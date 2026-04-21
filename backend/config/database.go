@@ -10,7 +10,7 @@ import (
 var DB *pgxpool.Pool
 
 func ConnectDB() {
-	dsn := "postgres://postgres:yohana@localhost:5432/bimbel_bmc"
+	dsn := "postgres://postgres:ramadhani12@localhost:5432/bmcgo_db"
 
 	var err error
 	// 1. Membuat konfigurasi pool

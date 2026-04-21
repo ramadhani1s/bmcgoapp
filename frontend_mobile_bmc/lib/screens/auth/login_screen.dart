@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
       String password = _passwordController.text;
 
       AuthService.login(email, password)
-          .then((response) {
+          .then((response) async {
             if (mounted) {
               setState(() {
                 _isLoading = false;
@@ -51,6 +52,23 @@ class _LoginScreenState extends State<LoginScreen> {
               final token = response['token'] as String?;
 
               if (user != null) {
+                final prefs = await SharedPreferences.getInstance();
+                if (token != null && token.isNotEmpty) {
+                  await prefs.setString('auth_token', token);
+                }
+                await prefs.setString(
+                  'user_name',
+                  user['nama']?.toString() ?? 'User',
+                );
+                await prefs.setString(
+                  'user_email',
+                  user['email']?.toString() ?? email,
+                );
+                await prefs.setString(
+                  'user_phone',
+                  user['whatsapp']?.toString() ?? '08xxxxxxxxxx',
+                );
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Selamat datang, ${user['nama']}!'),

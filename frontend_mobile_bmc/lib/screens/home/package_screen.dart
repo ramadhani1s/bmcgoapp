@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_mobile_bmc/screens/payment/payment_confirmation_screen.dart';
 
 class PackageScreen extends StatefulWidget {
   const PackageScreen({super.key});
@@ -206,12 +207,18 @@ class _PackageScreenState extends State<PackageScreen> {
           child: ElevatedButton(
             onPressed: () {
               final selected = _packages.firstWhere((e) => e.id == _selectedId);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Paket ${selected.title} dipilih. Lanjut ke konfirmasi pembayaran.',
+              // Extract numeric price
+              final priceStr = selected.promoPrice ?? selected.price ?? 'Rp 0';
+              
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PaymentConfirmationScreen(
+                    packageId: selected.id,
+                    packageTitle: selected.title,
+                    price: priceStr,
+                    description: selected.description,
                   ),
-                  backgroundColor: _accent,
                 ),
               );
             },

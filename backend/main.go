@@ -20,6 +20,7 @@ func main() {
 
 	routes.AuthRoutes(r)
 	routes.ProtectedRoutes(r)
+	routes.PaymentRoutes(r)
 
 	r.Run(":8080")
 }
