@@ -88,24 +88,6 @@ class _PackageScreenState extends State<PackageScreen> {
       savingsInfo: 'Hemat Rp 2.000.000',
       isRecommended: true,
     ),
-    _PackageOption(
-      id: 5,
-      title: 'Intensive UNHAN RI 2026',
-      period: 'Jan 2026 - September 2026',
-      students: '10 siswa/kelas',
-      duration: 'Jan - September 2026',
-      description: 'Paket khusus persiapan UNHAN (Universitas Pertahanan RI)',
-      benefits: [
-        '10 siswa per kelas',
-        'Materi khusus UNHAN',
-        'Latihan fisik & mental',
-        'Try Out UNHAN',
-        'Konsultasi pendaftaran',
-        'Akses materi digital',
-      ],
-      priceLabel: 'Total Biaya',
-      price: 'Rp 3.000.000',
-    ),
   ];
 
   int _selectedId = 4;

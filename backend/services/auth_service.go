@@ -20,11 +20,11 @@ func Register(user models.User) error {
 		return err
 	}
 
-	// 2️⃣ Normalisasi email (lowercase)
+	// 2️⃣ Normalisasi email dan nama
 	user.Email = strings.ToLower(strings.TrimSpace(user.Email))
 	user.Nama = strings.TrimSpace(user.Nama)
 
-	log.Printf("📝 Register - Email: '%s', Nama: '%s'\n", user.Email, user.Nama)
+	log.Printf("📝 Register - Username: '%s', Nama: '%s'\n", user.Email, user.Nama)
 
 	// 3️⃣ Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -41,8 +41,8 @@ func Register(user models.User) error {
 
 	// 5️⃣ Insert ke table users
 	query := `
-	INSERT INTO users (role_id, nama, email, password, phone_number, status)
-	VALUES ($1, $2, $3, $4, $5, $6)
+	INSERT INTO users (role_id, username, password, status)
+	VALUES ($1, $2, $3, $4)
 	RETURNING id
 	`
 
@@ -50,10 +50,8 @@ func Register(user models.User) error {
 	err = config.DB.QueryRow(context.Background(),
 		query,
 		user.RoleID,
-		user.Nama,
 		user.Email,
 		string(hashedPassword),
-		user.WhatsApp,
 		"nonaktif",
 	).Scan(&userID)
 
@@ -106,14 +104,25 @@ func Login(email, password string) (*models.User, error) {
 	log.Printf("🔍 Login attempt - Email: '%s'\n", email)
 
 	query := `
-	SELECT u.id, u.nama, u.email, u.password, u.role_id, u.phone_number, u.status, s.id AS siswa_id, s.kelas, s.asal_sekolah, s.no_wa, s.alamat
+	SELECT
+		u.id,
+		COALESCE(s.nama_siswa, u.username),
+		u.username,
+		u.password,
+		u.role_id,
+		u.status,
+		COALESCE(s.id, 0) AS siswa_id,
+		COALESCE(s.kelas, ''),
+		COALESCE(s.asal_sekolah, ''),
+		COALESCE(s.no_wa, ''),
+		COALESCE(s.alamat, '')
 	FROM users u
 	LEFT JOIN siswa s ON s.user_id = u.id
-	WHERE u.email = $1
+	WHERE u.username = $1
 	`
 
 	err := config.DB.QueryRow(context.Background(), query, email).
-		Scan(&user.ID, &user.Nama, &user.Email, &user.Password, &user.RoleID, &user.PhoneNumber, &user.Status, &user.SiswaID, &user.Kelas, &user.AsalSekolah, &user.WhatsApp, &user.Alamat)
+		Scan(&user.ID, &user.Nama, &user.Email, &user.Password, &user.RoleID, &user.Status, &user.SiswaID, &user.Kelas, &user.AsalSekolah, &user.WhatsApp, &user.Alamat)
 
 	if err != nil {
 		log.Printf("❌ User not found in DB: %s (Error: %v)\n", email, err)

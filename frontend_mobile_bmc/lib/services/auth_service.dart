@@ -54,7 +54,7 @@ class AuthService {
           'alamat': alamat,
           'email': email,
           'password': password,
-          'role_id': 2,
+          'role_id': 3,
           'is_active': false,
         }),
       );
@@ -62,8 +62,12 @@ class AuthService {
       if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        final body = jsonDecode(response.body);
-        final errorMessage = body['error'] ?? 'Register gagal: ${response.statusCode}';
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final error = (body['error'] ?? '').toString();
+        final details = (body['details'] ?? '').toString();
+        final errorMessage = details.isNotEmpty
+            ? '$error ($details)'
+            : (error.isNotEmpty ? error : 'Register gagal: ${response.statusCode}');
         throw Exception(errorMessage);
       }
     } catch (e) {
