@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,19 +19,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _previousIndex = 0;
   bool _canAccessPaidFeatures = false;
   bool _isCheckingVerification = true;
+  String _activePackageTitle = 'Paket belum dipilih';
+  bool _isLoadingPackageInfo = true;
+  int _openedMateriCount = 0;
+  int _openedTryoutCount = 0;
+
+  int get _totalMateriTarget => 24;
+  int get _totalTryoutTarget => 12;
+
+  double get _overallProgress {
+    final total = _totalMateriTarget + _totalTryoutTarget;
+    if (total <= 0) return 0;
+    final opened = _openedMateriCount + _openedTryoutCount;
+    return (opened / total).clamp(0, 1);
+  }
+
+  int get _overallProgressPercent => (_overallProgress * 100).round();
 
   @override
   void initState() {
     super.initState();
-    _loadVerificationStatus();
+    _loadLearningProgress();
+    _loadDashboardStatus();
   }
 
-  Future<void> _loadVerificationStatus() async {
+  String _progressKey(String suffix) {
+    return 'learning_progress_${_studentEmail}_$suffix';
+  }
+
+  Future<void> _loadLearningProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _openedMateriCount = prefs.getInt(_progressKey('materi_opened')) ?? 0;
+      _openedTryoutCount = prefs.getInt(_progressKey('tryout_opened')) ?? 0;
+    });
+  }
+
+  Future<void> _saveLearningProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_progressKey('materi_opened'), _openedMateriCount);
+    await prefs.setInt(_progressKey('tryout_opened'), _openedTryoutCount);
+  }
+
+  Future<void> _incrementMateriProgress() async {
+    if (!_isActive) return;
+    if (_openedMateriCount >= _totalMateriTarget) return;
+    setState(() {
+      _openedMateriCount += 1;
+    });
+    await _saveLearningProgress();
+  }
+
+  Future<void> _incrementTryoutProgress() async {
+    if (!_isActive) return;
+    if (_openedTryoutCount >= _totalTryoutTarget) return;
+    setState(() {
+      _openedTryoutCount += 1;
+    });
+    await _saveLearningProgress();
+  }
+
+  Future<void> _loadDashboardStatus() async {
     final canAccess = await PaymentService.getVerificationStatus();
+
+    String packageTitle = 'Paket belum dipilih';
+    try {
+      final history = await PaymentService.getPaymentHistory();
+      if (history.isNotEmpty) {
+        final successItems = history
+            .where((item) => item.status.toLowerCase() == 'success')
+            .toList();
+        final selectedItem = successItems.isNotEmpty
+            ? successItems.first
+            : history.first;
+        packageTitle = selectedItem.packageTitle;
+      }
+    } catch (_) {
+      // Keep fallback text when history cannot be loaded.
+    }
+
     if (!mounted) return;
     setState(() {
       _canAccessPaidFeatures = canAccess;
       _isCheckingVerification = false;
+      _activePackageTitle = packageTitle;
+      _isLoadingPackageInfo = false;
     });
   }
 
@@ -52,6 +126,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return (user?['kelas'] as String?) ?? 'Kelas 12';
   }
 
+  String get _studentEmail {
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final user = args?['user'] as Map<String, dynamic>?;
+    return (user?['email'] as String?) ?? '-';
+  }
+
   void _onBottomNavTap(int index) {
     if (!_isActive && (index == 1 || index == 2)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -63,6 +144,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
       return;
+    }
+
+    if (index == 1) {
+      _incrementMateriProgress();
+    }
+    if (index == 2) {
+      _incrementTryoutProgress();
     }
 
     setState(() {
@@ -82,6 +170,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
       return;
+    }
+
+    if (menuKey.toLowerCase() == 'materi') {
+      _incrementMateriProgress();
+    } else if (menuKey.toLowerCase() == 'try out') {
+      _incrementTryoutProgress();
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -262,7 +356,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              '$_classLabel · Paket belum dipilih',
+                              _isLoadingPackageInfo
+                                  ? '$_classLabel · Memuat paket...'
+                                  : '$_classLabel · $_activePackageTitle',
                               style: const TextStyle(
                                 color: _textMuted,
                                 fontSize: 11.5,
@@ -270,14 +366,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 8),
                             Row(
-                              children: const [
+                              children: [
                                 Expanded(
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.all(
                                       Radius.circular(99),
                                     ),
                                     child: LinearProgressIndicator(
-                                      value: 0,
+                                      value: _overallProgress,
                                       minHeight: 6,
                                       backgroundColor: Color(0xFFE9EAF0),
                                       valueColor: AlwaysStoppedAnimation<Color>(
@@ -286,10 +382,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
-                                  '0%',
-                                  style: TextStyle(
+                                  '$_overallProgressPercent%',
+                                  style: const TextStyle(
                                     color: Color(0xFFFF8D3C),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
@@ -329,17 +425,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 10),
                 Row(
-                  children: const [
+                  children: [
                     Expanded(
-                      child: _TopMetricCard(value: '0', label: 'Materi'),
+                      child: _TopMetricCard(
+                        value: '$_openedMateriCount/$_totalMateriTarget',
+                        label: 'Materi',
+                      ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: _TopMetricCard(value: '0', label: 'Latihan'),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: _TopMetricCard(value: '0', label: 'Try Out'),
+                      child: _TopMetricCard(
+                        value: '$_openedTryoutCount/$_totalTryoutTarget',
+                        label: 'Try Out',
+                      ),
                     ),
                   ],
                 ),
@@ -463,18 +565,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
                             color: _accent,
                             size: 18,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Akun kamu masih non-aktif',
-                              style: TextStyle(
+                              _isActive
+                                  ? 'Akun kamu sudah aktif'
+                                  : 'Akun kamu masih non-aktif',
+                              style: const TextStyle(
                                 fontSize: 13,
                                 color: _textPrimary,
                                 fontWeight: FontWeight.w700,
@@ -516,9 +620,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Icons.person_outline,
                             color: Colors.white,
                           ),
-                          label: const Text(
-                            'Buka Profil & Pilih Paket',
-                            style: TextStyle(
+                          label: Text(
+                            _isActive
+                                ? 'Buka Profil'
+                                : 'Buka Profil & Pilih Paket',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
                               fontSize: 13.5,
@@ -693,8 +799,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'yohana.nababan@bmc.id',
+                      Text(
+                        _studentEmail,
                         style: TextStyle(
                           color: Color(0xFFDCE1ED),
                           fontSize: 12.5,
@@ -734,22 +840,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Belum ada paket dipilih',
-                                    style: TextStyle(
+                                    _isLoadingPackageInfo
+                                        ? 'Memuat informasi paket...'
+                                        : _activePackageTitle,
+                                    style: const TextStyle(
                                       color: _textPrimary,
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
-                                    'Masuk ke Informasi Paket untuk memilih paket',
-                                    style: TextStyle(
+                                    _isActive
+                                        ? 'Paket aktif. Semua fitur belajar bisa digunakan.'
+                                        : 'Masuk ke Informasi Paket untuk memilih paket',
+                                    style: const TextStyle(
                                       color: _textMuted,
                                       fontSize: 12.5,
                                     ),
