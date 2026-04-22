@@ -15,7 +15,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   static const Color _blueHeader = Color(0xFF2D4CC8);
 
   String _selectedFilter = 'all';
-  late Future<List<PaymentHistoryItem>> _future;
+  Future<List<PaymentHistoryItem>> _future = Future.value(const []);
 
   @override
   void initState() {

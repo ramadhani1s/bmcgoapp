@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_mobile_bmc/services/payment_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -8,26 +10,108 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // Palet warna utama untuk seluruh halaman dashboard siswa.
   static const Color _accent = Color(0xFFFF7070);
   static const Color _background = Color(0xFFF7EEEF);
   static const Color _textPrimary = Color(0xFF25273D);
   static const Color _textMuted = Color(0xFF8D90A3);
 
-  // State navigasi bawah: index aktif saat ini dan index sebelumnya.
   int _selectedIndex = 0;
   int _previousIndex = 0;
-  int _lastMainTabIndex = 0;
+  bool _canAccessPaidFeatures = false;
+  bool _isCheckingVerification = true;
+  String _activePackageTitle = 'Paket belum dipilih';
+  bool _isLoadingPackageInfo = true;
+  int _openedMateriCount = 0;
+  int _openedTryoutCount = 0;
 
-  // Ambil status aktivasi akun dari argument route login.
-  bool get _isActive {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final user = args?['user'] as Map<String, dynamic>?;
-    return user?['is_active'] == true;
+  int get _totalMateriTarget => 24;
+  int get _totalTryoutTarget => 12;
+
+  double get _overallProgress {
+    final total = _totalMateriTarget + _totalTryoutTarget;
+    if (total <= 0) return 0;
+    final opened = _openedMateriCount + _openedTryoutCount;
+    return (opened / total).clamp(0, 1);
   }
 
-  // Ambil nama siswa dari argument route, fallback untuk mode demo.
+  int get _overallProgressPercent => (_overallProgress * 100).round();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLearningProgress();
+    _loadDashboardStatus();
+  }
+
+  String _progressKey(String suffix) {
+    return 'learning_progress_${_studentEmail}_$suffix';
+  }
+
+  Future<void> _loadLearningProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _openedMateriCount = prefs.getInt(_progressKey('materi_opened')) ?? 0;
+      _openedTryoutCount = prefs.getInt(_progressKey('tryout_opened')) ?? 0;
+    });
+  }
+
+  Future<void> _saveLearningProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_progressKey('materi_opened'), _openedMateriCount);
+    await prefs.setInt(_progressKey('tryout_opened'), _openedTryoutCount);
+  }
+
+  Future<void> _incrementMateriProgress() async {
+    if (!_isActive) return;
+    if (_openedMateriCount >= _totalMateriTarget) return;
+    setState(() {
+      _openedMateriCount += 1;
+    });
+    await _saveLearningProgress();
+  }
+
+  Future<void> _incrementTryoutProgress() async {
+    if (!_isActive) return;
+    if (_openedTryoutCount >= _totalTryoutTarget) return;
+    setState(() {
+      _openedTryoutCount += 1;
+    });
+    await _saveLearningProgress();
+  }
+
+  Future<void> _loadDashboardStatus() async {
+    final canAccess = await PaymentService.getVerificationStatus();
+
+    String packageTitle = 'Paket belum dipilih';
+    try {
+      final history = await PaymentService.getPaymentHistory();
+      if (history.isNotEmpty) {
+        final successItems = history
+            .where((item) => item.status.toLowerCase() == 'success')
+            .toList();
+        final selectedItem = successItems.isNotEmpty
+            ? successItems.first
+            : history.first;
+        packageTitle = selectedItem.packageTitle;
+      }
+    } catch (_) {
+      // Keep fallback text when history cannot be loaded.
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _canAccessPaidFeatures = canAccess;
+      _isCheckingVerification = false;
+      _activePackageTitle = packageTitle;
+      _isLoadingPackageInfo = false;
+    });
+  }
+
+  bool get _isActive {
+    return _canAccessPaidFeatures;
+  }
+
   String get _studentName {
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -35,7 +119,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return (user?['nama'] as String?) ?? 'Yohana Nababan';
   }
 
-  // Ambil label kelas siswa dari argument route.
   String get _classLabel {
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -43,7 +126,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return (user?['kelas'] as String?) ?? 'Kelas 12';
   }
 
-  // Batasi akses tab Materi dan Try Out bila akun siswa belum aktif.
+  String get _studentEmail {
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final user = args?['user'] as Map<String, dynamic>?;
+    return (user?['email'] as String?) ?? '-';
+  }
+
   void _onBottomNavTap(int index) {
     if (!_isActive && (index == 1 || index == 2)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,26 +146,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
+    if (index == 1) {
+      _incrementMateriProgress();
+    }
+    if (index == 2) {
+      _incrementTryoutProgress();
+    }
+
     setState(() {
-      if (index != 3) {
-        _lastMainTabIndex = index;
-      }
       _previousIndex = _selectedIndex;
       _selectedIndex = index;
     });
   }
 
-<<<<<<< Updated upstream
-  // Handler menu utama pada beranda (sementara masih placeholder).
-=======
-  void _goBackFromProfile() {
-    final targetTab = _previousIndex != 3 ? _previousIndex : _lastMainTabIndex;
-    setState(() {
-      _selectedIndex = targetTab.clamp(0, 2);
-    });
-  }
-
->>>>>>> Stashed changes
   void _onMainMenuTap(String menuKey) {
     if (!_isActive) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -90,6 +172,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
+    if (menuKey.toLowerCase() == 'materi') {
+      _incrementMateriProgress();
+    } else if (menuKey.toLowerCase() == 'try out') {
+      _incrementTryoutProgress();
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Menu $menuKey siap dihubungkan ke data dinamis.'),
@@ -98,7 +186,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Tab Beranda siswa: header profil singkat, menu utama, dan status akun.
   Widget _buildDashboardTab() {
     final menuItems = <_MainMenuItem>[
       const _MainMenuItem('Materi', Icons.menu_book_rounded, Color(0xFFFDECEC)),
@@ -134,7 +221,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header atas berisi branding BMC, salam, dan ringkasan siswa.
           Container(
             padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
             decoration: const BoxDecoration(
@@ -270,7 +356,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              '$_classLabel · Paket belum dipilih',
+                              _isLoadingPackageInfo
+                                  ? '$_classLabel · Memuat paket...'
+                                  : '$_classLabel · $_activePackageTitle',
                               style: const TextStyle(
                                 color: _textMuted,
                                 fontSize: 11.5,
@@ -278,14 +366,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 8),
                             Row(
-                              children: const [
+                              children: [
                                 Expanded(
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.all(
                                       Radius.circular(99),
                                     ),
                                     child: LinearProgressIndicator(
-                                      value: 0,
+                                      value: _overallProgress,
                                       minHeight: 6,
                                       backgroundColor: Color(0xFFE9EAF0),
                                       valueColor: AlwaysStoppedAnimation<Color>(
@@ -294,10 +382,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
-                                  '0%',
-                                  style: TextStyle(
+                                  '$_overallProgressPercent%',
+                                  style: const TextStyle(
                                     color: Color(0xFFFF8D3C),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
@@ -319,10 +407,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(color: const Color(0xFFFFCF9F)),
                         ),
-                        child: const Text(
-                          'Non-Aktif',
+                        child: Text(
+                          _isCheckingVerification
+                              ? 'Mengecek...'
+                              : (_isActive ? 'Aktif' : 'Non-Aktif'),
                           style: TextStyle(
-                            color: Color(0xFFFF8D3C),
+                            color: _isActive
+                                ? Color(0xFF16A34A)
+                                : Color(0xFFFF8D3C),
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                           ),
@@ -333,30 +425,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 10),
                 Row(
-                  children: const [
+                  children: [
                     Expanded(
-                      child: _TopMetricCard(value: '0', label: 'Materi'),
+                      child: _TopMetricCard(
+                        value: '$_openedMateriCount/$_totalMateriTarget',
+                        label: 'Materi',
+                      ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: _TopMetricCard(value: '0', label: 'Latihan'),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: _TopMetricCard(value: '0', label: 'Try Out'),
+                      child: _TopMetricCard(
+                        value: '$_openedTryoutCount/$_totalTryoutTarget',
+                        label: 'Try Out',
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          // Area konten berisi pencarian, grid menu, dan info aktivasi akun.
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Search bar nonaktif sebagai placeholder pencarian global.
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8CCCF),
@@ -391,7 +487,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                // Menu utama siswa dalam bentuk grid 4 kolom.
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -459,7 +554,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Kartu edukasi jika akun masih non-aktif.
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
@@ -471,18 +565,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
                             color: _accent,
                             size: 18,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Akun kamu masih non-aktif',
-                              style: TextStyle(
+                              _isActive
+                                  ? 'Akun kamu sudah aktif'
+                                  : 'Akun kamu masih non-aktif',
+                              style: const TextStyle(
                                 fontSize: 13,
                                 color: _textPrimary,
                                 fontWeight: FontWeight.w700,
@@ -492,8 +588,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Untuk membuka akses Materi, Try Out, dan fitur lain, silakan pilih paket bimbel dari menu Profil.',
+                      Text(
+                        _isActive
+                            ? 'Akun kamu sudah aktif. Semua fitur belajar bisa dipakai.'
+                            : 'Untuk membuka akses Materi, Try Out, dan fitur lain, silakan selesaikan pembayaran dan tunggu verifikasi admin. Menu Paket dan Profil tetap bisa dibuka.',
                         style: TextStyle(
                           fontSize: 12.5,
                           color: _textMuted,
@@ -522,9 +620,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Icons.person_outline,
                             color: Colors.white,
                           ),
-                          label: const Text(
-                            'Buka Profil & Pilih Paket',
-                            style: TextStyle(
+                          label: Text(
+                            _isActive
+                                ? 'Buka Profil'
+                                : 'Buka Profil & Pilih Paket',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
                               fontSize: 13.5,
@@ -543,7 +643,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Placeholder tab untuk fitur yang menunggu data dinamis dari backend.
   Widget _buildPlaceholderTab({required String title, required IconData icon}) {
     return Center(
       child: Padding(
@@ -582,14 +681,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Tab Profil siswa: identitas, statistik, detail akun, dan aksi logout.
   Widget _buildProfileTab() {
     final isActive = _isActive;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header profil dengan tombol kembali ke tab sebelumnya.
           Container(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
             decoration: const BoxDecoration(
@@ -602,7 +699,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Row(
               children: [
                 InkWell(
-                  onTap: _goBackFromProfile,
+                  onTap: () {
+                    setState(() {
+                      _selectedIndex = _previousIndex == 3 ? 0 : _previousIndex;
+                    });
+                  },
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
                     width: 42,
@@ -629,13 +730,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-          // Konten profil: kartu utama, detail akun, akademik, dan logout.
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Kartu identitas siswa dan status paket belajar.
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
@@ -700,8 +799,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'yohana.nababan@bmc.id',
+                      Text(
+                        _studentEmail,
                         style: TextStyle(
                           color: Color(0xFFDCE1ED),
                           fontSize: 12.5,
@@ -741,22 +840,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Belum ada paket dipilih',
-                                    style: TextStyle(
+                                    _isLoadingPackageInfo
+                                        ? 'Memuat informasi paket...'
+                                        : _activePackageTitle,
+                                    style: const TextStyle(
                                       color: _textPrimary,
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
-                                    'Masuk ke Informasi Paket untuk memilih paket',
-                                    style: TextStyle(
+                                    _isActive
+                                        ? 'Paket aktif. Semua fitur belajar bisa digunakan.'
+                                        : 'Masuk ke Informasi Paket untuk memilih paket',
+                                    style: const TextStyle(
                                       color: _textMuted,
                                       fontSize: 12.5,
                                     ),
@@ -784,7 +887,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Grup menu akun (profil, paket, status aktivasi).
                 _buildSectionTitle('AKUN'),
                 _buildTileCard(
                   children: [
@@ -813,7 +915,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                // Grup menu akademik siswa (placeholder data nilai/prestasi).
                 _buildSectionTitle('AKADEMIK'),
                 _buildTileCard(
                   children: [
@@ -878,7 +979,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Komponen statistik ringkas pada kartu profil.
   Widget _buildStat(String value, String title) {
     return Expanded(
       child: Column(
@@ -901,12 +1001,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Garis pemisah antar statistik pada kartu profil.
   Widget _buildDivider() {
     return Container(width: 1, height: 46, color: const Color(0xFFA6B2CC));
   }
 
-  // Judul section untuk pengelompokan menu di tab profil.
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -922,7 +1020,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Kartu daftar tile reusable untuk menu profil.
   Widget _buildTileCard({required List<_ProfileTile> children}) {
     return Container(
       decoration: BoxDecoration(
@@ -968,7 +1065,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Notifikasi sementara untuk fitur yang belum terhubung data akademik.
   void _showDynamicInfo() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -982,7 +1078,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Susunan tab utama yang dipilih lewat BottomNavigationBar.
     final tabs = <Widget>[
       _buildDashboardTab(),
       _buildPlaceholderTab(title: 'Materi', icon: Icons.menu_book_rounded),
@@ -997,7 +1092,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         bottom: false,
         child: IndexedStack(index: _selectedIndex, children: tabs),
       ),
-      // Navigasi utama siswa: Beranda, Materi, Try Out, dan Profil.
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onBottomNavTap,
@@ -1036,7 +1130,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// Model sederhana untuk item menu utama di beranda.
 class _MainMenuItem {
   const _MainMenuItem(this.label, this.icon, this.backgroundColor);
 
@@ -1045,7 +1138,6 @@ class _MainMenuItem {
   final Color backgroundColor;
 }
 
-// Kartu metrik kecil yang tampil di bagian atas dashboard.
 class _TopMetricCard extends StatelessWidget {
   const _TopMetricCard({required this.value, required this.label});
 
@@ -1085,7 +1177,6 @@ class _TopMetricCard extends StatelessWidget {
   }
 }
 
-// Model data untuk tile pada daftar menu tab profil.
 class _ProfileTile {
   const _ProfileTile({
     required this.icon,

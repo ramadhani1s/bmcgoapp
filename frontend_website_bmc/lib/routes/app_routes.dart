@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/dashboard/admin_dashboard.dart';
 import '../screens/dashboard/mentor_dashboard.dart';
+import '../screens/payment_verification_screen.dart';
 import '../services/auth_service.dart';
 
 class AppRoutes {
   static const String login = '/login';
   static const String adminDashboard = '/admin-dashboard';
+  static const String paymentVerification = '/payment-verification';
   static const String mentorDashboard = '/mentor-dashboard';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -15,6 +17,10 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const LoginScreen());
       case adminDashboard:
         return MaterialPageRoute(builder: (_) => const AdminDashboard());
+      case paymentVerification:
+        return MaterialPageRoute(
+          builder: (_) => const PaymentVerificationScreen(),
+        );
       case mentorDashboard:
         return MaterialPageRoute(builder: (_) => const MentorDashboard());
       default:
