@@ -699,10 +699,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.workspace_premium_outlined,
-                              color: Color(0xFFFFAE49),
-                              size: 30,
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF0F0),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Icon(
+                                Icons.lock_outline_rounded,
+                                color: _accent,
+                                size: 24,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             const Expanded(
@@ -710,7 +718,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Belum ada paket aktif',
+                                    'Belum ada paket dipilih',
                                     style: TextStyle(
                                       color: _textPrimary,
                                       fontSize: 15,
@@ -719,7 +727,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    'Pilih jenis paket untuk aktivasi akun',
+                                    'Masuk ke Informasi Paket untuk memilih paket',
                                     style: TextStyle(
                                       color: _textMuted,
                                       fontSize: 12.5,
@@ -761,7 +769,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       icon: Icons.badge_outlined,
                       title: 'Informasi Paket',
                       color: const Color(0xFFF2E9FF),
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.of(context).pushNamed('/package');
+                      },
                     ),
                     _ProfileTile(
                       icon: Icons.shield_outlined,
@@ -808,7 +818,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      Navigator.of(context).pushNamed('/package');
+                      Navigator.of(
+                        context,
+                      ).pushNamedAndRemoveUntil('/login', (route) => false);
                     },
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: _accent),
@@ -818,9 +830,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 13),
                     ),
-                    icon: const Icon(Icons.credit_card_rounded),
+                    icon: const Icon(Icons.logout_rounded),
                     label: const Text(
-                      'Lihat / Pilih Jenis Paket Bimbel',
+                      'Keluar dari Akun',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13.5,
