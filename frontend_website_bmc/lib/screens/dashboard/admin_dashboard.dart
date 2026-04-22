@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
 import '../../models/user.dart';
+import '../../services/auth_service.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -66,6 +66,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       value: '2',
       subtitle: 'Pendaftaran Siswa Baru',
       color: Color(0xFFFF7A00),
+      backgroundColor: Color(0xFFF6EFE7),
       icon: Icons.person_add_alt_1,
     ),
     _StatCardData(
@@ -73,6 +74,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       value: '4',
       subtitle: 'Kelas Aktif',
       color: Color(0xFF2E7BEF),
+      backgroundColor: Color(0xFFF0F5FF),
       icon: Icons.calendar_month,
     ),
     _StatCardData(
@@ -80,6 +82,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       value: '45',
       subtitle: 'Total Siswa Terdaftar',
       color: Color(0xFF17BF63),
+      backgroundColor: Color(0xFFEDF8F0),
       icon: Icons.groups,
     ),
   ];
@@ -150,39 +153,47 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F6FB),
-      body: Row(
-        children: [
-          _buildSidebar(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildTopBar(),
-                  const SizedBox(height: 14),
-                  _buildHeroCard(),
-                  const SizedBox(height: 14),
-                  _buildStatsRow(),
-                  const SizedBox(height: 14),
-                  _buildPendingVerificationCard(),
-                  const SizedBox(height: 12),
-                  _buildScheduleCard(),
-                ],
+      backgroundColor: const Color(0xFFEFF2F8),
+      body: SafeArea(
+        child: Row(
+          children: [
+            _buildSidebar(),
+            Expanded(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1120),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(14, 8, 14, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildTopBar(),
+                        const SizedBox(height: 14),
+                        _buildHeroCard(),
+                        const SizedBox(height: 14),
+                        _buildStatsRow(),
+                        const SizedBox(height: 14),
+                        _buildPendingVerificationCard(),
+                        const SizedBox(height: 12),
+                        _buildScheduleCard(),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSidebar() {
     return Container(
-      width: 220,
+      width: 214,
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF2F8),
+        color: const Color(0xFFE8EDF6),
         border: Border(right: BorderSide(color: Colors.grey.shade300)),
       ),
       child: Column(
@@ -243,7 +254,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               itemCount: _menuItems.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 2),
+              separatorBuilder: (context, index) => const SizedBox(height: 2),
               itemBuilder: (context, index) {
                 final item = _menuItems[index];
                 final selected = index == _selectedMenuIndex;
@@ -347,7 +358,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   SizedBox(width: 8),
                   Text(
                     'Cari...',
-                    style: TextStyle(color: Color(0xFFA0A9B7), fontSize: 12.5),
+                    style: TextStyle(
+                      color: Color(0xFFA0A9B7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -423,7 +438,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildHeroCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF2B57E4), Color(0xFF2756F0)],
@@ -431,6 +446,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(9),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x332557E4),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
       child: Stack(
         children: [
@@ -458,20 +480,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             ),
           ),
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text(
-                'Selamat Datang, Admin! 👋',
+                'Selamat Datang, Admin! ',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 30,
+                  fontSize: 33,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               SizedBox(height: 4),
               Text(
-                'Berikut adalah ringkasan informasi terkini dari sistem manajemen BMC — Kamis, 19 Maret 2026.',
+                'Berikut adalah ringkasan informasi terkini dari sistem manajemen BMC - Kamis, 19 Maret 2026.',
                 style: TextStyle(color: Color(0xFFD9E4FF), fontSize: 12),
               ),
             ],
@@ -489,9 +511,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
               child: Padding(
                 padding: const EdgeInsets.only(right: 10),
                 child: Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: e.backgroundColor,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: const Color(0xFFE6EBF2)),
                   ),
@@ -513,7 +535,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               e.value,
                               style: const TextStyle(
                                 color: Color(0xFF1E2B3D),
-                                fontSize: 32,
+                                fontSize: 36,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -664,7 +686,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'Sabtu, 28 Maret 2026 — total 4 sesi',
+                        'Sabtu, 28 Maret 2026 - total 4 sesi',
                         style: TextStyle(
                           color: Color(0xFFC9D7FF),
                           fontSize: 10.5,
@@ -735,6 +757,7 @@ class _StatCardData {
     required this.value,
     required this.subtitle,
     required this.color,
+    required this.backgroundColor,
     required this.icon,
   });
 
@@ -742,6 +765,7 @@ class _StatCardData {
   final String value;
   final String subtitle;
   final Color color;
+  final Color backgroundColor;
   final IconData icon;
 }
 

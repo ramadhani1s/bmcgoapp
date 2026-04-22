@@ -99,61 +99,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 900;
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 1200, maxHeight: 820),
-          margin: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFFFFFF), Color(0xFFFFF7ED)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: const [
-              BoxShadow(
-                color: Color.fromRGBO(120, 53, 15, 0.12),
-                blurRadius: 32,
-                offset: Offset(0, 18),
-              ),
-            ],
-          ),
-          child: isDesktop
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: Row(
-                    children: [
-                      Expanded(child: _buildBrandPanel()),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 46,
-                            vertical: 40,
-                          ),
-                          child: _buildLoginFormCard(),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    children: [
-                      _buildBrandPanel(),
-                      const SizedBox(height: 18),
-                      _buildLoginFormCard(),
-                    ],
-                  ),
-                ),
-        ),
-      ),
+  Widget _buildDecorCircle(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
     );
   }
 
@@ -225,14 +175,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDecorCircle(double size, Color color) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
     );
   }
 
@@ -374,6 +316,64 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAF7F2),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1200, maxHeight: 820),
+          margin: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFFFFF), Color(0xFFFFF7ED)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(120, 53, 15, 0.12),
+                blurRadius: 32,
+                offset: Offset(0, 18),
+              ),
+            ],
+          ),
+          child: isDesktop
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Row(
+                    children: [
+                      Expanded(child: _buildBrandPanel()),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 46,
+                            vertical: 40,
+                          ),
+                          child: _buildLoginFormCard(),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 360, child: _buildBrandPanel()),
+                      const SizedBox(height: 18),
+                      _buildLoginFormCard(),
+                    ],
+                  ),
+                ),
         ),
       ),
     );
