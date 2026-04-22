@@ -121,12 +121,12 @@ class _LoginScreenState extends State<LoginScreen> {
           Positioned(
             top: -30,
             right: -20,
-            child: _buildDecorCircle(120, Colors.white.withOpacity(0.12)),
+            child: _buildDecorCircle(120, Colors.white.withValues(alpha: 0.12)),
           ),
           Positioned(
             bottom: -50,
             left: -30,
-            child: _buildDecorCircle(180, Colors.white.withOpacity(0.08)),
+            child: _buildDecorCircle(180, Colors.white.withValues(alpha: 0.08)),
           ),
           Center(
             child: Padding(
@@ -137,9 +137,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.18),
+                      color: Colors.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(color: Colors.white.withOpacity(0.18)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
                     ),
                     child: Image.asset(
                       'assets/images/bmc_logo.jpeg',
@@ -182,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.96),
+        color: Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFF5E7D7)),
         boxShadow: const [

@@ -46,7 +46,7 @@ class _MentorDashboardState extends State<MentorDashboard> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withOpacity(0.1),
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -69,10 +69,7 @@ class _MentorDashboardState extends State<MentorDashboard> {
         actions: [
           IconButton(
             onPressed: _logout,
-            icon: const Icon(
-              Icons.logout,
-              color: Color(0xFFEF4444),
-            ),
+            icon: const Icon(Icons.logout, color: Color(0xFFEF4444)),
             tooltip: 'Logout',
           ),
         ],
@@ -96,7 +93,7 @@ class _MentorDashboardState extends State<MentorDashboard> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF10B981).withOpacity(0.3),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 6),
                         ),
@@ -128,9 +125,12 @@ class _MentorDashboardState extends State<MentorDashboard> {
                               ),
                               const SizedBox(height: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -235,7 +235,11 @@ class _MentorDashboardState extends State<MentorDashboard> {
                         () {
                           // Navigate to student list
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Daftar Siswa - Coming Soon!')),
+                            const SnackBar(
+                              content: Text(
+                                'Fitur Daftar Siswa - Coming Soon!',
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -246,7 +250,11 @@ class _MentorDashboardState extends State<MentorDashboard> {
                         () {
                           // Navigate to class management
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Kelola Kelas - Coming Soon!')),
+                            const SnackBar(
+                              content: Text(
+                                'Fitur Kelola Kelas - Coming Soon!',
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -257,7 +265,9 @@ class _MentorDashboardState extends State<MentorDashboard> {
                         () {
                           // Navigate to create assignment
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Buat Tugas - Coming Soon!')),
+                            const SnackBar(
+                              content: Text('Fitur Buat Tugas - Coming Soon!'),
+                            ),
                           );
                         },
                       ),
@@ -268,7 +278,9 @@ class _MentorDashboardState extends State<MentorDashboard> {
                         () {
                           // Navigate to grading
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Penilaian - Coming Soon!')),
+                            const SnackBar(
+                              content: Text('Fitur Penilaian - Coming Soon!'),
+                            ),
                           );
                         },
                       ),
@@ -279,7 +291,11 @@ class _MentorDashboardState extends State<MentorDashboard> {
                         () {
                           // Navigate to schedule
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Jadwal Mengajar - Coming Soon!')),
+                            const SnackBar(
+                              content: Text(
+                                'Fitur Jadwal Mengajar - Coming Soon!',
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -290,7 +306,11 @@ class _MentorDashboardState extends State<MentorDashboard> {
                         () {
                           // Navigate to student reports
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Laporan Siswa - Coming Soon!')),
+                            const SnackBar(
+                              content: Text(
+                                'Fitur Laporan Siswa - Coming Soon!',
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -354,7 +374,12 @@ class _MentorDashboardState extends State<MentorDashboard> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -374,14 +399,10 @@ class _MentorDashboardState extends State<MentorDashboard> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
+            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 12),
           Text(
@@ -406,7 +427,12 @@ class _MentorDashboardState extends State<MentorDashboard> {
     );
   }
 
-  Widget _buildMenuCard(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildMenuCard(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -429,14 +455,10 @@ class _MentorDashboardState extends State<MentorDashboard> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 28,
-              ),
+              child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(height: 12),
             Text(
@@ -454,20 +476,21 @@ class _MentorDashboardState extends State<MentorDashboard> {
     );
   }
 
-  Widget _buildActivityItem(String title, String time, IconData icon, Color color) {
+  Widget _buildActivityItem(
+    String title,
+    String time,
+    IconData icon,
+    Color color,
+  ) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 16,
-          ),
+          child: Icon(icon, color: color, size: 16),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -485,10 +508,7 @@ class _MentorDashboardState extends State<MentorDashboard> {
               const SizedBox(height: 2),
               Text(
                 time,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
             ],
           ),

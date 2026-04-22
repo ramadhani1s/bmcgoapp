@@ -10,6 +10,12 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
+  static const Color _pageCream = Color(0xFFF8F2E6);
+  static const Color _sidebarCream = Color(0xFFF8F2E6);
+  static const Color _surfaceCream = Color(0xFFFFFCF6);
+  static const Color _borderCream = Color(0xFFE3D8C7);
+  static const Color _softBorderCream = Color(0xFFEEE3D3);
+
   User? _currentUser;
   int _selectedMenuIndex = 0;
 
@@ -153,7 +159,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFEFF2F8),
+      backgroundColor: _pageCream,
       body: SafeArea(
         child: Row(
           children: [
@@ -193,8 +199,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Container(
       width: 214,
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EDF6),
-        border: Border(right: BorderSide(color: Colors.grey.shade300)),
+        color: _sidebarCream,
+        border: const Border(right: BorderSide(color: _borderCream)),
       ),
       child: Column(
         children: [
@@ -337,9 +343,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
       height: 66,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _surfaceCream,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F1)),
+        border: Border.all(color: _borderCream),
       ),
       child: Row(
         children: [
@@ -348,9 +354,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
               height: 40,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F7FB),
+                color: const Color(0xFFF8F1E6),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE7EBF2)),
+                border: Border.all(color: _softBorderCream),
               ),
               child: const Row(
                 children: [
@@ -463,7 +469,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               width: 110,
               height: 110,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
             ),
@@ -475,7 +481,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.06),
+                color: Colors.white.withValues(alpha: 0.06),
                 shape: BoxShape.circle,
               ),
             ),
@@ -515,7 +521,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: BoxDecoration(
                     color: e.backgroundColor,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE6EBF2)),
+                    border: Border.all(color: _borderCream),
                   ),
                   child: Row(
                     children: [
@@ -572,9 +578,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildPendingVerificationCard() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _surfaceCream,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE4E9F2)),
+        border: Border.all(color: _borderCream),
       ),
       child: Column(
         children: [
@@ -654,9 +660,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildScheduleCard() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _surfaceCream,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE4E9F2)),
+        border: Border.all(color: _borderCream),
       ),
       child: Column(
         children: [
@@ -698,7 +704,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 TextButton(
                   onPressed: () {},
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
@@ -708,7 +714,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 TextButton(
                   onPressed: () {},
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
@@ -856,7 +862,7 @@ class _PendingItemRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFF0F3F8))),
+        border: Border(bottom: BorderSide(color: Color(0xFFF0E6D8))),
       ),
       child: Row(
         children: [
@@ -872,7 +878,7 @@ class _PendingItemRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: _statusColor(row.status).withOpacity(0.14),
+                color: _statusColor(row.status).withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -932,7 +938,7 @@ class _ScheduleItemRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFF0F3F8))),
+        border: Border(bottom: BorderSide(color: Color(0xFFF0E6D8))),
       ),
       child: Row(
         children: [
