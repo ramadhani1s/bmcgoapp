@@ -144,27 +144,63 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       return;
     }
 
-    final status = result.status.toLowerCase();
+    final initialStatus = result.status.toLowerCase();
+    final status = await _resolveFinalStatus(transactionId, initialStatus);
 
-    if (status == 'success' || status == 'settlement' || status == 'capture') {
-      await PaymentService.finishTransaction(transactionId, 'success');
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      _showSuccessDialog();
-      return;
-    }
+    // Query backend untuk dapat status terbaru (backend sudah query Midtrans)
+    try {
+      final finalStatus = await PaymentService.finishTransaction(transactionId);
 
-    if (status == 'pending') {
-      await PaymentService.finishTransaction(transactionId, 'pending');
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      _showPendingDialog();
-      return;
+      if (finalStatus == 'success') {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        _showSuccessDialog();
+        return;
+      }
+
+      if (finalStatus == 'pending') {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        _showPendingDialog();
+        return;
+      }
+    } catch (e) {
+      debugPrint('Error finishing transaction: $e');
     }
 
     if (!mounted) return;
     setState(() => _isLoading = false);
     _showFailureDialog();
+  }
+
+  Future<String> _resolveFinalStatus(
+    String transactionId,
+    String fallbackStatus,
+  ) async {
+    var status = fallbackStatus;
+
+    // Midtrans mobile callback can return pending first. Re-check backend status
+    // a few times so settled payments do not end up showing pending UI.
+    for (var i = 0; i < 5; i++) {
+      if (status != 'pending') {
+        return status;
+      }
+
+      try {
+        final currentStatus = await PaymentService.checkPaymentStatus(
+          transactionId,
+        );
+        status = currentStatus.status.toLowerCase();
+      } catch (_) {
+        return status;
+      }
+
+      if (status == 'pending') {
+        await Future.delayed(const Duration(seconds: 2));
+      }
+    }
+
+    return status;
   }
 
   void _showSuccessDialog() {
@@ -175,6 +211,13 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
         title: const Text('Pembayaran Berhasil! 🎉'),
         content: const Text('Paket berhasil dibeli.'),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/payment-history');
+            },
+            child: const Text('Lihat Status'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
@@ -258,6 +301,14 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : Text("Bayar Rp $priceAmount"),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/payment-history');
+                },
+                icon: const Icon(Icons.receipt_long_rounded),
+                label: const Text('Lihat Status Pembayaran'),
               ),
             ],
           ),

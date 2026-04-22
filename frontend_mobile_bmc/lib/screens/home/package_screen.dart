@@ -170,6 +170,16 @@ class _PackageScreenState extends State<PackageScreen> {
                       ],
                     ),
                   ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('/payment-history');
+                    },
+                    icon: const Icon(
+                      Icons.receipt_long_rounded,
+                      color: Colors.white,
+                    ),
+                    tooltip: 'Riwayat Pembayaran',
+                  ),
                 ],
               ),
             ),
@@ -209,7 +219,7 @@ class _PackageScreenState extends State<PackageScreen> {
               final selected = _packages.firstWhere((e) => e.id == _selectedId);
               // Extract numeric price
               final priceStr = selected.promoPrice ?? selected.price ?? 'Rp 0';
-              
+
               Navigator.push(
                 context,
                 MaterialPageRoute(

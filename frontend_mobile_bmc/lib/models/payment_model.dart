@@ -86,3 +86,51 @@ class PaymentStatus {
     );
   }
 }
+
+class PaymentHistoryItem {
+  final String transactionId;
+  final String packageId;
+  final String packageTitle;
+  final int amount;
+  final String status;
+  final String paymentType;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  PaymentHistoryItem({
+    required this.transactionId,
+    required this.packageId,
+    required this.packageTitle,
+    required this.amount,
+    required this.status,
+    required this.paymentType,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory PaymentHistoryItem.fromJson(Map<String, dynamic> json) {
+    DateTime? parseDate(dynamic value) {
+      if (value == null) return null;
+      final text = value.toString();
+      if (text.isEmpty) return null;
+      return DateTime.tryParse(text);
+    }
+
+    int parseAmount(dynamic value) {
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    return PaymentHistoryItem(
+      transactionId: json['transaction_id']?.toString() ?? '',
+      packageId: json['package_id']?.toString() ?? '',
+      packageTitle: json['package_title']?.toString() ?? '-',
+      amount: parseAmount(json['amount']),
+      status: json['status']?.toString() ?? 'unknown',
+      paymentType: json['payment_type']?.toString() ?? '-',
+      createdAt: parseDate(json['created_at']),
+      updatedAt: parseDate(json['updated_at']),
+    );
+  }
+}
