@@ -17,6 +17,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // State navigasi bawah: index aktif saat ini dan index sebelumnya.
   int _selectedIndex = 0;
   int _previousIndex = 0;
+  int _lastMainTabIndex = 0;
 
   // Ambil status aktivasi akun dari argument route login.
   bool get _isActive {
@@ -57,12 +58,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     setState(() {
+      if (index != 3) {
+        _lastMainTabIndex = index;
+      }
       _previousIndex = _selectedIndex;
       _selectedIndex = index;
     });
   }
 
+<<<<<<< Updated upstream
   // Handler menu utama pada beranda (sementara masih placeholder).
+=======
+  void _goBackFromProfile() {
+    final targetTab = _previousIndex != 3 ? _previousIndex : _lastMainTabIndex;
+    setState(() {
+      _selectedIndex = targetTab.clamp(0, 2);
+    });
+  }
+
+>>>>>>> Stashed changes
   void _onMainMenuTap(String menuKey) {
     if (!_isActive) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -588,11 +602,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Row(
               children: [
                 InkWell(
-                  onTap: () {
-                    setState(() {
-                      _selectedIndex = _previousIndex == 3 ? 0 : _previousIndex;
-                    });
-                  },
+                  onTap: _goBackFromProfile,
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
                     width: 42,

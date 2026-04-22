@@ -41,8 +41,10 @@ class MyApp extends StatelessWidget {
         '/payment': (context) => const PaymentConfirmationScreen(
           packageId: 0,
           packageTitle: '',
-          price: '',
-          description: '',
+          packagePeriod: '',
+          benefits: [],
+          normalAmount: 0,
+          finalAmount: 0,
         ),
       },
     );

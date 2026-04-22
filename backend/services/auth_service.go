@@ -13,6 +13,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func isBcryptHash(value string) bool {
+	return strings.HasPrefix(value, "$2a$") ||
+		strings.HasPrefix(value, "$2b$") ||
+		strings.HasPrefix(value, "$2y$")
+}
+
 // Register - Mendaftarkan user baru
 func Register(user models.User) error {
 	// 1️⃣ Validasi input
@@ -24,7 +30,7 @@ func Register(user models.User) error {
 	user.Email = strings.ToLower(strings.TrimSpace(user.Email))
 	user.Nama = strings.TrimSpace(user.Nama)
 
-	log.Printf("📝 Register - Username: '%s', Nama: '%s'\n", user.Email, user.Nama)
+	log.Printf("📝 Register - Email: '%s', Nama: '%s'\n", user.Email, user.Nama)
 
 	// 3️⃣ Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -41,7 +47,7 @@ func Register(user models.User) error {
 
 	// 5️⃣ Insert ke table users
 	query := `
-	INSERT INTO users (role_id, username, password, status)
+	INSERT INTO users (role_id, email, password, status)
 	VALUES ($1, $2, $3, $4)
 	RETURNING id
 	`
@@ -106,8 +112,8 @@ func Login(email, password string) (*models.User, error) {
 	query := `
 	SELECT
 		u.id,
-		COALESCE(s.nama_siswa, u.username),
-		u.username,
+		COALESCE(s.nama_siswa, u.email),
+		u.email,
 		u.password,
 		u.role_id,
 		u.status,
@@ -118,7 +124,7 @@ func Login(email, password string) (*models.User, error) {
 		COALESCE(s.alamat, '')
 	FROM users u
 	LEFT JOIN siswa s ON s.user_id = u.id
-	WHERE u.username = $1
+	WHERE u.email = $1
 	`
 
 	err := config.DB.QueryRow(context.Background(), query, email).
@@ -131,11 +137,38 @@ func Login(email, password string) (*models.User, error) {
 
 	log.Printf("✅ User found in DB: ID=%d, Email=%s, Hash length=%d\n", user.ID, user.Email, len(user.Password))
 
-	// Verifikasi password
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
-		log.Printf("❌ Password mismatch for: %s (Error: %v)\n", email, err)
-		return nil, errors.New("email atau password salah")
+	// Verifikasi password.
+	// Support akun lama yang password-nya masih plaintext, lalu upgrade ke bcrypt saat login berhasil.
+	if isBcryptHash(user.Password) {
+		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+		if err != nil {
+			log.Printf("❌ Password mismatch for: %s (Error: %v)\n", email, err)
+			return nil, errors.New("email atau password salah")
+		}
+	} else {
+		if user.Password != password {
+			log.Printf("❌ Legacy plaintext password mismatch for: %s\n", email)
+			return nil, errors.New("email atau password salah")
+		}
+
+		hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if hashErr != nil {
+			log.Printf("❌ Failed to upgrade plaintext password for user ID=%d: %v\n", user.ID, hashErr)
+			return nil, errors.New("gagal memproses password")
+		}
+
+		_, updateErr := config.DB.Exec(
+			context.Background(),
+			"UPDATE users SET password = $1 WHERE id = $2",
+			string(hashedPassword),
+			user.ID,
+		)
+		if updateErr != nil {
+			log.Printf("❌ Failed to store upgraded password hash for user ID=%d: %v\n", user.ID, updateErr)
+			return nil, errors.New("gagal memperbarui keamanan password")
+		}
+
+		log.Printf("✅ Legacy password upgraded to bcrypt for user ID=%d\n", user.ID)
 	}
 
 	// Clear password dari response (jangan return password hash)
