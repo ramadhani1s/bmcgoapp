@@ -4,18 +4,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://localhost:55618'; // Sesuaikan dengan backend URL
+  static const String baseUrl = 'http://localhost:8080';
 
   // Login
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       if (response.statusCode == 200) {
@@ -36,10 +36,7 @@ class AuthService {
         };
       } else {
         final error = jsonDecode(response.body);
-        return {
-          'success': false,
-          'message': error['error'] ?? 'Login gagal',
-        };
+        return {'success': false, 'message': error['error'] ?? 'Login gagal'};
       }
     } catch (e) {
       return {

@@ -41,8 +41,8 @@ func Register(user models.User) error {
 
 	// 5️⃣ Insert ke table users
 	query := `
-	INSERT INTO users (role_id, username, password, status)
-	VALUES ($1, $2, $3, $4)
+	INSERT INTO users (role_id, nama, email, password, status)
+	VALUES ($1, $2, $3, $4, $5)
 	RETURNING id
 	`
 
@@ -50,6 +50,7 @@ func Register(user models.User) error {
 	err = config.DB.QueryRow(context.Background(),
 		query,
 		user.RoleID,
+		user.Nama,
 		user.Email,
 		string(hashedPassword),
 		"nonaktif",
@@ -106,8 +107,8 @@ func Login(email, password string) (*models.User, error) {
 	query := `
 	SELECT
 		u.id,
-		COALESCE(s.nama_siswa, u.username),
-		u.username,
+		COALESCE(s.nama_siswa, u.nama),
+		u.email,
 		u.password,
 		u.role_id,
 		u.status,
@@ -118,7 +119,7 @@ func Login(email, password string) (*models.User, error) {
 		COALESCE(s.alamat, '')
 	FROM users u
 	LEFT JOIN siswa s ON s.user_id = u.id
-	WHERE u.username = $1
+	WHERE u.email = $1
 	`
 
 	err := config.DB.QueryRow(context.Background(), query, email).
@@ -134,8 +135,21 @@ func Login(email, password string) (*models.User, error) {
 	// Verifikasi password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		log.Printf("❌ Password mismatch for: %s (Error: %v)\n", email, err)
-		return nil, errors.New("email atau password salah")
+		// Compatibility mode: allow legacy plaintext password and upgrade it.
+		if user.Password == password {
+			newHash, hashErr := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+			if hashErr == nil {
+				_, _ = config.DB.Exec(
+					context.Background(),
+					`UPDATE users SET password = $1 WHERE id = $2`,
+					string(newHash),
+					user.ID,
+				)
+			}
+		} else {
+			log.Printf("❌ Password mismatch for: %s (Error: %v)\n", email, err)
+			return nil, errors.New("email atau password salah")
+		}
 	}
 
 	// Clear password dari response (jangan return password hash)

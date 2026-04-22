@@ -229,6 +229,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     mainAxisSpacing: 16,
                     children: [
                       _buildMenuCard(
+                        'Verifikasi Pembayaran',
+                        Icons.receipt_long,
+                        const Color(0xFFEF4444),
+                        () {
+                          Navigator.of(context).pushNamed('/payment-verification');
+                        },
+                      ),
+                      _buildMenuCard(
                         'Kelola Siswa',
                         Icons.people_outline,
                         const Color(0xFF3B82F6),

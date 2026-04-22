@@ -634,15 +634,28 @@ func PaymentNotification(c *gin.Context) {
 	// Ambil transaction ID dan status kalau tersedia
 	transactionID, _ := notification["order_id"].(string)
 	transactionStatus, _ := notification["transaction_status"].(string)
+	paymentType, _ := notification["payment_type"].(string)
+	normalizedStatus := normalizeStatus(transactionStatus)
 
-	// TODO: Update status di database berdasarkan transaction status
-	// Jika settlement atau capture: paket bisa diakses
-	// Jika pending: tunggu konfirmasi
-	// Jika deny atau cancel: pembayaran gagal
+	if transactionID != "" {
+		_, _ = config.DB.Exec(
+			c.Request.Context(),
+			`UPDATE payment_transactions
+			 SET status = $1,
+			     payment_type = COALESCE(NULLIF($2, ''), payment_type),
+			     updated_at = NOW()
+			 WHERE transaction_id = $3`,
+			normalizedStatus,
+			paymentType,
+			transactionID,
+		)
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":            "Notification received",
 		"order_id":           transactionID,
 		"transaction_status": transactionStatus,
+		"normalized_status":  normalizedStatus,
+		"payment_type":       paymentType,
 	})
 }

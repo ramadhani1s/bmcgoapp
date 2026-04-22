@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
 import 'routes/app_routes.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Get initial route based on login status
-  final initialRoute = await AppRoutes.getInitialRoute();
-
-  runApp(MyApp(initialRoute: initialRoute));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final String initialRoute;
-
-  const MyApp({super.key, required this.initialRoute});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -43,15 +38,13 @@ class MyApp extends StatelessWidget {
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           focusedBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Color(0xFFF87171), width: 2),
           ),
         ),
       ),
-      initialRoute: initialRoute,
+      initialRoute: AppRoutes.login,
       onGenerateRoute: AppRoutes.generateRoute,
     );
   }
