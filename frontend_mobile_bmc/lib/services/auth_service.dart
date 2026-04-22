@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -6,18 +7,18 @@ class AuthService {
   // Jika menggunakan perangkat fisik, ganti dengan IP PC kamu, misalnya http://192.168.1.100:8080/auth
   static const String baseUrl = 'http://10.0.2.2:8080/auth';
 
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/login'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      );
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email, 'password': password}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -26,6 +27,8 @@ class AuthService {
       } else {
         throw Exception('Login gagal: ${response.statusCode}');
       }
+    } on TimeoutException {
+      throw Exception('Koneksi timeout. Cek backend atau internet kamu.');
     } catch (e) {
       throw Exception('Error: $e');
     }
@@ -41,23 +44,23 @@ class AuthService {
     String password,
   ) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/register'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'nama': nama,
-          'kelas': kelas,
-          'asal_sekolah': asalSekolah,
-          'whatsapp': whatsapp,
-          'alamat': alamat,
-          'email': email,
-          'password': password,
-          'role_id': 3,
-          'is_active': false,
-        }),
-      );
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/register'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'nama': nama,
+              'kelas': kelas,
+              'asal_sekolah': asalSekolah,
+              'whatsapp': whatsapp,
+              'alamat': alamat,
+              'email': email,
+              'password': password,
+              'role_id': 3,
+              'is_active': false,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -67,9 +70,15 @@ class AuthService {
         final details = (body['details'] ?? '').toString();
         final errorMessage = details.isNotEmpty
             ? '$error ($details)'
-            : (error.isNotEmpty ? error : 'Register gagal: ${response.statusCode}');
+            : (error.isNotEmpty
+                  ? error
+                  : 'Register gagal: ${response.statusCode}');
         throw Exception(errorMessage);
       }
+    } on TimeoutException {
+      throw Exception(
+        'Koneksi timeout. Backend mungkin belum jalan di port 8080.',
+      );
     } catch (e) {
       throw Exception('Error: $e');
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
+import '../../models/mentor.dart';
 import '../../models/user.dart';
+import '../../services/auth_service.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -10,28 +11,132 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _namaController = TextEditingController();
+  final _spesialisasiController = TextEditingController();
+  final _bioController = TextEditingController();
+
   User? _currentUser;
+  List<Mentor> _mentors = [];
+  bool _isLoading = false;
+  bool _isFetchingMentors = true;
 
   @override
   void initState() {
     super.initState();
-    _loadUser();
+    _bootstrap();
   }
 
-  Future<void> _loadUser() async {
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _namaController.dispose();
+    _spesialisasiController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _bootstrap() async {
     final user = await AuthService.getCurrentUser();
-    if (mounted) {
-      setState(() {
-        _currentUser = user;
-      });
-    }
+    final mentors = await AuthService.getMentors();
+    if (!mounted) return;
+
+    setState(() {
+      _currentUser = user;
+      _mentors = mentors;
+      _isFetchingMentors = false;
+    });
+  }
+
+  Future<void> _refreshMentors() async {
+    final mentors = await AuthService.getMentors();
+    if (!mounted) return;
+
+    setState(() {
+      _mentors = mentors;
+      _isFetchingMentors = false;
+    });
   }
 
   Future<void> _logout() async {
     await AuthService.logout();
-    if (mounted) {
-      Navigator.of(context).pushReplacementNamed('/login');
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed('/login');
+  }
+
+  Future<void> _createMentor() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await AuthService.createMentor(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      namaMentor: _namaController.text.trim(),
+      spesialisasi: _spesialisasiController.text.trim(),
+      bio: _bioController.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result['message']),
+        backgroundColor: result['success'] ? Colors.green : Colors.red,
+      ),
+    );
+
+    if (result['success']) {
+      _emailController.clear();
+      _passwordController.clear();
+      _namaController.clear();
+      _spesialisasiController.clear();
+      _bioController.clear();
+      await _refreshMentors();
     }
+  }
+
+  Future<void> _deleteMentor(Mentor mentor) async {
+    final result = await AuthService.deleteMentor(mentor.mentorId);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result['message']),
+        backgroundColor: result['success'] ? Colors.green : Colors.red,
+      ),
+    );
+
+    if (result['success']) {
+      await _refreshMentors();
+    }
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: const Color(0xFFEF4444)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.8),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+    );
   }
 
   @override
@@ -41,38 +146,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF87171).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.admin_panel_settings,
-                color: Color(0xFFEF4444),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Admin Dashboard',
-              style: TextStyle(
-                color: Color(0xFF1F2937),
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ],
+        title: const Text(
+          'Portal Admin BMC',
+          style: TextStyle(
+            color: Color(0xFF1F2937),
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
             onPressed: _logout,
-            icon: const Icon(
-              Icons.logout,
-              color: Color(0xFFEF4444),
-            ),
+            icon: const Icon(Icons.logout, color: Color(0xFFEF4444)),
             tooltip: 'Logout',
           ),
         ],
@@ -84,321 +168,210 @@ class _AdminDashboardState extends State<AdminDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Welcome Section
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFF87171), Color(0xFFEF4444)],
+                        colors: [Color(0xFFF97316), Color(0xFFEA580C)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      'Selamat datang, ${_currentUser!.nama}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Tambah Akun Mentor',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: const [
                         BoxShadow(
-                          color: const Color(0xFFF87171).withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
+                          color: Color.fromRGBO(15, 23, 42, 0.08),
+                          blurRadius: 14,
+                          offset: Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: Row(
-                      children: [
-                        const CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            Icons.person,
-                            size: 30,
-                            color: Color(0xFFEF4444),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _namaController,
+                            decoration: _inputDecoration(
+                              'Nama Mentor',
+                              Icons.badge_outlined,
+                            ),
+                            validator: (value) =>
+                                (value == null || value.trim().isEmpty)
+                                ? 'Nama mentor wajib diisi'
+                                : null,
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Selamat datang, ${_currentUser!.nama}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: _inputDecoration(
+                              'Email Mentor',
+                              Icons.email_outlined,
+                            ),
+                            validator: (value) =>
+                                (value == null || value.trim().isEmpty)
+                                ? 'Email mentor wajib diisi'
+                                : null,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: true,
+                            decoration: _inputDecoration(
+                              'Password',
+                              Icons.lock_outline,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Password wajib diisi';
+                              }
+                              if (value.length < 6) {
+                                return 'Password minimal 6 karakter';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _spesialisasiController,
+                            decoration: _inputDecoration(
+                              'Spesialisasi (opsional)',
+                              Icons.menu_book_outlined,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _bioController,
+                            maxLines: 3,
+                            decoration: _inputDecoration(
+                              'Bio (opsional)',
+                              Icons.description_outlined,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _createMentor,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text('Simpan Akun Mentor'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Daftar Mentor',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _refreshMentors,
+                        icon: const Icon(Icons.refresh),
+                        tooltip: 'Refresh mentor',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  if (_isFetchingMentors)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_mentors.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text('Belum ada mentor yang terdaftar.'),
+                    )
+                  else
+                    Column(
+                      children: _mentors
+                          .map(
+                            (mentor) => Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFFE5E7EB),
                                 ),
-                                child: Text(
-                                  _currentUser!.roleName,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                              ),
+                              child: ListTile(
+                                title: Text(mentor.namaMentor),
+                                subtitle: Text(
+                                  '${mentor.email}\n${mentor.spesialisasi.isEmpty ? '-' : mentor.spesialisasi}',
+                                ),
+                                isThreeLine: true,
+                                trailing: IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
                                   ),
+                                  onPressed: () => _deleteMentor(mentor),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
+                            ),
+                          )
+                          .toList(),
                     ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Quick Stats
-                  const Text(
-                    'Statistik Cepat',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          'Total Siswa',
-                          '150',
-                          Icons.people,
-                          const Color(0xFF3B82F6),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          'Total Mentor',
-                          '12',
-                          Icons.school,
-                          const Color(0xFF10B981),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          'Kelas Aktif',
-                          '8',
-                          Icons.class_,
-                          const Color(0xFFF59E0B),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          'Laporan',
-                          '24',
-                          Icons.report,
-                          const Color(0xFFEF4444),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Menu Grid
-                  const Text(
-                    'Menu Admin',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    children: [
-                      _buildMenuCard(
-                        'Kelola Siswa',
-                        Icons.people_outline,
-                        const Color(0xFF3B82F6),
-                        () {
-                          // Navigate to student management
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Kelola Siswa - Coming Soon!')),
-                          );
-                        },
-                      ),
-                      _buildMenuCard(
-                        'Kelola Mentor',
-                        Icons.school_outlined,
-                        const Color(0xFF10B981),
-                        () {
-                          // Navigate to mentor management
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Kelola Mentor - Coming Soon!')),
-                          );
-                        },
-                      ),
-                      _buildMenuCard(
-                        'Kelola Kelas',
-                        Icons.class_outlined,
-                        const Color(0xFFF59E0B),
-                        () {
-                          // Navigate to class management
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Kelola Kelas - Coming Soon!')),
-                          );
-                        },
-                      ),
-                      _buildMenuCard(
-                        'Laporan',
-                        Icons.report_outlined,
-                        const Color(0xFFEF4444),
-                        () {
-                          // Navigate to reports
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Laporan - Coming Soon!')),
-                          );
-                        },
-                      ),
-                      _buildMenuCard(
-                        'Pengaturan',
-                        Icons.settings_outlined,
-                        const Color(0xFF8B5CF6),
-                        () {
-                          // Navigate to settings
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Pengaturan - Coming Soon!')),
-                          );
-                        },
-                      ),
-                      _buildMenuCard(
-                        'Bantuan',
-                        Icons.help_outline,
-                        const Color(0xFF6B7280),
-                        () {
-                          // Navigate to help
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur Bantuan - Coming Soon!')),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color.fromRGBO(0, 0, 0, 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMenuCard(String title, IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: const Color.fromRGBO(0, 0, 0, 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1F2937),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
