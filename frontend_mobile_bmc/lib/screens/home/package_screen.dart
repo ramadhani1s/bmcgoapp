@@ -12,6 +12,11 @@ class _PackageScreenState extends State<PackageScreen> {
   static const Color _blueHeader = Color(0xFF2D4CC8);
   static const Color _accent = Color(0xFFFF7070);
 
+  int _parseAmount(String value) {
+    final cleaned = value.replaceAll('Rp', '').replaceAll('.', '').trim();
+    return int.tryParse(cleaned) ?? 0;
+  }
+
   final List<_PackageOption> _packages = const [
     _PackageOption(
       id: 1,
@@ -79,8 +84,6 @@ class _PackageScreenState extends State<PackageScreen> {
         'Materi SNBT lengkap',
         'Try Out SNBT mingguan',
         'Drilling soal intensif',
-        'Konsultasi strategi ujian',
-        'Akses materi digital premium',
       ],
       normalPrice: 'Rp 8.000.000',
       promoPrice: 'Rp 6.000.000',
@@ -92,6 +95,14 @@ class _PackageScreenState extends State<PackageScreen> {
   ];
 
   int _selectedId = 4;
+
+  void _handleBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+    Navigator.of(context).pushReplacementNamed('/dashboard');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +124,7 @@ class _PackageScreenState extends State<PackageScreen> {
               child: Row(
                 children: [
                   InkWell(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: _handleBack,
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       width: 36,
@@ -199,8 +210,15 @@ class _PackageScreenState extends State<PackageScreen> {
           child: ElevatedButton(
             onPressed: () {
               final selected = _packages.firstWhere((e) => e.id == _selectedId);
+<<<<<<< Updated upstream
               // Extract numeric price
               final priceStr = selected.promoPrice ?? selected.price ?? 'Rp 0';
+=======
+              final normalPriceLabel =
+                  selected.normalPrice ?? selected.price ?? 'Rp 0';
+              final finalPriceLabel =
+                  selected.promoPrice ?? selected.price ?? 'Rp 0';
+>>>>>>> Stashed changes
 
               Navigator.push(
                 context,
@@ -208,8 +226,12 @@ class _PackageScreenState extends State<PackageScreen> {
                   builder: (context) => PaymentConfirmationScreen(
                     packageId: selected.id,
                     packageTitle: selected.title,
-                    price: priceStr,
-                    description: selected.description,
+                    packagePeriod: selected.period,
+                    benefits: selected.benefits,
+                    normalAmount: _parseAmount(normalPriceLabel),
+                    finalAmount: _parseAmount(finalPriceLabel),
+                    promoTag: selected.promoTag,
+                    promoInfo: selected.promoInfo,
                   ),
                 ),
               );
@@ -271,6 +293,53 @@ class _PackageCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (item.promoTag != null || item.isRecommended)
+                    Row(
+                      children: [
+                        if (item.promoTag != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF3B30),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              item.promoTag!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        if (item.promoTag != null && item.isRecommended)
+                          const SizedBox(width: 6),
+                        if (item.isRecommended)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFC928),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'REKOMENDASI',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  if (item.promoTag != null || item.isRecommended)
+                    const SizedBox(height: 8),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -304,34 +373,46 @@ class _PackageCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.people_outline,
-                        size: 14,
-                        color: Color(0xFF9A9EB0),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.people_outline,
+                            size: 14,
+                            color: Color(0xFF9A9EB0),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            item.students,
+                            style: const TextStyle(
+                              color: Color(0xFF7E8293),
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        item.students,
-                        style: const TextStyle(
-                          color: Color(0xFF7E8293),
-                          fontSize: 11.5,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Icon(
-                        Icons.calendar_today_outlined,
-                        size: 13,
-                        color: Color(0xFF9A9EB0),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        item.duration,
-                        style: const TextStyle(
-                          color: Color(0xFF7E8293),
-                          fontSize: 11.5,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 13,
+                            color: Color(0xFF9A9EB0),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            item.duration,
+                            style: const TextStyle(
+                              color: Color(0xFF7E8293),
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -353,32 +434,38 @@ class _PackageCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
-                      children: item.benefits
-                          .map(
-                            (benefit) => Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.check_circle,
-                                    size: 15,
-                                    color: Color(0xFF4CAF50),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      benefit,
-                                      style: const TextStyle(
-                                        color: Color(0xFF6A6F81),
-                                        fontSize: 11.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                      children: List.generate(item.benefits.length, (index) {
+                        final benefit = item.benefits[index];
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: index == item.benefits.length - 1 ? 0 : 6,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 1),
+                                child: Icon(
+                                  Icons.check_circle,
+                                  size: 15,
+                                  color: Color(0xFF4CAF50),
+                                ),
                               ),
-                            ),
-                          )
-                          .toList(),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  benefit,
+                                  style: const TextStyle(
+                                    color: Color(0xFF6A6F81),
+                                    fontSize: 11.5,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -485,52 +572,6 @@ class _PackageCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (item.promoTag != null)
-              Positioned(
-                top: -1,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF3B30),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    item.promoTag!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            if (item.isRecommended)
-              Positioned(
-                top: -1,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFC928),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: const Text(
-                    'REKOMENDASI',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),

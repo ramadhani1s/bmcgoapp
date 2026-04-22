@@ -20,6 +20,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
+  void _handleBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+    Navigator.of(context).pushReplacementNamed('/entry');
+  }
+
   @override
   void dispose() {
     _namaController.dispose();
@@ -107,32 +115,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               decoration: const BoxDecoration(
                 color: Color(0xFFF87171),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
+                children: [
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: _handleBack,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Registrasi Siswa Baru',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 24),
-                  Text(
-                    'Registrasi Siswa Baru',
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Data Siswa',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Data Siswa & Tanda Tangan',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
+                      color: Color(0xFFFFE0E0),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
