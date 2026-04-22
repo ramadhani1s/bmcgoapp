@@ -19,6 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Bimbel Bintang Muda Center',
       theme: ThemeData(
         useMaterial3: true,
@@ -40,8 +41,10 @@ class MyApp extends StatelessWidget {
         '/payment': (context) => const PaymentConfirmationScreen(
           packageId: 0,
           packageTitle: '',
-          price: '',
-          description: '',
+          packagePeriod: '',
+          benefits: [],
+          normalAmount: 0,
+          finalAmount: 0,
         ),
       },
     );

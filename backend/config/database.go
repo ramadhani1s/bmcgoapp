@@ -2,10 +2,7 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"os"
-	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -13,7 +10,7 @@ import (
 var DB *pgxpool.Pool
 
 func ConnectDB() {
-	dsn := buildDSN()
+	dsn := "postgres://postgres:yohana@localhost:5432/bimbel_bmc"
 
 	var err error
 	// 1. Membuat konfigurasi pool
@@ -25,33 +22,42 @@ func ConnectDB() {
 	// 2. TES KONEKSI ASLI (Sangat Penting!)
 	err = DB.Ping(context.Background())
 	if err != nil {
-		if strings.Contains(err.Error(), `database "`) && strings.Contains(err.Error(), `does not exist`) {
-			log.Fatalf("Database belum ada. Buat dulu DB '%s'. Detail: %v", getEnv("DB_NAME", "bmcgo_db"), err)
-		}
 		log.Fatal("Gagal konek ke database (Cek apakah DB sudah nyala/password benar):", err)
 	}
 
 	log.Println("✅ Real connection established to database")
-}
 
-func buildDSN() string {
-	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
-		return databaseURL
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS payment_transactions (
+			transaction_id VARCHAR(255) PRIMARY KEY,
+			user_id INT NOT NULL,
+			package_id VARCHAR(255),
+			package_title VARCHAR(255),
+			amount BIGINT,
+			status VARCHAR(50),
+			payment_type VARCHAR(100),
+			customer_name VARCHAR(255),
+			customer_email VARCHAR(255),
+			customer_phone VARCHAR(100),
+			is_verified BOOLEAN DEFAULT FALSE,
+			verified_at TIMESTAMP,
+			verified_by_admin INT,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+		)
+	`)
+	if err != nil {
+		log.Fatal("Gagal membuat table payment_transactions:", err)
 	}
 
-	host := getEnv("DB_HOST", "localhost")
-	port := getEnv("DB_PORT", "5432")
-	user := getEnv("DB_USER", "postgres")
-	password := getEnv("DB_PASSWORD", "")
-	name := getEnv("DB_NAME", "bmcgo_db")
-	sslMode := getEnv("DB_SSLMODE", "disable")
-
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, password, host, port, name, sslMode)
-}
-
-func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+	// Add columns if they don't exist (for existing databases)
+	_, err = DB.Exec(context.Background(), `
+		ALTER TABLE payment_transactions
+		ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
+		ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP,
+		ADD COLUMN IF NOT EXISTS verified_by_admin INT
+	`)
+	if err != nil {
+		log.Println("Warning: Could not add verification columns (might already exist):", err)
 	}
-	return fallback
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
 import '../../models/user.dart';
+import '../../services/auth_service.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -463,7 +463,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               width: 110,
               height: 110,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: Colors.white.withOpacity(0.05),
                 shape: BoxShape.circle,
               ),
             ),
@@ -475,16 +475,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.06),
+                color: Colors.white.withOpacity(0.06),
                 shape: BoxShape.circle,
               ),
             ),
           ),
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text(
-                'Selamat Datang, Admin! 👋',
+                'Selamat Datang, Admin! ',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 33,
@@ -686,7 +686,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'Sabtu, 28 Maret 2026 — total 4 sesi',
+                        'Sabtu, 28 Maret 2026 - total 4 sesi',
                         style: TextStyle(
                           color: Color(0xFFC9D7FF),
                           fontSize: 10.5,
@@ -698,7 +698,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 TextButton(
                   onPressed: () {},
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    backgroundColor: Colors.white.withOpacity(0.2),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
@@ -708,7 +708,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 TextButton(
                   onPressed: () {},
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    backgroundColor: Colors.white.withOpacity(0.2),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
@@ -872,7 +872,7 @@ class _PendingItemRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: _statusColor(row.status).withValues(alpha: 0.14),
+                color: _statusColor(row.status).withOpacity(0.14),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
