@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_mobile_bmc/services/payment_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,13 +18,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // State navigasi bawah: index aktif saat ini dan index sebelumnya.
   int _selectedIndex = 0;
   int _previousIndex = 0;
+  bool _canAccessPaidFeatures = false;
+  bool _isCheckingVerification = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVerificationStatus();
+  }
+
+  Future<void> _loadVerificationStatus() async {
+    final canAccess = await PaymentService.getVerificationStatus();
+    if (!mounted) return;
+    setState(() {
+      _canAccessPaidFeatures = canAccess;
+      _isCheckingVerification = false;
+    });
+  }
 
   // Ambil status aktivasi akun dari argument route login.
   bool get _isActive {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final user = args?['user'] as Map<String, dynamic>?;
-    return user?['is_active'] == true;
+    return _canAccessPaidFeatures;
   }
 
   // Ambil nama siswa dari argument route, fallback untuk mode demo.
@@ -305,10 +320,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(color: const Color(0xFFFFCF9F)),
                         ),
-                        child: const Text(
-                          'Non-Aktif',
+                        child: Text(
+                          _isCheckingVerification
+                              ? 'Mengecek...'
+                              : (_isActive ? 'Aktif' : 'Non-Aktif'),
                           style: TextStyle(
-                            color: Color(0xFFFF8D3C),
+                            color: _isActive
+                                ? Color(0xFF16A34A)
+                                : Color(0xFFFF8D3C),
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                           ),
@@ -478,8 +497,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Untuk membuka akses Materi, Try Out, dan fitur lain, silakan pilih paket bimbel dari menu Profil.',
+                      Text(
+                        _isActive
+                            ? 'Akun kamu sudah aktif. Semua fitur belajar bisa dipakai.'
+                            : 'Untuk membuka akses Materi, Try Out, dan fitur lain, silakan selesaikan pembayaran dan tunggu verifikasi admin. Menu Paket dan Profil tetap bisa dibuka.',
                         style: TextStyle(
                           fontSize: 12.5,
                           color: _textMuted,

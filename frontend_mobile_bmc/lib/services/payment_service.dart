@@ -140,6 +140,28 @@ class PaymentService {
     }
   }
 
+  static Future<bool> getVerificationStatus() async {
+    try {
+      final token = await _getAuthToken();
+
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/payment/verification-status'),
+            headers: {'Authorization': 'Bearer $token'},
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['can_access'] == true;
+      }
+
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Finish transaction di backend (backend query Midtrans langsung)
   static Future<String> finishTransaction(String transactionId) async {
     try {

@@ -29,7 +29,7 @@ func PaymentRoutes(r *gin.Engine) {
 
 	// Admin payment verification routes
 	admin := r.Group("/admin/payment")
-	admin.Use(middleware.AuthMiddleware())
+	admin.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware(1))
 	{
 		admin.GET("/pending-verifications", handlers.GetPendingVerifications)
 		admin.POST("/verify/:transactionId", handlers.VerifyPayment)
