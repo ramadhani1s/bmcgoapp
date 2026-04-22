@@ -104,11 +104,44 @@ class PaymentService {
     }
   }
 
-  // Finish transaction di backend
-  static Future<void> finishTransaction(
-    String transactionId,
-    String status,
-  ) async {
+  static Future<List<PaymentHistoryItem>> getPaymentHistory({
+    String? status,
+  }) async {
+    try {
+      final token = await _getAuthToken();
+
+      final uri = Uri.parse('$baseUrl/payment/history').replace(
+        queryParameters: status != null && status.isNotEmpty
+            ? {'status': status}
+            : null,
+      );
+
+      final response = await http
+          .get(uri, headers: {'Authorization': 'Bearer $token'})
+          .timeout(const Duration(seconds: 20));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final list = (data['data'] as List<dynamic>? ?? const []);
+        return list
+            .whereType<Map<String, dynamic>>()
+            .map(PaymentHistoryItem.fromJson)
+            .toList();
+      }
+
+      final errorMessage = _extractMessageFromBody(response.body);
+      throw Exception(
+        errorMessage?.isNotEmpty == true
+            ? errorMessage!
+            : 'Gagal memuat riwayat pembayaran (${response.statusCode})',
+      );
+    } catch (e) {
+      throw Exception('Error loading payment history: $e');
+    }
+  }
+
+  // Finish transaction di backend (backend query Midtrans langsung)
+  static Future<String> finishTransaction(String transactionId) async {
     try {
       final token = await _getAuthToken();
 
@@ -119,16 +152,16 @@ class PaymentService {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $token',
             },
-            body: jsonEncode({
-              'transaction_id': transactionId,
-              'status': status,
-            }),
+            body: jsonEncode({'transaction_id': transactionId}),
           )
           .timeout(const Duration(seconds: 15));
 
-      if (response.statusCode != 200) {
-        throw Exception('Gagal menyelesaikan transaction');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['data']['status'] ?? 'unknown';
       }
+
+      throw Exception('Gagal menyelesaikan transaction');
     } catch (e) {
       throw Exception('Error finishing transaction: $e');
     }
