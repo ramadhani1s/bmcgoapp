@@ -210,15 +210,10 @@ class _PackageScreenState extends State<PackageScreen> {
           child: ElevatedButton(
             onPressed: () {
               final selected = _packages.firstWhere((e) => e.id == _selectedId);
-<<<<<<< Updated upstream
-              // Extract numeric price
-              final priceStr = selected.promoPrice ?? selected.price ?? 'Rp 0';
-=======
               final normalPriceLabel =
                   selected.normalPrice ?? selected.price ?? 'Rp 0';
               final finalPriceLabel =
                   selected.promoPrice ?? selected.price ?? 'Rp 0';
->>>>>>> Stashed changes
 
               Navigator.push(
                 context,

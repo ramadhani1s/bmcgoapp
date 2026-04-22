@@ -55,184 +55,6 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
           packageTitle: widget.packageTitle,
           finalAmount: widget.finalAmount,
         ),
-<<<<<<< Updated upstream
-      );
-      _midtransSDK?.setTransactionFinishedCallback(_onTransactionFinished);
-    } catch (e) {
-      debugPrint("ERROR INIT MIDTRANS: $e");
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = 'Gagal inisialisasi Midtrans. Coba lagi.';
-      });
-    }
-  }
-
-  Future<Map<String, String>> _getUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    return {
-      'name': prefs.getString('user_name') ?? 'User',
-      'email': prefs.getString('user_email') ?? 'user@example.com',
-      'phone': prefs.getString('user_phone') ?? '08xxxxxxxxxx',
-    };
-  }
-
-  String _extractPrice() {
-    return widget.price
-        .replaceAll('Rp', '')
-        .replaceAll('.', '')
-        .replaceAll(',', '')
-        .trim();
-  }
-
-  // ✅ START PAYMENT (FIXED SAFE)
-  Future<void> _startPayment() async {
-    if (_midtransSDK == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Midtrans belum siap")));
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final userData = await _getUserData();
-
-      final transactionRequest = TransactionRequest(
-        packageId: widget.packageId.toString(),
-        packageTitle: widget.packageTitle,
-        amount: _extractPrice(),
-        customerEmail: userData['email']!,
-        customerName: userData['name']!,
-        customerPhone: userData['phone']!,
-      );
-
-      final transactionResponse = await PaymentService.createTransaction(
-        transactionRequest,
-      );
-
-      if (!mounted) return;
-      _currentTransactionId = transactionResponse.transactionId;
-
-      await _midtransSDK!.startPaymentUiFlow(token: transactionResponse.token);
-
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Error: ${e.toString()}';
-        _isLoading = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_errorMessage ?? 'Gagal membuat transaction'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  // ✅ HANDLE RESULT (FIXED)
-  Future<void> _onTransactionFinished(TransactionResult result) async {
-    final transactionId = result.transactionId ?? _currentTransactionId;
-
-    if (transactionId == null) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Transaction ID tidak ditemukan.';
-      });
-      return;
-    }
-
-    final initialStatus = result.status.toLowerCase();
-    final status = await _resolveFinalStatus(transactionId, initialStatus);
-
-    // Query backend untuk dapat status terbaru (backend sudah query Midtrans)
-    try {
-      final finalStatus = await PaymentService.finishTransaction(transactionId);
-
-      if (finalStatus == 'success') {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-        _showSuccessDialog();
-        return;
-      }
-
-      if (finalStatus == 'pending') {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-        _showPendingDialog();
-        return;
-      }
-    } catch (e) {
-      debugPrint('Error finishing transaction: $e');
-    }
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    _showFailureDialog();
-  }
-
-  Future<String> _resolveFinalStatus(
-    String transactionId,
-    String fallbackStatus,
-  ) async {
-    var status = fallbackStatus;
-
-    // Midtrans mobile callback can return pending first. Re-check backend status
-    // a few times so settled payments do not end up showing pending UI.
-    for (var i = 0; i < 5; i++) {
-      if (status != 'pending') {
-        return status;
-      }
-
-      try {
-        final currentStatus = await PaymentService.checkPaymentStatus(
-          transactionId,
-        );
-        status = currentStatus.status.toLowerCase();
-      } catch (_) {
-        return status;
-      }
-
-      if (status == 'pending') {
-        await Future.delayed(const Duration(seconds: 2));
-      }
-    }
-
-    return status;
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Text('Pembayaran Berhasil! 🎉'),
-        content: const Text('Paket berhasil dibeli.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/payment-history');
-            },
-            child: const Text('Lihat Status'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text('Kembali'),
-          ),
-        ],
-=======
->>>>>>> Stashed changes
       ),
     );
   }
@@ -285,7 +107,6 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                             color: Colors.white,
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: -0.2,
                           ),
                         ),
                         SizedBox(height: 4),
@@ -302,17 +123,6 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                   ),
                 ],
               ),
-<<<<<<< Updated upstream
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/payment-history');
-                },
-                icon: const Icon(Icons.receipt_long_rounded),
-                label: const Text('Lihat Status Pembayaran'),
-              ),
-            ],
-=======
             ),
           ),
           Expanded(
@@ -369,7 +179,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                               color: _accent,
                               fontSize: 24,
                               fontWeight: FontWeight.w800,
-                              letterSpacing: -0.4,
+                              letterSpacing: -0.3,
                             ),
                           ),
                         ),
@@ -402,7 +212,6 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                 ),
               ],
             ),
->>>>>>> Stashed changes
           ),
         ),
       ),
@@ -428,7 +237,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '📦 Detail Paket',
+            'Detail Paket',
             style: TextStyle(
               color: Color(0xFF2C2E43),
               fontSize: 14,
@@ -560,7 +369,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '🪪 Ringkasan Pembayaran',
+            'Ringkasan Pembayaran',
             style: TextStyle(
               color: Color(0xFF2C2E43),
               fontSize: 14,
@@ -709,7 +518,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '💰 Pilih Metode Pembayaran',
+            'Pilih Metode Pembayaran',
             style: TextStyle(
               color: Color(0xFF2C2E43),
               fontSize: 14,
