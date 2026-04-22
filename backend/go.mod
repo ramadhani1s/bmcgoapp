@@ -5,6 +5,7 @@ go 1.25.6
 require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/jackc/pgx/v5 v5.9.1
+	github.com/midtrans/midtrans-go v1.3.8
 	golang.org/x/crypto v0.50.0
 )
 
