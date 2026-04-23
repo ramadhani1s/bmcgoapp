@@ -435,20 +435,35 @@ func VerifyPayment(c *gin.Context) {
 		return
 	}
 
-	_, err := config.DB.Exec(
+	var verifiedUserID int
+	err := config.DB.QueryRow(
 		c.Request.Context(),
 		`UPDATE payment_transactions
 		 SET is_verified = TRUE,
 		     verified_at = NOW(),
 		     verified_by_admin = $1,
 		     updated_at = NOW()
-		 WHERE transaction_id = $2`,
+		 WHERE transaction_id = $2
+		 RETURNING user_id`,
 		adminID,
 		transactionID,
-	)
+	).Scan(&verifiedUserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Failed to verify payment",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	_, err = config.DB.Exec(
+		c.Request.Context(),
+		`UPDATE users SET status = 'aktif' WHERE id = $1`,
+		verifiedUserID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Payment verified but failed to update user status",
 			"error":   err.Error(),
 		})
 		return
@@ -480,7 +495,8 @@ func RejectPayment(c *gin.Context) {
 	}
 
 	// Update status ke failed saat di-reject
-	_, err := config.DB.Exec(
+	var rejectedUserID int
+	err := config.DB.QueryRow(
 		c.Request.Context(),
 		`UPDATE payment_transactions
 		 SET status = 'failed',
@@ -488,13 +504,51 @@ func RejectPayment(c *gin.Context) {
 		     verified_at = NULL,
 		     verified_by_admin = $1,
 		     updated_at = NOW()
-		 WHERE transaction_id = $2`,
+		 WHERE transaction_id = $2
+		 RETURNING user_id`,
 		adminID,
 		transactionID,
-	)
+	).Scan(&rejectedUserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Failed to reject payment",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	var stillActive bool
+	err = config.DB.QueryRow(
+		c.Request.Context(),
+		`SELECT EXISTS(
+			SELECT 1
+			FROM payment_transactions
+			WHERE user_id = $1 AND status = 'success' AND is_verified = TRUE
+		)`,
+		rejectedUserID,
+	).Scan(&stillActive)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Payment rejected but failed checking user status",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	newStatus := "nonaktif"
+	if stillActive {
+		newStatus = "aktif"
+	}
+
+	_, err = config.DB.Exec(
+		c.Request.Context(),
+		`UPDATE users SET status = $1 WHERE id = $2`,
+		newStatus,
+		rejectedUserID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Payment rejected but failed to update user status",
 			"error":   err.Error(),
 		})
 		return
