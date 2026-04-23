@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/dashboard/admin_dashboard.dart';
 import '../screens/dashboard/mentor_dashboard.dart';
+import '../screens/mentor_management_screen.dart';
 import '../screens/payment_verification_screen.dart';
 import '../services/auth_service.dart';
 
@@ -10,6 +11,7 @@ class AppRoutes {
   static const String adminDashboard = '/admin-dashboard';
   static const String paymentVerification = '/payment-verification';
   static const String mentorDashboard = '/mentor-dashboard';
+  static const String mentorManagement = '/mentor-management';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -23,12 +25,14 @@ class AppRoutes {
         );
       case mentorDashboard:
         return MaterialPageRoute(builder: (_) => const MentorDashboard());
+      case mentorManagement:
+        return MaterialPageRoute(
+          builder: (_) => const MentorManagementScreen(),
+        );
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(
-            body: Center(
-              child: Text('Halaman tidak ditemukan'),
-            ),
+            body: Center(child: Text('Halaman tidak ditemukan')),
           ),
         );
     }

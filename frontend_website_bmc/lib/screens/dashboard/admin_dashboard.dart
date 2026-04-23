@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/user.dart';
 import '../../services/auth_service.dart';
+import '../mentor_management_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -10,11 +11,11 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  static const Color _pageCream = Color(0xFFF8F2E6);
-  static const Color _sidebarCream = Color(0xFFF8F2E6);
-  static const Color _surfaceCream = Color(0xFFFFFCF6);
-  static const Color _borderCream = Color(0xFFE3D8C7);
-  static const Color _softBorderCream = Color(0xFFEEE3D3);
+  static const Color _pageCream = Color(0xFFF1F4FA);
+  static const Color _sidebarCream = Color(0xFFF8FAFD);
+  static const Color _surfaceCream = Colors.white;
+  static const Color _borderCream = Color(0xFFDDE4F0);
+  static const Color _softBorderCream = Color(0xFFE9EFF8);
 
   User? _currentUser;
   int _selectedMenuIndex = 0;
@@ -45,6 +46,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
     setState(() {
       _selectedMenuIndex = index;
     });
+
+    if (item.title == 'Kelola Mentor') {
+      Navigator.of(context).pushNamed('/mentor-management');
+      return;
+    }
 
     if (item.route != null) {
       Navigator.of(context).pushNamed(item.route!);
@@ -170,7 +176,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1120),
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(14, 8, 14, 18),
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -195,12 +201,52 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
+  String _monthName(int month) {
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    return months[month - 1];
+  }
+
+  String _dayName(DateTime date) {
+    const days = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu',
+    ];
+    return days[date.weekday - 1];
+  }
+
+  String _formatIndoDate(DateTime date) {
+    return '${_dayName(date)}, ${date.day} ${_monthName(date.month)} ${date.year}';
+  }
+
   Widget _buildSidebar() {
     return Container(
       width: 214,
       decoration: BoxDecoration(
         color: _sidebarCream,
-        border: const Border(right: BorderSide(color: _borderCream)),
+        border: const Border(
+          right: BorderSide(color: _borderCream),
+          top: BorderSide(color: _borderCream),
+          bottom: BorderSide(color: _borderCream),
+          left: BorderSide(color: Color(0xFF2A8CF4), width: 2),
+        ),
       ),
       child: Column(
         children: [
@@ -211,7 +257,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 SizedBox(
                   width: 36,
                   height: 36,
-                  child: Image.asset('assets/images/bmc_logo.jpeg'),
+                  // Lokasi logo sidebar admin.
+                  child: Image.asset('assets/images/BMC .png'),
                 ),
                 const SizedBox(width: 8),
                 const Expanded(
@@ -223,14 +270,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 18,
-                          color: Color(0xFF1F2D44),
+                          color: Color(0xFF1E2A3E),
                         ),
                       ),
                       Text(
                         'Bintang Muda Center',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF647089),
+                          color: Color(0xFF6D7B93),
                         ),
                       ),
                     ],
@@ -245,7 +292,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'MENU\nUTAMA',
+                'MENU UTAMA',
                 style: TextStyle(
                   color: Color(0xFF9AA4B8),
                   fontSize: 11,
@@ -285,7 +332,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           size: 15,
                           color: selected
                               ? Colors.white
-                              : const Color(0xFF7A8497),
+                              : const Color(0xFF8290A6),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -294,7 +341,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             style: TextStyle(
                               color: selected
                                   ? Colors.white
-                                  : const Color(0xFF4B566C),
+                                  : const Color(0xFF4B5972),
                               fontSize: 12.5,
                               fontWeight: selected
                                   ? FontWeight.w700
@@ -354,7 +401,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               height: 40,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8F1E6),
+                color: const Color(0xFFF8FAFF),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: _softBorderCream),
               ),
@@ -442,16 +489,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildHeroCard() {
+    final today = DateTime.now();
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF2B57E4), Color(0xFF2756F0)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: const [
           BoxShadow(
             color: Color(0x332557E4),
@@ -486,21 +535,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             ),
           ),
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Selamat Datang, Admin! ',
+              const Text(
+                'Selamat Datang, Admin!',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 33,
+                  fontSize: 22,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
-                'Berikut adalah ringkasan informasi terkini dari sistem manajemen BMC - Kamis, 19 Maret 2026.',
-                style: TextStyle(color: Color(0xFFD9E4FF), fontSize: 12),
+                'Berikut adalah ringkasan informasi terkini dari sistem manajemen BMC - ${_formatIndoDate(today)}.',
+                style: const TextStyle(
+                  color: Color(0xFFD9E4FF),
+                  fontSize: 11.5,
+                ),
               ),
             ],
           ),
@@ -541,7 +593,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               e.value,
                               style: const TextStyle(
                                 color: Color(0xFF1E2B3D),
-                                fontSize: 36,
+                                fontSize: 34,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -601,7 +653,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   'Pendaftaran Menunggu Verifikasi',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 17,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -686,7 +738,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         'Jadwal Belajar Hari Ini',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 14.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
