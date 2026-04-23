@@ -1,107 +1,222 @@
+import 'dart:async';
 import 'dart:convert';
-import 'package:frontend_website_bmc/models/mentor.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/mentor.dart';
+
+import 'package:frontend_website_bmc/models/mentor.dart';
 import '../models/user.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://localhost:8080';
+  // =====================================================
+  // BASE URL
+  // =====================================================
+  static const String baseUrl =
+      'http://127.0.0.1:8080';
 
-  // Login
+  // =====================================================
+  // LOGIN
+  // =====================================================
   static Future<Map<String, dynamic>> login(
     String email,
     String password,
   ) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
+      final response = await http
+          .post(
+            Uri.parse(
+              '$baseUrl/auth/login',
+            ),
+            headers: {
+              'Content-Type':
+                  'application/json',
+              'Accept':
+                  'application/json',
+            },
+            body: jsonEncode({
+              'email':
+                  email.trim(),
+              'password':
+                  password.trim(),
+            }),
+          )
+          .timeout(
+            const Duration(
+              seconds: 15,
+            ),
+          );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final user = User.fromJson(data['user']);
-        final token = data['token'];
+      final data =
+          response.body.isNotEmpty
+              ? jsonDecode(
+                  response.body,
+                )
+              : {};
 
-        // Simpan token dan user data ke shared preferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
-        await prefs.setString('user', jsonEncode(user.toJson()));
+      if (response.statusCode ==
+          200) {
+        final user =
+            User.fromJson(
+              data['user'],
+            );
+
+        final prefs =
+            await SharedPreferences
+                .getInstance();
+
+        await prefs.setString(
+          'token',
+          data['token']
+              .toString(),
+        );
+
+        await prefs.setString(
+          'user',
+          jsonEncode(
+            user.toJson(),
+          ),
+        );
 
         return {
           'success': true,
           'user': user,
-          'token': token,
-          'message': data['message'],
+          'token':
+              data['token'],
+          'message':
+              data['message'] ??
+                  'Login berhasil',
         };
-      } else {
-        final error = jsonDecode(response.body);
-        return {'success': false, 'message': error['error'] ?? 'Login gagal'};
       }
+
+      return {
+        'success': false,
+        'message':
+            data['error'] ??
+                'Login gagal',
+      };
+    } on TimeoutException {
+      return {
+        'success': false,
+        'message':
+            'Server timeout',
+      };
     } catch (e) {
       return {
         'success': false,
-        'message': 'Terjadi kesalahan: ${e.toString()}',
+        'message':
+            'Terjadi kesalahan: $e',
       };
     }
   }
 
-  // Logout
+  // =====================================================
+  // LOGOUT
+  // =====================================================
   static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs =
+        await SharedPreferences
+            .getInstance();
+
     await prefs.remove('token');
     await prefs.remove('user');
   }
 
-  // Get current user
-  static Future<User?> getCurrentUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userJson = prefs.getString('user');
-    if (userJson != null) {
-      return User.fromJson(jsonDecode(userJson));
+  // =====================================================
+  // GET CURRENT USER
+  // =====================================================
+  static Future<User?>
+      getCurrentUser() async {
+    final prefs =
+        await SharedPreferences
+            .getInstance();
+
+    final userJson =
+        prefs.getString(
+          'user',
+        );
+
+    if (userJson == null) {
+      return null;
     }
-    return null;
+
+    return User.fromJson(
+      jsonDecode(userJson),
+    );
   }
 
-  // Get token
-  static Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+  // =====================================================
+  // TOKEN
+  // =====================================================
+  static Future<String?>
+      getToken() async {
+    final prefs =
+        await SharedPreferences
+            .getInstance();
+
+    return prefs.getString(
+      'token',
+    );
   }
 
-  // Check if user is logged in
-  static Future<bool> isLoggedIn() async {
-    final token = await getToken();
-    return token != null && token.isNotEmpty;
+  static Future<bool>
+      isLoggedIn() async {
+    final token =
+        await getToken();
+
+    return token != null &&
+        token.isNotEmpty;
   }
 
-  // Get auth headers
-  static Future<Map<String, String>> getAuthHeaders() async {
-    final token = await getToken();
+  // =====================================================
+  // HEADERS
+  // =====================================================
+  static Future<
+      Map<String, String>>
+      getAuthHeaders() async {
+    final token =
+        await getToken();
+
     return {
-      'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      'Content-Type':
+          'application/json',
+      'Accept':
+          'application/json',
+      if (token != null)
+        'Authorization':
+            'Bearer $token',
     };
   }
 
-  // Validate token dengan backend
-  static Future<bool> validateToken() async {
+  // =====================================================
+  // VALIDATE TOKEN
+  // =====================================================
+  static Future<bool>
+      validateToken() async {
     try {
-      final headers = await getAuthHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/profile'),
+      final headers =
+          await getAuthHeaders();
+
+      final response =
+          await http.get(
+        Uri.parse(
+          '$baseUrl/api/profile',
+        ),
         headers: headers,
       );
 
-      return response.statusCode == 200;
-    } catch (e) {
+      return response
+              .statusCode ==
+          200;
+    } catch (_) {
       return false;
     }
   }
 
-  static Future<Map<String, dynamic>> createMentor({
+  // =====================================================
+  // CREATE MENTOR
+  // =====================================================
+  static Future<Map<String,
+      dynamic>> createMentor({
     required String email,
     required String password,
     required String namaMentor,
@@ -109,86 +224,193 @@ class AuthService {
     String bio = '',
   }) async {
     try {
-      final headers = await getAuthHeaders();
+      final headers =
+          await getAuthHeaders();
+
       final response = await http
           .post(
-            Uri.parse('$baseUrl/auth/create-mentor'),
+            Uri.parse(
+              '$baseUrl/mentor/',
+            ),
             headers: headers,
             body: jsonEncode({
-              'email': email,
-              'password': password,
-              'nama_mentor': namaMentor,
-              'spesialisasi': spesialisasi,
-              'bio': bio,
+              'email':
+                  email.trim(),
+              'password':
+                  password.trim(),
+              'nama_mentor':
+                  namaMentor.trim(),
+              'spesialisasi':
+                  spesialisasi.trim(),
+              'bio':
+                  bio.trim(),
             }),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(
+            const Duration(
+              seconds: 15,
+            ),
+          );
 
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      final data =
+          response.body.isNotEmpty
+              ? jsonDecode(
+                  response.body,
+                )
+              : {};
+
+      if (response.statusCode ==
+              200 ||
+          response.statusCode ==
+              201) {
         return {
           'success': true,
-          'message': data['message'] ?? 'Mentor berhasil dibuat',
+          'message':
+              data['message'] ??
+                  'Mentor berhasil dibuat',
         };
       }
 
       return {
         'success': false,
-        'message': data['details'] ?? data['error'] ?? 'Gagal membuat mentor',
+        'message':
+            data['error'] ??
+                'Gagal membuat mentor',
       };
     } catch (e) {
       return {
         'success': false,
-        'message': 'Terjadi kesalahan: ${e.toString()}',
+        'message':
+            'Terjadi kesalahan: $e',
       };
     }
   }
 
-  static Future<List<Mentor>> getMentors() async {
+  // =====================================================
+  // GET ALL MENTOR
+  // =====================================================
+  static Future<List<Mentor>>
+      getMentors() async {
     try {
-      final headers = await getAuthHeaders();
-      final response = await http
-          .get(Uri.parse('$baseUrl/auth/mentors'), headers: headers)
-          .timeout(const Duration(seconds: 15));
+      final headers =
+          await getAuthHeaders();
 
-      if (response.statusCode != 200) {
+      final response = await http
+          .get(
+            Uri.parse(
+              '$baseUrl/mentor/',
+            ),
+            headers: headers,
+          )
+          .timeout(
+            const Duration(
+              seconds: 15,
+            ),
+          );
+
+      if (response.statusCode !=
+          200) {
         return [];
       }
 
-      final data = jsonDecode(response.body);
-      final List<dynamic> list = data['data'] ?? [];
-      return list.map((item) => Mentor.fromJson(item)).toList();
+      final data =
+          jsonDecode(
+              response.body)
+              as List;
+
+      return data
+          .map(
+            (item) =>
+                Mentor.fromJson(
+                    item),
+          )
+          .toList();
     } catch (_) {
       return [];
     }
   }
 
-  static Future<Map<String, dynamic>> deleteMentor(int mentorId) async {
+  // =====================================================
+  // UPDATE MENTOR
+  // =====================================================
+  static Future<Map<String, dynamic>>
+updateMentor(
+  int id,
+  String nama,
+  String email,
+  String mapel,
+  String bio,
+) async {
+  final res = await http.put(
+    Uri.parse("$baseUrl/mentor/$id"),
+    headers: {
+      "Content-Type":
+          "application/json"
+    },
+    body: jsonEncode({
+      "nama_mentor": nama,
+      "email": email,
+      "spesialisasi": mapel,
+      "bio": bio,
+      "status": "Aktif"
+    }),
+  );
+
+  return jsonDecode(res.body);
+}
+
+  // =====================================================
+  // DELETE MENTOR
+  // =====================================================
+  static Future<Map<String,
+      dynamic>> deleteMentor(
+    int mentorId,
+  ) async {
     try {
-      final headers = await getAuthHeaders();
+      final headers =
+          await getAuthHeaders();
+
       final response = await http
           .delete(
-            Uri.parse('$baseUrl/auth/mentors/$mentorId'),
+            Uri.parse(
+              '$baseUrl/mentor/$mentorId',
+            ),
             headers: headers,
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(
+            const Duration(
+              seconds: 15,
+            ),
+          );
 
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200) {
+      final data =
+          response.body.isNotEmpty
+              ? jsonDecode(
+                  response.body,
+                )
+              : {};
+
+      if (response.statusCode ==
+          200) {
         return {
           'success': true,
-          'message': data['message'] ?? 'Mentor berhasil dihapus',
+          'message':
+              data['message'] ??
+                  'Mentor berhasil dihapus',
         };
       }
 
       return {
         'success': false,
-        'message': data['details'] ?? data['error'] ?? 'Gagal menghapus mentor',
+        'message':
+            data['error'] ??
+                'Gagal hapus mentor',
       };
     } catch (e) {
       return {
         'success': false,
-        'message': 'Terjadi kesalahan: ${e.toString()}',
+        'message':
+            'Terjadi kesalahan: $e',
       };
     }
   }
