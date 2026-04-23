@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -99,15 +100,81 @@ func Login(email, password string) (*models.User, error) {
 		return nil, errors.New("email dan password harus diisi")
 	}
 
-	user := &models.User{}
 	email = strings.ToLower(strings.TrimSpace(email))
 
 	log.Printf("🔍 Login attempt - Email: '%s'\n", email)
 
+	user, err := findUserFromAdminTable(email)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		log.Printf("❌ Failed querying admin table: %v\n", err)
+		return nil, errors.New("gagal memproses login")
+	}
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		user, err = findUserFromUsersTable(email)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("❌ User not found in admin/users tables: %s\n", email)
+				return nil, errors.New("email atau password salah")
+			}
+			log.Printf("❌ Failed querying users table: %v\n", err)
+			return nil, errors.New("gagal memproses login")
+		}
+	} else if !verifyLoginPassword(user.Password, password) {
+		// If admin exists but password mismatches, still try users table.
+		user, err = findUserFromUsersTable(email)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("❌ Password mismatch for admin table account: %s\n", email)
+				return nil, errors.New("email atau password salah")
+			}
+			log.Printf("❌ Failed querying users table after admin mismatch: %v\n", err)
+			return nil, errors.New("gagal memproses login")
+		}
+	}
+
+	log.Printf("✅ User found in DB: ID=%d, Email=%s, Hash length=%d\n", user.ID, user.Email, len(user.Password))
+
+	if !verifyLoginPassword(user.Password, password) {
+		log.Printf("❌ Password mismatch for: %s\n", email)
+		return nil, errors.New("email atau password salah")
+	}
+
+	// Clear password dari response (jangan return password hash)
+	user.Password = ""
+
+	log.Printf("✅ User login successfully: ID=%d, Email=%s\n", user.ID, user.Email)
+	return user, nil
+}
+
+func findUserFromUsersTable(email string) (*models.User, error) {
+	user := &models.User{}
+
+	nameExpr := "''"
+	for _, candidate := range []string{"nama", "name", "full_name", "username"} {
+		var exists bool
+		err := config.DB.QueryRow(
+			context.Background(),
+			`SELECT EXISTS (
+				SELECT 1
+				FROM information_schema.columns
+				WHERE table_name = 'users' AND column_name = $1
+			)`,
+			candidate,
+		).Scan(&exists)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			nameExpr = "u." + candidate
+			break
+		}
+	}
+
 	query := `
 	SELECT
 		u.id,
-		COALESCE(s.nama_siswa, u.nama),
+		COALESCE(s.nama_siswa, ` + nameExpr + `),
 		u.email,
 		u.password,
 		u.role_id,
@@ -119,44 +186,86 @@ func Login(email, password string) (*models.User, error) {
 		COALESCE(s.alamat, '')
 	FROM users u
 	LEFT JOIN siswa s ON s.user_id = u.id
-	WHERE u.email = $1
+	WHERE LOWER(u.email) = $1
 	`
 
 	err := config.DB.QueryRow(context.Background(), query, email).
-		Scan(&user.ID, &user.Nama, &user.Email, &user.Password, &user.RoleID, &user.Status, &user.SiswaID, &user.Kelas, &user.AsalSekolah, &user.WhatsApp, &user.Alamat)
-
+		Scan(
+			&user.ID,
+			&user.Nama,
+			&user.Email,
+			&user.Password,
+			&user.RoleID,
+			&user.Status,
+			&user.SiswaID,
+			&user.Kelas,
+			&user.AsalSekolah,
+			&user.WhatsApp,
+			&user.Alamat,
+		)
 	if err != nil {
-		log.Printf("❌ User not found in DB: %s (Error: %v)\n", email, err)
-		return nil, errors.New("email atau password salah")
+		return nil, err
 	}
 
-	log.Printf("✅ User found in DB: ID=%d, Email=%s, Hash length=%d\n", user.ID, user.Email, len(user.Password))
-
-	// Verifikasi password
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
-		// Compatibility mode: allow legacy plaintext password and upgrade it.
-		if user.Password == password {
-			newHash, hashErr := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-			if hashErr == nil {
-				_, _ = config.DB.Exec(
-					context.Background(),
-					`UPDATE users SET password = $1 WHERE id = $2`,
-					string(newHash),
-					user.ID,
-				)
-			}
-		} else {
-			log.Printf("❌ Password mismatch for: %s (Error: %v)\n", email, err)
-			return nil, errors.New("email atau password salah")
-		}
-	}
-
-	// Clear password dari response (jangan return password hash)
-	user.Password = ""
-
-	log.Printf("✅ User login successfully: ID=%d, Email=%s\n", user.ID, user.Email)
 	return user, nil
+}
+
+func findUserFromAdminTable(email string) (*models.User, error) {
+	user := &models.User{}
+
+	var hasUserID bool
+	err := config.DB.QueryRow(
+		context.Background(),
+		`SELECT EXISTS (
+			SELECT 1
+			FROM information_schema.columns
+			WHERE table_name = 'admin' AND column_name = 'user_id'
+		)`,
+	).Scan(&hasUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	query := `
+	SELECT
+		id,
+		nama,
+		email,
+		password
+	FROM admin
+	WHERE LOWER(email) = $1
+	`
+
+	if hasUserID {
+		query = `
+		SELECT
+			user_id AS id,
+			nama,
+			email,
+			password
+		FROM admin
+		WHERE LOWER(email) = $1
+		`
+	}
+
+	err = config.DB.QueryRow(context.Background(), query, email).
+		Scan(&user.ID, &user.Nama, &user.Email, &user.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	user.RoleID = 1
+	user.Status = "aktif"
+
+	return user, nil
+}
+
+func verifyLoginPassword(storedPassword, inputPassword string) bool {
+	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(inputPassword)); err == nil {
+		return true
+	}
+
+	return storedPassword == inputPassword
 }
 
 // validateRegisterInput - Validasi input register

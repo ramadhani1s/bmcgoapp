@@ -12,6 +12,41 @@ class MentorDashboard extends StatefulWidget {
 class _MentorDashboardState extends State<MentorDashboard> {
   User? _currentUser;
 
+  String _monthName(int month) {
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    return months[month - 1];
+  }
+
+  String _dayName(DateTime date) {
+    const days = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu',
+    ];
+    return days[date.weekday - 1];
+  }
+
+  String _formatIndoDate(DateTime date) {
+    return '${_dayName(date)}, ${date.day} ${_monthName(date.month)} ${date.year}';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -36,9 +71,13 @@ class _MentorDashboardState extends State<MentorDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final today = DateTime.now();
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      // Ubah warna latar halaman mentor di sini.
+      backgroundColor: const Color(0xFFF3F5FA),
       appBar: AppBar(
+        // Ubah warna bar atas mentor di sini (jika ingin bukan putih).
         backgroundColor: Colors.white,
         elevation: 0,
         title: Row(
@@ -76,71 +115,261 @@ class _MentorDashboardState extends State<MentorDashboard> {
       ),
       body: _currentUser == null
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Welcome Section
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF10B981), Color(0xFF059669)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1220),
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    // Ubah warna card/container utama mentor di sini.
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFDCE3F0)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color.fromRGBO(15, 23, 42, 0.06),
+                        blurRadius: 24,
+                        offset: Offset(0, 10),
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
+                    ],
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            Icons.person,
-                            size: 30,
-                            color: Color(0xFF10B981),
+                        // Quick Stats
+                        const Text(
+                          'Statistik Mengajar',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F2937),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Selamat datang, ${_currentUser!.nama}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        const SizedBox(height: 16),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatCard(
+                                'Siswa Aktif',
+                                '45',
+                                Icons.people,
+                                const Color(0xFF3B82F6),
                               ),
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  _currentUser!.roleName,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildStatCard(
+                                'Kelas Saya',
+                                '3',
+                                Icons.class_,
+                                const Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatCard(
+                                'Tugas Diberikan',
+                                '12',
+                                Icons.assignment,
+                                const Color(0xFFF59E0B),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildStatCard(
+                                'Penilaian',
+                                '28',
+                                Icons.grade,
+                                const Color(0xFF8B5CF6),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Menu Grid
+                        const Text(
+                          'Menu Mentor',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          children: [
+                            _buildMenuCard(
+                              'Daftar Siswa',
+                              Icons.people_outline,
+                              const Color(0xFF3B82F6),
+                              () {
+                                // Navigate to student list
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Fitur Daftar Siswa - Coming Soon!',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildMenuCard(
+                              'Kelola Kelas',
+                              Icons.class_outlined,
+                              const Color(0xFF10B981),
+                              () {
+                                // Navigate to class management
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Fitur Kelola Kelas - Coming Soon!',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildMenuCard(
+                              'Buat Tugas',
+                              Icons.assignment_outlined,
+                              const Color(0xFFF59E0B),
+                              () {
+                                // Navigate to create assignment
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Fitur Buat Tugas - Coming Soon!',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildMenuCard(
+                              'Penilaian',
+                              Icons.grade_outlined,
+                              const Color(0xFF8B5CF6),
+                              () {
+                                // Navigate to grading
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Fitur Penilaian - Coming Soon!',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildMenuCard(
+                              'Jadwal Mengajar',
+                              Icons.schedule_outlined,
+                              const Color(0xFFEF4444),
+                              () {
+                                // Navigate to schedule
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Fitur Jadwal Mengajar - Coming Soon!',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildMenuCard(
+                              'Laporan Siswa',
+                              Icons.report_outlined,
+                              const Color(0xFF6B7280),
+                              () {
+                                // Navigate to student reports
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Fitur Laporan Siswa - Coming Soon!',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Recent Activity
+                        const Text(
+                          'Aktivitas Terbaru',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color.fromRGBO(0, 0, 0, 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Tanggal hari ini: ${_formatIndoDate(today)}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF6B7280),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
+                              ),
+                              _buildActivityItem(
+                                'Tugas Matematika dikumpulkan oleh 15 siswa',
+                                '2 jam yang lalu',
+                                Icons.assignment_turned_in,
+                                const Color(0xFF10B981),
+                              ),
+                              const Divider(height: 20),
+                              _buildActivityItem(
+                                'Kelas Bahasa Inggris dimulai',
+                                '4 jam yang lalu',
+                                Icons.play_circle,
+                                const Color(0xFF3B82F6),
+                              ),
+                              const Divider(height: 20),
+                              _buildActivityItem(
+                                'Penilaian ulangan Fisika selesai',
+                                '1 hari yang lalu',
+                                Icons.grade,
+                                const Color(0xFFF59E0B),
                               ),
                             ],
                           ),
@@ -148,227 +377,7 @@ class _MentorDashboardState extends State<MentorDashboard> {
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 32),
-
-                  // Quick Stats
-                  const Text(
-                    'Statistik Mengajar',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          'Siswa Aktif',
-                          '45',
-                          Icons.people,
-                          const Color(0xFF3B82F6),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          'Kelas Saya',
-                          '3',
-                          Icons.class_,
-                          const Color(0xFF10B981),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          'Tugas Diberikan',
-                          '12',
-                          Icons.assignment,
-                          const Color(0xFFF59E0B),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          'Penilaian',
-                          '28',
-                          Icons.grade,
-                          const Color(0xFF8B5CF6),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Menu Grid
-                  const Text(
-                    'Menu Mentor',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    children: [
-                      _buildMenuCard(
-                        'Daftar Siswa',
-                        Icons.people_outline,
-                        const Color(0xFF3B82F6),
-                        () {
-                          // Navigate to student list
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Fitur Daftar Siswa - Coming Soon!',
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildMenuCard(
-                        'Kelola Kelas',
-                        Icons.class_outlined,
-                        const Color(0xFF10B981),
-                        () {
-                          // Navigate to class management
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Fitur Kelola Kelas - Coming Soon!',
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildMenuCard(
-                        'Buat Tugas',
-                        Icons.assignment_outlined,
-                        const Color(0xFFF59E0B),
-                        () {
-                          // Navigate to create assignment
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Fitur Buat Tugas - Coming Soon!'),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildMenuCard(
-                        'Penilaian',
-                        Icons.grade_outlined,
-                        const Color(0xFF8B5CF6),
-                        () {
-                          // Navigate to grading
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Fitur Penilaian - Coming Soon!'),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildMenuCard(
-                        'Jadwal Mengajar',
-                        Icons.schedule_outlined,
-                        const Color(0xFFEF4444),
-                        () {
-                          // Navigate to schedule
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Fitur Jadwal Mengajar - Coming Soon!',
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildMenuCard(
-                        'Laporan Siswa',
-                        Icons.report_outlined,
-                        const Color(0xFF6B7280),
-                        () {
-                          // Navigate to student reports
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Fitur Laporan Siswa - Coming Soon!',
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Recent Activity
-                  const Text(
-                    'Aktivitas Terbaru',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color.fromRGBO(0, 0, 0, 0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        _buildActivityItem(
-                          'Tugas Matematika dikumpulkan oleh 15 siswa',
-                          '2 jam yang lalu',
-                          Icons.assignment_turned_in,
-                          const Color(0xFF10B981),
-                        ),
-                        const Divider(height: 20),
-                        _buildActivityItem(
-                          'Kelas Bahasa Inggris dimulai',
-                          '4 jam yang lalu',
-                          Icons.play_circle,
-                          const Color(0xFF3B82F6),
-                        ),
-                        const Divider(height: 20),
-                        _buildActivityItem(
-                          'Penilaian ulangan Fisika selesai',
-                          '1 hari yang lalu',
-                          Icons.grade,
-                          const Color(0xFFF59E0B),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
     );

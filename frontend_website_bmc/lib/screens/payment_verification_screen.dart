@@ -43,6 +43,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
     await PaymentVerificationService.verifyPayment(transactionId);
     if (!mounted) return;
     await _refresh();
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Pembayaran berhasil diverifikasi')),
     );
@@ -52,6 +53,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
     await PaymentVerificationService.rejectPayment(transactionId);
     if (!mounted) return;
     await _refresh();
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Pembayaran berhasil ditolak')),
     );
@@ -119,7 +121,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final item = items[index];
                 return Card(

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:frontend_website_bmc/models/mentor.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/mentor.dart';
 import '../models/user.dart';
 
 class AuthService {

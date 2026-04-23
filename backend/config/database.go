@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -10,7 +11,12 @@ import (
 var DB *pgxpool.Pool
 
 func ConnectDB() {
-	dsn := "postgres://postgres:yohana@localhost:5432/bimbel_bmc"
+	dsn := os.Getenv("BMC_DB_DSN")
+	if dsn == "" {
+		// Default lokal: pakai database bmcgo_db dan matikan TLS.
+		// Jika DB kamu beda, set BMC_DB_DSN ke connection string yang benar.
+		dsn = "postgres://postgres@localhost:5432/bmcgo_db?sslmode=disable"
+	}
 
 	var err error
 	// 1. Membuat konfigurasi pool
