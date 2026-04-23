@@ -18,6 +18,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   int _previousIndex = 0;
   bool _canAccessPaidFeatures = false;
+  bool _hasAutoNavigatedToProfile = false;
   bool _isCheckingVerification = true;
   String _activePackageTitle = 'Paket belum dipilih';
   bool _isLoadingPackageInfo = true;
@@ -29,7 +30,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   double get _overallProgress {
     final total = _totalMateriTarget + _totalTryoutTarget;
-    if (total <= 0) return 0;
+    if (total <= 0) {
+      return 0;
+    }
     final opened = _openedMateriCount + _openedTryoutCount;
     return (opened / total).clamp(0, 1);
   }
@@ -49,7 +52,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadLearningProgress() async {
     final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       _openedMateriCount = prefs.getInt(_progressKey('materi_opened')) ?? 0;
       _openedTryoutCount = prefs.getInt(_progressKey('tryout_opened')) ?? 0;
@@ -63,8 +69,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _incrementMateriProgress() async {
-    if (!_isActive) return;
-    if (_openedMateriCount >= _totalMateriTarget) return;
+    if (!_isActive || _openedMateriCount >= _totalMateriTarget) {
+      return;
+    }
+
     setState(() {
       _openedMateriCount += 1;
     });
@@ -72,8 +80,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _incrementTryoutProgress() async {
-    if (!_isActive) return;
-    if (_openedTryoutCount >= _totalTryoutTarget) return;
+    if (!_isActive || _openedTryoutCount >= _totalTryoutTarget) {
+      return;
+    }
+
     setState(() {
       _openedTryoutCount += 1;
     });
@@ -96,11 +106,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         packageTitle = selectedItem.packageTitle;
       }
     } catch (_) {
-      // Keep fallback text when history cannot be loaded.
+      // Keep fallback when history cannot be loaded.
     }
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
+      if (canAccess && !_hasAutoNavigatedToProfile) {
+        _previousIndex = _selectedIndex;
+        _selectedIndex = 3;
+        _hasAutoNavigatedToProfile = true;
+      }
       _canAccessPaidFeatures = canAccess;
       _isCheckingVerification = false;
       _activePackageTitle = packageTitle;
@@ -108,9 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  bool get _isActive {
-    return _canAccessPaidFeatures;
-  }
+  bool get _isActive => _canAccessPaidFeatures;
 
   String get _studentName {
     final args =
@@ -132,6 +148,110 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final user = args?['user'] as Map<String, dynamic>?;
     return (user?['email'] as String?) ?? '-';
   }
+
+  String get _firstName {
+    final parts = _studentName.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) {
+      return _studentName;
+    }
+    return parts.first;
+  }
+
+  List<_MainMenuItem> get _menuItems => const [
+    _MainMenuItem(
+      'Materi',
+      Icons.menu_book_rounded,
+      Color(0xFFFFF0F0),
+      iconColor: Color(0xFFFF6F72),
+    ),
+    _MainMenuItem(
+      'Try Out',
+      Icons.description_outlined,
+      Color(0xFFEDEBFF),
+      iconColor: Color(0xFF6C67FF),
+    ),
+    _MainMenuItem(
+      'Olimpiade',
+      Icons.emoji_events_outlined,
+      Color(0xFFFFF6D9),
+      iconColor: Color(0xFFF0C31D),
+    ),
+    _MainMenuItem(
+      'Absensi',
+      Icons.fact_check_outlined,
+      Color(0xFFE3FBF4),
+      iconColor: Color(0xFF12B892),
+    ),
+    _MainMenuItem(
+      'Pembayaran',
+      Icons.credit_card_rounded,
+      Color(0xFFDCEBFF),
+      iconColor: Color(0xFF4B9BFF),
+    ),
+    _MainMenuItem(
+      'Pengumuman',
+      Icons.campaign_outlined,
+      Color(0xFFFFF0F4),
+      iconColor: Color(0xFFFF6A88),
+    ),
+    _MainMenuItem(
+      'Alumni',
+      Icons.school_outlined,
+      Color(0xFFEDE7FF),
+      iconColor: Color(0xFF6D3CEB),
+    ),
+  ];
+
+  List<_AlumniPreviewItem> get _alumniPreview => const [
+    _AlumniPreviewItem(
+      initials: 'A',
+      name: 'Ahmad F.',
+      facultyLine: 'ITB 2024',
+      majorLine: 'Teknik Informatika',
+      avatarColor: Color(0xFF6D67F6),
+    ),
+    _AlumniPreviewItem(
+      initials: 'S',
+      name: 'Siti R.',
+      facultyLine: 'UI 2023',
+      majorLine: 'Kedokteran',
+      avatarColor: Color(0xFFFF6D70),
+    ),
+    _AlumniPreviewItem(
+      initials: 'D',
+      name: 'Dimas P.',
+      facultyLine: 'UGM 2024',
+      majorLine: 'Hukum',
+      avatarColor: Color(0xFFF7A13A),
+    ),
+  ];
+
+  List<_SchedulePreviewItem> get _schedulePreview => const [
+    _SchedulePreviewItem(
+      time: '08:00',
+      subject: 'Matematika',
+      mentorRoom: 'Kak Budi · Ruang A',
+      status: 'Sekarang',
+      statusColor: Color(0xFF1CC08A),
+      statusBackground: Color(0xFFDEF8EF),
+    ),
+    _SchedulePreviewItem(
+      time: '10:00',
+      subject: 'IPA Terpadu',
+      mentorRoom: 'Kak Rina · Ruang B',
+      status: 'Segera',
+      statusColor: Color(0xFFF39A44),
+      statusBackground: Color(0xFFFFF0E0),
+    ),
+    _SchedulePreviewItem(
+      time: '13:00',
+      subject: 'Bahasa Indonesia',
+      mentorRoom: 'Kak Dewi · Ruang C',
+      status: 'Akan Datang',
+      statusColor: Color(0xFF5194F8),
+      statusBackground: Color(0xFFE9F2FF),
+    ),
+  ];
 
   void _onBottomNavTap(int index) {
     if (!_isActive && (index == 1 || index == 2)) {
@@ -187,266 +307,294 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDashboardTab() {
-    final menuItems = <_MainMenuItem>[
-      const _MainMenuItem('Materi', Icons.menu_book_rounded, Color(0xFFFDECEC)),
-      const _MainMenuItem(
-        'Try Out',
-        Icons.description_outlined,
-        Color(0xFFEAEAFE),
-      ),
-      const _MainMenuItem(
-        'Olimpiade',
-        Icons.emoji_events_outlined,
-        Color(0xFFFFF5DA),
-      ),
-      const _MainMenuItem(
-        'Absensi',
-        Icons.fact_check_outlined,
-        Color(0xFFE6FBF3),
-      ),
-      const _MainMenuItem(
-        'Jenis Paket',
-        Icons.credit_card_outlined,
-        Color(0xFFE8F2FF),
-      ),
-      const _MainMenuItem(
-        'Pengumuman',
-        Icons.campaign_outlined,
-        Color(0xFFFFEDF1),
-      ),
-      const _MainMenuItem('Alumni', Icons.school_outlined, Color(0xFFEDE8FF)),
-    ];
-
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
-            decoration: const BoxDecoration(
-              color: _accent,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(34),
-                bottomRight: Radius.circular(34),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Stack(
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+                decoration: const BoxDecoration(
+                  color: _accent,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(38),
+                    bottomRight: Radius.circular(38),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Image.asset(
-                          'assets/images/bmc_logo.jpeg',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'BMC',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 30,
-                            ),
-                          ),
-                          Text(
-                            'Bintang Muda Center',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w400,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.95),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Stack(
-                        children: [
-                          Center(
-                            child: Icon(
-                              Icons.notifications_none_rounded,
-                              color: _accent,
-                            ),
-                          ),
-                          Positioned(
-                            right: 10,
-                            top: 11,
-                            child: CircleAvatar(
-                              radius: 4,
-                              backgroundColor: Color(0xFFFF3F3F),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Selamat datang kembali.',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _studentName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: const Color(0xFFFF8F53),
-                        child: Text(
-                          _studentName.characters.first.toUpperCase(),
-                          style: const TextStyle(
+                    Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
                             color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Image.asset(
+                              'assets/images/bmc_logo.png',
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _studentName,
-                              style: const TextStyle(
-                                color: _textPrimary,
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'BMC',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 29,
+                                  height: 1,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              _isLoadingPackageInfo
-                                  ? '$_classLabel · Memuat paket...'
-                                  : '$_classLabel · $_activePackageTitle',
-                              style: const TextStyle(
-                                color: _textMuted,
-                                fontSize: 11.5,
+                              SizedBox(height: 3),
+                              Text(
+                                'Bintang Muda Center',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(99),
-                                    ),
-                                    child: LinearProgressIndicator(
-                                      value: _overallProgress,
-                                      minHeight: 6,
-                                      backgroundColor: Color(0xFFE9EAF0),
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(0xFFFFB082),
-                                      ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Stack(
+                            children: [
+                              Center(
+                                child: Icon(
+                                  Icons.notifications_none_rounded,
+                                  color: _accent,
+                                ),
+                              ),
+                              Positioned(
+                                right: 9,
+                                top: 10,
+                                child: CircleAvatar(
+                                  radius: 7,
+                                  backgroundColor: Color(0xFFFDCF52),
+                                  child: Text(
+                                    '1',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '$_overallProgressPercent%',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Selamat datang kembali.',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$_studentName 👋',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 34,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F7F8),
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor: const Color(0xFFFF8F53),
+                                child: Text(
+                                  _firstName.characters.first.toUpperCase(),
                                   style: const TextStyle(
-                                    color: Color(0xFFFF8D3C),
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _studentName,
+                                      style: const TextStyle(
+                                        color: _textPrimary,
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      _isLoadingPackageInfo
+                                          ? '$_classLabel · Memuat paket...'
+                                          : '$_classLabel · $_activePackageTitle',
+                                      style: const TextStyle(
+                                        color: _textMuted,
+                                        fontSize: 11.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _isActive
+                                      ? const Color(0xFFFFF4E2)
+                                      : const Color(0xFFFFEFEF),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: _isActive
+                                        ? const Color(0xFFF7D4A4)
+                                        : const Color(0xFFFFCFD1),
+                                  ),
+                                ),
+                                child: Text(
+                                  _isCheckingVerification
+                                      ? 'Mengecek...'
+                                      : (_isActive ? '• Aktif' : '• Non-Aktif'),
+                                  style: TextStyle(
+                                    color: _isActive
+                                        ? const Color(0xFFB2771E)
+                                        : const Color(0xFFD45767),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF2E8),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFFFFCF9F)),
-                        ),
-                        child: Text(
-                          _isCheckingVerification
-                              ? 'Mengecek...'
-                              : (_isActive ? 'Aktif' : 'Non-Aktif'),
-                          style: TextStyle(
-                            color: _isActive
-                                ? Color(0xFF16A34A)
-                                : Color(0xFFFF8D3C),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _TopMetricCard(
-                        value: '$_openedMateriCount/$_totalMateriTarget',
-                        label: 'Materi',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _TopMetricCard(value: '0', label: 'Latihan'),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _TopMetricCard(
-                        value: '$_openedTryoutCount/$_totalTryoutTarget',
-                        label: 'Try Out',
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Text(
+                                'Progress Belajar',
+                                style: TextStyle(
+                                  color: _textPrimary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '$_overallProgressPercent%',
+                                style: const TextStyle(
+                                  color: Color(0xFFFF6A6E),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(99),
+                            child: LinearProgressIndicator(
+                              value: _overallProgress,
+                              minHeight: 6,
+                              backgroundColor: const Color(0xFFE7E8EC),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                Color(0xFFFF7E63),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _TopMetricCard(
+                                  value: '$_openedMateriCount',
+                                  label: 'Materi',
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _TopMetricCard(
+                                  value:
+                                      '${_openedMateriCount + _openedTryoutCount}',
+                                  label: 'Latihan',
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _TopMetricCard(
+                                  value: '$_openedTryoutCount',
+                                  label: 'Try Out',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              Positioned(
+                top: 16,
+                right: -32,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 98,
+                right: 80,
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.09),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -455,7 +603,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8CCCF),
+                    color: const Color(0xFFF3CED0),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: TextField(
@@ -490,7 +638,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: menuItems.length,
+                  itemCount: _menuItems.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
                     childAspectRatio: 0.74,
@@ -498,7 +646,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     mainAxisSpacing: 12,
                   ),
                   itemBuilder: (context, index) {
-                    final item = menuItems[index];
+                    final item = _menuItems[index];
                     return GestureDetector(
                       onTap: () => _onMainMenuTap(item.label),
                       child: Opacity(
@@ -517,7 +665,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                   child: Icon(
                                     item.icon,
-                                    color: _accent,
+                                    color: item.iconColor,
                                     size: 27,
                                   ),
                                 ),
@@ -556,85 +704,175 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 16),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _accent,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFFFD0D0)),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: const Row(
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline_rounded,
-                            color: _accent,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _isActive
-                                  ? 'Akun kamu sudah aktif'
-                                  : 'Akun kamu masih non-aktif',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: _textPrimary,
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Color(0xFFFF856E),
+                        child: Icon(
+                          Icons.campaign_outlined,
+                          color: Color(0xFFFFD35E),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pengumuman Baru!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _isActive
-                            ? 'Akun kamu sudah aktif. Semua fitur belajar bisa dipakai.'
-                            : 'Untuk membuka akses Materi, Try Out, dan fitur lain, silakan selesaikan pembayaran dan tunggu verifikasi admin. Menu Paket dan Profil tetap bisa dibuka.',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: _textMuted,
-                          height: 1.45,
+                            SizedBox(height: 2),
+                            Text(
+                              'Try Out SNBT: Sabtu, 15 Maret 2025',
+                              style: TextStyle(
+                                color: Color(0xFFFFE5E5),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _previousIndex = _selectedIndex;
-                              _selectedIndex = 3;
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _accent,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(
-                            Icons.person_outline,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            _isActive
-                                ? 'Buka Profil'
-                                : 'Buka Profil & Pilih Paket',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13.5,
-                            ),
-                          ),
-                        ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.white,
+                        size: 22,
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 22),
+                _SectionTitleRow(
+                  title: 'Alumni Berprestasi',
+                  actionText: 'Lihat Semua',
+                  onTap: _showDynamicInfo,
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 160,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _alumniPreview.length,
+                    separatorBuilder: (_, index) => const SizedBox(width: 10),
+                    itemBuilder: (context, index) {
+                      final item = _alumniPreview[index];
+                      return _AlumniPreviewCard(item: item);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 22),
+                _SectionTitleRow(
+                  title: 'Materi Terbaru',
+                  actionText: 'Lihat Semua',
+                  onTap: _showDynamicInfo,
+                ),
+                const SizedBox(height: 12),
+                const _EmptyDataCard(
+                  icon: Icons.menu_book_rounded,
+                  title: 'Materi belum tersedia',
+                  description:
+                      'Materi terbaru akan tampil di sini setelah mentor mengunggah konten.',
+                ),
+                const SizedBox(height: 22),
+                const _SectionTitleRow(
+                  title: 'Jadwal Hari Ini',
+                  trailingText: 'Sen, 10 Feb',
+                  trailingIcon: Icons.calendar_today_outlined,
+                ),
+                const SizedBox(height: 12),
+                for (final item in _schedulePreview) ...[
+                  _SchedulePreviewTile(item: item),
+                  const SizedBox(height: 10),
+                ],
+                if (!_isActive) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFFFD0D0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              color: _accent,
+                              size: 18,
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Akun kamu masih non-aktif',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: _textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Lengkapi profil dan pilih paket agar akses belajar bisa dibuka.',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: _textMuted,
+                            height: 1.45,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _previousIndex = _selectedIndex;
+                                _selectedIndex = 3;
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _accent,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.person_outline,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              'Buka Profil',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -709,7 +947,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.22),
+                      color: Colors.white.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
@@ -801,7 +1039,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 4),
                       Text(
                         _studentEmail,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Color(0xFFDCE1ED),
                           fontSize: 12.5,
                         ),
@@ -894,7 +1132,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       icon: Icons.person_outline,
                       title: 'Detail Profil',
                       color: const Color(0xFFEAF4FF),
-                      onTap: () {},
+                      onTap: () {
+                        final args = ModalRoute.of(context)?.settings.arguments
+                                as Map<String, dynamic>? ??
+                            const <String, dynamic>{};
+                        final user = args['user'] as Map<String, dynamic>? ??
+                            const <String, dynamic>{};
+                        Navigator.of(context).pushNamed(
+                          '/profile-detail',
+                          arguments: {'user': user},
+                        );
+                      },
                     ),
                     _ProfileTile(
                       icon: Icons.badge_outlined,
@@ -922,25 +1170,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       icon: Icons.military_tech_outlined,
                       title: 'Prestasi & Sertifikat',
                       color: const Color(0xFFFFF7DD),
-                      onTap: () {
-                        _showDynamicInfo();
-                      },
+                      onTap: _showDynamicInfo,
                     ),
                     _ProfileTile(
                       icon: Icons.fact_check_outlined,
                       title: 'Riwayat Kehadiran',
                       color: const Color(0xFFEAF8ED),
-                      onTap: () {
-                        _showDynamicInfo();
-                      },
+                      onTap: _showDynamicInfo,
                     ),
                     _ProfileTile(
                       icon: Icons.menu_book_outlined,
                       title: 'Transkrip Nilai',
                       color: const Color(0xFFE7F8FD),
-                      onTap: () {
-                        _showDynamicInfo();
-                      },
+                      onTap: _showDynamicInfo,
                     ),
                   ],
                 ),
@@ -949,9 +1191,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      Navigator.of(
-                        context,
-                      ).pushNamedAndRemoveUntil('/login', (route) => false);
+                      Navigator.of(context)
+                          .pushNamedAndRemoveUntil('/login', (route) => false);
                     },
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: _accent),
@@ -1131,11 +1372,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 class _MainMenuItem {
-  const _MainMenuItem(this.label, this.icon, this.backgroundColor);
+  const _MainMenuItem(
+    this.label,
+    this.icon,
+    this.backgroundColor, {
+    this.iconColor = const Color(0xFFFF7070),
+  });
 
   final String label;
   final IconData icon;
   final Color backgroundColor;
+  final Color iconColor;
 }
 
 class _TopMetricCard extends StatelessWidget {
@@ -1147,9 +1394,9 @@ class _TopMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 11),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3EEF0),
+        color: const Color(0xFFEFEAEC),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1157,8 +1404,8 @@ class _TopMetricCard extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              color: Color(0xFFFF7070),
-              fontSize: 15,
+              color: Color(0xFFFF6368),
+              fontSize: 22,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -1167,8 +1414,314 @@ class _TopMetricCard extends StatelessWidget {
             label,
             style: const TextStyle(
               color: Color(0xFF8E90A0),
-              fontSize: 11.5,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitleRow extends StatelessWidget {
+  const _SectionTitleRow({
+    required this.title,
+    this.actionText,
+    this.onTap,
+    this.trailingText,
+    this.trailingIcon,
+  });
+
+  final String title;
+  final String? actionText;
+  final VoidCallback? onTap;
+  final String? trailingText;
+  final IconData? trailingIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF22243A),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        if (actionText != null)
+          GestureDetector(
+            onTap: onTap,
+            child: Text(
+              actionText!,
+              style: const TextStyle(
+                color: Color(0xFFFF666C),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        if (trailingText != null) ...[
+          if (trailingIcon != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Icon(
+                trailingIcon,
+                size: 14,
+                color: const Color(0xFFABB0BE),
+              ),
+            ),
+          Text(
+            trailingText!,
+            style: const TextStyle(
+              color: Color(0xFFABB0BE),
+              fontSize: 15,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _AlumniPreviewItem {
+  const _AlumniPreviewItem({
+    required this.initials,
+    required this.name,
+    required this.facultyLine,
+    required this.majorLine,
+    required this.avatarColor,
+  });
+
+  final String initials;
+  final String name;
+  final String facultyLine;
+  final String majorLine;
+  final Color avatarColor;
+}
+
+class _AlumniPreviewCard extends StatelessWidget {
+  const _AlumniPreviewCard({required this.item});
+
+  final _AlumniPreviewItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 104,
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: item.avatarColor,
+            child: Text(
+              item.initials,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 20,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            item.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF22243A),
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            item.facultyLine,
+            style: const TextStyle(
+              color: Color(0xFFFF6E72),
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            item.majorLine,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFFA2A7B5),
+              fontSize: 11.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyDataCard extends StatelessWidget {
+  const _EmptyDataCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFCECED),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: const Color(0xFFFF7070)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF25273D),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: Color(0xFF8D90A3),
+                    fontSize: 12.5,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SchedulePreviewItem {
+  const _SchedulePreviewItem({
+    required this.time,
+    required this.subject,
+    required this.mentorRoom,
+    required this.status,
+    required this.statusColor,
+    required this.statusBackground,
+  });
+
+  final String time;
+  final String subject;
+  final String mentorRoom;
+  final String status;
+  final Color statusColor;
+  final Color statusBackground;
+}
+
+class _SchedulePreviewTile extends StatelessWidget {
+  const _SchedulePreviewTile({required this.item});
+
+  final _SchedulePreviewItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 54,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.time,
+                  style: const TextStyle(
+                    color: Color(0xFFFF656B),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Text(
+                  'WIB',
+                  style: TextStyle(color: Color(0xFFB2B7C5), fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(width: 1, height: 34, color: const Color(0xFFECEEF4)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.subject,
+                  style: const TextStyle(
+                    color: Color(0xFF22243A),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.mentorRoom,
+                  style: const TextStyle(
+                    color: Color(0xFF9297A6),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: item.statusBackground,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              item.status,
+              style: TextStyle(
+                color: item.statusColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

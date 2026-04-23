@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"bmcgoapp-backend/handlers"
 	"bmcgoapp-backend/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -26,11 +27,7 @@ func ProtectedRoutes(r *gin.Engine) {
 	admin := auth.Group("/admin")
 	admin.Use(middleware.RoleMiddleware(1)) // 1 = admin
 
-	admin.GET("/dashboard", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Admin dashboard",
-		})
-	})
+	admin.GET("/dashboard", handlers.GetAdminDashboard)
 
 	// ================= MENTOR ONLY =================
 	mentor := auth.Group("/mentor")

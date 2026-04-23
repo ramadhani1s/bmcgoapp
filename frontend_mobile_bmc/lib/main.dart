@@ -4,6 +4,7 @@ import 'package:frontend_mobile_bmc/screens/auth/login_screen.dart';
 import 'package:frontend_mobile_bmc/screens/auth/register_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/dashboard_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/package_screen.dart';
+import 'package:frontend_mobile_bmc/screens/home/profile_detail_form_screen.dart';
 import 'package:frontend_mobile_bmc/screens/onboarding_screen.dart';
 import 'package:frontend_mobile_bmc/screens/splash_screen.dart';
 import 'package:frontend_mobile_bmc/screens/payment/payment_confirmation_screen.dart';
@@ -36,6 +37,7 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/login': (context) => const LoginScreen(),
         '/dashboard': (context) => const DashboardScreen(),
+        '/profile-detail': (context) => const ProfileDetailFormScreen(),
         '/package': (context) => const PackageScreen(),
         '/payment-history': (context) => const PaymentHistoryScreen(),
         '/payment': (context) => const PaymentConfirmationScreen(
