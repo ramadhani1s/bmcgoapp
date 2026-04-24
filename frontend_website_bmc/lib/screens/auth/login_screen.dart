@@ -161,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 20),
               const Text(
-                'Portal Admin\nBintang Muda Center',
+                'Portal Admin & Mentor\nBintang Muda Center',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 44,
@@ -197,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Masuk ke Dashboard',
+              'Masuk ke Portal',
               style: TextStyle(
                 fontSize: 56,
                 height: 1.1,
@@ -246,6 +246,25 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 28),
             _buildLoginButton(),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: const Text(
+                'Akun mentor sementara: mentor@bmc.local / mentor123\nNanti bisa diganti setelah admin membuat akun mentor resmi.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF1E3A8A),
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -316,3 +335,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
 import '../../models/user.dart';
+import '../../routes/app_routes.dart';
+import '../../services/auth_service.dart';
 
 class MentorDashboard extends StatefulWidget {
   const MentorDashboard({super.key});
@@ -11,41 +12,35 @@ class MentorDashboard extends StatefulWidget {
 
 class _MentorDashboardState extends State<MentorDashboard> {
   User? _currentUser;
+  String _activeMenuTitle = 'Dashboard';
 
-  String _monthName(int month) {
-    const months = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-    return months[month - 1];
-  }
+  static const Color _sidebarBg = Color(0xFFF0F4FF);
+  static const Color _sidebarBorder = Color(0xFF2563EB);
+  static const Color _textPrimary = Color(0xFF1F2937);
+  static const Color _textSecondary = Color(0xFF6B7280);
 
-  String _dayName(DateTime date) {
-    const days = [
-      'Senin',
-      'Selasa',
-      'Rabu',
-      'Kamis',
-      'Jumat',
-      'Sabtu',
-      'Minggu',
-    ];
-    return days[date.weekday - 1];
-  }
-
-  String _formatIndoDate(DateTime date) {
-    return '${_dayName(date)}, ${date.day} ${_monthName(date.month)} ${date.year}';
-  }
+  final List<_SidebarMenuItem> _menuItems = const [
+    _SidebarMenuItem(title: 'Dashboard', icon: Icons.home_outlined),
+    _SidebarMenuItem(
+      title: 'Jadwal Mengajar',
+      icon: Icons.calendar_month_outlined,
+    ),
+    _SidebarMenuItem(title: 'Absensi Kelas', icon: Icons.fact_check_outlined),
+    _SidebarMenuItem(
+      title: 'Evaluasi Siswa',
+      icon: Icons.assignment_turned_in_outlined,
+    ),
+    _SidebarMenuItem(title: 'Soal Latihan', icon: Icons.menu_book_outlined),
+    _SidebarMenuItem(title: 'Try Out', icon: Icons.rocket_launch_outlined),
+    _SidebarMenuItem(
+      title: 'Materi Pembelajaran',
+      icon: Icons.video_library_outlined,
+    ),
+    _SidebarMenuItem(
+      title: 'Olimpiade Akademik',
+      icon: Icons.emoji_events_outlined,
+    ),
+  ];
 
   @override
   void initState() {
@@ -69,460 +64,453 @@ class _MentorDashboardState extends State<MentorDashboard> {
     }
   }
 
+  void _onMenuTap(String title) {
+    setState(() {
+      _activeMenuTitle = title;
+    });
+
+    if (title == 'Soal Latihan') {
+      Navigator.of(context).pushNamed(AppRoutes.mentorExercise);
+      return;
+    }
+
+    if (title != 'Dashboard') {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$title akan segera tersedia')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final today = DateTime.now();
+    if (_currentUser == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final isMobile = MediaQuery.of(context).size.width < 820;
 
     return Scaffold(
-      // Ubah warna latar halaman mentor di sini.
-      backgroundColor: const Color(0xFFF3F5FA),
-      appBar: AppBar(
-        // Ubah warna bar atas mentor di sini (jika ingin bukan putih).
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Row(
+      backgroundColor: Colors.white,
+      drawer: isMobile ? Drawer(child: _buildSidebar(forDrawer: true)) : null,
+      body: SafeArea(
+        child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.school,
-                color: Color(0xFF10B981),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Mentor Dashboard',
-              style: TextStyle(
-                color: Color(0xFF1F2937),
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
+            // SIDEBAR
+            if (!isMobile) _buildSidebar(forDrawer: false),
+            // CONTENT
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTopBar(),
+                    const SizedBox(height: 24),
+                    _buildHeroCard(),
+                    const SizedBox(height: 24),
+                    _buildStatsGrid(),
+                    const SizedBox(height: 24),
+                    _buildScheduleCard(),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: _logout,
-            icon: const Icon(Icons.logout, color: Color(0xFFEF4444)),
-            tooltip: 'Logout',
-          ),
-        ],
       ),
-      body: _currentUser == null
-          ? const Center(child: CircularProgressIndicator())
-          : Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1220),
-                child: Container(
-                  margin: const EdgeInsets.fromLTRB(18, 18, 18, 24),
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    // Ubah warna card/container utama mentor di sini.
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFDCE3F0)),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color.fromRGBO(15, 23, 42, 0.06),
-                        blurRadius: 24,
-                        offset: Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(2),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Quick Stats
-                        const Text(
-                          'Statistik Mengajar',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                'Siswa Aktif',
-                                '45',
-                                Icons.people,
-                                const Color(0xFF3B82F6),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildStatCard(
-                                'Kelas Saya',
-                                '3',
-                                Icons.class_,
-                                const Color(0xFF10B981),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                'Tugas Diberikan',
-                                '12',
-                                Icons.assignment,
-                                const Color(0xFFF59E0B),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildStatCard(
-                                'Penilaian',
-                                '28',
-                                Icons.grade,
-                                const Color(0xFF8B5CF6),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 32),
-
-                        // Menu Grid
-                        const Text(
-                          'Menu Mentor',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          children: [
-                            _buildMenuCard(
-                              'Daftar Siswa',
-                              Icons.people_outline,
-                              const Color(0xFF3B82F6),
-                              () {
-                                // Navigate to student list
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Fitur Daftar Siswa - Coming Soon!',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildMenuCard(
-                              'Kelola Kelas',
-                              Icons.class_outlined,
-                              const Color(0xFF10B981),
-                              () {
-                                // Navigate to class management
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Fitur Kelola Kelas - Coming Soon!',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildMenuCard(
-                              'Buat Tugas',
-                              Icons.assignment_outlined,
-                              const Color(0xFFF59E0B),
-                              () {
-                                // Navigate to create assignment
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Fitur Buat Tugas - Coming Soon!',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildMenuCard(
-                              'Penilaian',
-                              Icons.grade_outlined,
-                              const Color(0xFF8B5CF6),
-                              () {
-                                // Navigate to grading
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Fitur Penilaian - Coming Soon!',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildMenuCard(
-                              'Jadwal Mengajar',
-                              Icons.schedule_outlined,
-                              const Color(0xFFEF4444),
-                              () {
-                                // Navigate to schedule
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Fitur Jadwal Mengajar - Coming Soon!',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildMenuCard(
-                              'Laporan Siswa',
-                              Icons.report_outlined,
-                              const Color(0xFF6B7280),
-                              () {
-                                // Navigate to student reports
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Fitur Laporan Siswa - Coming Soon!',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 32),
-
-                        // Recent Activity
-                        const Text(
-                          'Aktivitas Terbaru',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color.fromRGBO(0, 0, 0, 0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    'Tanggal hari ini: ${_formatIndoDate(today)}',
-                                    style: const TextStyle(
-                                      color: Color(0xFF6B7280),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              _buildActivityItem(
-                                'Tugas Matematika dikumpulkan oleh 15 siswa',
-                                '2 jam yang lalu',
-                                Icons.assignment_turned_in,
-                                const Color(0xFF10B981),
-                              ),
-                              const Divider(height: 20),
-                              _buildActivityItem(
-                                'Kelas Bahasa Inggris dimulai',
-                                '4 jam yang lalu',
-                                Icons.play_circle,
-                                const Color(0xFF3B82F6),
-                              ),
-                              const Divider(height: 20),
-                              _buildActivityItem(
-                                'Penilaian ulangan Fisika selesai',
-                                '1 hari yang lalu',
-                                Icons.grade,
-                                const Color(0xFFF59E0B),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
     );
   }
 
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildSidebar({required bool forDrawer}) {
+    final userName = (_currentUser?.nama ?? 'Mentor').trim();
+    final avatarInitial = userName.isNotEmpty ? userName[0].toUpperCase() : 'M';
+
     return Container(
+      width: forDrawer ? double.infinity : 260,
+      decoration: BoxDecoration(
+        color: _sidebarBg,
+        border: Border(right: BorderSide(color: _sidebarBorder, width: 3)),
+      ),
+      child: Column(
+        children: [
+          // PROFILE SECTION
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Column(
+              children: [
+                // Menu & Bell
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        if (Scaffold.of(context).hasDrawer) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      icon: const Icon(Icons.menu, color: _textPrimary),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(
+                        Icons.notifications_none,
+                        color: _textPrimary,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(
+                        Icons.person_outline,
+                        color: _textPrimary,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Profile Avatar
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF6366F1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      avatarInitial,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Name & Specialization
+                Text(
+                  _currentUser?.nama ?? 'Mentor',
+                  style: const TextStyle(
+                    color: _textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _currentUser?.email ?? 'mentor@bmc.local',
+                  style: const TextStyle(color: _textSecondary, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 12, thickness: 1, color: Color(0xFFDEDFE0)),
+          // MENU ITEMS
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: _menuItems.length,
+              itemBuilder: (context, index) {
+                final item = _menuItems[index];
+                return _buildSidebarMenuItem(
+                  item,
+                  isActive: item.title == _activeMenuTitle,
+                );
+              },
+            ),
+          ),
+          // LOGOUT BUTTON
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: InkWell(
+              onTap: _logout,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 12,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.logout,
+                      color: Color(0xFFEF4444),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Keluar',
+                      style: TextStyle(
+                        color: Color(0xFFEF4444),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarMenuItem(
+    _SidebarMenuItem item, {
+    required bool isActive,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: InkWell(
+        onTap: () => _onMenuTap(item.title),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          decoration: BoxDecoration(
+            color: isActive ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                item.icon,
+                color: isActive ? const Color(0xFF2563EB) : _textSecondary,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                item.title,
+                style: TextStyle(
+                  color: isActive ? const Color(0xFF2563EB) : _textPrimary,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Row(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Dashboard',
+              style: TextStyle(
+                color: _textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 24,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Selamat datang kembali, ${_currentUser?.nama ?? "Mentor"}',
+              style: const TextStyle(color: _textSecondary, fontSize: 13),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeroCard() {
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Jadwal Mengajar Hari Ini',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Belum ada jadwal kelas untuk hari ini',
+            style: TextStyle(color: Color(0xFFE5E7EB), fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFFFF).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFFFFFFFF).withValues(alpha: 0.2),
+              ),
+            ),
+            child: const Column(
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Anda belum memiliki jadwal mengajar hari ini',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsGrid() {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 2.2,
+      children: [
+        _buildStatItem('Total Siswa', '0', Icons.groups_2_outlined),
+        _buildStatItem('Kelas Aktif', '0', Icons.class_outlined),
+        _buildStatItem('Jadwal Hari Ini', '0', Icons.schedule_outlined),
+        _buildStatItem('Tugas Selesai', '0', Icons.task_alt_outlined),
+      ],
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: const Color.fromRGBO(0, 0, 0, 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFFDBEAFE),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: const Color(0xFF2563EB), size: 20),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: _textPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(color: _textSecondary, fontSize: 11),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+          const Text(
+            'Riwayat Aktivitas',
+            style: TextStyle(
+              color: _textPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
             ),
-            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAFAFA),
+              borderRadius: BorderRadius.circular(8),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-              fontWeight: FontWeight.w500,
+            child: const Center(
+              child: Text(
+                'Belum ada aktivitas',
+                style: TextStyle(color: _textSecondary, fontSize: 13),
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildMenuCard(
-    String title,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: const Color.fromRGBO(0, 0, 0, 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1F2937),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class _SidebarMenuItem {
+  final String title;
+  final IconData icon;
 
-  Widget _buildActivityItem(
-    String title,
-    String time,
-    IconData icon,
-    Color color,
-  ) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: color, size: 16),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF1F2937),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                time,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  const _SidebarMenuItem({required this.title, required this.icon});
 }

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"bmcgoapp-backend/handlers"
+	"bmcgoapp-backend/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,5 +12,13 @@ func AuthRoutes(r *gin.Engine) {
 	{
 		auth.POST("/register", handlers.RegisterHandler)
 		auth.POST("/login", handlers.LoginHandler)
+	}
+
+	adminAuth := r.Group("/auth")
+	adminAuth.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware(1))
+	{
+		adminAuth.POST("/create-mentor", handlers.CreateMentorHandler)
+		adminAuth.GET("/mentors", handlers.GetMentorsHandler)
+		adminAuth.DELETE("/mentors/:mentorId", handlers.DeleteMentorHandler)
 	}
 }

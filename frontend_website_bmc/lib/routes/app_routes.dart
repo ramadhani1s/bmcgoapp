@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/dashboard/admin_dashboard.dart';
 import '../screens/dashboard/mentor_dashboard.dart';
+import '../screens/mentor/latihan_soal_screen.dart';
 import '../screens/mentor_management_screen.dart';
 import '../screens/payment_verification_screen.dart';
 import '../services/auth_service.dart';
@@ -12,6 +13,7 @@ class AppRoutes {
   static const String paymentVerification = '/payment-verification';
   static const String mentorDashboard = '/mentor-dashboard';
   static const String mentorManagement = '/mentor-management';
+  static const String mentorExercise = '/mentor-exercise';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -29,6 +31,8 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (_) => const MentorManagementScreen(),
         );
+      case mentorExercise:
+        return MaterialPageRoute(builder: (_) => const LatihanSoalScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(
