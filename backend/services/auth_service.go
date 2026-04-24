@@ -25,7 +25,7 @@ func Register(user models.User) error {
 	user.Email = strings.ToLower(strings.TrimSpace(user.Email))
 	user.Nama = strings.TrimSpace(user.Nama)
 
-	log.Printf("📝 Register - Username: '%s', Nama: '%s'\n", user.Email, user.Nama)
+	log.Printf("📝 Register - Email: '%s', Nama: '%s'\n", user.Email, user.Nama)
 
 	// 3️⃣ Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -40,10 +40,10 @@ func Register(user models.User) error {
 		user.RoleID = 3
 	}
 
-	// 5️⃣ Insert ke table users
+	// 5️⃣ Insert ke table users (users table uses 'username', not email)
 	query := `
-	INSERT INTO users (role_id, nama, email, password, status)
-	VALUES ($1, $2, $3, $4, $5)
+	INSERT INTO users (role_id, username, password, status)
+	VALUES ($1, $2, $3, $4)
 	RETURNING id
 	`
 
@@ -51,10 +51,9 @@ func Register(user models.User) error {
 	err = config.DB.QueryRow(context.Background(),
 		query,
 		user.RoleID,
-		user.Nama,
-		user.Email,
+		user.Email, // gunakan email sebagai username
 		string(hashedPassword),
-		"nonaktif",
+		"aktif",
 	).Scan(&userID)
 
 	if err != nil {
@@ -86,7 +85,7 @@ func Register(user models.User) error {
 			return errors.New("email sudah terdaftar")
 		}
 		log.Println("❌ Database error:", err)
-		return fmt.Errorf("gagal menyimpan user: %w", err)
+		return fmt.Errorf("gagal menyimpan siswa: %w", err)
 	}
 
 	log.Printf("✅ User registered successfully: ID=%d, Email=%s\n", userID, user.Email)
@@ -101,6 +100,19 @@ func Login(email, password string) (*models.User, error) {
 	}
 
 	email = strings.ToLower(strings.TrimSpace(email))
+
+	// Temporary mentor fallback account for website development.
+	// Use this until admin creates a real mentor account.
+	if email == "mentor@bmc.local" && password == "mentor123" {
+		return &models.User{
+			ID:       999999,
+			Nama:     "Mentor Sementara",
+			Email:    "mentor@bmc.local",
+			RoleID:   2,
+			Status:   "aktif",
+			Password: "",
+		}, nil
+	}
 
 	log.Printf("🔍 Login attempt - Email: '%s'\n", email)
 
@@ -125,10 +137,10 @@ func Login(email, password string) (*models.User, error) {
 		user, err = findUserFromUsersTable(email)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				log.Printf("❌ Password mismatch for admin table account: %s\n", email)
+				log.Printf(" Password mismatch for admin table account: %s\n", email)
 				return nil, errors.New("email atau password salah")
 			}
-			log.Printf("❌ Failed querying users table after admin mismatch: %v\n", err)
+			log.Printf("Failed querying users table after admin mismatch: %v\n", err)
 			return nil, errors.New("gagal memproses login")
 		}
 	}
@@ -150,32 +162,12 @@ func Login(email, password string) (*models.User, error) {
 func findUserFromUsersTable(email string) (*models.User, error) {
 	user := &models.User{}
 
-	nameExpr := "''"
-	for _, candidate := range []string{"nama", "name", "full_name", "username"} {
-		var exists bool
-		err := config.DB.QueryRow(
-			context.Background(),
-			`SELECT EXISTS (
-				SELECT 1
-				FROM information_schema.columns
-				WHERE table_name = 'users' AND column_name = $1
-			)`,
-			candidate,
-		).Scan(&exists)
-		if err != nil {
-			return nil, err
-		}
-		if exists {
-			nameExpr = "u." + candidate
-			break
-		}
-	}
-
+	// users table menggunakan username; nama ditarik dari siswa/mentor jika tersedia.
 	query := `
 	SELECT
 		u.id,
-		COALESCE(s.nama_siswa, ` + nameExpr + `),
-		u.email,
+		COALESCE(s.nama_siswa, m.nama_mentor, u.username),
+		u.username, -- gunakan username sebagai email untuk response
 		u.password,
 		u.role_id,
 		u.status,
@@ -186,7 +178,8 @@ func findUserFromUsersTable(email string) (*models.User, error) {
 		COALESCE(s.alamat, '')
 	FROM users u
 	LEFT JOIN siswa s ON s.user_id = u.id
-	WHERE LOWER(u.email) = $1
+	LEFT JOIN mentor m ON m.user_id = u.id
+	WHERE LOWER(u.username) = $1
 	`
 
 	err := config.DB.QueryRow(context.Background(), query, email).
