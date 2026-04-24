@@ -41,6 +41,7 @@ func main() {
 	routes.AuthRoutes(r)
 	routes.ProtectedRoutes(r)
 	routes.PaymentRoutes(r)
+	routes.MentorRoutes(r)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("failed to start server on :8080: %v", err)

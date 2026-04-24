@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -15,6 +14,7 @@ func ConnectDB() {
 	if dsn == "" {
 		dsn = "postgres://postgres:yohana@localhost:5432/bmcgo_db?sslmode=disable"
 	}
+	dsn := "postgres://postgres:123@localhost:5432/bmcgo_app"
 
 	var err error
 	// 1. Membuat konfigurasi pool
