@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"bmcgoapp-backend/config"
+	"context"
 	"fmt"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -43,6 +46,42 @@ type PaymentHistoryItem struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
+type ManualTransferConfirmationRequest struct {
+	PackageID    string `json:"package_id" binding:"required"`
+	PackageTitle string `json:"package_title" binding:"required"`
+	Amount       string `json:"amount" binding:"required"`
+}
+
+type VerificationItem struct {
+	TransactionID   string     `json:"transaction_id"`
+	UserID          int        `json:"user_id"`
+	StudentName     string     `json:"student_name"`
+	ClassName       string     `json:"class_name"`
+	SchoolName      string     `json:"school_name"`
+	Address         string     `json:"address"`
+	RegisteredWA    string     `json:"registered_whatsapp"`
+	PackageID       string     `json:"package_id"`
+	PackageTitle    string     `json:"package_title"`
+	Amount          int64      `json:"amount"`
+	Status          string     `json:"status"`
+	PaymentType     string     `json:"payment_type"`
+	CustomerEmail   string     `json:"customer_email"`
+	CustomerPhone   string     `json:"customer_phone"`
+	IsVerified      bool       `json:"is_verified"`
+	VerifiedAt      *time.Time `json:"verified_at"`
+	VerifiedByAdmin *int       `json:"verified_by_admin"`
+	UserStatus      string     `json:"user_status"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+}
+
+type VerificationOverview struct {
+	Waiting  int                `json:"waiting"`
+	Approved int                `json:"approved"`
+	Rejected int                `json:"rejected"`
+	Items    []VerificationItem `json:"items"`
+}
+
 // InitMidtrans initialize Midtrans SDK
 func InitMidtrans() {
 	// GANTI DENGAN SERVER KEY MIDTRANS KAMU
@@ -64,6 +103,116 @@ func normalizeStatus(status string) string {
 		return "failed"
 	}
 	return s
+}
+
+func normalizeWhatsAppNumber(raw string) string {
+	phone := strings.TrimSpace(raw)
+	if phone == "" {
+		return ""
+	}
+
+	nonDigits := regexp.MustCompile(`\D`)
+	phone = nonDigits.ReplaceAllString(phone, "")
+
+	if strings.HasPrefix(phone, "0") {
+		phone = "62" + strings.TrimPrefix(phone, "0")
+	} else if strings.HasPrefix(phone, "8") {
+		phone = "62" + phone
+	}
+
+	if !strings.HasPrefix(phone, "62") {
+		return ""
+	}
+
+	return phone
+}
+
+func buildVerificationWAMessage() string {
+	return strings.Join([]string{
+		"Pembayaran Anda telah terverifikasi dan akun Anda sudah AKTIF! ✅",
+		"Selamat bergabung di Bimbel Bintang Muda Center! 🚀",
+		"Mari kita raih prestasi bersama! 💪📚",
+	}, "\n")
+}
+
+func buildWALink(phone, message string) string {
+	normalized := normalizeWhatsAppNumber(phone)
+	if normalized == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("https://wa.me/%s?text=%s", normalized, url.QueryEscape(message))
+}
+
+func loadVerificationItems(ctx context.Context) ([]VerificationItem, error) {
+	rows, err := config.DB.Query(
+		ctx,
+		`SELECT pt.transaction_id,
+				pt.user_id,
+				COALESCE(NULLIF(s.nama_siswa, ''), NULLIF(u.nama, ''), pt.customer_name),
+				COALESCE(NULLIF(s.kelas, ''), ''),
+				COALESCE(NULLIF(s.asal_sekolah, ''), ''),
+				COALESCE(NULLIF(s.alamat, ''), ''),
+				COALESCE(NULLIF(s.no_wa, ''), ''),
+				pt.package_id,
+				pt.package_title,
+				pt.amount,
+				pt.status,
+				COALESCE(pt.payment_type, ''),
+				COALESCE(pt.customer_email, ''),
+				COALESCE(pt.customer_phone, ''),
+				COALESCE(pt.is_verified, FALSE),
+				pt.verified_at,
+				pt.verified_by_admin,
+				COALESCE(u.status, ''),
+				pt.created_at,
+				pt.updated_at
+		 FROM payment_transactions pt
+		 LEFT JOIN users u ON u.id = pt.user_id
+		 LEFT JOIN siswa s ON s.user_id = pt.user_id
+		 ORDER BY pt.created_at DESC
+		 LIMIT 200`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]VerificationItem, 0)
+	for rows.Next() {
+		item := VerificationItem{}
+		if err := rows.Scan(
+			&item.TransactionID,
+			&item.UserID,
+			&item.StudentName,
+			&item.ClassName,
+			&item.SchoolName,
+			&item.Address,
+			&item.RegisteredWA,
+			&item.PackageID,
+			&item.PackageTitle,
+			&item.Amount,
+			&item.Status,
+			&item.PaymentType,
+			&item.CustomerEmail,
+			&item.CustomerPhone,
+			&item.IsVerified,
+			&item.VerifiedAt,
+			&item.VerifiedByAdmin,
+			&item.UserStatus,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }
 
 // CreateTransaction membuat transaction di Midtrans
@@ -419,6 +568,102 @@ func GetPaymentHistory(c *gin.Context) {
 	})
 }
 
+// SubmitManualTransferConfirmation siswa konfirmasi sudah transfer VA agar masuk antrian verifikasi admin.
+func SubmitManualTransferConfirmation(c *gin.Context) {
+	userIDValue, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+
+	userID, ok := userIDValue.(int)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+
+	var req ManualTransferConfirmationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid request data",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	amount, err := strconv.ParseInt(strings.TrimSpace(req.Amount), 10, 64)
+	if err != nil || amount <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid amount",
+		})
+		return
+	}
+
+	var customerName string
+	var customerEmail string
+	var customerPhone string
+	err = config.DB.QueryRow(
+		c.Request.Context(),
+		`SELECT
+			COALESCE(NULLIF(s.nama_siswa, ''), NULLIF(u.nama, ''), ''),
+			COALESCE(NULLIF(u.email, ''), ''),
+			COALESCE(NULLIF(s.no_wa, ''), NULLIF(u.phone_number, ''), '')
+		 FROM users u
+		 LEFT JOIN siswa s ON s.user_id = u.id
+		 WHERE u.id = $1`,
+		userID,
+	).Scan(&customerName, &customerEmail, &customerPhone)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Gagal mengambil data siswa",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	transactionID := fmt.Sprintf(
+		"BMC-MANUAL-%d-%s-%d",
+		userID,
+		strings.TrimSpace(req.PackageID),
+		time.Now().UnixMilli(),
+	)
+
+	_, err = config.DB.Exec(
+		c.Request.Context(),
+		`INSERT INTO payment_transactions (
+			transaction_id, user_id, package_id, package_title, amount, status,
+			payment_type, customer_name, customer_email, customer_phone,
+			is_verified, created_at, updated_at
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,FALSE,NOW(),NOW())`,
+		transactionID,
+		userID,
+		strings.TrimSpace(req.PackageID),
+		strings.TrimSpace(req.PackageTitle),
+		amount,
+		"success",
+		"bni_transfer_manual",
+		customerName,
+		customerEmail,
+		customerPhone,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Gagal menyimpan konfirmasi transfer",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Konfirmasi transfer diterima. Menunggu verifikasi admin.",
+		"data": gin.H{
+			"transaction_id": transactionID,
+			"status":         "success",
+			"is_verified":    false,
+		},
+	})
+}
+
 // VerifyPayment admin verifikasi pembayaran
 func VerifyPayment(c *gin.Context) {
 	transactionID := c.Param("transactionId")
@@ -435,19 +680,45 @@ func VerifyPayment(c *gin.Context) {
 		return
 	}
 
-	var verifiedUserID int
+	if strings.TrimSpace(transactionID) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Transaction ID is required"})
+		return
+	}
+
+	var userID int
+	var customerPhone string
+	var registeredWhatsApp string
 	err := config.DB.QueryRow(
 		c.Request.Context(),
+		`SELECT pt.user_id,
+				COALESCE(pt.customer_phone, ''),
+				COALESCE(s.no_wa, '')
+		 FROM payment_transactions pt
+		 LEFT JOIN siswa s ON s.user_id = pt.user_id
+		 WHERE pt.transaction_id = $1`,
+		transactionID,
+	).Scan(&userID, &customerPhone, &registeredWhatsApp)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "Transaction not found",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	verifyResult, err := config.DB.Exec(
+		c.Request.Context(),
 		`UPDATE payment_transactions
-		 SET is_verified = TRUE,
+		 SET status = 'success',
+		     is_verified = TRUE,
 		     verified_at = NOW(),
 		     verified_by_admin = $1,
 		     updated_at = NOW()
 		 WHERE transaction_id = $2
-		 RETURNING user_id`,
+		   AND status IN ('success', 'pending')`,
 		adminID,
 		transactionID,
-	).Scan(&verifiedUserID)
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Failed to verify payment",
@@ -456,24 +727,46 @@ func VerifyPayment(c *gin.Context) {
 		return
 	}
 
+	if verifyResult.RowsAffected() == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Payment tidak dalam status yang bisa diverifikasi",
+		})
+		return
+	}
+
 	_, err = config.DB.Exec(
 		c.Request.Context(),
-		`UPDATE users SET status = 'aktif' WHERE id = $1`,
-		verifiedUserID,
+		`UPDATE users
+		 SET status = 'aktif'
+		 WHERE id = $1`,
+		userID,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Payment verified but failed to update user status",
+			"message": "Payment verified, tetapi gagal aktivasi akun siswa",
 			"error":   err.Error(),
 		})
 		return
 	}
 
+	waTemplate := buildVerificationWAMessage()
+	waPhone := strings.TrimSpace(registeredWhatsApp)
+	if waPhone == "" {
+		waPhone = strings.TrimSpace(customerPhone)
+	}
+	waLink := buildWALink(waPhone, waTemplate)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Payment verified successfully",
 		"data": gin.H{
-			"transaction_id": transactionID,
-			"is_verified":    true,
+			"transaction_id":       transactionID,
+			"is_verified":          true,
+			"user_id":              userID,
+			"user_status":          "aktif",
+			"whatsapp_number":      waPhone,
+			"whatsapp_message":     waTemplate,
+			"whatsapp_template_ok": waLink != "",
+			"whatsapp_url":         waLink,
 		},
 	})
 }
@@ -563,6 +856,40 @@ func RejectPayment(c *gin.Context) {
 	})
 }
 
+// GetVerificationOverview admin ambil ringkasan dan daftar verifikasi
+func GetVerificationOverview(c *gin.Context) {
+	var overview VerificationOverview
+	if err := config.DB.QueryRow(
+		c.Request.Context(),
+		`SELECT
+			COUNT(*) FILTER (WHERE pt.status IN ('success', 'pending') AND COALESCE(pt.is_verified, FALSE) = FALSE) AS waiting,
+			COUNT(*) FILTER (WHERE COALESCE(pt.is_verified, FALSE) = TRUE) AS approved,
+			COUNT(*) FILTER (WHERE pt.status = 'failed' OR pt.status = 'deny' OR pt.status = 'cancel' OR pt.status = 'expire') AS rejected
+		 FROM payment_transactions pt`,
+	).Scan(&overview.Waiting, &overview.Approved, &overview.Rejected); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to load verification overview",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	items, err := loadVerificationItems(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to load verification items",
+			"error":   err.Error(),
+		})
+		return
+	}
+	overview.Items = items
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Verification overview retrieved",
+		"data":    overview,
+	})
+}
+
 // GetVerificationStatus cek apakah user sudah terverifikasi
 func GetVerificationStatus(c *gin.Context) {
 	userIDValue, exists := c.Get("user_id")
@@ -611,13 +938,7 @@ func GetVerificationStatus(c *gin.Context) {
 
 // GetPendingVerifications admin ambil list pembayaran yg pending verifikasi
 func GetPendingVerifications(c *gin.Context) {
-	query := `SELECT transaction_id, user_id, package_id, package_title, amount, status,
-		payment_type, customer_name, customer_email, customer_phone, created_at, updated_at
-		FROM payment_transactions
-		WHERE status = 'success' AND is_verified = FALSE
-		ORDER BY created_at DESC`
-
-	rows, err := config.DB.Query(c.Request.Context(), query)
+	items, err := loadVerificationItems(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Failed to load pending verifications",
@@ -625,52 +946,17 @@ func GetPendingVerifications(c *gin.Context) {
 		})
 		return
 	}
-	defer rows.Close()
 
-	type PendingVerification struct {
-		TransactionID string    `json:"transaction_id"`
-		UserID        int       `json:"user_id"`
-		PackageID     string    `json:"package_id"`
-		PackageTitle  string    `json:"package_title"`
-		Amount        int64     `json:"amount"`
-		Status        string    `json:"status"`
-		PaymentType   string    `json:"payment_type"`
-		CustomerName  string    `json:"customer_name"`
-		CustomerEmail string    `json:"customer_email"`
-		CustomerPhone string    `json:"customer_phone"`
-		CreatedAt     time.Time `json:"created_at"`
-		UpdatedAt     time.Time `json:"updated_at"`
-	}
-
-	verifications := make([]PendingVerification, 0)
-	for rows.Next() {
-		item := PendingVerification{}
-		if err := rows.Scan(
-			&item.TransactionID,
-			&item.UserID,
-			&item.PackageID,
-			&item.PackageTitle,
-			&item.Amount,
-			&item.Status,
-			&item.PaymentType,
-			&item.CustomerName,
-			&item.CustomerEmail,
-			&item.CustomerPhone,
-			&item.CreatedAt,
-			&item.UpdatedAt,
-		); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Failed to parse verifications",
-				"error":   err.Error(),
-			})
-			return
+	pendingItems := make([]VerificationItem, 0)
+	for _, item := range items {
+		if (item.Status == "success" || item.Status == "pending") && !item.IsVerified {
+			pendingItems = append(pendingItems, item)
 		}
-		verifications = append(verifications, item)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Pending verifications retrieved",
-		"data":    verifications,
+		"data":    pendingItems,
 	})
 }
 

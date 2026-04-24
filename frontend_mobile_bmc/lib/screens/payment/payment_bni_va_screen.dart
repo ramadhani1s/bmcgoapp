@@ -1,16 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:frontend_mobile_bmc/services/payment_service.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class PaymentBniVaScreen extends StatefulWidget {
   const PaymentBniVaScreen({
     super.key,
+    required this.packageId,
     required this.packageTitle,
     required this.finalAmount,
   });
 
+  final int packageId;
   final String packageTitle;
   final int finalAmount;
 
@@ -21,6 +24,7 @@ class PaymentBniVaScreen extends StatefulWidget {
 class _PaymentBniVaScreenState extends State<PaymentBniVaScreen> {
   late DateTime _expiryTime;
   Timer? _countdownTimer;
+  bool _isSubmittingTransfer = false;
 
   static const Color _headerOrange = Color(0xFFFF6D00);
   static const String _virtualAccountNumber = '8008267692142738';
@@ -76,6 +80,43 @@ class _PaymentBniVaScreenState extends State<PaymentBniVaScreen> {
       return;
     }
     Navigator.of(context).pushReplacementNamed('/payment');
+  }
+
+  Future<void> _submitTransferConfirmation() async {
+    if (_isSubmittingTransfer) return;
+
+    setState(() {
+      _isSubmittingTransfer = true;
+    });
+
+    try {
+      await PaymentService.submitManualTransfer(
+        packageId: widget.packageId,
+        packageTitle: widget.packageTitle,
+        amount: widget.finalAmount,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Konfirmasi terkirim. Menunggu verifikasi admin.'),
+          backgroundColor: Color(0xFF2E7D32),
+        ),
+      );
+
+      Navigator.of(context).pushReplacementNamed('/dashboard');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingTransfer = false;
+        });
+      }
+    }
   }
 
   @override
@@ -393,13 +434,9 @@ class _PaymentBniVaScreenState extends State<PaymentBniVaScreen> {
               width: double.infinity,
               height: 54,
               child: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Status: menunggu verifikasi admin'),
-                    ),
-                  );
-                },
+                onPressed: _isSubmittingTransfer
+                    ? null
+                    : _submitTransferConfirmation,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4CAF50),
                   foregroundColor: Colors.white,
@@ -408,10 +445,22 @@ class _PaymentBniVaScreenState extends State<PaymentBniVaScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Saya Sudah Transfer',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-                ),
+                child: _isSubmittingTransfer
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Saya Sudah Transfer',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
               ),
             ),
           ),

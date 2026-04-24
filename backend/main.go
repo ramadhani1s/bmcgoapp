@@ -3,6 +3,7 @@ package main
 import (
 	"bmcgoapp-backend/config"
 	"bmcgoapp-backend/routes"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,9 @@ func main() {
 	config.ConnectDB()
 
 	r := gin.Default()
+	if err := r.SetTrustedProxies([]string{"127.0.0.1", "::1"}); err != nil {
+		log.Fatalf("failed to set trusted proxies: %v", err)
+	}
 
 	// Allow browser clients (Flutter web) to call backend APIs.
 	r.Use(func(c *gin.Context) {
@@ -38,5 +42,7 @@ func main() {
 	routes.ProtectedRoutes(r)
 	routes.PaymentRoutes(r)
 
-	r.Run(":8080")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("failed to start server on :8080: %v", err)
+	}
 }

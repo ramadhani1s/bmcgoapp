@@ -28,6 +28,7 @@ func ProtectedRoutes(r *gin.Engine) {
 	admin.Use(middleware.RoleMiddleware(1)) // 1 = admin
 
 	admin.GET("/dashboard", handlers.GetAdminDashboard)
+	admin.GET("/dashboard-summary", handlers.GetAdminDashboardSummary)
 
 	// ================= MENTOR ONLY =================
 	mentor := auth.Group("/mentor")

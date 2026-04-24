@@ -55,13 +55,6 @@ class _LoginScreenState extends State<LoginScreen> {
         await AuthService.logout();
         return;
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Selamat datang, ${user.nama}! (${user.roleName})'),
-          backgroundColor: Colors.green,
-        ),
-      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -79,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFD1D5DB), width: 1),
+        borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
@@ -90,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderSide: const BorderSide(color: Colors.red, width: 1.5),
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: const Color(0xFFF8FAFC),
       labelStyle: const TextStyle(
         color: Color(0xFF6B7280),
         fontWeight: FontWeight.w500,
@@ -142,42 +135,40 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildBrandPanel() {
+  Widget _buildBrandPanel({bool compact = false}) {
     return Container(
-      // Ubah warna panel kiri login di sini.
       color: const Color(0xFFEFF1F6),
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 36),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 18 : 40),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                // Lokasi logo 
                 'assets/images/BMC .png',
-                width: 130,
-                height: 130,
+                width: compact ? 88 : 170,
+                height: compact ? 88 : 170,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(height: 20),
-              const Text(
+              SizedBox(height: compact ? 12 : 24),
+              Text(
                 'Portal Admin\nBintang Muda Center',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 44,
+                  fontSize: compact ? 26 : 50,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF1F2937),
                   height: 1.18,
                 ),
               ),
-              const SizedBox(height: 20),
-              const Text(
+              SizedBox(height: compact ? 8 : 24),
+              Text(
                 'Selamat datang di sistem manajemen Bimbingan Belajar\nBintang Muda Center. Kelola semua aspek operasional\ndengan mudah.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: compact ? 12 : 14,
                   color: Color(0xFF4B5563),
-                  height: 1.4,
+                  height: 1.45,
                 ),
               ),
             ],
@@ -187,25 +178,25 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLoginFormCard() {
+  Widget _buildLoginFormCard({bool compact = false}) {
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 620),
+      constraints: BoxConstraints(maxWidth: compact ? 420 : 560),
       child: Form(
         key: _formKey,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Masuk ke Dashboard',
               style: TextStyle(
-                fontSize: 56,
+                fontSize: compact ? 28 : 52,
                 height: 1.1,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF1F2937),
               ),
             ),
-            const SizedBox(height: 40),
+            SizedBox(height: compact ? 18 : 34),
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
@@ -217,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 22),
+            SizedBox(height: compact ? 14 : 18),
             TextFormField(
               controller: _passwordController,
               obscureText: !_isPasswordVisible,
@@ -244,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: compact ? 18 : 22),
             _buildLoginButton(),
           ],
         ),
@@ -257,58 +248,45 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDesktop = MediaQuery.of(context).size.width >= 980;
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 37, 85, 208),
+      backgroundColor: Colors.white,
       body: isDesktop
-          ? SafeArea(
-              child: Center(
-                child: Container(
-                  constraints: const BoxConstraints(
-                    maxWidth: 1320,
-                    maxHeight: 860,
-                  ),
-                  margin: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
+          ? Row(
+              children: [
+                Expanded(flex: 44, child: _buildBrandPanel()),
+                Expanded(
+                  flex: 56,
+                  child: Container(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color.fromRGBO(15, 23, 42, 0.08),
-                        blurRadius: 30,
-                        offset: Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Row(
-                      children: [
-                        Expanded(flex: 43, child: _buildBrandPanel()),
-                        // Ubah warna garis pemisah login di sini.
-                        Container(width: 2, color:Colors.white,),
-                        Expanded(
-                          flex: 57,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 52,
-                              vertical: 34,
-                            ),
-                            child: _buildLoginFormCard(),
-                          ),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 52,
+                          vertical: 34,
                         ),
-                      ],
+                        child: _buildLoginFormCard(),
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             )
           : SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(18),
                 child: Column(
                   children: [
-                    SizedBox(height: 290, child: _buildBrandPanel()),
+                    SizedBox(
+                      height: 240,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF1F6),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: _buildBrandPanel(compact: true),
+                      ),
+                    ),
                     const SizedBox(height: 24),
-                    _buildLoginFormCard(),
+                    _buildLoginFormCard(compact: true),
                   ],
                 ),
               ),

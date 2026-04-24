@@ -188,4 +188,72 @@ class PaymentService {
       throw Exception('Error finishing transaction: $e');
     }
   }
+
+  static Future<String> submitManualTransfer({
+    required int packageId,
+    required String packageTitle,
+    required int amount,
+  }) async {
+    try {
+      final token = await _getAuthToken();
+
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/payment/submit-transfer'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'package_id': packageId.toString(),
+              'package_title': packageTitle,
+              'amount': amount.toString(),
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final payload = data['data'] as Map<String, dynamic>?;
+        return payload?['transaction_id']?.toString() ?? '';
+      }
+
+      // Fallback untuk backend lama yang belum punya route submit-transfer.
+      if (response.statusCode == 404) {
+        final prefs = await SharedPreferences.getInstance();
+        final customerName = prefs.getString('user_name') ?? 'Siswa BMC';
+        final customerEmail =
+            prefs.getString('user_email') ?? 'siswa@bmc.local';
+        final customerPhone = prefs.getString('user_phone') ?? '081234567890';
+
+        final legacyTransaction = await createTransaction(
+          TransactionRequest(
+            packageId: packageId.toString(),
+            packageTitle: packageTitle,
+            amount: amount.toString(),
+            customerEmail: customerEmail,
+            customerName: customerName,
+            customerPhone: customerPhone,
+          ),
+        );
+
+        try {
+          await finishTransaction(legacyTransaction.transactionId);
+        } catch (_) {
+          // Abaikan error refresh status Midtrans, admin masih bisa verifikasi dari status pending.
+        }
+
+        return legacyTransaction.transactionId;
+      }
+
+      final errorMessage = _extractMessageFromBody(response.body);
+      throw Exception(
+        errorMessage?.isNotEmpty == true
+            ? errorMessage!
+            : 'Gagal mengirim konfirmasi transfer (${response.statusCode})',
+      );
+    } catch (e) {
+      throw Exception('Error submit transfer: $e');
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../models/admin_dashboard_data.dart';
 import '../../models/user.dart';
+import '../../models/admin_dashboard_data.dart';
 import '../../services/admin_dashboard_service.dart';
 import '../../services/auth_service.dart';
 
@@ -20,14 +20,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   User? _currentUser;
   int _selectedMenuIndex = 0;
-  bool _isDashboardLoading = true;
-  AdminDashboardData _dashboardData = AdminDashboardData.empty();
+  AdminDashboardData? _summary;
+  bool _isSummaryLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadUser();
-    _loadDashboardData();
+    _loadSummary();
   }
 
   Future<void> _loadUser() async {
@@ -39,30 +39,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  Future<void> _loadDashboardData() async {
-    if (mounted) {
-      setState(() {
-        _isDashboardLoading = true;
-      });
-    }
+  Future<void> _loadSummary() async {
+    setState(() {
+      _isSummaryLoading = true;
+    });
 
     try {
-      final data = await AdminDashboardService.getDashboardData();
-      if (mounted) {
-        setState(() {
-          _dashboardData = data;
-        });
-      }
+      final summary = await AdminDashboardService.getSummary();
+      if (!mounted) return;
+      setState(() {
+        _summary = summary;
+      });
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _dashboardData = AdminDashboardData.empty();
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _summary = null;
+      });
     } finally {
       if (mounted) {
         setState(() {
-          _isDashboardLoading = false;
+          _isSummaryLoading = false;
         });
       }
     }
@@ -108,56 +104,52 @@ class _AdminDashboardState extends State<AdminDashboard> {
   List<_StatCardData> get _stats => [
     _StatCardData(
       title: 'Menunggu Verifikasi',
-      value: _dashboardData.stats.pendingVerifications.toString(),
+      value: (_summary?.waitingVerifications ?? 0).toString(),
       subtitle: 'Pendaftaran Siswa Baru',
-      color: Color(0xFFFF7A00),
-      backgroundColor: Color(0xFFF6EFE7),
+      color: const Color(0xFFFF7A00),
+      backgroundColor: const Color(0xFFF6EFE7),
       icon: Icons.person_add_alt_1,
     ),
     _StatCardData(
       title: 'Jadwal Hari Ini',
-      value: _dashboardData.stats.schedulesToday.toString(),
+      value: (_summary?.todaySchedules ?? 0).toString(),
       subtitle: 'Kelas Aktif',
-      color: Color(0xFF2E7BEF),
-      backgroundColor: Color(0xFFF0F5FF),
+      color: const Color(0xFF2E7BEF),
+      backgroundColor: const Color(0xFFF0F5FF),
       icon: Icons.calendar_month,
     ),
     _StatCardData(
       title: 'Siswa Aktif',
-      value: _dashboardData.stats.activeStudents.toString(),
-      subtitle: 'Siswa dengan akses belajar aktif',
-      color: Color(0xFF17BF63),
-      backgroundColor: Color(0xFFEDF8F0),
+      value: (_summary?.activeStudents ?? 0).toString(),
+      subtitle: 'Total Siswa Terdaftar',
+      color: const Color(0xFF17BF63),
+      backgroundColor: const Color(0xFFEDF8F0),
       icon: Icons.groups,
     ),
   ];
 
-  List<_PendingVerificationRow> get _pendingRows => _dashboardData
-      .pendingVerifications
-      .map(
-        (item) => _PendingVerificationRow(
-          transactionId: item.transactionId,
-          name: item.name,
-          school: item.school,
-          className: item.className,
-          date: item.date,
-          status: item.status,
-        ),
-      )
-      .toList();
+  List<_PendingVerificationRow> get _pendingRows {
+    final items = _summary?.pendingItems ?? const <DashboardPendingItem>[];
+    if (items.isEmpty) {
+      return const [];
+    }
 
-  List<_ScheduleRow> get _scheduleRows => _dashboardData.todaySchedules
-      .map(
-        (item) => _ScheduleRow(
-          time: item.time,
-          className: item.className,
-          subject: item.subject,
-          mentor: item.mentor,
-          room: item.room,
-          status: item.status,
-        ),
-      )
-      .toList();
+    return items
+        .map(
+          (item) => _PendingVerificationRow(
+            transactionId: '',
+            name: item.studentName,
+            school: item.schoolName,
+            className: item.className,
+            date:
+                '${item.date.day.toString().padLeft(2, '0')} ${_monthName(item.date.month).substring(0, 3)} ${item.date.year}',
+            status: item.status,
+          ),
+        )
+        .toList();
+  }
+
+  List<_ScheduleRow> get _scheduleRows => const [];
 
   @override
   Widget build(BuildContext context) {
@@ -182,18 +174,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildTopBar(),
-                        if (_isDashboardLoading)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 10),
-                            child: LinearProgressIndicator(
-                              minHeight: 2,
-                              backgroundColor: Color(0xFFE7EDF9),
-                              color: Color(0xFF2A58E8),
-                            ),
-                          ),
                         const SizedBox(height: 14),
                         _buildHeroCard(),
                         const SizedBox(height: 14),
+                        if (_isSummaryLoading)
+                          const LinearProgressIndicator(minHeight: 2),
+                        if (_isSummaryLoading) const SizedBox(height: 8),
                         _buildStatsRow(),
                         const SizedBox(height: 14),
                         _buildPendingVerificationCard(),
@@ -638,8 +624,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildPendingVerificationCard() {
-    final pendingCount = _pendingRows.length;
-
     return Container(
       decoration: BoxDecoration(
         color: _surfaceCream,
@@ -671,7 +655,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$pendingCount pendaftaran belum diverifikasi',
+                  '${_summary?.waitingVerifications ?? 0} pendaftaran belum diverifikasi',
                   style: const TextStyle(
                     color: Color(0xFFFFD5BC),
                     fontSize: 11,
@@ -734,8 +718,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildScheduleCard() {
-    final scheduleCount = _scheduleRows.length;
-
     return Container(
       decoration: BoxDecoration(
         color: _surfaceCream,
@@ -770,7 +752,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${_dashboardData.scheduleDateLabel} - total $scheduleCount sesi',
+                        '${_formatIndoDate(DateTime.now())} - total ${_summary?.todaySchedules ?? _scheduleRows.length} sesi',
                         style: const TextStyle(
                           color: Color(0xFFC9D7FF),
                           fontSize: 10.5,

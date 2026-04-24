@@ -1,50 +1,75 @@
-class AdminDashboardData {
-  final AdminDashboardStats stats;
-  final List<AdminPendingVerificationRow> pendingVerifications;
-  final List<AdminScheduleRow> todaySchedules;
-  final String scheduleDateLabel;
+class DashboardPendingItem {
+  final String studentName;
+  final String schoolName;
+  final String className;
+  final DateTime date;
+  final String status;
 
-  const AdminDashboardData({
-    required this.stats,
-    required this.pendingVerifications,
-    required this.todaySchedules,
-    required this.scheduleDateLabel,
+  DashboardPendingItem({
+    required this.studentName,
+    required this.schoolName,
+    required this.className,
+    required this.date,
+    required this.status,
   });
 
-  factory AdminDashboardData.empty() {
-    return const AdminDashboardData(
-      stats: AdminDashboardStats(
-        pendingVerifications: 0,
-        schedulesToday: 0,
-        activeStudents: 0,
-      ),
-      pendingVerifications: [],
-      todaySchedules: [],
-      scheduleDateLabel: '-',
-    );
-  }
-
-  factory AdminDashboardData.fromJson(Map<String, dynamic> json) {
-    final statsJson = json['stats'] as Map<String, dynamic>? ?? const {};
-    final pendingJson =
-        (json['pending_verifications'] as List<dynamic>? ?? const []);
-    final scheduleJson = (json['today_schedules'] as List<dynamic>? ?? const []);
-
-    return AdminDashboardData(
-      stats: AdminDashboardStats.fromJson(statsJson),
-      pendingVerifications: pendingJson
-          .whereType<Map<String, dynamic>>()
-          .map(AdminPendingVerificationRow.fromJson)
-          .toList(),
-      todaySchedules: scheduleJson
-          .whereType<Map<String, dynamic>>()
-          .map(AdminScheduleRow.fromJson)
-          .toList(),
-      scheduleDateLabel: json['schedule_date_label']?.toString() ?? '-',
+  factory DashboardPendingItem.fromJson(Map<String, dynamic> json) {
+    return DashboardPendingItem(
+      studentName: json['student_name']?.toString() ?? '-',
+      schoolName: json['school_name']?.toString() ?? '-',
+      className: json['class_name']?.toString() ?? '-',
+      date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
+      status: json['status']?.toString() ?? 'Menunggu',
     );
   }
 }
 
+class AdminDashboardData {
+  final int waitingVerifications;
+  final int todaySchedules;
+  final int activeStudents;
+  final List<DashboardPendingItem> pendingItems;
+
+  const AdminDashboardData({
+    required this.waitingVerifications,
+    required this.todaySchedules,
+    required this.activeStudents,
+    required this.pendingItems,
+  });
+
+  factory AdminDashboardData.empty() {
+    return const AdminDashboardData(
+      waitingVerifications: 0,
+      todaySchedules: 0,
+      activeStudents: 0,
+      pendingItems: [],
+    );
+  }
+
+  factory AdminDashboardData.fromJson(Map<String, dynamic> json) {
+    final pendingItems = (json['pending_items'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(DashboardPendingItem.fromJson)
+        .toList();
+
+    return AdminDashboardData(
+      waitingVerifications: json['waiting_verifications'] is int
+          ? json['waiting_verifications'] as int
+          : int.tryParse(json['waiting_verifications']?.toString() ?? '0') ?? 0,
+      todaySchedules: json['today_schedules'] is int
+          ? json['today_schedules'] as int
+          : int.tryParse(json['today_schedules']?.toString() ?? '0') ?? 0,
+      activeStudents: json['active_students'] is int
+          ? json['active_students'] as int
+          : int.tryParse(json['active_students']?.toString() ?? '0') ?? 0,
+      pendingItems: pendingItems,
+    );
+  }
+}
+
+typedef AdminDashboardSummary = AdminDashboardData;
+
+// Legacy model classes for compatibility
 class AdminDashboardStats {
   final int pendingVerifications;
   final int schedulesToday;

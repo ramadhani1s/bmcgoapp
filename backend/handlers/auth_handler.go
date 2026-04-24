@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"bmcgoapp-backend/models"
 	"bmcgoapp-backend/services"
@@ -21,6 +22,25 @@ func RegisterHandler(c *gin.Context) {
 		})
 		return
 	}
+
+	// Normalisasi input supaya payload dari frontend yang berbeda tetap terbaca
+	if user.Nama == "" {
+		user.Nama = c.PostForm("nama")
+	}
+	if user.WhatsApp == "" {
+		user.WhatsApp = c.PostForm("whatsapp")
+	}
+	if user.Alamat == "" {
+		user.Alamat = c.PostForm("alamat")
+	}
+
+	user.Nama = strings.TrimSpace(user.Nama)
+	user.Email = strings.TrimSpace(user.Email)
+	user.Password = strings.TrimSpace(user.Password)
+	user.Kelas = strings.TrimSpace(user.Kelas)
+	user.AsalSekolah = strings.TrimSpace(user.AsalSekolah)
+	user.WhatsApp = strings.TrimSpace(user.WhatsApp)
+	user.Alamat = strings.TrimSpace(user.Alamat)
 
 	if user.Nama == "" || user.Email == "" || user.Password == "" || user.Kelas == "" || user.AsalSekolah == "" || user.WhatsApp == "" || user.Alamat == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
