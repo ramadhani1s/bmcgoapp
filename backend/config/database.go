@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -11,12 +10,11 @@ import (
 var DB *pgxpool.Pool
 
 func ConnectDB() {
-	dsn := os.Getenv("BMC_DB_DSN")
+	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		// Default lokal: pakai database bmcgo_db dan matikan TLS.
-		// Jika DB kamu beda, set BMC_DB_DSN ke connection string yang benar.
-		dsn = "postgres://postgres@localhost:5432/bmcgo_db?sslmode=disable"
+		dsn = "postgres://postgres:yohana@localhost:5432/bmcgo_db?sslmode=disable"
 	}
+	dsn := "postgres://postgres:123@localhost:5432/bmcgo_app"
 
 	var err error
 	// 1. Membuat konfigurasi pool
@@ -32,6 +30,44 @@ func ConnectDB() {
 	}
 
 	log.Println("✅ Real connection established to database")
+
+	// Sinkronisasi schema minimum agar query auth/register tidak gagal
+	_, err = DB.Exec(context.Background(), `
+		ALTER TABLE IF EXISTS users
+		ADD COLUMN IF NOT EXISTS nama VARCHAR(255),
+		ADD COLUMN IF NOT EXISTS email VARCHAR(255),
+		ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20)
+	`)
+	if err != nil {
+		log.Fatal("Gagal sinkronisasi kolom users:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		DO $$
+		BEGIN
+			IF EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'users' AND column_name = 'username'
+			) THEN
+				EXECUTE 'UPDATE users
+					SET nama = COALESCE(NULLIF(nama, ''''), username)
+					WHERE (nama IS NULL OR nama = '''')';
+			END IF;
+		END
+		$$
+	`)
+	if err != nil {
+		log.Println("Warning: gagal backfill nama dari username:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique
+		ON users (email)
+		WHERE email IS NOT NULL
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat unique index email users:", err)
+	}
 
 	_, err = DB.Exec(context.Background(), `
 		CREATE TABLE IF NOT EXISTS payment_transactions (

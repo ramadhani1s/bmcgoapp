@@ -1,79 +1,149 @@
 package handlers
 
 import (
-	"net/http"
-	"strconv"
+	"context"
 
-	"bmcgoapp-backend/services"
+	"bmcgoapp-backend/config"
 
 	"github.com/gin-gonic/gin"
 )
 
-type createMentorRequest struct {
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	NamaMentor   string `json:"nama_mentor"`
-	Spesialisasi string `json:"spesialisasi"`
-	Bio          string `json:"bio"`
-}
-
-func CreateMentorHandler(c *gin.Context) {
-	var req createMentorRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Format request tidak valid",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	if err := services.CreateMentor(req.Email, req.Password, req.NamaMentor, req.Spesialisasi, req.Bio); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Gagal membuat mentor",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Mentor berhasil dibuat",
-	})
-}
-
-func GetMentorsHandler(c *gin.Context) {
-	items, err := services.GetMentors()
+// GetMentors returns all mentor rows.
+func GetMentors(c *gin.Context) {
+	rows, err := config.DB.Query(context.Background(), `
+		SELECT id, nama_mentor, email, spesialisasi, status
+		FROM mentor
+		ORDER BY id ASC
+	`)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Gagal mengambil data mentor",
-			"details": err.Error(),
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var mentors []gin.H
+
+	for rows.Next() {
+		var id int
+		var nama, email, mapel, status string
+
+		err := rows.Scan(&id, &nama, &email, &mapel, &status)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		mentors = append(mentors, gin.H{
+			"id":     id,
+			"nama":   nama,
+			"email":  email,
+			"mapel":  mapel,
+			"status": status,
 		})
+	}
+
+	c.JSON(200, mentors)
+}
+
+// CreateMentor inserts a new mentor row.
+func CreateMentor(c *gin.Context) {
+	var input struct {
+		NamaMentor   string `json:"nama_mentor"`
+		Email        string `json:"email"`
+		Spesialisasi string `json:"spesialisasi"`
+		Bio          string `json:"bio"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": "Data tidak valid"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Data mentor berhasil diambil",
-		"data":    items,
+	if input.NamaMentor == "" || input.Email == "" || input.Spesialisasi == "" {
+		c.JSON(400, gin.H{"error": "Nama, email, dan spesialisasi wajib diisi"})
+		return
+	}
+
+	_, err := config.DB.Exec(context.Background(), `
+		INSERT INTO mentor (nama_mentor, email, spesialisasi, bio, status)
+		VALUES ($1, $2, $3, $4, 'Aktif')
+	`,
+		input.NamaMentor,
+		input.Email,
+		input.Spesialisasi,
+		input.Bio,
+	)
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Mentor berhasil ditambahkan",
 	})
 }
 
-func DeleteMentorHandler(c *gin.Context) {
-	mentorID, err := strconv.Atoi(c.Param("mentorId"))
-	if err != nil || mentorID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "mentorId tidak valid",
-		})
+// UpdateMentor updates a mentor row by id.
+func UpdateMentor(c *gin.Context) {
+	id := c.Param("id")
+
+	var input struct {
+		NamaMentor   string `json:"nama_mentor"`
+		Email        string `json:"email"`
+		Spesialisasi string `json:"spesialisasi"`
+		Bio          string `json:"bio"`
+		Status       string `json:"status"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": "Data tidak valid"})
 		return
 	}
 
-	if err := services.DeleteMentorByID(mentorID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Gagal menghapus mentor",
-			"details": err.Error(),
-		})
+	_, err := config.DB.Exec(context.Background(), `
+		UPDATE mentor
+		SET nama_mentor=$1,
+		    email=$2,
+		    spesialisasi=$3,
+		    bio=$4,
+		    status=$5
+		WHERE id=$6
+	`,
+		input.NamaMentor,
+		input.Email,
+		input.Spesialisasi,
+		input.Bio,
+		input.Status,
+		id,
+	)
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(200, gin.H{
+		"message": "Mentor berhasil diupdate",
+	})
+}
+
+// DeleteMentor deletes a mentor row by id.
+func DeleteMentor(c *gin.Context) {
+	id := c.Param("id")
+
+	_, err := config.DB.Exec(
+		context.Background(),
+		"DELETE FROM mentor WHERE id=$1",
+		id,
+	)
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
 		"message": "Mentor berhasil dihapus",
 	})
 }

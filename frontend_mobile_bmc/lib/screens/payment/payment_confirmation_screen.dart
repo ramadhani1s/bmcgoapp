@@ -52,6 +52,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => PaymentBniVaScreen(
+          packageId: widget.packageId,
           packageTitle: widget.packageTitle,
           finalAmount: widget.finalAmount,
         ),

@@ -69,13 +69,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   user['whatsapp']?.toString() ?? '08xxxxxxxxxx',
                 );
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Selamat datang, ${user['nama']}!'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-
                 Navigator.of(context).pushReplacementNamed(
                   '/dashboard',
                   arguments: {'user': user, 'token': token},

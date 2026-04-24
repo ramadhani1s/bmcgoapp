@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/user.dart';
+import '../../models/admin_dashboard_data.dart';
+import '../../services/admin_dashboard_service.dart';
 import '../../services/auth_service.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -18,11 +20,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   User? _currentUser;
   int _selectedMenuIndex = 0;
+  AdminDashboardData? _summary;
+  bool _isSummaryLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadUser();
+    _loadSummary();
   }
 
   Future<void> _loadUser() async {
@@ -31,6 +36,31 @@ class _AdminDashboardState extends State<AdminDashboard> {
       setState(() {
         _currentUser = user;
       });
+    }
+  }
+
+  Future<void> _loadSummary() async {
+    setState(() {
+      _isSummaryLoading = true;
+    });
+
+    try {
+      final summary = await AdminDashboardService.getSummary();
+      if (!mounted) return;
+      setState(() {
+        _summary = summary;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _summary = null;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSummaryLoading = false;
+        });
+      }
     }
   }
 
@@ -71,91 +101,55 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _SideMenuItem('Kelola Profil Alumni', Icons.badge_outlined),
   ];
 
-  List<_StatCardData> get _stats => const [
+  List<_StatCardData> get _stats => [
     _StatCardData(
       title: 'Menunggu Verifikasi',
-      value: '2',
+      value: (_summary?.waitingVerifications ?? 0).toString(),
       subtitle: 'Pendaftaran Siswa Baru',
-      color: Color(0xFFFF7A00),
-      backgroundColor: Color(0xFFF6EFE7),
+      color: const Color(0xFFFF7A00),
+      backgroundColor: const Color(0xFFF6EFE7),
       icon: Icons.person_add_alt_1,
     ),
     _StatCardData(
       title: 'Jadwal Hari Ini',
-      value: '4',
+      value: (_summary?.todaySchedules ?? 0).toString(),
       subtitle: 'Kelas Aktif',
-      color: Color(0xFF2E7BEF),
-      backgroundColor: Color(0xFFF0F5FF),
+      color: const Color(0xFF2E7BEF),
+      backgroundColor: const Color(0xFFF0F5FF),
       icon: Icons.calendar_month,
     ),
     _StatCardData(
       title: 'Siswa Aktif',
-      value: '45',
+      value: (_summary?.activeStudents ?? 0).toString(),
       subtitle: 'Total Siswa Terdaftar',
-      color: Color(0xFF17BF63),
-      backgroundColor: Color(0xFFEDF8F0),
+      color: const Color(0xFF17BF63),
+      backgroundColor: const Color(0xFFEDF8F0),
       icon: Icons.groups,
     ),
   ];
 
-  List<_PendingVerificationRow> get _pendingRows => const [
-    _PendingVerificationRow(
-      name: 'Putri Rahayu',
-      school: 'SMAN 1 Bandung',
-      className: 'Kelas 10',
-      date: '13 Mar 2025',
-      status: 'Menunggu',
-    ),
-    _PendingVerificationRow(
-      name: 'Dimas Pratama',
-      school: 'SMAN 1 Bandung',
-      className: 'Kelas 12',
-      date: '13 Mar 2025',
-      status: 'Disetujui',
-    ),
-    _PendingVerificationRow(
-      name: 'Rina Sari',
-      school: 'SMAN 2 Bandung',
-      className: 'Kelas 11',
-      date: '12 Mar 2025',
-      status: 'Ditolak',
-    ),
-  ];
+  List<_PendingVerificationRow> get _pendingRows {
+    final items = _summary?.pendingItems ?? const <DashboardPendingItem>[];
+    if (items.isEmpty) {
+      return const [];
+    }
 
-  List<_ScheduleRow> get _scheduleRows => const [
-    _ScheduleRow(
-      time: '08:00 - 10:00',
-      className: 'Kelas 10',
-      subject: 'Matematika',
-      mentor: 'Bu Sarah',
-      room: 'Ruang A',
-      status: 'Berlangsung',
-    ),
-    _ScheduleRow(
-      time: '10:00 - 12:00',
-      className: 'Kelas 11',
-      subject: 'Fisika',
-      mentor: 'Pak Andi',
-      room: 'Ruang B',
-      status: 'Akan Datang',
-    ),
-    _ScheduleRow(
-      time: '13:00 - 15:00',
-      className: 'Kelas 12',
-      subject: 'Kimia',
-      mentor: 'Bu Rini',
-      room: 'Ruang C',
-      status: 'Akan Datang',
-    ),
-    _ScheduleRow(
-      time: '15:30 - 17:00',
-      className: 'Kelas 10',
-      subject: 'Biologi',
-      mentor: 'Pak Dodi',
-      room: 'Ruang A',
-      status: 'Akan Datang',
-    ),
-  ];
+    return items
+        .map(
+          (item) => _PendingVerificationRow(
+            transactionId: '',
+            name: item.studentName,
+            school: item.schoolName,
+            className: item.className,
+            date:
+                '${item.date.day.toString().padLeft(2, '0')} ${_monthName(item.date.month).substring(0, 3)} ${item.date.year}',
+            status: item.status,
+          ),
+        )
+        .toList();
+  }
+
+  List<_ScheduleRow> get _scheduleRows => const [];
 
   @override
   Widget build(BuildContext context) {
@@ -183,6 +177,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         const SizedBox(height: 14),
                         _buildHeroCard(),
                         const SizedBox(height: 14),
+                        if (_isSummaryLoading)
+                          const LinearProgressIndicator(minHeight: 2),
+                        if (_isSummaryLoading) const SizedBox(height: 8),
                         _buildStatsRow(),
                         const SizedBox(height: 14),
                         _buildPendingVerificationCard(),
@@ -645,10 +642,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 topRight: Radius.circular(10),
               ),
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Pendaftaran Menunggu Verifikasi',
                   style: TextStyle(
                     color: Colors.white,
@@ -656,10 +653,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
-                  '3 pendaftaran belum diverifikasi',
-                  style: TextStyle(color: Color(0xFFFFD5BC), fontSize: 11),
+                  '${_summary?.waitingVerifications ?? 0} pendaftaran belum diverifikasi',
+                  style: const TextStyle(
+                    color: Color(0xFFFFD5BC),
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -680,8 +680,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                for (final row in _pendingRows)
-                  _PendingItemRow(row: row, onApprove: () {}, onReject: () {}),
+                if (_pendingRows.isEmpty)
+                  const _EmptyTableRow(
+                    message: 'Belum ada pendaftaran yang menunggu verifikasi.',
+                  )
+                else
+                  for (final row in _pendingRows)
+                    _PendingItemRow(
+                      row: row,
+                      onApprove: () {},
+                      onReject: () {},
+                    ),
               ],
             ),
           ),
@@ -729,11 +738,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Jadwal Belajar Hari Ini',
                         style: TextStyle(
                           color: Colors.white,
@@ -741,10 +750,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
-                        'Sabtu, 28 Maret 2026 - total 4 sesi',
-                        style: TextStyle(
+                        '${_formatIndoDate(DateTime.now())} - total ${_summary?.todaySchedules ?? _scheduleRows.length} sesi',
+                        style: const TextStyle(
                           color: Color(0xFFC9D7FF),
                           fontSize: 10.5,
                         ),
@@ -790,7 +799,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                for (final row in _scheduleRows) _ScheduleItemRow(row: row),
+                if (_scheduleRows.isEmpty)
+                  const _EmptyTableRow(
+                    message: 'Belum ada jadwal belajar untuk hari ini.',
+                  )
+                else
+                  for (final row in _scheduleRows) _ScheduleItemRow(row: row),
               ],
             ),
           ),
@@ -828,6 +842,7 @@ class _StatCardData {
 
 class _PendingVerificationRow {
   const _PendingVerificationRow({
+    required this.transactionId,
     required this.name,
     required this.school,
     required this.className,
@@ -835,11 +850,38 @@ class _PendingVerificationRow {
     required this.status,
   });
 
+  final String transactionId;
   final String name;
   final String school;
   final String className;
   final String date;
   final String status;
+}
+
+class _EmptyTableRow extends StatelessWidget {
+  const _EmptyTableRow({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFF0E6D8))),
+      ),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Color(0xFF94A0B4),
+          fontSize: 12,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+    );
+  }
 }
 
 class _ScheduleRow {
