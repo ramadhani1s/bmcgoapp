@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"bmcgoapp-backend/handlers"
 	"bmcgoapp-backend/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -41,6 +42,11 @@ func ProtectedRoutes(r *gin.Engine) {
 			"message": "Mentor kelas",
 		})
 	})
+
+	mentor.GET("/soal-latihan", handlers.GetSoalLatihanHandler)
+	mentor.POST("/soal-latihan", handlers.CreateSoalLatihanHandler)
+	mentor.PUT("/soal-latihan/:soalId", handlers.UpdateSoalLatihanHandler)
+	mentor.DELETE("/soal-latihan/:soalId", handlers.DeleteSoalLatihanHandler)
 
 	// ================= SISWA ONLY =================
 	siswa := auth.Group("/siswa")

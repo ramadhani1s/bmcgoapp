@@ -29,40 +29,10 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
     if (!mounted) return;
 
     setState(() {
-      _mentors = mentors.isNotEmpty ? mentors : _demoMentors;
+      _mentors = mentors;
       _isLoading = false;
     });
   }
-
-  static final List<Mentor> _demoMentors = [
-    Mentor(
-      mentorId: 1,
-      userId: 101,
-      email: 'sarah@bmc.id',
-      namaMentor: 'Bu Sarah',
-      spesialisasi: 'Matematika',
-      bio: 'Mentor matematika untuk kelas reguler dan intensif.',
-      status: 'aktif',
-    ),
-    Mentor(
-      mentorId: 2,
-      userId: 102,
-      email: 'andi@bmc.id',
-      namaMentor: 'Pak Andi',
-      spesialisasi: 'Fisika',
-      bio: 'Fokus pada pembahasan soal dan latihan konsep dasar.',
-      status: 'aktif',
-    ),
-    Mentor(
-      mentorId: 3,
-      userId: 103,
-      email: 'rini@bmc.id',
-      namaMentor: 'Bu Rini',
-      spesialisasi: 'Kimia',
-      bio: 'Mendampingi siswa memahami konsep dan praktik kimia.',
-      status: 'nonaktif',
-    ),
-  ];
 
   void _showDemoSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -87,6 +57,127 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
     return const Color(0xFFF59E0B);
   }
 
+  Future<void> _showCreateMentorDialog() async {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    final namaController = TextEditingController();
+    final spesialisasiController = TextEditingController();
+    final bioController = TextEditingController();
+
+    final shouldSubmit = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Tambah Mentor'),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 420,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: namaController,
+                    decoration: const InputDecoration(labelText: 'Nama Mentor'),
+                  ),
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                  ),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'Password'),
+                  ),
+                  TextField(
+                    controller: spesialisasiController,
+                    decoration: const InputDecoration(
+                      labelText: 'Spesialisasi',
+                    ),
+                  ),
+                  TextField(
+                    controller: bioController,
+                    minLines: 2,
+                    maxLines: 3,
+                    decoration: const InputDecoration(labelText: 'Bio'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldSubmit != true) {
+      return;
+    }
+
+    final result = await AuthService.createMentor(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+      namaMentor: namaController.text.trim(),
+      spesialisasi: spesialisasiController.text.trim(),
+      bio: bioController.text.trim(),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    _showDemoSnack(result['message'] ?? 'Proses selesai');
+
+    if (result['success'] == true) {
+      await _loadMentors();
+    }
+  }
+
+  Future<void> _deleteMentor(Mentor mentor) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Hapus mentor?'),
+          content: Text('Akun ${mentor.namaMentor} akan dihapus permanen.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    final result = await AuthService.deleteMentor(mentor.mentorId);
+    if (!mounted) {
+      return;
+    }
+
+    _showDemoSnack(result['message'] ?? 'Proses selesai');
+
+    if (result['success'] == true) {
+      await _loadMentors();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,8 +198,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
           ),
           const SizedBox(width: 8),
           TextButton.icon(
-            onPressed: () =>
-                _showDemoSnack('Fitur tambah mentor masih percobaan'),
+            onPressed: _showCreateMentorDialog,
             icon: const Icon(Icons.add_circle_outline, size: 18),
             label: const Text('Tambah Mentor'),
           ),
@@ -173,79 +263,83 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                         ),
                         const SizedBox(height: 12),
                         Expanded(
-                          child: SingleChildScrollView(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                              ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        flex: 2,
-                                        child: Text(
-                                          'MENTOR',
-                                          style: const TextStyle(
-                                            color: Color(0xFF9AA4B6),
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                          ),
+                          child: _mentors.isEmpty
+                              ? const Center(
+                                  child: Text('Belum ada mentor terdaftar'),
+                                )
+                              : SingleChildScrollView(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              flex: 2,
+                                              child: Text(
+                                                'MENTOR',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF9AA4B6),
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: Text(
+                                                'KONTAK',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF9AA4B6),
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: Text(
+                                                'MATA PELAJARAN',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF9AA4B6),
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 1,
+                                              child: Text(
+                                                'STATUS',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF9AA4B6),
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 1,
+                                              child: Text(
+                                                'AKSI',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF9AA4B6),
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      Expanded(
-                                        flex: 2,
-                                        child: Text(
-                                          'KONTAK',
-                                          style: const TextStyle(
-                                            color: Color(0xFF9AA4B6),
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        flex: 2,
-                                        child: Text(
-                                          'MATA PELAJARAN',
-                                          style: const TextStyle(
-                                            color: Color(0xFF9AA4B6),
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        flex: 1,
-                                        child: Text(
-                                          'STATUS',
-                                          style: const TextStyle(
-                                            color: Color(0xFF9AA4B6),
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        flex: 1,
-                                        child: Text(
-                                          'AKSI',
-                                          style: const TextStyle(
-                                            color: Color(0xFF9AA4B6),
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 8),
+                                        for (final mentor in _mentors)
+                                          _buildMentorRow(mentor),
+                                      ],
+                                    ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  for (final mentor in _mentors)
-                                    _buildMentorRow(mentor),
-                                ],
-                              ),
-                            ),
-                          ),
+                                ),
                         ),
                       ],
                     ),
@@ -323,7 +417,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 InkWell(
-                  onTap: () => _showDemoSnack('Edit mentor masih percobaan'),
+                  onTap: () => _showDemoSnack('Edit mentor menyusul'),
                   child: const Icon(
                     Icons.edit_outlined,
                     size: 16,
@@ -332,7 +426,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                 ),
                 const SizedBox(width: 12),
                 InkWell(
-                  onTap: () => _showDemoSnack('Hapus mentor masih percobaan'),
+                  onTap: () => _deleteMentor(mentor),
                   child: const Icon(
                     Icons.delete_outline,
                     size: 16,
