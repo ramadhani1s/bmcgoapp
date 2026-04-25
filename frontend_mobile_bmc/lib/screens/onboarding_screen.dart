@@ -15,7 +15,7 @@ class OnboardingScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Image.asset(
-                    'assets/images/bmc_logo.PNG',
+                    'assets/images/bmc_logo.png',
                     width: 140,
                     height: 140,
                     fit: BoxFit.contain,

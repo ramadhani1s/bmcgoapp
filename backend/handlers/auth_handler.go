@@ -78,6 +78,9 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	input.Email = strings.TrimSpace(input.Email)
+	input.Password = strings.TrimSpace(input.Password)
+
 	if input.Email == "" || input.Password == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Email dan password wajib diisi",

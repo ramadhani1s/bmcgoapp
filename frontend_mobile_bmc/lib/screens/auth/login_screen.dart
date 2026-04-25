@@ -173,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                                 child: Image.asset(
-                                  'assets/images/bmc_logo.jpeg',
+                                  'assets/images/bmc_logo.png',
                                   fit: BoxFit.contain,
                                 ),
                               ),

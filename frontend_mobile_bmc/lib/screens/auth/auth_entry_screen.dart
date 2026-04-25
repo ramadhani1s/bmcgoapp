@@ -17,7 +17,7 @@ class AuthEntryScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Image.asset(
-                      'assets/images/bmc_logo.jpeg',
+                      'assets/images/bmc_logo.png',
                       width: 140,
                       height: 140,
                       fit: BoxFit.contain,

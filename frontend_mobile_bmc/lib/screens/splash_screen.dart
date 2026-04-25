@@ -64,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen>
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Image.asset(
-                    'assets/images/bmc_logo.PNG',
+                    'assets/images/bmc_logo.png',
                     width: 180,
                     height: 180,
                     fit: BoxFit.contain,

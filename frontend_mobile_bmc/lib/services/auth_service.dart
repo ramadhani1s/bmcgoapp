@@ -12,25 +12,39 @@ class AuthService {
     String password,
   ) async {
     try {
+      final normalizedEmail = email.trim();
+      final normalizedPassword = password.trim();
+
       final response = await http
           .post(
             Uri.parse('$baseUrl/login'),
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'email': email, 'password': password}),
+            body: jsonEncode({
+              'email': normalizedEmail,
+              'password': normalizedPassword,
+            }),
           )
           .timeout(const Duration(seconds: 15));
 
+      final Map<String, dynamic> body =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return body;
       } else if (response.statusCode == 401) {
-        throw Exception('Email atau password salah');
+        throw Exception((body['error'] ?? 'Email atau password salah').toString());
       } else {
-        throw Exception('Login gagal: ${response.statusCode}');
+        throw Exception((body['error'] ?? 'Login gagal: ${response.statusCode}').toString());
       }
     } on TimeoutException {
       throw Exception('Koneksi timeout. Cek backend atau internet kamu.');
+    } on FormatException {
+      throw Exception('Respons login tidak valid dari server.');
     } catch (e) {
-      throw Exception('Error: $e');
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception(e.toString());
     }
   }
 

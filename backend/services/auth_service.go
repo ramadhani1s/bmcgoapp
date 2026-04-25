@@ -12,10 +12,42 @@ import (
 	"bmcgoapp-backend/models"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
 )
 
+func isUndefinedColumnError(err error) bool {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "42703"
+	}
+
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "column") && strings.Contains(msg, "does not exist")
+}
+
+func isSchemaMismatchError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if isUndefinedColumnError(err) {
+		return true
+	}
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "42P01" // undefined_table
+	}
+
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "relation") && strings.Contains(msg, "does not exist")
+}
+
 func verifyPassword(ctx context.Context, storedPassword, inputPassword string, upgradeQuery string, upgradeArgs ...any) error {
+	storedPassword = strings.TrimSpace(storedPassword)
+	inputPassword = strings.TrimSpace(inputPassword)
+
 	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(inputPassword)); err == nil {
 		return nil
 	}
@@ -124,7 +156,7 @@ func Login(email, password string) (*models.User, error) {
 	}
 
 	user := &models.User{}
-	queryUser := `
+	queryUserByUsername := `
 		SELECT
 			u.id,
 			COALESCE(s.nama_siswa, m.nama_mentor, u.username),
@@ -140,10 +172,10 @@ func Login(email, password string) (*models.User, error) {
 		FROM users u
 		LEFT JOIN siswa s ON s.user_id = u.id
 		LEFT JOIN mentor m ON m.user_id = u.id
-		WHERE LOWER(u.username) = LOWER($1)
+		WHERE LOWER(TRIM(u.username)) = LOWER(TRIM($1))
 	`
 
-	err := config.DB.QueryRow(context.Background(), queryUser, email).Scan(
+	err := config.DB.QueryRow(context.Background(), queryUserByUsername, email).Scan(
 		&user.ID,
 		&user.Nama,
 		&user.Email,
@@ -156,6 +188,107 @@ func Login(email, password string) (*models.User, error) {
 		&user.WhatsApp,
 		&user.Alamat,
 	)
+
+	if err != nil && isSchemaMismatchError(err) {
+		queryUserByEmail := `
+			SELECT
+				u.id,
+				COALESCE(s.nama_siswa, m.nama_mentor, u.email),
+				u.email,
+				u.password,
+				u.role_id,
+				u.status,
+				COALESCE(s.id, 0) AS siswa_id,
+				COALESCE(s.kelas, ''),
+				COALESCE(s.asal_sekolah, ''),
+				COALESCE(s.no_wa, ''),
+				COALESCE(s.alamat, '')
+			FROM users u
+			LEFT JOIN siswa s ON s.user_id = u.id
+			LEFT JOIN mentor m ON m.user_id = u.id
+			WHERE LOWER(TRIM(u.email)) = LOWER(TRIM($1))
+		`
+
+		err = config.DB.QueryRow(context.Background(), queryUserByEmail, email).Scan(
+			&user.ID,
+			&user.Nama,
+			&user.Email,
+			&user.Password,
+			&user.RoleID,
+			&user.Status,
+			&user.SiswaID,
+			&user.Kelas,
+			&user.AsalSekolah,
+			&user.WhatsApp,
+			&user.Alamat,
+		)
+	}
+
+	if err != nil && isSchemaMismatchError(err) {
+		querySimpleByUsername := `
+			SELECT
+				u.id,
+				u.username,
+				u.username,
+				u.password,
+				3 AS role_id,
+				'aktif' AS status,
+				0 AS siswa_id,
+				'' AS kelas,
+				'' AS asal_sekolah,
+				COALESCE(u.phone_number, '') AS no_wa,
+				'' AS alamat
+			FROM users u
+			WHERE LOWER(TRIM(u.username)) = LOWER(TRIM($1))
+		`
+
+		err = config.DB.QueryRow(context.Background(), querySimpleByUsername, email).Scan(
+			&user.ID,
+			&user.Nama,
+			&user.Email,
+			&user.Password,
+			&user.RoleID,
+			&user.Status,
+			&user.SiswaID,
+			&user.Kelas,
+			&user.AsalSekolah,
+			&user.WhatsApp,
+			&user.Alamat,
+		)
+	}
+
+	if err != nil && isSchemaMismatchError(err) {
+		querySimpleByEmail := `
+			SELECT
+				u.id,
+				COALESCE(NULLIF(TRIM(u.email), ''), LOWER(TRIM($1))) AS nama,
+				u.email,
+				u.password,
+				3 AS role_id,
+				COALESCE(NULLIF(TRIM(u.status), ''), 'aktif') AS status,
+				0 AS siswa_id,
+				'' AS kelas,
+				'' AS asal_sekolah,
+				COALESCE(u.phone_number, '') AS no_wa,
+				'' AS alamat
+			FROM users u
+			WHERE LOWER(TRIM(u.email)) = LOWER(TRIM($1))
+		`
+
+		err = config.DB.QueryRow(context.Background(), querySimpleByEmail, email).Scan(
+			&user.ID,
+			&user.Nama,
+			&user.Email,
+			&user.Password,
+			&user.RoleID,
+			&user.Status,
+			&user.SiswaID,
+			&user.Kelas,
+			&user.AsalSekolah,
+			&user.WhatsApp,
+			&user.Alamat,
+		)
+	}
 
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
@@ -176,7 +309,7 @@ func Login(email, password string) (*models.User, error) {
 				'' AS no_wa,
 				'' AS alamat
 			FROM admin a
-			WHERE LOWER(a.email) = LOWER($1)
+			WHERE LOWER(TRIM(a.email)) = LOWER(TRIM($1))
 		`
 
 		err = config.DB.QueryRow(context.Background(), queryAdmin, email).Scan(
