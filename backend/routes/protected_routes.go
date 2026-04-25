@@ -45,6 +45,23 @@ func ProtectedRoutes(r *gin.Engine) {
 	mentor.PUT("/soal-latihan/:soalId", handlers.UpdateSoalLatihanHandler)
 	mentor.DELETE("/soal-latihan/:soalId", handlers.DeleteSoalLatihanHandler)
 
+	mentor.GET("/tryout", handlers.GetTryoutHandler)
+	mentor.POST("/tryout", handlers.CreateTryoutHandler)
+	mentor.PUT("/tryout/:id", handlers.UpdateTryoutHandler)
+	mentor.DELETE("/tryout/:id", handlers.DeleteTryoutHandler)
+	mentor.GET("/tryout/:id/hasil", handlers.GetHasilTryoutByTryoutHandler)
+	mentor.POST("/tryout/:id/hasil", handlers.CreateHasilTryoutHandler)
+
+	mentor.GET("/evaluasi", handlers.GetEvaluasiHandler)
+	mentor.POST("/evaluasi", handlers.CreateEvaluasiHandler)
+
+	mentor.GET("/olimpiade", handlers.GetOlimpiadeHandler)
+	mentor.POST("/olimpiade", handlers.CreateOlimpiadeHandler)
+	mentor.PUT("/olimpiade/:id", handlers.UpdateOlimpiadeHandler)
+	mentor.DELETE("/olimpiade/:id", handlers.DeleteOlimpiadeHandler)
+	mentor.GET("/olimpiade/:id/peserta", handlers.GetPesertaOlimpiadeHandler)
+	mentor.POST("/olimpiade/:id/peserta", handlers.CreatePesertaOlimpiadeHandler)
+
 	// ================= SISWA ONLY =================
 	siswa := auth.Group("/siswa")
 	siswa.Use(middleware.RoleMiddleware(3)) // 3 = siswa

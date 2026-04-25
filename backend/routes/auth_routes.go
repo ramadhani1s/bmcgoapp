@@ -17,8 +17,8 @@ func AuthRoutes(r *gin.Engine) {
 	adminAuth := r.Group("/auth")
 	adminAuth.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware(1))
 	{
-		adminAuth.POST("/create-mentor", handlers.CreateMentorHandler)
-		adminAuth.GET("/mentors", handlers.GetMentorsHandler)
-		adminAuth.DELETE("/mentors/:mentorId", handlers.DeleteMentorHandler)
+		adminAuth.POST("/create-mentor", handlers.CreateMentor)
+		adminAuth.GET("/mentors", handlers.GetMentors)
+		adminAuth.DELETE("/mentors/:id", handlers.DeleteMentor)
 	}
 }

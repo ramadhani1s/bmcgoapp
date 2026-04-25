@@ -74,6 +74,16 @@ class _MentorDashboardState extends State<MentorDashboard> {
       return;
     }
 
+    if (title == 'Try Out') {
+      Navigator.of(context).pushNamed(AppRoutes.mentorTryout);
+      return;
+    }
+
+    if (title == 'Olimpiade Akademik') {
+      Navigator.of(context).pushNamed(AppRoutes.mentorOlimpiade);
+      return;
+    }
+
     if (title != 'Dashboard') {
       ScaffoldMessenger.of(
         context,
