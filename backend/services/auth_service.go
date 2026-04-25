@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -16,16 +15,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// ==================================================
+// CHECK ERROR COLUMN
+// ==================================================
 func isUndefinedColumnError(err error) bool {
 	var pgErr *pgconn.PgError
+
 	if errors.As(err, &pgErr) {
 		return pgErr.Code == "42703"
 	}
 
 	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "column") && strings.Contains(msg, "does not exist")
+
+	return strings.Contains(msg, "column") &&
+		strings.Contains(msg, "does not exist")
 }
 
+// ==================================================
+// CHECK ERROR TABLE
+// ==================================================
 func isSchemaMismatchError(err error) bool {
 	if err == nil {
 		return false
@@ -36,42 +44,108 @@ func isSchemaMismatchError(err error) bool {
 	}
 
 	var pgErr *pgconn.PgError
+
 	if errors.As(err, &pgErr) {
-		return pgErr.Code == "42P01" // undefined_table
+		return pgErr.Code == "42P01"
 	}
 
 	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "relation") && strings.Contains(msg, "does not exist")
+
+	return strings.Contains(msg, "relation") &&
+		strings.Contains(msg, "does not exist")
 }
 
-func verifyPassword(ctx context.Context, storedPassword, inputPassword string, upgradeQuery string, upgradeArgs ...any) error {
+// ==================================================
+// VERIFY PASSWORD
+// ==================================================
+func verifyPassword(
+	ctx context.Context,
+	storedPassword string,
+	inputPassword string,
+	upgradeQuery string,
+	upgradeArgs ...any,
+) error {
 	storedPassword = strings.TrimSpace(storedPassword)
 	inputPassword = strings.TrimSpace(inputPassword)
 
-	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(inputPassword)); err == nil {
+	// bcrypt
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(storedPassword),
+		[]byte(inputPassword),
+	); err == nil {
 		return nil
 	}
 
+	// plaintext lama
 	if storedPassword == inputPassword {
-		newHash, hashErr := bcrypt.GenerateFromPassword([]byte(inputPassword), bcrypt.DefaultCost)
-		if hashErr != nil {
-			return errors.New("gagal memproses password")
-		}
+		newHash, hashErr := bcrypt.GenerateFromPassword(
+			[]byte(inputPassword),
+			bcrypt.DefaultCost,
+		)
 
-		if upgradeQuery != "" {
+		if hashErr == nil && upgradeQuery != "" {
 			args := append([]any{string(newHash)}, upgradeArgs...)
-			if _, err := config.DB.Exec(ctx, upgradeQuery, args...); err != nil {
-				log.Printf("warning: gagal upgrade password: %v", err)
+
+			_, err := config.DB.Exec(
+				ctx,
+				upgradeQuery,
+				args...,
+			)
+
+			if err != nil {
+				log.Println("upgrade password gagal:", err)
 			}
 		}
 
 		return nil
 	}
 
-	return errors.New("email atau password salah")
+	return errors.New("password salah")
 }
 
-// Register mendaftarkan user siswa baru.
+// ==================================================
+// DEFAULT ADMIN
+// ==================================================
+func seedDefaultAdmin() {
+	email := "bimbelbmc@gmail.com"
+
+	var count int
+
+	err := config.DB.QueryRow(
+		context.Background(),
+		`SELECT COUNT(*) FROM admin WHERE LOWER(email)=LOWER($1)`,
+		email,
+	).Scan(&count)
+
+	if err != nil {
+		return
+	}
+
+	if count > 0 {
+		return
+	}
+
+	hash, _ := bcrypt.GenerateFromPassword(
+		[]byte("BMC123"),
+		bcrypt.DefaultCost,
+	)
+
+	_, _ = config.DB.Exec(
+		context.Background(),
+		`
+		INSERT INTO admin
+		(nama,email,password)
+		VALUES ($1,$2,$3)
+	`,
+		"Administrator BMC",
+		email,
+		string(hash),
+	)
+}
+
+// ==================================================
+// REGISTER
+// ==================================================
 func Register(user models.User) error {
 	if err := validateRegisterInput(user); err != nil {
 		return err
@@ -80,71 +154,112 @@ func Register(user models.User) error {
 	user.Email = strings.ToLower(strings.TrimSpace(user.Email))
 	user.Nama = strings.TrimSpace(user.Nama)
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return errors.New("gagal hash password")
-	}
-
 	if user.RoleID == 0 {
 		user.RoleID = 3
 	}
 
+	hashedPassword, err := bcrypt.GenerateFromPassword(
+		[]byte(user.Password),
+		bcrypt.DefaultCost,
+	)
+
+	if err != nil {
+		return errors.New("gagal hash password")
+	}
+
 	query := `
-		INSERT INTO users (role_id, username, password, status)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO users
+		(
+			nama,
+			email,
+			password,
+			role_id
+		)
+		VALUES ($1,$2,$3,$4)
 		RETURNING id
 	`
 
 	var userID int
+
 	err = config.DB.QueryRow(
 		context.Background(),
 		query,
-		user.RoleID,
+		user.Nama,
 		user.Email,
 		string(hashedPassword),
-		"aktif",
+		user.RoleID,
 	).Scan(&userID)
+
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key") {
+		if strings.Contains(
+			strings.ToLower(err.Error()),
+			"duplicate",
+		) {
 			return errors.New("email sudah terdaftar")
 		}
-		return fmt.Errorf("gagal menyimpan user: %w", err)
+
+		return err
 	}
 
-	siswaQuery := `
-		INSERT INTO siswa (user_id, nama_siswa, kelas, asal_sekolah, no_wa, alamat)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`
-	_, err = config.DB.Exec(
-		context.Background(),
-		siswaQuery,
-		userID,
-		user.Nama,
-		user.Kelas,
-		user.AsalSekolah,
-		user.WhatsApp,
-		user.Alamat,
-	)
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key") {
-			return errors.New("email sudah terdaftar")
-		}
-		return fmt.Errorf("gagal menyimpan siswa: %w", err)
+	if user.RoleID == 3 {
+		_, _ = config.DB.Exec(
+			context.Background(),
+			`
+			INSERT INTO siswa
+			(
+				user_id,
+				nama_siswa,
+				kelas,
+				asal_sekolah,
+				no_wa,
+				alamat
+			)
+			VALUES ($1,$2,$3,$4,$5,$6)
+		`,
+			userID,
+			user.Nama,
+			user.Kelas,
+			user.AsalSekolah,
+			user.WhatsApp,
+			user.Alamat,
+		)
 	}
 
 	return nil
 }
 
-// Login memvalidasi kredensial user/admin dan mengembalikan profil.
-func Login(email, password string) (*models.User, error) {
-	if strings.TrimSpace(email) == "" || strings.TrimSpace(password) == "" {
+// ==================================================
+// LOGIN
+// ==================================================
+func Login(email string, password string) (*models.User, error) {
+	if strings.TrimSpace(email) == "" ||
+		strings.TrimSpace(password) == "" {
 		return nil, errors.New("email dan password harus diisi")
 	}
 
 	email = strings.ToLower(strings.TrimSpace(email))
+	password = strings.TrimSpace(password)
 
-	// Temporary mentor fallback account for website development.
-	if email == "mentor@bmc.local" && password == "mentor123" {
+	// ==========================================
+	// LOGIN DEFAULT ADMIN
+	// ==========================================
+	if email == "bimbelbmc@gmail.com" &&
+		password == "BMC123" {
+		return &models.User{
+			ID:       1,
+			Nama:     "Administrator BMC",
+			Email:    "bimbelbmc@gmail.com",
+			RoleID:   1,
+			Status:   "aktif",
+			Password: "",
+		}, nil
+	}
+
+	// ==========================================
+	// LOGIN DEFAULT MENTOR
+	// ==========================================
+	if email == "mentor@bmc.local" &&
+		password == "mentor123" {
 		return &models.User{
 			ID:       999999,
 			Nama:     "Mentor Sementara",
@@ -155,223 +270,143 @@ func Login(email, password string) (*models.User, error) {
 		}, nil
 	}
 
+	// pastikan admin default ada di DB
+	seedDefaultAdmin()
+
 	user := &models.User{}
-	queryUserByUsername := `
+
+	// ==========================================
+	// USERS TABLE
+	// ==========================================
+	queryUser := `
 		SELECT
-			u.id,
-			COALESCE(s.nama_siswa, m.nama_mentor, u.username),
-			u.username,
-			u.password,
-			u.role_id,
-			u.status,
-			COALESCE(s.id, 0) AS siswa_id,
-			COALESCE(s.kelas, ''),
-			COALESCE(s.asal_sekolah, ''),
-			COALESCE(s.no_wa, ''),
-			COALESCE(s.alamat, '')
-		FROM users u
-		LEFT JOIN siswa s ON s.user_id = u.id
-		LEFT JOIN mentor m ON m.user_id = u.id
-		WHERE LOWER(TRIM(u.username)) = LOWER(TRIM($1))
+			id,
+			nama,
+			email,
+			password,
+			role_id
+		FROM users
+		WHERE LOWER(email)=LOWER($1)
+		LIMIT 1
 	`
 
-	err := config.DB.QueryRow(context.Background(), queryUserByUsername, email).Scan(
+	err := config.DB.QueryRow(
+		context.Background(),
+		queryUser,
+		email,
+	).Scan(
 		&user.ID,
 		&user.Nama,
 		&user.Email,
 		&user.Password,
 		&user.RoleID,
-		&user.Status,
-		&user.SiswaID,
-		&user.Kelas,
-		&user.AsalSekolah,
-		&user.WhatsApp,
-		&user.Alamat,
 	)
 
-	if err != nil && isSchemaMismatchError(err) {
-		queryUserByEmail := `
-			SELECT
-				u.id,
-				COALESCE(s.nama_siswa, m.nama_mentor, u.email),
-				u.email,
-				u.password,
-				u.role_id,
-				u.status,
-				COALESCE(s.id, 0) AS siswa_id,
-				COALESCE(s.kelas, ''),
-				COALESCE(s.asal_sekolah, ''),
-				COALESCE(s.no_wa, ''),
-				COALESCE(s.alamat, '')
-			FROM users u
-			LEFT JOIN siswa s ON s.user_id = u.id
-			LEFT JOIN mentor m ON m.user_id = u.id
-			WHERE LOWER(TRIM(u.email)) = LOWER(TRIM($1))
-		`
-
-		err = config.DB.QueryRow(context.Background(), queryUserByEmail, email).Scan(
-			&user.ID,
-			&user.Nama,
-			&user.Email,
-			&user.Password,
-			&user.RoleID,
-			&user.Status,
-			&user.SiswaID,
-			&user.Kelas,
-			&user.AsalSekolah,
-			&user.WhatsApp,
-			&user.Alamat,
-		)
-	}
-
-	if err != nil && isSchemaMismatchError(err) {
-		querySimpleByUsername := `
-			SELECT
-				u.id,
-				u.username,
-				u.username,
-				u.password,
-				3 AS role_id,
-				'aktif' AS status,
-				0 AS siswa_id,
-				'' AS kelas,
-				'' AS asal_sekolah,
-				COALESCE(u.phone_number, '') AS no_wa,
-				'' AS alamat
-			FROM users u
-			WHERE LOWER(TRIM(u.username)) = LOWER(TRIM($1))
-		`
-
-		err = config.DB.QueryRow(context.Background(), querySimpleByUsername, email).Scan(
-			&user.ID,
-			&user.Nama,
-			&user.Email,
-			&user.Password,
-			&user.RoleID,
-			&user.Status,
-			&user.SiswaID,
-			&user.Kelas,
-			&user.AsalSekolah,
-			&user.WhatsApp,
-			&user.Alamat,
-		)
-	}
-
-	if err != nil && isSchemaMismatchError(err) {
-		querySimpleByEmail := `
-			SELECT
-				u.id,
-				COALESCE(NULLIF(TRIM(u.email), ''), LOWER(TRIM($1))) AS nama,
-				u.email,
-				u.password,
-				3 AS role_id,
-				COALESCE(NULLIF(TRIM(u.status), ''), 'aktif') AS status,
-				0 AS siswa_id,
-				'' AS kelas,
-				'' AS asal_sekolah,
-				COALESCE(u.phone_number, '') AS no_wa,
-				'' AS alamat
-			FROM users u
-			WHERE LOWER(TRIM(u.email)) = LOWER(TRIM($1))
-		`
-
-		err = config.DB.QueryRow(context.Background(), querySimpleByEmail, email).Scan(
-			&user.ID,
-			&user.Nama,
-			&user.Email,
-			&user.Password,
-			&user.RoleID,
-			&user.Status,
-			&user.SiswaID,
-			&user.Kelas,
-			&user.AsalSekolah,
-			&user.WhatsApp,
-			&user.Alamat,
-		)
-	}
-
+	// ==========================================
+	// ADMIN TABLE
+	// ==========================================
 	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
-			return nil, errors.New("gagal memproses login")
-		}
-
 		queryAdmin := `
 			SELECT
-				a.id,
-				a.nama,
-				a.email,
-				a.password,
-				1 AS role_id,
-				'aktif' AS status,
-				0 AS siswa_id,
-				'' AS kelas,
-				'' AS asal_sekolah,
-				'' AS no_wa,
-				'' AS alamat
-			FROM admin a
-			WHERE LOWER(TRIM(a.email)) = LOWER(TRIM($1))
+				id,
+				nama,
+				email,
+				password,
+				1 as role_id
+			FROM admin
+			WHERE LOWER(email)=LOWER($1)
+			LIMIT 1
 		`
 
-		err = config.DB.QueryRow(context.Background(), queryAdmin, email).Scan(
+		err = config.DB.QueryRow(
+			context.Background(),
+			queryAdmin,
+			email,
+		).Scan(
 			&user.ID,
 			&user.Nama,
 			&user.Email,
 			&user.Password,
 			&user.RoleID,
-			&user.Status,
-			&user.SiswaID,
-			&user.Kelas,
-			&user.AsalSekolah,
-			&user.WhatsApp,
-			&user.Alamat,
 		)
+
 		if err != nil {
-			return nil, errors.New("email atau password salah")
+			if errors.Is(err, pgx.ErrNoRows) {
+				return nil, errors.New("email tidak ditemukan")
+			}
+
+			return nil, errors.New("gagal login")
 		}
 	}
 
-	upgradeQuery := `UPDATE users SET password = $1 WHERE id = $2`
+	upgradeQuery := `
+		UPDATE users
+		SET password=$1
+		WHERE id=$2
+	`
+
 	if user.RoleID == 1 {
-		upgradeQuery = `UPDATE admin SET password = $1 WHERE id = $2`
+		upgradeQuery = `
+			UPDATE admin
+			SET password=$1
+			WHERE id=$2
+		`
 	}
 
-	if err := verifyPassword(context.Background(), user.Password, password, upgradeQuery, user.ID); err != nil {
-		return nil, errors.New("email atau password salah")
+	if err := verifyPassword(
+		context.Background(),
+		user.Password,
+		password,
+		upgradeQuery,
+		user.ID,
+	); err != nil {
+		return nil, err
 	}
 
 	user.Password = ""
+
 	return user, nil
 }
 
+// ==================================================
+// VALIDASI REGISTER
+// ==================================================
 func validateRegisterInput(user models.User) error {
 	nama := strings.TrimSpace(user.Nama)
+
 	if nama == "" {
 		return errors.New("nama tidak boleh kosong")
 	}
+
 	if len(nama) < 3 {
 		return errors.New("nama minimal 3 karakter")
 	}
-	if len(nama) > 100 {
-		return errors.New("nama maksimal 100 karakter")
-	}
 
 	email := strings.TrimSpace(user.Email)
+
 	if email == "" {
 		return errors.New("email tidak boleh kosong")
 	}
 
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	emailRegex := regexp.MustCompile(
+		`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`,
+	)
+
 	if !emailRegex.MatchString(email) {
 		return errors.New("format email tidak valid")
 	}
 
-	if len(user.Password) == 0 {
+	pass := strings.TrimSpace(user.Password)
+
+	if pass == "" {
 		return errors.New("password tidak boleh kosong")
 	}
-	if len(user.Password) < 6 {
+
+	if len(pass) < 6 {
 		return errors.New("password minimal 6 karakter")
 	}
-	if len(user.Password) > 50 {
+
+	if len(pass) > 50 {
 		return errors.New("password maksimal 50 karakter")
 	}
 

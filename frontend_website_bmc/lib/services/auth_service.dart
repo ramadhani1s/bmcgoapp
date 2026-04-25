@@ -41,7 +41,6 @@ class AuthService {
         final prefs = await SharedPreferences.getInstance();
 
         await prefs.setString('token', data['token'].toString());
-
         await prefs.setString('user', jsonEncode(user.toJson()));
 
         return {
@@ -52,11 +51,20 @@ class AuthService {
         };
       }
 
-      return {'success': false, 'message': data['error'] ?? 'Login gagal'};
+      return {
+        'success': false,
+        'message': data['error'] ?? 'Login gagal',
+      };
     } on TimeoutException {
-      return {'success': false, 'message': 'Server timeout'};
+      return {
+        'success': false,
+        'message': 'Server timeout',
+      };
     } catch (e) {
-      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
     }
   }
 
@@ -139,7 +147,6 @@ class AuthService {
     required String password,
     required String namaMentor,
     String spesialisasi = '',
-    String bio = '',
   }) async {
     try {
       final headers = await getAuthHeaders();
@@ -153,7 +160,7 @@ class AuthService {
               'password': password.trim(),
               'nama_mentor': namaMentor.trim(),
               'spesialisasi': spesialisasi.trim(),
-              'bio': bio.trim(),
+              'status': 'Aktif',
             }),
           )
           .timeout(const Duration(seconds: 15));
@@ -172,7 +179,10 @@ class AuthService {
         'message': data['error'] ?? 'Gagal membuat mentor',
       };
     } catch (e) {
-      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
     }
   }
 
@@ -184,7 +194,10 @@ class AuthService {
       final headers = await getAuthHeaders();
 
       final response = await http
-          .get(Uri.parse('$baseUrl/mentor/'), headers: headers)
+          .get(
+            Uri.parse('$baseUrl/mentor/'),
+            headers: headers,
+          )
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
@@ -203,36 +216,65 @@ class AuthService {
   // UPDATE MENTOR
   // =====================================================
   static Future<Map<String, dynamic>> updateMentor(
-    int id,
-    String nama,
-    String email,
-    String mapel,
-    String bio,
-  ) async {
-    final res = await http.put(
-      Uri.parse("$baseUrl/mentor/$id"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "nama_mentor": nama,
-        "email": email,
-        "spesialisasi": mapel,
-        "bio": bio,
-        "status": "Aktif",
-      }),
+  int id,
+  String nama,
+  String email,
+  String mapel, {
+  String password = '',
+}) async {
+  try {
+    final headers = await getAuthHeaders();
+
+    final body = {
+      'nama_mentor': nama.trim(),
+      'email': email.trim(),
+      'spesialisasi': mapel.trim(),
+      'status': 'Aktif',
+    };
+
+    if (password.trim().isNotEmpty) {
+      body['password'] = password.trim();
+    }
+
+    final response = await http.put(
+      Uri.parse('$baseUrl/mentor/$id'),
+      headers: headers,
+      body: jsonEncode(body),
     );
 
-    return jsonDecode(res.body);
-  }
+    final data =
+        response.body.isNotEmpty
+            ? jsonDecode(response.body)
+            : {};
 
+    return {
+      'success': response.statusCode == 200,
+      'message':
+          data['message'] ??
+          data['error'] ??
+          'Update selesai',
+    };
+  } catch (e) {
+    return {
+      'success': false,
+      'message': 'Terjadi kesalahan: $e',
+    };
+  }
+}
   // =====================================================
   // DELETE MENTOR
   // =====================================================
-  static Future<Map<String, dynamic>> deleteMentor(int mentorId) async {
+  static Future<Map<String, dynamic>> deleteMentor(
+    int mentorId,
+  ) async {
     try {
       final headers = await getAuthHeaders();
 
       final response = await http
-          .delete(Uri.parse('$baseUrl/mentor/$mentorId'), headers: headers)
+          .delete(
+            Uri.parse('$baseUrl/mentor/$mentorId'),
+            headers: headers,
+          )
           .timeout(const Duration(seconds: 15));
 
       final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
@@ -249,7 +291,10 @@ class AuthService {
         'message': data['error'] ?? 'Gagal hapus mentor',
       };
     } catch (e) {
-      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
     }
   }
 }

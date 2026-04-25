@@ -2,28 +2,31 @@ package handlers
 
 import (
 	"context"
-	"net/http"
-	"strconv"
+	"strings"
 
 	"bmcgoapp-backend/config"
 
 	"github.com/gin-gonic/gin"
 )
 
-
-// ==========================
-// GET ALL MENTORS
-// ==========================
+// ===============================
+// GET ALL MENTOR
+// ===============================
 func GetMentors(c *gin.Context) {
 	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, nama_mentor, email, spesialisasi, status
+		SELECT 
+			id,
+			nama_mentor,
+			email,
+			password,
+			spesialisasi,
+			status
 		FROM mentor
 		ORDER BY id ASC
 	`)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal mengambil data mentor",
-			"detail": err.Error(),
+		c.JSON(500, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
@@ -32,172 +35,242 @@ func GetMentors(c *gin.Context) {
 	var mentors []gin.H
 
 	for rows.Next() {
-		var id int
-		var nama, email, spesialisasi, status string
+		var (
+			id           int
+			nama         string
+			email        string
+			password     string
+			spesialisasi string
+			status       string
+		)
 
-		if err := rows.Scan(&id, &nama, &email, &spesialisasi, &status); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Gagal membaca data mentor",
-				"detail": err.Error(),
+		err := rows.Scan(
+			&id,
+			&nama,
+			&email,
+			&password,
+			&spesialisasi,
+			&status,
+		)
+
+		if err != nil {
+			c.JSON(500, gin.H{
+				"error": err.Error(),
 			})
 			return
 		}
 
 		mentors = append(mentors, gin.H{
-			"id": id,
-			"nama_mentor": nama,
-			"email": email,
+			"id":           id,
+			"mentor_id":    id,
+			"nama":         nama,
+			"nama_mentor":  nama,
+			"email":        email,
+			"password":     password,
+			"mapel":        spesialisasi,
 			"spesialisasi": spesialisasi,
-			"status": status,
+			"status":       status,
 		})
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Berhasil mengambil data mentor",
-		"data": mentors,
-	})
+	c.JSON(200, mentors)
 }
 
-
-// ==========================
+// ===============================
 // CREATE MENTOR
-// ==========================
+// ===============================
 func CreateMentor(c *gin.Context) {
 	var input struct {
 		NamaMentor   string `json:"nama_mentor"`
 		Email        string `json:"email"`
+		Password     string `json:"password"`
 		Spesialisasi string `json:"spesialisasi"`
-		Bio          string `json:"bio"`
+		Status       string `json:"status"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Format data tidak valid",
+		c.JSON(400, gin.H{
+			"error": "Data tidak valid",
 		})
 		return
 	}
 
-	// Validasi sederhana
-	if input.NamaMentor == "" || input.Email == "" || input.Spesialisasi == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
+	input.NamaMentor = strings.TrimSpace(input.NamaMentor)
+	input.Email = strings.TrimSpace(input.Email)
+	input.Password = strings.TrimSpace(input.Password)
+	input.Spesialisasi = strings.TrimSpace(input.Spesialisasi)
+	input.Status = strings.TrimSpace(input.Status)
+
+	if input.NamaMentor == "" ||
+		input.Email == "" ||
+		input.Password == "" ||
+		input.Spesialisasi == "" {
+		c.JSON(400, gin.H{
+			"error": "Nama, email, password, dan spesialisasi wajib diisi",
+		})
+		return
+	}
+
+	if input.Status == "" {
+		input.Status = "Aktif"
+	}
+
+	// =====================================================
+	// FIX: support jika tabel mentor masih punya kolom bio
+	// =====================================================
+
+	_, err := config.DB.Exec(context.Background(), `
+		INSERT INTO mentor
+		(
+			nama_mentor,
+			email,
+			password,
+			spesialisasi,
+			status
+		)
+		VALUES ($1,$2,$3,$4,$5)
+	`,
+		input.NamaMentor,
+		input.Email,
+		input.Password,
+		input.Spesialisasi,
+		input.Status,
+	)
+
+	if err != nil {
+
+		// jika DB masih punya kolom bio NOT NULL
+		if strings.Contains(strings.ToLower(err.Error()), "bio") {
+
+			_, err = config.DB.Exec(context.Background(), `
+				INSERT INTO mentor
+				(
+					nama_mentor,
+					email,
+					password,
+					spesialisasi,
+					status,
+					bio
+				)
+				VALUES ($1,$2,$3,$4,$5,$6)
+			`,
+				input.NamaMentor,
+				input.Email,
+				input.Password,
+				input.Spesialisasi,
+				input.Status,
+				"-",
+			)
+
+			if err != nil {
+				c.JSON(500, gin.H{
+					"error": err.Error(),
+				})
+				return
+			}
+
+		} else {
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+	}
+
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": "Mentor berhasil ditambahkan",
+	})
+}
+
+// ===============================
+// UPDATE MENTOR
+// ===============================
+func UpdateMentor(c *gin.Context) {
+	id := c.Param("id")
+
+	var input struct {
+		NamaMentor   string `json:"nama_mentor"`
+		Email        string `json:"email"`
+		Spesialisasi string `json:"spesialisasi"`
+		Status       string `json:"status"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Data tidak valid",
+		})
+		return
+	}
+
+	input.NamaMentor = strings.TrimSpace(input.NamaMentor)
+	input.Email = strings.TrimSpace(input.Email)
+	input.Spesialisasi = strings.TrimSpace(input.Spesialisasi)
+	input.Status = strings.TrimSpace(input.Status)
+
+	if input.NamaMentor == "" ||
+		input.Email == "" ||
+		input.Spesialisasi == "" {
+		c.JSON(400, gin.H{
 			"error": "Nama, email, dan spesialisasi wajib diisi",
 		})
 		return
 	}
 
+	if input.Status == "" {
+		input.Status = "Aktif"
+	}
+
 	_, err := config.DB.Exec(context.Background(), `
-		INSERT INTO mentor (nama_mentor, email, spesialisasi, bio, status)
-		VALUES ($1, $2, $3, $4, 'Aktif')
-	`,
-		input.NamaMentor,
-		input.Email,
-		input.Spesialisasi,
-		input.Bio,
-	)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal menambahkan mentor",
-			"detail": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Mentor berhasil ditambahkan",
-	})
-}
-
-
-// ==========================
-// UPDATE MENTOR
-// ==========================
-func UpdateMentor(c *gin.Context) {
-	idParam := c.Param("id")
-
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID tidak valid",
-		})
-		return
-	}
-
-	var input struct {
-		NamaMentor   string `json:"nama_mentor"`
-		Email        string `json:"email"`
-		Spesialisasi string `json:"spesialisasi"`
-		Bio          string `json:"bio"`
-		Status       string `json:"status"`
-	}
-
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Format data tidak valid",
-		})
-		return
-	}
-
-	_, err = config.DB.Exec(context.Background(), `
 		UPDATE mentor
-		SET nama_mentor=$1,
-		    email=$2,
-		    spesialisasi=$3,
-		    bio=$4,
-		    status=$5
-		WHERE id=$6
+		SET 
+			nama_mentor=$1,
+			email=$2,
+			spesialisasi=$3,
+			status=$4
+		WHERE id=$5
 	`,
 		input.NamaMentor,
 		input.Email,
 		input.Spesialisasi,
-		input.Bio,
 		input.Status,
 		id,
 	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal update mentor",
-			"detail": err.Error(),
+		c.JSON(500, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(200, gin.H{
+		"success": true,
 		"message": "Mentor berhasil diupdate",
 	})
 }
 
-
-// ==========================
+// ===============================
 // DELETE MENTOR
-// ==========================
+// ===============================
 func DeleteMentor(c *gin.Context) {
-	idParam := c.Param("id")
+	id := c.Param("id")
 
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID tidak valid",
-		})
-		return
-	}
-
-	_, err = config.DB.Exec(
+	_, err := config.DB.Exec(
 		context.Background(),
-		"DELETE FROM mentor WHERE id=$1",
+		`DELETE FROM mentor WHERE id=$1`,
 		id,
 	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal menghapus mentor",
-			"detail": err.Error(),
+		c.JSON(500, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(200, gin.H{
+		"success": true,
 		"message": "Mentor berhasil dihapus",
 	})
 }

@@ -4,10 +4,10 @@ import '../screens/dashboard/admin_dashboard.dart';
 import '../screens/dashboard/mentor_dashboard.dart';
 import '../screens/dashboard/mentor_olimpiade_screen.dart';
 import '../screens/dashboard/mentor_tryout_screen.dart';
+import '../screens/dashboard/paket_les_screen.dart';
 import '../screens/mentor/latihan_soal_screen.dart';
 import '../screens/mentor_management_screen.dart';
 import '../screens/payment_verification_screen.dart';
-import '../screens/dashboard/paket_les_screen.dart';
 import '../services/auth_service.dart';
 
 class AppRoutes {
@@ -19,16 +19,19 @@ class AppRoutes {
   static const String mentorExercise = '/mentor-exercise';
   static const String mentorTryout = '/mentor-tryout';
   static const String mentorOlimpiade = '/mentor-olimpiade';
-
   static const String paketLes = '/paket-les';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case login:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
+        return MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
+        );
 
       case adminDashboard:
-        return MaterialPageRoute(builder: (_) => const AdminDashboard());
+        return MaterialPageRoute(
+          builder: (_) => const AdminDashboard(),
+        );
 
       case paymentVerification:
         return MaterialPageRoute(
@@ -36,7 +39,9 @@ class AppRoutes {
         );
 
       case mentorDashboard:
-        return MaterialPageRoute(builder: (_) => const MentorDashboard());
+        return MaterialPageRoute(
+          builder: (_) => const MentorDashboard(),
+        );
 
       case mentorManagement:
         return MaterialPageRoute(
@@ -44,22 +49,31 @@ class AppRoutes {
         );
 
       case mentorExercise:
-        return MaterialPageRoute(builder: (_) => const LatihanSoalScreen());
-<<<<<<< Updated upstream
+        return MaterialPageRoute(
+          builder: (_) => const LatihanSoalScreen(),
+        );
+
       case mentorTryout:
-        return MaterialPageRoute(builder: (_) => const MentorTryoutScreen());
+        return MaterialPageRoute(
+          builder: (_) => const MentorTryoutScreen(),
+        );
+
       case mentorOlimpiade:
-        return MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen());
-=======
+        return MaterialPageRoute(
+          builder: (_) => const MentorOlimpiadeScreen(),
+        );
 
       case paketLes:
-        return MaterialPageRoute(builder: (_) => const PaketLesScreen());
+        return MaterialPageRoute(
+          builder: (_) => const PaketLesScreen(),
+        );
 
->>>>>>> Stashed changes
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(
-            body: Center(child: Text('Halaman tidak ditemukan')),
+            body: Center(
+              child: Text('Halaman tidak ditemukan'),
+            ),
           ),
         );
     }
@@ -67,12 +81,19 @@ class AppRoutes {
 
   static Future<String> getInitialRoute() async {
     final isLoggedIn = await AuthService.isLoggedIn();
-    if (!isLoggedIn) return login;
+
+    if (!isLoggedIn) {
+      return login;
+    }
 
     final user = await AuthService.getCurrentUser();
-    if (user == null) return login;
+
+    if (user == null) {
+      return login;
+    }
 
     final isValidToken = await AuthService.validateToken();
+
     if (!isValidToken) {
       await AuthService.logout();
       return login;

@@ -13,7 +13,7 @@ var DB *pgxpool.Pool
 func ConnectDB() {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		dsn = "postgres://postgres:yohana@localhost:5432/bmcgo_db?sslmode=disable"
+		dsn = "postgres://postgres:123@localhost:5432/bmcgo_app?sslmode=disable"
 	}
 
 	var err error
