@@ -1,379 +1,431 @@
-package services
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-import (
-	"context"
-	"errors"
-	"fmt"
-	"log"
-	"regexp"
-	"strings"
+import '../models/user.dart';
+import '../models/mentor.dart';
 
-	"bmcgoapp-backend/config"
-	"bmcgoapp-backend/models"
+class AuthService {
+  // =====================================================
+  // BASE URL
+  // =====================================================
+  static const String baseUrl = 'http://127.0.0.1:8080';
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"golang.org/x/crypto/bcrypt"
-)
+  // =====================================================
+  // LOGIN
+  // =====================================================
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/login'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'email': email.trim(),
+              'password': password.trim(),
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
-func isUndefinedColumnError(err error) bool {
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		return pgErr.Code == "42703"
-	}
+      final data =
+          response.body.isNotEmpty
+              ? jsonDecode(response.body)
+              : {};
 
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "column") && strings.Contains(msg, "does not exist")
-}
+      if (response.statusCode == 200) {
+        final user =
+            User.fromJson(data['user']);
 
-func isSchemaMismatchError(err error) bool {
-	if err == nil {
-		return false
-	}
+        final prefs =
+            await SharedPreferences
+                .getInstance();
 
-	if isUndefinedColumnError(err) {
-		return true
-	}
+        await prefs.setString(
+          'token',
+          data['token'].toString(),
+        );
 
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		return pgErr.Code == "42P01" // undefined_table
-	}
+        await prefs.setString(
+          'user',
+          jsonEncode(user.toJson()),
+        );
 
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "relation") && strings.Contains(msg, "does not exist")
-}
+        return {
+          'success': true,
+          'user': user,
+          'token': data['token'],
+          'message':
+              data['message'] ??
+              'Login berhasil',
+        };
+      }
 
-func verifyPassword(ctx context.Context, storedPassword, inputPassword string, upgradeQuery string, upgradeArgs ...any) error {
-	storedPassword = strings.TrimSpace(storedPassword)
-	inputPassword = strings.TrimSpace(inputPassword)
+      return {
+        'success': false,
+        'message':
+            data['error'] ??
+            'Login gagal',
+      };
+    } on TimeoutException {
+      return {
+        'success': false,
+        'message': 'Server timeout',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message':
+            'Terjadi kesalahan: $e',
+      };
+    }
+  }
 
-	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(inputPassword)); err == nil {
-		return nil
-	}
+  // =====================================================
+  // LOGOUT
+  // =====================================================
+  static Future<void> logout() async {
+    final prefs =
+        await SharedPreferences
+            .getInstance();
 
-	if storedPassword == inputPassword {
-		newHash, hashErr := bcrypt.GenerateFromPassword([]byte(inputPassword), bcrypt.DefaultCost)
-		if hashErr != nil {
-			return errors.New("gagal memproses password")
-		}
+    await prefs.remove('token');
+    await prefs.remove('user');
+  }
 
-		if upgradeQuery != "" {
-			args := append([]any{string(newHash)}, upgradeArgs...)
-			if _, err := config.DB.Exec(ctx, upgradeQuery, args...); err != nil {
-				log.Printf("warning: gagal upgrade password: %v", err)
-			}
-		}
+  // =====================================================
+  // CURRENT USER
+  // =====================================================
+  static Future<User?> getCurrentUser() async {
+    final prefs =
+        await SharedPreferences
+            .getInstance();
 
-		return nil
-	}
+    final userJson =
+        prefs.getString('user');
 
-	return errors.New("email atau password salah")
-}
+    if (userJson == null) {
+      return null;
+    }
 
-// Register mendaftarkan user siswa baru.
-func Register(user models.User) error {
-	if err := validateRegisterInput(user); err != nil {
-		return err
-	}
+    return User.fromJson(
+      jsonDecode(userJson),
+    );
+  }
 
-	user.Email = strings.ToLower(strings.TrimSpace(user.Email))
-	user.Nama = strings.TrimSpace(user.Nama)
+  // =====================================================
+  // TOKEN
+  // =====================================================
+  static Future<String?> getToken() async {
+    final prefs =
+        await SharedPreferences
+            .getInstance();
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return errors.New("gagal hash password")
-	}
+    return prefs.getString('token');
+  }
 
-	if user.RoleID == 0 {
-		user.RoleID = 3
-	}
+  static Future<bool> isLoggedIn() async {
+    final token = await getToken();
 
-	query := `
-		INSERT INTO users (role_id, username, password, status)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id
-	`
+    return token != null &&
+        token.isNotEmpty;
+  }
 
-	var userID int
-	err = config.DB.QueryRow(
-		context.Background(),
-		query,
-		user.RoleID,
-		user.Email,
-		string(hashedPassword),
-		"aktif",
-	).Scan(&userID)
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key") {
-			return errors.New("email sudah terdaftar")
-		}
-		return fmt.Errorf("gagal menyimpan user: %w", err)
-	}
+  // =====================================================
+  // HEADERS
+  // =====================================================
+  static Future<Map<String, String>>
+      getAuthHeaders() async {
+    final token = await getToken();
 
-	siswaQuery := `
-		INSERT INTO siswa (user_id, nama_siswa, kelas, asal_sekolah, no_wa, alamat)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`
-	_, err = config.DB.Exec(
-		context.Background(),
-		siswaQuery,
-		userID,
-		user.Nama,
-		user.Kelas,
-		user.AsalSekolah,
-		user.WhatsApp,
-		user.Alamat,
-	)
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key") {
-			return errors.New("email sudah terdaftar")
-		}
-		return fmt.Errorf("gagal menyimpan siswa: %w", err)
-	}
+    return {
+      'Content-Type':
+          'application/json',
+      'Accept':
+          'application/json',
+      if (token != null)
+        'Authorization':
+            'Bearer $token',
+    };
+  }
 
-	return nil
-}
+  // =====================================================
+  // VALIDATE TOKEN
+  // =====================================================
+  static Future<bool>
+      validateToken() async {
+    try {
+      final headers =
+          await getAuthHeaders();
 
-// Login memvalidasi kredensial user/admin dan mengembalikan profil.
-func Login(email, password string) (*models.User, error) {
-	if strings.TrimSpace(email) == "" || strings.TrimSpace(password) == "" {
-		return nil, errors.New("email dan password harus diisi")
-	}
+      final response = await http.get(
+        Uri.parse(
+          '$baseUrl/api/profile',
+        ),
+        headers: headers,
+      );
 
-	email = strings.ToLower(strings.TrimSpace(email))
+      return response.statusCode ==
+          200;
+    } catch (_) {
+      return false;
+    }
+  }
 
-	// Temporary mentor fallback account for website development.
-	if email == "mentor@bmc.local" && password == "mentor123" {
-		return &models.User{
-			ID:       999999,
-			Nama:     "Mentor Sementara",
-			Email:    "mentor@bmc.local",
-			RoleID:   2,
-			Status:   "aktif",
-			Password: "",
-		}, nil
-	}
+  // =====================================================
+  // CREATE MENTOR
+  // =====================================================
+  static Future<Map<String, dynamic>>
+      createMentor({
+    required String email,
+    required String password,
+    required String namaMentor,
+    String spesialisasi = '',
+  }) async {
+    try {
+      final headers =
+          await getAuthHeaders();
 
-	user := &models.User{}
-	queryUserByUsername := `
-		SELECT
-			u.id,
-			COALESCE(s.nama_siswa, m.nama_mentor, u.username),
-			u.username,
-			u.password,
-			u.role_id,
-			u.status,
-			COALESCE(s.id, 0) AS siswa_id,
-			COALESCE(s.kelas, ''),
-			COALESCE(s.asal_sekolah, ''),
-			COALESCE(s.no_wa, ''),
-			COALESCE(s.alamat, '')
-		FROM users u
-		LEFT JOIN siswa s ON s.user_id = u.id
-		LEFT JOIN mentor m ON m.user_id = u.id
-		WHERE LOWER(TRIM(u.username)) = LOWER(TRIM($1))
-	`
+      final response = await http
+          .post(
+            Uri.parse(
+              '$baseUrl/mentor/',
+            ),
+            headers: headers,
+            body: jsonEncode({
+              'email':
+                  email.trim(),
+              'password':
+                  password.trim(),
+              'nama_mentor':
+                  namaMentor.trim(),
+              'spesialisasi':
+                  spesialisasi
+                      .trim(),
+              'status': 'Aktif',
+            }),
+          )
+          .timeout(
+            const Duration(
+              seconds: 15,
+            ),
+          );
 
-	err := config.DB.QueryRow(context.Background(), queryUserByUsername, email).Scan(
-		&user.ID,
-		&user.Nama,
-		&user.Email,
-		&user.Password,
-		&user.RoleID,
-		&user.Status,
-		&user.SiswaID,
-		&user.Kelas,
-		&user.AsalSekolah,
-		&user.WhatsApp,
-		&user.Alamat,
-	)
+      final data =
+          response.body.isNotEmpty
+              ? jsonDecode(
+                  response.body,
+                )
+              : {};
 
-	if err != nil && isSchemaMismatchError(err) {
-		queryUserByEmail := `
-			SELECT
-				u.id,
-				COALESCE(s.nama_siswa, m.nama_mentor, u.email),
-				u.email,
-				u.password,
-				u.role_id,
-				u.status,
-				COALESCE(s.id, 0) AS siswa_id,
-				COALESCE(s.kelas, ''),
-				COALESCE(s.asal_sekolah, ''),
-				COALESCE(s.no_wa, ''),
-				COALESCE(s.alamat, '')
-			FROM users u
-			LEFT JOIN siswa s ON s.user_id = u.id
-			LEFT JOIN mentor m ON m.user_id = u.id
-			WHERE LOWER(TRIM(u.email)) = LOWER(TRIM($1))
-		`
+      if (response.statusCode ==
+              200 ||
+          response.statusCode ==
+              201) {
+        return {
+          'success': true,
+          'message':
+              data['message'] ??
+              'Mentor berhasil dibuat',
+        };
+      }
 
-		err = config.DB.QueryRow(context.Background(), queryUserByEmail, email).Scan(
-			&user.ID,
-			&user.Nama,
-			&user.Email,
-			&user.Password,
-			&user.RoleID,
-			&user.Status,
-			&user.SiswaID,
-			&user.Kelas,
-			&user.AsalSekolah,
-			&user.WhatsApp,
-			&user.Alamat,
-		)
-	}
+      return {
+        'success': false,
+        'message':
+            data['error'] ??
+            'Gagal membuat mentor',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message':
+            'Terjadi kesalahan: $e',
+      };
+    }
+  }
 
-	if err != nil && isSchemaMismatchError(err) {
-		querySimpleByUsername := `
-			SELECT
-				u.id,
-				u.username,
-				u.username,
-				u.password,
-				3 AS role_id,
-				'aktif' AS status,
-				0 AS siswa_id,
-				'' AS kelas,
-				'' AS asal_sekolah,
-				COALESCE(u.phone_number, '') AS no_wa,
-				'' AS alamat
-			FROM users u
-			WHERE LOWER(TRIM(u.username)) = LOWER(TRIM($1))
-		`
+  // =====================================================
+  // GET MENTOR
+  // =====================================================
+  static Future<List<Mentor>>
+      getMentors() async {
+    try {
+      final headers =
+          await getAuthHeaders();
 
-		err = config.DB.QueryRow(context.Background(), querySimpleByUsername, email).Scan(
-			&user.ID,
-			&user.Nama,
-			&user.Email,
-			&user.Password,
-			&user.RoleID,
-			&user.Status,
-			&user.SiswaID,
-			&user.Kelas,
-			&user.AsalSekolah,
-			&user.WhatsApp,
-			&user.Alamat,
-		)
-	}
+      final response = await http
+          .get(
+            Uri.parse(
+              '$baseUrl/mentor/',
+            ),
+            headers: headers,
+          )
+          .timeout(
+            const Duration(
+              seconds: 15,
+            ),
+          );
 
-	if err != nil && isSchemaMismatchError(err) {
-		querySimpleByEmail := `
-			SELECT
-				u.id,
-				COALESCE(NULLIF(TRIM(u.email), ''), LOWER(TRIM($1))) AS nama,
-				u.email,
-				u.password,
-				3 AS role_id,
-				COALESCE(NULLIF(TRIM(u.status), ''), 'aktif') AS status,
-				0 AS siswa_id,
-				'' AS kelas,
-				'' AS asal_sekolah,
-				COALESCE(u.phone_number, '') AS no_wa,
-				'' AS alamat
-			FROM users u
-			WHERE LOWER(TRIM(u.email)) = LOWER(TRIM($1))
-		`
+      if (response.statusCode !=
+          200) {
+        return [];
+      }
 
-		err = config.DB.QueryRow(context.Background(), querySimpleByEmail, email).Scan(
-			&user.ID,
-			&user.Nama,
-			&user.Email,
-			&user.Password,
-			&user.RoleID,
-			&user.Status,
-			&user.SiswaID,
-			&user.Kelas,
-			&user.AsalSekolah,
-			&user.WhatsApp,
-			&user.Alamat,
-		)
-	}
+      final data =
+          jsonDecode(response.body)
+              as List;
 
-	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
-			return nil, errors.New("gagal memproses login")
-		}
+      return data
+          .map(
+            (e) => Mentor.fromJson(
+              e,
+            ),
+          )
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
 
-		queryAdmin := `
-			SELECT
-				a.id,
-				a.nama,
-				a.email,
-				a.password,
-				1 AS role_id,
-				'aktif' AS status,
-				0 AS siswa_id,
-				'' AS kelas,
-				'' AS asal_sekolah,
-				'' AS no_wa,
-				'' AS alamat
-			FROM admin a
-			WHERE LOWER(TRIM(a.email)) = LOWER(TRIM($1))
-		`
+  // =====================================================
+  // UPDATE MENTOR
+  // TIDAK MERUSAK FUNGSI LAMA
+  // password opsional
+  // =====================================================
+  static Future<Map<String, dynamic>>
+      updateMentor(
+    int id,
+    String nama,
+    String email,
+    String mapel, {
+    String password = '',
+  }) async {
+    try {
+      final headers =
+          await getAuthHeaders();
 
-		err = config.DB.QueryRow(context.Background(), queryAdmin, email).Scan(
-			&user.ID,
-			&user.Nama,
-			&user.Email,
-			&user.Password,
-			&user.RoleID,
-			&user.Status,
-			&user.SiswaID,
-			&user.Kelas,
-			&user.AsalSekolah,
-			&user.WhatsApp,
-			&user.Alamat,
-		)
-		if err != nil {
-			return nil, errors.New("email atau password salah")
-		}
-	}
+      final body = {
+        'nama_mentor':
+            nama.trim(),
+        'email':
+            email.trim(),
+        'spesialisasi':
+            mapel.trim(),
+        'status': 'Aktif',
+      };
 
-	upgradeQuery := `UPDATE users SET password = $1 WHERE id = $2`
-	if user.RoleID == 1 {
-		upgradeQuery = `UPDATE admin SET password = $1 WHERE id = $2`
-	}
+      // hanya kirim password kalau diisi
+      if (password.trim().isNotEmpty) {
+        body['password'] =
+            password.trim();
+      }
 
-	if err := verifyPassword(context.Background(), user.Password, password, upgradeQuery, user.ID); err != nil {
-		return nil, errors.New("email atau password salah")
-	}
+      final response = await http
+          .put(
+            Uri.parse(
+              '$baseUrl/mentor/$id',
+            ),
+            headers: headers,
+            body: jsonEncode(body),
+          )
+          .timeout(
+            const Duration(
+              seconds: 15,
+            ),
+          );
 
-	user.Password = ""
-	return user, nil
-}
+      final data =
+          response.body.isNotEmpty
+              ? jsonDecode(
+                  response.body,
+                )
+              : {};
 
-func validateRegisterInput(user models.User) error {
-	nama := strings.TrimSpace(user.Nama)
-	if nama == "" {
-		return errors.New("nama tidak boleh kosong")
-	}
-	if len(nama) < 3 {
-		return errors.New("nama minimal 3 karakter")
-	}
-	if len(nama) > 100 {
-		return errors.New("nama maksimal 100 karakter")
-	}
+      if (response.statusCode ==
+          200) {
+        return {
+          'success': true,
+          'message':
+              data['message'] ??
+              'Mentor berhasil diupdate',
+        };
+      }
 
-	email := strings.TrimSpace(user.Email)
-	if email == "" {
-		return errors.New("email tidak boleh kosong")
-	}
+      return {
+        'success': false,
+        'message':
+            data['error'] ??
+            'Gagal update mentor',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message':
+            'Terjadi kesalahan: $e',
+      };
+    }
+  }
 
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	if !emailRegex.MatchString(email) {
-		return errors.New("format email tidak valid")
-	}
+  // =====================================================
+  // DELETE MENTOR
+  // =====================================================
+  static Future<Map<String, dynamic>>
+      deleteMentor(
+    int mentorId,
+  ) async {
+    try {
+      final headers =
+          await getAuthHeaders();
 
-	if len(user.Password) == 0 {
-		return errors.New("password tidak boleh kosong")
-	}
-	if len(user.Password) < 6 {
-		return errors.New("password minimal 6 karakter")
-	}
-	if len(user.Password) > 50 {
-		return errors.New("password maksimal 50 karakter")
-	}
+      final response = await http
+          .delete(
+            Uri.parse(
+              '$baseUrl/mentor/$mentorId',
+            ),
+            headers: headers,
+          )
+          .timeout(
+            const Duration(
+              seconds: 15,
+            ),
+          );
 
-	return nil
+      final data =
+          response.body.isNotEmpty
+              ? jsonDecode(
+                  response.body,
+                )
+              : {};
+
+      if (response.statusCode ==
+          200) {
+        return {
+          'success': true,
+          'message':
+              data['message'] ??
+              'Mentor berhasil dihapus',
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['error'] ??
+            'Gagal hapus mentor',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message':
+            'Terjadi kesalahan: $e',
+      };
+    }
+  }
 }

@@ -4,7 +4,7 @@ class Mentor {
   final String email;
   final String namaMentor;
   final String spesialisasi;
-  final String bio;
+  final String password;
   final String status;
 
   Mentor({
@@ -13,7 +13,7 @@ class Mentor {
     required this.email,
     required this.namaMentor,
     required this.spesialisasi,
-    required this.bio,
+    required this.password,
     required this.status,
   });
 
@@ -27,10 +27,12 @@ class Mentor {
           0,
 
       userId:
-          json['user_id'] ?? 0,
+          json['user_id'] ??
+          0,
 
       email:
-          json['email'] ?? '',
+          json['email'] ??
+          '',
 
       namaMentor:
           json['nama_mentor'] ??
@@ -42,8 +44,9 @@ class Mentor {
           json['mapel'] ??
           '',
 
-      bio:
-          json['bio'] ?? '',
+      password:
+          json['password'] ??
+          '',
 
       status:
           json['status'] ??
@@ -58,7 +61,7 @@ class Mentor {
       'email': email,
       'nama_mentor': namaMentor,
       'spesialisasi': spesialisasi,
-      'bio': bio,
+      'password': password,
       'status': status,
     };
   }
