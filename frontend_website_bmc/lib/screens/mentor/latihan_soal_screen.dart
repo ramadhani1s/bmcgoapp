@@ -17,11 +17,15 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   List<SoalLatihan> _items = const [];
   SoalLatihan? _editingItem;
 
-  final TextEditingController _questionController = TextEditingController();
-  final TextEditingController _optionAController = TextEditingController();
-  final TextEditingController _optionBController = TextEditingController();
-  final TextEditingController _optionCController = TextEditingController();
-  final TextEditingController _optionDController = TextEditingController();
+  final TextEditingController _judulController = TextEditingController();
+  final TextEditingController _jumlahSoalController = TextEditingController(
+    text: '1',
+  );
+  final TextEditingController _durasiController = TextEditingController(
+    text: '20',
+  );
+  final TextEditingController _jadwalController = TextEditingController();
+  final List<_QuestionDraft> _drafts = <_QuestionDraft>[];
 
   final List<String> _mapelOptions = const [
     'Matematika',
@@ -43,11 +47,13 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
 
   @override
   void dispose() {
-    _questionController.dispose();
-    _optionAController.dispose();
-    _optionBController.dispose();
-    _optionCController.dispose();
-    _optionDController.dispose();
+    _judulController.dispose();
+    _jumlahSoalController.dispose();
+    _durasiController.dispose();
+    _jadwalController.dispose();
+    for (final draft in _drafts) {
+      draft.dispose();
+    }
     super.dispose();
   }
 
@@ -80,34 +86,39 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   }
 
   void _openCreateForm() {
+    _syncDraftCount(1);
+
     setState(() {
       _showForm = true;
       _editingItem = null;
-      _questionController.clear();
-      _optionAController.clear();
-      _optionBController.clear();
-      _optionCController.clear();
-      _optionDController.clear();
-      _selectedAnswer = 'A';
       _selectedMapel = _mapelOptions.first;
+      _judulController.text = '';
+      _jumlahSoalController.text = '1';
+      _durasiController.text = '20';
+      _jadwalController.text = '';
+      _drafts.first.reset();
     });
   }
 
   void _openEditForm(SoalLatihan item) {
     final parsed = _parseStoredQuestion(item.pertanyaan);
+    _syncDraftCount(1);
+
+    _drafts.first
+      ..questionController.text = parsed.questionText
+      ..optionAController.text = item.pilihanA
+      ..optionBController.text = item.pilihanB
+      ..optionCController.text = item.pilihanC
+      ..optionDController.text = item.pilihanD
+      ..selectedAnswer = item.jawaban.toUpperCase();
 
     setState(() {
       _showForm = true;
       _editingItem = item;
-      _questionController.text = parsed.questionText;
-      _optionAController.text = item.pilihanA;
-      _optionBController.text = item.pilihanB;
-      _optionCController.text = item.pilihanC;
-      _optionDController.text = item.pilihanD;
-      _selectedAnswer = item.jawaban.toUpperCase();
       _selectedMapel = _mapelOptions.contains(parsed.mapel)
           ? parsed.mapel
           : _mapelOptions.first;
+      _jumlahSoalController.text = '1';
     });
   }
 
@@ -120,45 +131,64 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   }
 
   Future<void> _submitForm() async {
-    final pertanyaan = _questionController.text.trim();
-    final pilihanA = _optionAController.text.trim();
-    final pilihanB = _optionBController.text.trim();
-    final pilihanC = _optionCController.text.trim();
-    final pilihanD = _optionDController.text.trim();
-    final storedQuestion = _buildStoredQuestion(pertanyaan, _selectedMapel);
-
-    if (pertanyaan.isEmpty ||
-        pilihanA.isEmpty ||
-        pilihanB.isEmpty ||
-        pilihanC.isEmpty ||
-        pilihanD.isEmpty) {
-      _showMessage('Semua field wajib diisi', isError: true);
+    if (_drafts.isEmpty) {
+      _showMessage('Tambahkan minimal 1 soal', isError: true);
       return;
+    }
+
+    for (int i = 0; i < _drafts.length; i++) {
+      final draft = _drafts[i];
+      if (!draft.isComplete) {
+        _showMessage('Soal ${i + 1} belum lengkap', isError: true);
+        return;
+      }
     }
 
     setState(() {
       _isSubmitting = true;
     });
 
-    Map<String, dynamic> response;
+    Map<String, dynamic> response = <String, dynamic>{
+      'success': true,
+      'message': 'Soal berhasil disimpan',
+    };
+
     if (_editingItem == null) {
-      response = await LatihanSoalService.createSoalLatihan(
-        pertanyaan: storedQuestion,
-        pilihanA: pilihanA,
-        pilihanB: pilihanB,
-        pilihanC: pilihanC,
-        pilihanD: pilihanD,
-        jawaban: _selectedAnswer,
-      );
+      for (int i = 0; i < _drafts.length; i++) {
+        final draft = _drafts[i];
+        final result = await LatihanSoalService.createSoalLatihan(
+          pertanyaan: _buildStoredQuestion(
+            draft.questionController.text.trim(),
+            _selectedMapel,
+          ),
+          pilihanA: draft.optionAController.text.trim(),
+          pilihanB: draft.optionBController.text.trim(),
+          pilihanC: draft.optionCController.text.trim(),
+          pilihanD: draft.optionDController.text.trim(),
+          jawaban: draft.selectedAnswer,
+        );
+
+        if (result['success'] != true) {
+          response = {
+            'success': false,
+            'message': 'Gagal simpan Soal ${i + 1}: ${result['message']}',
+          };
+          break;
+        }
+      }
     } else {
+      final draft = _drafts.first;
       response = await LatihanSoalService.updateSoalLatihan(
         soalId: _editingItem!.id,
-        pertanyaan: storedQuestion,
-        pilihanA: pilihanA,
-        pilihanB: pilihanB,
-        pilihanC: pilihanC,
-        pilihanD: pilihanD,
-        jawaban: _selectedAnswer,
+        pertanyaan: _buildStoredQuestion(
+          draft.questionController.text.trim(),
+          _selectedMapel,
+        ),
+        pilihanA: draft.optionAController.text.trim(),
+        pilihanB: draft.optionBController.text.trim(),
+        pilihanC: draft.optionCController.text.trim(),
+        pilihanD: draft.optionDController.text.trim(),
+        jawaban: draft.selectedAnswer,
       );
     }
 
@@ -635,6 +665,29 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
+              'Judul Latihan *',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                color: Color(0xFF374151),
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _judulController,
+              decoration: InputDecoration(
+                hintText: 'Contoh: Latihan Matematika Bab 1',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
               'Mata Pelajaran *',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
@@ -672,29 +725,59 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Pertanyaan *',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-                color: Color(0xFF374151),
-              ),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _questionController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Tulis pertanyaan soal di sini...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _jumlahSoalController,
+                    keyboardType: TextInputType.number,
+                    enabled: _editingItem == null,
+                    decoration: InputDecoration(
+                      labelText: 'Jumlah Soal *',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      if (_editingItem != null) {
+                        return;
+                      }
+                      final parsed = int.tryParse(value) ?? 1;
+                      _syncDraftCount(parsed.clamp(1, 20));
+                    },
+                  ),
                 ),
-                contentPadding: const EdgeInsets.all(12),
-              ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _durasiController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Durasi (Menit) *',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _jadwalController,
+                    decoration: InputDecoration(
+                      labelText: 'Jadwal Pelaksanaan',
+                      hintText: '30 April 2026',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
             const Text(
-              'Pilihan Jawaban',
+              'Daftar Soal (Per Kolom)',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
@@ -702,13 +785,50 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            _buildOptionEditor('A', _optionAController),
-            const SizedBox(height: 8),
-            _buildOptionEditor('B', _optionBController),
-            const SizedBox(height: 8),
-            _buildOptionEditor('C', _optionCController),
-            const SizedBox(height: 8),
-            _buildOptionEditor('D', _optionDController),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 900;
+                final cardWidth = isWide
+                    ? (constraints.maxWidth - 12) / 2
+                    : constraints.maxWidth;
+
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: List.generate(_drafts.length, (index) {
+                    return SizedBox(
+                      width: cardWidth,
+                      child: _buildQuestionEditorCard(index),
+                    );
+                  }),
+                );
+              },
+            ),
+            if (_editingItem == null) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _drafts.length >= 20
+                        ? null
+                        : () {
+                            _syncDraftCount(_drafts.length + 1);
+                            _jumlahSoalController.text = '${_drafts.length}';
+                          },
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Tambah Kolom Soal'),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Maksimal 20 soal',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 14),
             Row(
               children: [
@@ -745,59 +865,102 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     );
   }
 
-  Widget _buildOptionEditor(String key, TextEditingController controller) {
-    final isSelected = _selectedAnswer == key;
+  Widget _buildQuestionEditorCard(int index) {
+    final draft = _drafts[index];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Soal ${index + 1}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              const Spacer(),
+              if (_editingItem == null && _drafts.length > 1)
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      final removed = _drafts.removeAt(index);
+                      removed.dispose();
+                      _jumlahSoalController.text = '${_drafts.length}';
+                    });
+                  },
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: 18,
+                    color: Color(0xFFEF4444),
+                  ),
+                  tooltip: 'Hapus kolom soal',
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: draft.questionController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: 'Pertanyaan *',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              contentPadding: const EdgeInsets.all(12),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildOptionInput('A', draft.optionAController, draft),
+          const SizedBox(height: 8),
+          _buildOptionInput('B', draft.optionBController, draft),
+          const SizedBox(height: 8),
+          _buildOptionInput('C', draft.optionCController, draft),
+          const SizedBox(height: 8),
+          _buildOptionInput('D', draft.optionDController, draft),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOptionInput(
+    String key,
+    TextEditingController controller,
+    _QuestionDraft draft,
+  ) {
+    final isAnswer = draft.selectedAnswer == key;
+
+    return Row(
       children: [
-        Text(
-          'Opsi $key *',
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-            color: Color(0xFF6B7280),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: 'Opsi $key',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              isDense: true,
+            ),
           ),
         ),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  hintText: 'Tulis opsi $key...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  isDense: true,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 84,
-              child: TextButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedAnswer = key;
-                  });
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: isSelected
-                      ? const Color(0xFF22C55E)
-                      : const Color(0xFFF3F4F6),
-                  foregroundColor: isSelected
-                      ? Colors.white
-                      : const Color(0xFF6B7280),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(isSelected ? '✓ Kunci' : 'Set Kunci'),
-              ),
-            ),
-          ],
+        const SizedBox(width: 8),
+        ChoiceChip(
+          label: Text(isAnswer ? 'Kunci $key' : 'Set $key'),
+          selected: isAnswer,
+          onSelected: (_) {
+            setState(() {
+              draft.selectedAnswer = key;
+            });
+          },
         ),
       ],
     );
@@ -850,6 +1013,19 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     return '[${mapel.trim()}] ${text.trim()}';
   }
 
+  void _syncDraftCount(int requested) {
+    final target = requested.clamp(1, 20);
+
+    while (_drafts.length < target) {
+      _drafts.add(_QuestionDraft());
+    }
+
+    while (_drafts.length > target) {
+      final removed = _drafts.removeLast();
+      removed.dispose();
+    }
+  }
+
   _ParsedQuestion _parseStoredQuestion(String raw) {
     final match = RegExp(r'^\[(.+?)\]\s*(.*)$').firstMatch(raw.trim());
     if (match == null) {
@@ -874,4 +1050,38 @@ class _ParsedQuestion {
   final String questionText;
 
   const _ParsedQuestion({required this.mapel, required this.questionText});
+}
+
+class _QuestionDraft {
+  final TextEditingController questionController = TextEditingController();
+  final TextEditingController optionAController = TextEditingController();
+  final TextEditingController optionBController = TextEditingController();
+  final TextEditingController optionCController = TextEditingController();
+  final TextEditingController optionDController = TextEditingController();
+  String selectedAnswer = 'A';
+
+  bool get isComplete {
+    return questionController.text.trim().isNotEmpty &&
+        optionAController.text.trim().isNotEmpty &&
+        optionBController.text.trim().isNotEmpty &&
+        optionCController.text.trim().isNotEmpty &&
+        optionDController.text.trim().isNotEmpty;
+  }
+
+  void reset() {
+    questionController.clear();
+    optionAController.clear();
+    optionBController.clear();
+    optionCController.clear();
+    optionDController.clear();
+    selectedAnswer = 'A';
+  }
+
+  void dispose() {
+    questionController.dispose();
+    optionAController.dispose();
+    optionBController.dispose();
+    optionCController.dispose();
+    optionDController.dispose();
+  }
 }

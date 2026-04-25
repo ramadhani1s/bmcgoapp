@@ -271,6 +271,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
     if (index == 2) {
       _incrementTryoutProgress();
+      Navigator.of(context).pushNamed('/mentor-tryout');
+      return;
     }
 
     setState(() {
@@ -280,6 +282,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _onMainMenuTap(String menuKey) {
+    if (menuKey.toLowerCase() == 'try out') {
+      _incrementTryoutProgress();
+      Navigator.of(context).pushNamed('/mentor-tryout');
+      return;
+    }
+
+    if (menuKey.toLowerCase() == 'olimpiade') {
+      Navigator.of(context).pushNamed('/mentor-olimpiade');
+      return;
+    }
+
     if (!_isActive) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -294,16 +307,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (menuKey.toLowerCase() == 'materi') {
       _incrementMateriProgress();
-    } else if (menuKey.toLowerCase() == 'try out') {
-      _incrementTryoutProgress();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Menu $menuKey siap dihubungkan ke data dinamis.'),
+          backgroundColor: const Color(0xFF23A66F),
+        ),
+      );
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Menu $menuKey siap dihubungkan ke data dinamis.'),
-        backgroundColor: const Color(0xFF23A66F),
-      ),
-    );
   }
 
   Widget _buildDashboardTab() {
@@ -1133,10 +1144,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: 'Detail Profil',
                       color: const Color(0xFFEAF4FF),
                       onTap: () {
-                        final args = ModalRoute.of(context)?.settings.arguments
+                        final args =
+                            ModalRoute.of(context)?.settings.arguments
                                 as Map<String, dynamic>? ??
                             const <String, dynamic>{};
-                        final user = args['user'] as Map<String, dynamic>? ??
+                        final user =
+                            args['user'] as Map<String, dynamic>? ??
                             const <String, dynamic>{};
                         Navigator.of(context).pushNamed(
                           '/profile-detail',
@@ -1191,8 +1204,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      Navigator.of(context)
-                          .pushNamedAndRemoveUntil('/login', (route) => false);
+                      Navigator.of(
+                        context,
+                      ).pushNamedAndRemoveUntil('/login', (route) => false);
                     },
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: _accent),
@@ -1476,10 +1490,7 @@ class _SectionTitleRow extends StatelessWidget {
             ),
           Text(
             trailingText!,
-            style: const TextStyle(
-              color: Color(0xFFABB0BE),
-              fontSize: 15,
-            ),
+            style: const TextStyle(color: Color(0xFFABB0BE), fontSize: 15),
           ),
         ],
       ],
@@ -1556,10 +1567,7 @@ class _AlumniPreviewCard extends StatelessWidget {
             item.majorLine,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFFA2A7B5),
-              fontSize: 11.5,
-            ),
+            style: const TextStyle(color: Color(0xFFA2A7B5), fontSize: 11.5),
           ),
         ],
       ),

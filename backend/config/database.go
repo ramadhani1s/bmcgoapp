@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -14,7 +15,6 @@ func ConnectDB() {
 	if dsn == "" {
 		dsn = "postgres://postgres:yohana@localhost:5432/bmcgo_db?sslmode=disable"
 	}
-	dsn := "postgres://postgres:123@localhost:5432/bmcgo_app"
 
 	var err error
 	// 1. Membuat konfigurasi pool
@@ -101,5 +101,104 @@ func ConnectDB() {
 	`)
 	if err != nil {
 		log.Println("Warning: Could not add verification columns (might already exist):", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS paket_les (
+			id SERIAL PRIMARY KEY,
+			nama VARCHAR(255),
+			created_at TIMESTAMP DEFAULT NOW()
+		)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat table paket_les:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS tryout (
+			id SERIAL PRIMARY KEY,
+			paket_id INTEGER NOT NULL,
+			mentor_id INTEGER NOT NULL,
+			class_level VARCHAR(30) DEFAULT 'Kelas 12',
+			judul VARCHAR(255),
+			tanggal DATE,
+			durasi INT,
+			FOREIGN KEY (paket_id) REFERENCES paket_les(id),
+			FOREIGN KEY (mentor_id) REFERENCES mentor(id)
+		)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat table tryout:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		ALTER TABLE IF EXISTS tryout
+		ADD COLUMN IF NOT EXISTS class_level VARCHAR(30) DEFAULT 'Kelas 12'
+	`)
+	if err != nil {
+		log.Println("Warning: gagal alter class_level tryout:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS hasil_tryout (
+			id SERIAL PRIMARY KEY,
+			siswa_id INTEGER NOT NULL,
+			tryout_id INTEGER NOT NULL,
+			nilai INT,
+			FOREIGN KEY (siswa_id) REFERENCES siswa(id),
+			FOREIGN KEY (tryout_id) REFERENCES tryout(id)
+		)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat table hasil_tryout:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS evaluasi (
+			id SERIAL PRIMARY KEY,
+			siswa_id INTEGER NOT NULL,
+			nilai INT,
+			catatan TEXT,
+			FOREIGN KEY (siswa_id) REFERENCES siswa(id)
+		)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat table evaluasi:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS olimpiade (
+			id SERIAL PRIMARY KEY,
+			mentor_id INTEGER NOT NULL,
+			class_level VARCHAR(30) DEFAULT 'Kelas 12',
+			nama VARCHAR(255),
+			tanggal DATE,
+			lokasi VARCHAR(100),
+			FOREIGN KEY (mentor_id) REFERENCES mentor(id)
+		)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat table olimpiade:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		ALTER TABLE IF EXISTS olimpiade
+		ADD COLUMN IF NOT EXISTS class_level VARCHAR(30) DEFAULT 'Kelas 12'
+	`)
+	if err != nil {
+		log.Println("Warning: gagal alter class_level olimpiade:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS peserta_olimpiade (
+			id SERIAL PRIMARY KEY,
+			siswa_id INTEGER NOT NULL,
+			olimpiade_id INTEGER NOT NULL,
+			FOREIGN KEY (siswa_id) REFERENCES siswa(id),
+			FOREIGN KEY (olimpiade_id) REFERENCES olimpiade(id)
+		)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat table peserta_olimpiade:", err)
 	}
 }

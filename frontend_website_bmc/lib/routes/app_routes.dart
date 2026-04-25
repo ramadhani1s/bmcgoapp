@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/dashboard/admin_dashboard.dart';
 import '../screens/dashboard/mentor_dashboard.dart';
+import '../screens/dashboard/mentor_olimpiade_screen.dart';
+import '../screens/dashboard/mentor_tryout_screen.dart';
 import '../screens/mentor/latihan_soal_screen.dart';
 import '../screens/mentor_management_screen.dart';
 import '../screens/payment_verification_screen.dart';
@@ -14,6 +16,8 @@ class AppRoutes {
   static const String mentorDashboard = '/mentor-dashboard';
   static const String mentorManagement = '/mentor-management';
   static const String mentorExercise = '/mentor-exercise';
+  static const String mentorTryout = '/mentor-tryout';
+  static const String mentorOlimpiade = '/mentor-olimpiade';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -33,6 +37,10 @@ class AppRoutes {
         );
       case mentorExercise:
         return MaterialPageRoute(builder: (_) => const LatihanSoalScreen());
+      case mentorTryout:
+        return MaterialPageRoute(builder: (_) => const MentorTryoutScreen());
+      case mentorOlimpiade:
+        return MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(
