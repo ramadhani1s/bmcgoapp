@@ -38,7 +38,7 @@ class PaymentVerificationOverview {
 }
 
 class PaymentVerificationService {
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'http://127.0.0.1:8080';
 
   static Future<String> _getToken() async {
     final prefs = await SharedPreferences.getInstance();

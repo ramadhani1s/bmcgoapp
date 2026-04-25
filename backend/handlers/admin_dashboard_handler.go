@@ -140,8 +140,15 @@ func GetAdminDashboardSummary(c *gin.Context) {
 	if err := config.DB.QueryRow(
 		ctx,
 		`SELECT COUNT(*)
-		 FROM payment_transactions
-		 WHERE status IN ('success', 'pending') AND COALESCE(is_verified, FALSE) = FALSE`,
+		 FROM (
+			SELECT DISTINCT ON (pt.user_id)
+				pt.user_id,
+				pt.status,
+				COALESCE(pt.is_verified, FALSE) AS is_verified
+			FROM payment_transactions pt
+			ORDER BY pt.user_id, pt.created_at DESC
+		) latest
+		WHERE latest.status IN ('success', 'pending') AND latest.is_verified = FALSE`,
 	).Scan(&summary.WaitingVerifications); err != nil {
 		summary.WaitingVerifications = 0
 	}
@@ -164,17 +171,28 @@ func GetAdminDashboardSummary(c *gin.Context) {
 	rows, err := config.DB.Query(
 		ctx,
 		`SELECT
-			COALESCE(NULLIF(s.nama_siswa, ''), NULLIF(u.nama, ''), pt.customer_name) AS student_name,
+			COALESCE(NULLIF(s.nama_siswa, ''), NULLIF(u.nama, ''), latest.customer_name) AS student_name,
 			COALESCE(NULLIF(s.asal_sekolah, ''), '') AS school_name,
 			COALESCE(NULLIF(s.kelas, ''), '') AS class_name,
-			pt.created_at,
-			pt.status,
-			COALESCE(pt.is_verified, FALSE) AS is_verified
-		 FROM payment_transactions pt
-		 LEFT JOIN users u ON u.id = pt.user_id
-		 LEFT JOIN siswa s ON s.user_id = pt.user_id
-		 ORDER BY pt.created_at DESC
-		 LIMIT 5`,
+			latest.created_at,
+			latest.status,
+			latest.is_verified
+		FROM (
+			SELECT DISTINCT ON (pt.user_id)
+				pt.user_id,
+				pt.customer_name,
+				pt.created_at,
+				pt.status,
+				COALESCE(pt.is_verified, FALSE) AS is_verified
+			FROM payment_transactions pt
+			WHERE pt.status IN ('success', 'pending')
+			ORDER BY pt.user_id, pt.created_at DESC
+		) latest
+		LEFT JOIN users u ON u.id = latest.user_id
+		LEFT JOIN siswa s ON s.user_id = latest.user_id
+		WHERE latest.is_verified = FALSE
+		ORDER BY latest.created_at DESC
+		LIMIT 5`,
 	)
 	if err == nil {
 		defer rows.Close()

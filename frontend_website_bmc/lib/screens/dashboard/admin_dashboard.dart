@@ -3,6 +3,8 @@ import '../../models/user.dart';
 import '../../models/admin_dashboard_data.dart';
 import '../../services/admin_dashboard_service.dart';
 import '../../services/auth_service.dart';
+import '../../routes/app_routes.dart';
+import 'paket_les_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -20,6 +22,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   User? _currentUser;
   int _selectedMenuIndex = 0;
+  String _selectedMenuTitle = 'Dashboard';
   AdminDashboardData? _summary;
   bool _isSummaryLoading = true;
 
@@ -71,20 +74,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  void _onMenuTap(int index, _SideMenuItem item) {
-    setState(() {
-      _selectedMenuIndex = index;
-    });
+ void _onMenuTap(int index, _SideMenuItem item) {
+  setState(() {
+    _selectedMenuIndex = index;
+    _selectedMenuTitle = item.title;
+  });
 
-    if (item.title == 'Kelola Mentor') {
-      Navigator.of(context).pushNamed('/mentor-management');
-      return;
-    }
-
-    if (item.route != null) {
-      Navigator.of(context).pushNamed(item.route!);
-    }
+  if (item.title == 'Kelola Mentor') {
+    Navigator.of(context).pushNamed('/mentor-management');
   }
+
+  if (item.title == 'Verifikasi Pendaftaran') {
+    Navigator.of(context).pushNamed('/payment-verification');
+  }
+}
 
   List<_SideMenuItem> get _menuItems => const [
     _SideMenuItem('Dashboard', Icons.grid_view_rounded),
@@ -97,7 +100,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _SideMenuItem('Kelola Jadwal', Icons.event_note_outlined),
     _SideMenuItem('Kelola Absensi', Icons.assignment_turned_in_outlined),
     _SideMenuItem('Kelola Pengumuman', Icons.campaign_outlined),
-    _SideMenuItem('Kelola Paket Les', Icons.school_outlined),
+   _SideMenuItem('Kelola Paket Les', Icons.school_outlined, route: '/paket-les'),
     _SideMenuItem('Kelola Profil Alumni', Icons.badge_outlined),
   ];
 
@@ -173,6 +176,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                      if (_selectedMenuTitle == 'Kelola Paket Les')
+                        const PaketLesScreen()
+                      else ...[
                         _buildTopBar(),
                         const SizedBox(height: 14),
                         _buildHeroCard(),
@@ -185,7 +191,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         _buildPendingVerificationCard(),
                         const SizedBox(height: 12),
                         _buildScheduleCard(),
-                      ],
+                      ]
+                    ],
                     ),
                   ),
                 ),

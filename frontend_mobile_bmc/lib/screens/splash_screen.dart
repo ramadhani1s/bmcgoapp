@@ -81,10 +81,7 @@ class _SplashScreenState extends State<SplashScreen>
                 children: const [
                   Text(
                     'versi 1.0.0',
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
                   ),
                 ],
               ),

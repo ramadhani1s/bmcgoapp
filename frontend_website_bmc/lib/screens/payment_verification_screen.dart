@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/payment_verification_item.dart';
+import '../services/auth_service.dart';
 import '../services/payment_verification_service.dart';
 
 class PaymentVerificationScreen extends StatefulWidget {
@@ -23,6 +24,30 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
   static const Color _blue = Color(0xFF2563EB);
 
   late Future<PaymentVerificationOverview> _future;
+  int _selectedMenuIndex = 1;
+
+  List<_SideMenuItem> get _menuItems => const [
+    _SideMenuItem(
+      'Dashboard',
+      Icons.grid_view_rounded,
+      route: '/admin-dashboard',
+    ),
+    _SideMenuItem(
+      'Verifikasi Pendaftaran',
+      Icons.fact_check_outlined,
+      route: '/payment-verification',
+    ),
+    _SideMenuItem(
+      'Kelola Mentor',
+      Icons.groups_2_outlined,
+      route: '/mentor-management',
+    ),
+    _SideMenuItem('Kelola Jadwal', Icons.event_note_outlined),
+    _SideMenuItem('Kelola Absensi', Icons.assignment_turned_in_outlined),
+    _SideMenuItem('Kelola Pengumuman', Icons.campaign_outlined),
+    _SideMenuItem('Kelola Paket Les', Icons.school_outlined),
+    _SideMenuItem('Kelola Profil Alumni', Icons.badge_outlined),
+  ];
 
   @override
   void initState() {
@@ -36,21 +61,27 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
     });
   }
 
-  void _onSidebarTap(String label) {
-    switch (label) {
-      case 'Dashboard':
-        Navigator.of(context).pushReplacementNamed('/admin-dashboard');
-        break;
-      case 'Verifikasi Pendaftaran':
-        break;
-      case 'Kelola Mentor':
-        Navigator.of(context).pushNamed('/mentor-management');
-        break;
-      default:
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Menu "$label" belum tersedia')));
+  Future<void> _logout() async {
+    await AuthService.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed('/login');
+  }
+
+  void _onMenuTap(int index, _SideMenuItem item) {
+    setState(() {
+      _selectedMenuIndex = index;
+    });
+
+    if (item.route == null || item.route == '/payment-verification') {
+      if (item.route == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Menu "${item.title}" belum tersedia')),
+        );
+      }
+      return;
     }
+
+    Navigator.of(context).pushNamed(item.route!);
   }
 
   String _formatDate(DateTime dateTime) {
@@ -227,6 +258,8 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        _buildTopBar(),
+                        const SizedBox(height: 14),
                         _buildHeader(),
                         const SizedBox(height: 20),
                         _buildStatsRow(),
@@ -247,19 +280,21 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
   }
 
   Widget _buildSidebar() {
-    final menuItems = [
-      ('Dashboard', Icons.grid_view_rounded),
-      ('Verifikasi Pendaftaran', Icons.fact_check_outlined),
-      ('Kelola Mentor', Icons.groups_2_outlined),
-    ];
-
     return Container(
       width: 214,
-      color: _sidebarBg,
+      decoration: BoxDecoration(
+        color: _sidebarBg,
+        border: const Border(
+          right: BorderSide(color: _border),
+          top: BorderSide(color: _border),
+          bottom: BorderSide(color: _border),
+          left: BorderSide(color: Color(0xFF2A8CF4), width: 2),
+        ),
+      ),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 10),
             child: Row(
               children: [
                 SizedBox(
@@ -275,13 +310,17 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                       Text(
                         'BMC',
                         style: TextStyle(
+                          color: Color(0xFF1E2A3E),
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       Text(
                         'Bintang Muda Center',
-                        style: TextStyle(fontSize: 10),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF6D7B93),
+                        ),
                       ),
                     ],
                   ),
@@ -289,26 +328,35 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 8),
           const Padding(
-            padding: EdgeInsets.all(12),
-            child: Text(
-              'MENU UTAMA',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'MENU UTAMA',
+                style: TextStyle(
+                  color: Color(0xFF9AA4B8),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  height: 1.1,
+                ),
+              ),
             ),
           ),
+          const SizedBox(height: 8),
           Expanded(
-            child: ListView.builder(
-              itemCount: menuItems.length,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              itemCount: _menuItems.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 2),
               itemBuilder: (context, index) {
-                final (label, icon) = menuItems[index];
-                final isSelected = label == 'Verifikasi Pendaftaran';
+                final item = _menuItems[index];
+                final isSelected = index == _selectedMenuIndex;
                 return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 2,
-                  ),
+                  padding: EdgeInsets.zero,
                   child: InkWell(
-                    onTap: () => _onSidebarTap(label),
+                    onTap: () => _onMenuTap(index, item),
                     borderRadius: BorderRadius.circular(9),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -324,7 +372,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                       child: Row(
                         children: [
                           Icon(
-                            icon,
+                            item.icon,
                             size: 15,
                             color: isSelected
                                 ? Colors.white
@@ -333,7 +381,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              label,
+                              item.title,
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: isSelected
@@ -352,6 +400,113 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                 );
               },
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 16),
+            child: InkWell(
+              onTap: _logout,
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.logout_rounded,
+                      size: 15,
+                      color: Color(0xFF9CA5B5),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Keluar',
+                      style: TextStyle(color: Color(0xFF8E96A8), fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Container(
+      height: 66,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFF),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE9EFF8)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.search, size: 16, color: Color(0xFF9AA3B2)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Cari...',
+                    style: TextStyle(
+                      color: Color(0xFFA0A9B7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Icon(
+            Icons.notifications_none_rounded,
+            color: Color(0xFF7D8797),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: const Color(0xFF6388FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: const Text(
+              'AD',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Administrator',
+                style: TextStyle(
+                  color: Color(0xFF27344B),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                'Admin BMC',
+                style: TextStyle(color: Color(0xFF99A4B5), fontSize: 10),
+              ),
+            ],
           ),
         ],
       ),
@@ -507,7 +662,14 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Text(
+                      'Data verifikasi belum tersedia saat ini.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Color(0xFF94A0B4)),
+                    ),
+                  );
                 }
 
                 final items = snapshot.data?.items ?? [];
@@ -689,19 +851,28 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
 
           // STATUS
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: statusBgColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                statusLabel,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  color: statusColor,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: 70,  // Reduced from 92 to 70 for shorter status container
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusBgColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    statusLabel,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -709,40 +880,77 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
 
           // AKSI
           Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                IconButton(
-                  onPressed: () => _approve(item),
-                  icon: const Icon(Icons.check_circle, size: 20),
-                  color: _green,
-                  tooltip: 'Setujui',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 20),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: 102,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _actionChip(
+                      icon: Icons.check,
+                      color: _green,
+                      onTap: () => _approve(item),
+                      tooltip: 'Setujui',
+                    ),
+                    _actionChip(
+                      icon: Icons.close,
+                      color: _red,
+                      onTap: () => _reject(item),
+                      tooltip: 'Tolak',
+                    ),
+                    _actionChip(
+                      icon: Icons.visibility_outlined,
+                      color: _blue,
+                      onTap: () => _showDetailModal(item),
+                      tooltip: 'Lihat Detail',
+                    ),
+                  ],
                 ),
-                IconButton(
-                  onPressed: () => _reject(item),
-                  icon: const Icon(Icons.cancel, size: 20),
-                  color: _red,
-                  tooltip: 'Tolak',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 20),
-                ),
-                IconButton(
-                  onPressed: () => _showDetailModal(item),
-                  icon: const Icon(Icons.visibility, size: 20),
-                  color: _blue,
-                  tooltip: 'Lihat Detail',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 20),
-                ),
-              ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _actionChip({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: 30,
+            height: 24,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: color.withValues(alpha: 0.55)),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 14, color: color),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SideMenuItem {
+  const _SideMenuItem(this.title, this.icon, {this.route});
+
+  final String title;
+  final IconData icon;
+  final String? route;
 }
 
 class _DetailModal extends StatefulWidget {

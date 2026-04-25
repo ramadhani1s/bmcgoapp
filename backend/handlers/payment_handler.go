@@ -147,31 +147,51 @@ func buildWALink(phone, message string) string {
 func loadVerificationItems(ctx context.Context) ([]VerificationItem, error) {
 	rows, err := config.DB.Query(
 		ctx,
-		`SELECT pt.transaction_id,
+		`SELECT
+			t.transaction_id,
+			t.user_id,
+			COALESCE(NULLIF(s.nama_siswa, ''), NULLIF(u.nama, ''), t.customer_name),
+			COALESCE(NULLIF(s.kelas, ''), ''),
+			COALESCE(NULLIF(s.asal_sekolah, ''), ''),
+			'' AS address,
+			COALESCE(NULLIF(u.phone_number, ''), COALESCE(t.customer_phone, '')),
+			t.package_id,
+			t.package_title,
+			t.amount,
+			t.status,
+			COALESCE(t.payment_type, ''),
+			COALESCE(t.customer_email, ''),
+			COALESCE(t.customer_phone, ''),
+			COALESCE(t.is_verified, FALSE),
+			t.verified_at,
+			t.verified_by_admin,
+			COALESCE(u.status, ''),
+			t.created_at,
+			t.updated_at
+		FROM (
+			SELECT DISTINCT ON (pt.user_id)
+				pt.transaction_id,
 				pt.user_id,
-				COALESCE(NULLIF(s.nama_siswa, ''), NULLIF(u.nama, ''), pt.customer_name),
-				COALESCE(NULLIF(s.kelas, ''), ''),
-				COALESCE(NULLIF(s.asal_sekolah, ''), ''),
-				COALESCE(NULLIF(s.alamat, ''), ''),
-				COALESCE(NULLIF(s.no_wa, ''), ''),
 				pt.package_id,
 				pt.package_title,
 				pt.amount,
 				pt.status,
-				COALESCE(pt.payment_type, ''),
-				COALESCE(pt.customer_email, ''),
-				COALESCE(pt.customer_phone, ''),
-				COALESCE(pt.is_verified, FALSE),
+				pt.payment_type,
+				pt.customer_name,
+				pt.customer_email,
+				pt.customer_phone,
+				pt.is_verified,
 				pt.verified_at,
 				pt.verified_by_admin,
-				COALESCE(u.status, ''),
 				pt.created_at,
 				pt.updated_at
-		 FROM payment_transactions pt
-		 LEFT JOIN users u ON u.id = pt.user_id
-		 LEFT JOIN siswa s ON s.user_id = pt.user_id
-		 ORDER BY pt.created_at DESC
-		 LIMIT 200`,
+			FROM payment_transactions pt
+			ORDER BY pt.user_id, pt.created_at DESC
+		) t
+		LEFT JOIN users u ON u.id = t.user_id
+		LEFT JOIN siswa s ON s.user_id = t.user_id
+		ORDER BY t.created_at DESC
+		LIMIT 200`,
 	)
 	if err != nil {
 		return nil, err
@@ -205,6 +225,7 @@ func loadVerificationItems(ctx context.Context) ([]VerificationItem, error) {
 		); err != nil {
 			return nil, err
 		}
+		item.Status = normalizeStatus(item.Status)
 		items = append(items, item)
 	}
 
@@ -607,7 +628,7 @@ func SubmitManualTransferConfirmation(c *gin.Context) {
 		`SELECT
 			COALESCE(NULLIF(s.nama_siswa, ''), NULLIF(u.nama, ''), ''),
 			COALESCE(NULLIF(u.email, ''), ''),
-			COALESCE(NULLIF(s.no_wa, ''), NULLIF(u.phone_number, ''), '')
+			COALESCE(NULLIF(u.phone_number, ''), '')
 		 FROM users u
 		 LEFT JOIN siswa s ON s.user_id = u.id
 		 WHERE u.id = $1`,
@@ -692,9 +713,9 @@ func VerifyPayment(c *gin.Context) {
 		c.Request.Context(),
 		`SELECT pt.user_id,
 				COALESCE(pt.customer_phone, ''),
-				COALESCE(s.no_wa, '')
+				COALESCE(NULLIF(u.phone_number, ''), '')
 		 FROM payment_transactions pt
-		 LEFT JOIN siswa s ON s.user_id = pt.user_id
+		 LEFT JOIN users u ON u.id = pt.user_id
 		 WHERE pt.transaction_id = $1`,
 		transactionID,
 	).Scan(&userID, &customerPhone, &registeredWhatsApp)
@@ -858,22 +879,7 @@ func RejectPayment(c *gin.Context) {
 
 // GetVerificationOverview admin ambil ringkasan dan daftar verifikasi
 func GetVerificationOverview(c *gin.Context) {
-	var overview VerificationOverview
-	if err := config.DB.QueryRow(
-		c.Request.Context(),
-		`SELECT
-			COUNT(*) FILTER (WHERE pt.status IN ('success', 'pending') AND COALESCE(pt.is_verified, FALSE) = FALSE) AS waiting,
-			COUNT(*) FILTER (WHERE COALESCE(pt.is_verified, FALSE) = TRUE) AS approved,
-			COUNT(*) FILTER (WHERE pt.status = 'failed' OR pt.status = 'deny' OR pt.status = 'cancel' OR pt.status = 'expire') AS rejected
-		 FROM payment_transactions pt`,
-	).Scan(&overview.Waiting, &overview.Approved, &overview.Rejected); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Failed to load verification overview",
-			"error":   err.Error(),
-		})
-		return
-	}
-
+	overview := VerificationOverview{}
 	items, err := loadVerificationItems(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -882,6 +888,23 @@ func GetVerificationOverview(c *gin.Context) {
 		})
 		return
 	}
+
+	for _, item := range items {
+		if item.IsVerified {
+			overview.Approved++
+			continue
+		}
+
+		if item.Status == "failed" {
+			overview.Rejected++
+			continue
+		}
+
+		if item.Status == "success" || item.Status == "pending" {
+			overview.Waiting++
+		}
+	}
+
 	overview.Items = items
 
 	c.JSON(http.StatusOK, gin.H{
