@@ -6,6 +6,7 @@ import '../screens/dashboard/mentor_attendance_screen.dart';
 import '../screens/dashboard/mentor_olimpiade_screen.dart';
 import '../screens/dashboard/mentor_tryout_screen.dart';
 import '../screens/dashboard/paket_les_screen.dart';
+import '../screens/mentor/evaluasi_siswa_screen.dart';
 import '../screens/mentor/latihan_soal_screen.dart';
 import '../screens/mentor/materi_pembelajaran_screen.dart';
 import '../screens/mentor_management_screen.dart';
@@ -22,6 +23,7 @@ class AppRoutes {
   static const String mentorExercise = '/mentor-exercise';
   static const String mentorTryout = '/mentor-tryout';
   static const String mentorOlimpiade = '/mentor-olimpiade';
+  static const String mentorEvaluasi = '/mentor-evaluasi';
   static const String mentorMateri = '/mentor-materi';
   static const String paketLes = '/paket-les';
 
@@ -70,6 +72,11 @@ class AppRoutes {
       case mentorOlimpiade:
         return MaterialPageRoute(
           builder: (_) => const MentorOlimpiadeScreen(),
+        );
+
+      case mentorEvaluasi:
+        return MaterialPageRoute(
+          builder: (_) => const EvaluasiSiswaScreen(),
         );
 
       case mentorMateri:

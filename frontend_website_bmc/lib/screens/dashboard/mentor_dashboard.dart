@@ -84,6 +84,11 @@ class _MentorDashboardState extends State<MentorDashboard> {
       return;
     }
 
+    if (title == 'Evaluasi Siswa') {
+      Navigator.of(context).pushNamed(AppRoutes.mentorEvaluasi);
+      return;
+    }
+
     if (title == 'Olimpiade Akademik') {
       Navigator.of(context).pushNamed(AppRoutes.mentorOlimpiade);
       return;
