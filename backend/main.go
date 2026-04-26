@@ -38,6 +38,9 @@ func main() {
 		})
 	})
 
+	// Serve static files for uploaded materials
+	r.Static("/uploads", "./uploads")
+
 	routes.AuthRoutes(r)
 	routes.ProtectedRoutes(r)
 	routes.PaymentRoutes(r)

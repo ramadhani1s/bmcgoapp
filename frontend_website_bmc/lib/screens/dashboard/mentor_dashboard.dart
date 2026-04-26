@@ -89,6 +89,11 @@ class _MentorDashboardState extends State<MentorDashboard> {
       return;
     }
 
+    if (title == 'Materi Pembelajaran') {
+      Navigator.of(context).pushNamed(AppRoutes.mentorMateri);
+      return;
+    }
+
     if (title != 'Dashboard') {
       ScaffoldMessenger.of(
         context,

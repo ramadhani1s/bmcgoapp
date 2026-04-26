@@ -7,6 +7,7 @@ import '../screens/dashboard/mentor_olimpiade_screen.dart';
 import '../screens/dashboard/mentor_tryout_screen.dart';
 import '../screens/dashboard/paket_les_screen.dart';
 import '../screens/mentor/latihan_soal_screen.dart';
+import '../screens/mentor/materi_pembelajaran_screen.dart';
 import '../screens/mentor_management_screen.dart';
 import '../screens/payment_verification_screen.dart';
 import '../services/auth_service.dart';
@@ -21,6 +22,7 @@ class AppRoutes {
   static const String mentorExercise = '/mentor-exercise';
   static const String mentorTryout = '/mentor-tryout';
   static const String mentorOlimpiade = '/mentor-olimpiade';
+  static const String mentorMateri = '/mentor-materi';
   static const String paketLes = '/paket-les';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -68,6 +70,11 @@ class AppRoutes {
       case mentorOlimpiade:
         return MaterialPageRoute(
           builder: (_) => const MentorOlimpiadeScreen(),
+        );
+
+      case mentorMateri:
+        return MaterialPageRoute(
+          builder: (_) => const MateriPembelajaranScreen(),
         );
 
       case paketLes:

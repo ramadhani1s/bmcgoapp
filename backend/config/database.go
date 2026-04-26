@@ -184,4 +184,22 @@ func ConnectDB() {
 	if err != nil {
 		log.Println("Warning: gagal membuat index siswa attendance_records:", err)
 	}
+
+	// Buat table materi_pembelajaran (learning_materials)
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS learning_materials (
+			id SERIAL PRIMARY KEY,
+			mentor_id INT NOT NULL,
+			title VARCHAR(255) NOT NULL,
+			description TEXT,
+			file_path VARCHAR(500) NOT NULL,
+			file_type VARCHAR(50),
+			file_size BIGINT,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+		)
+	`)
+	if err != nil {
+		log.Fatal("Gagal membuat table learning_materials:", err)
+	}
 }

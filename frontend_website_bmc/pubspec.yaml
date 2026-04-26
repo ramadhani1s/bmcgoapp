@@ -41,6 +41,7 @@ dependencies:
 
   # Shared preferences for local storage
   shared_preferences: ^2.2.3
+  file_picker: ^11.0.2
 
 dev_dependencies:
   flutter_test:

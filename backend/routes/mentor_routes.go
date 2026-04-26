@@ -13,5 +13,10 @@ func MentorRoutes(r *gin.Engine) {
 		mentor.POST("/", handlers.CreateMentor)
 		mentor.PUT("/:id", handlers.UpdateMentor)
 		mentor.DELETE("/:id", handlers.DeleteMentor)
+
+		// Materi Pembelajaran Routes
+		mentor.POST("/materi", handlers.UploadMateri)
+		mentor.GET("/materi", handlers.GetMateriByMentor)
+		mentor.DELETE("/materi/:id", handlers.DeleteMateri)
 	}
 }
