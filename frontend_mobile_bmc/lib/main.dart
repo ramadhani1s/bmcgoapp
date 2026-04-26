@@ -3,6 +3,7 @@ import 'package:frontend_mobile_bmc/screens/auth/auth_entry_screen.dart';
 import 'package:frontend_mobile_bmc/screens/auth/login_screen.dart';
 import 'package:frontend_mobile_bmc/screens/auth/register_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/dashboard_screen.dart';
+import 'package:frontend_mobile_bmc/screens/home/attendance_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/package_screen.dart';
 import 'package:frontend_mobile_bmc/screens/mentor/add_latihan_soal_screen.dart';
 import 'package:frontend_mobile_bmc/screens/mentor/add_olimpiade_screen.dart';
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/login': (context) => const LoginScreen(),
         '/dashboard': (context) => const DashboardScreen(),
+        '/attendance': (context) => const AttendanceScreen(),
         '/mentor-soal': (context) => const LatihanSoalManagementScreen(),
         '/mentor-add-soal': (context) => const AddLatihanSoalScreen(),
         '/mentor-olimpiade': (context) => const OlimpiadeManagementScreen(),

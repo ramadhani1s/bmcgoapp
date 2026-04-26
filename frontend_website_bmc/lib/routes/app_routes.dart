@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/dashboard/admin_dashboard.dart';
 import '../screens/dashboard/mentor_dashboard.dart';
+import '../screens/dashboard/mentor_attendance_screen.dart';
 import '../screens/dashboard/mentor_olimpiade_screen.dart';
 import '../screens/dashboard/mentor_tryout_screen.dart';
 import '../screens/dashboard/paket_les_screen.dart';
@@ -15,6 +16,7 @@ class AppRoutes {
   static const String adminDashboard = '/admin-dashboard';
   static const String paymentVerification = '/payment-verification';
   static const String mentorDashboard = '/mentor-dashboard';
+  static const String mentorAttendance = '/mentor-attendance';
   static const String mentorManagement = '/mentor-management';
   static const String mentorExercise = '/mentor-exercise';
   static const String mentorTryout = '/mentor-tryout';
@@ -41,6 +43,11 @@ class AppRoutes {
       case mentorDashboard:
         return MaterialPageRoute(
           builder: (_) => const MentorDashboard(),
+        );
+
+      case mentorAttendance:
+        return MaterialPageRoute(
+          builder: (_) => const MentorAttendanceScreen(),
         );
 
       case mentorManagement:

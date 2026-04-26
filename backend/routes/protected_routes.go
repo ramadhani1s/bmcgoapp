@@ -61,6 +61,10 @@ func ProtectedRoutes(r *gin.Engine) {
 	mentor.DELETE("/olimpiade/:id", handlers.DeleteOlimpiadeHandler)
 	mentor.GET("/olimpiade/:id/peserta", handlers.GetPesertaOlimpiadeHandler)
 	mentor.POST("/olimpiade/:id/peserta", handlers.CreatePesertaOlimpiadeHandler)
+	mentor.POST("/attendance/start", handlers.StartAttendanceSessionHandler)
+	mentor.GET("/attendance/active", handlers.GetActiveAttendanceSessionHandler)
+	mentor.GET("/attendance/sessions/:sessionId/summary", handlers.GetAttendanceSessionSummaryHandler)
+	mentor.GET("/attendance/rules", handlers.DebugAttendanceExplainHandler)
 
 	// ================= SISWA ONLY =================
 	siswa := auth.Group("/siswa")
@@ -71,4 +75,7 @@ func ProtectedRoutes(r *gin.Engine) {
 			"message": "Jadwal siswa",
 		})
 	})
+
+	siswa.POST("/attendance/submit", handlers.SubmitAttendanceTokenHandler)
+	siswa.GET("/attendance/history", handlers.GetStudentAttendanceHistoryHandler)
 }

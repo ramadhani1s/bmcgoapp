@@ -293,6 +293,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
+    if (menuKey.toLowerCase() == 'absensi') {
+      Navigator.of(context).pushNamed('/attendance');
+      return;
+    }
+
     if (!_isActive) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

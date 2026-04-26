@@ -1,5 +1,5 @@
 import 'dart:html' as html;
-import 'package:excel/excel.dart';
+import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
 import '../models/mentor.dart';
 import '../services/auth_service.dart';
@@ -44,7 +44,7 @@ class _MentorManagementScreenState
   // EXPORT EXCEL (FIX NO ERROR)
   // ==================================================
   void _exportMentorExcel(Mentor mentor) {
-    final excel = Excel.createExcel();
+    final excel = xls.Excel.createExcel();
 
     final defaultSheet =
         excel.getDefaultSheet() ?? 'Sheet1';
@@ -53,23 +53,44 @@ class _MentorManagementScreenState
 
     excel.rename(defaultSheet, 'Mentor');
 
-    sheet.appendRow([
-      TextCellValue('ID'),
-      TextCellValue('Nama Mentor'),
-      TextCellValue('Email'),
-      TextCellValue('Password'),
-      TextCellValue('Spesialisasi'),
-      TextCellValue('Status'),
-    ]);
+    // Use direct cell assignment for broader compatibility across excel package versions.
+    final headers = <String>[
+      'ID',
+      'Nama Mentor',
+      'Email',
+      'Password',
+      'Spesialisasi',
+      'Status',
+    ];
 
-    sheet.appendRow([
-      IntCellValue(mentor.mentorId),
-      TextCellValue(mentor.namaMentor),
-      TextCellValue(mentor.email),
-      TextCellValue(mentor.password),
-      TextCellValue(mentor.spesialisasi),
-      TextCellValue(mentor.status),
-    ]);
+    final values = <xls.CellValue>[
+      xls.IntCellValue(mentor.mentorId),
+      xls.TextCellValue(mentor.namaMentor),
+      xls.TextCellValue(mentor.email),
+      xls.TextCellValue(mentor.password),
+      xls.TextCellValue(mentor.spesialisasi),
+      xls.TextCellValue(mentor.status),
+    ];
+
+    for (var col = 0; col < headers.length; col++) {
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(
+              columnIndex: col,
+              rowIndex: 0,
+            ),
+          )
+          .value = xls.TextCellValue(headers[col]);
+
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(
+              columnIndex: col,
+              rowIndex: 1,
+            ),
+          )
+          .value = values[col];
+    }
 
     final bytes = excel.encode();
 

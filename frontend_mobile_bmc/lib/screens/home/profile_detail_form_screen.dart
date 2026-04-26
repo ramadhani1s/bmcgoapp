@@ -39,6 +39,8 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
   int _step = 0;
   bool _isSaving = false;
   bool _didLoadInitialData = false;
+  bool _hasSavedProfile = false;
+  bool _isEditMode = true;
   bool _parentAgreementChecked = true;
   String _signatureFileName = '';
 
@@ -124,6 +126,9 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
 
     _signatureFileName = _readString(savedProfile, 'signature_file_name');
 
+    _hasSavedProfile = savedProfile.isNotEmpty;
+    _isEditMode = !_hasSavedProfile;
+
     if (mounted) {
       setState(() {});
     }
@@ -134,6 +139,14 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
   }
 
   String _stepTitle() {
+    if (_hasSavedProfile && !_isEditMode) {
+      return 'Data Profil Tersimpan';
+    }
+
+    if (_hasSavedProfile && _isEditMode) {
+      return 'Ubah Data Profil';
+    }
+
     switch (_step) {
       case 0:
         return 'Data Diri Siswa';
@@ -255,6 +268,9 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
 
     setState(() {
       _isSaving = false;
+      _hasSavedProfile = true;
+      _isEditMode = false;
+      _step = 0;
     });
 
     await showDialog<void>(
@@ -264,7 +280,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           title: const Text('Berhasil'),
-          content: const Text('Data profil berhasil disimpan.'),
+          content: const Text('Data profil berhasil disimpan'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -274,10 +290,6 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
         );
       },
     );
-
-    if (mounted) {
-      Navigator.of(context).pop(true);
-    }
   }
 
   void _nextStep() {
@@ -296,6 +308,13 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
   }
 
   void _previousStep() {
+    if (_hasSavedProfile && _isEditMode && _step == 0) {
+      setState(() {
+        _isEditMode = false;
+      });
+      return;
+    }
+
     if (_step == 0) {
       Navigator.of(context).pop();
       return;
@@ -344,6 +363,51 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
     );
   }
 
+  void _startEditing() {
+    setState(() {
+      _isEditMode = true;
+      _step = 0;
+    });
+  }
+
+  Future<void> _handleStartEditing() async {
+    final shouldEdit = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          title: const Text('Edit Data Profil'),
+          content: const Text(
+            'Kamu akan masuk ke mode edit. Data yang tersimpan tetap aman sampai kamu menekan Simpan Perubahan.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: _accent),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Lanjut Edit', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if ((shouldEdit ?? false) && mounted) {
+      _startEditing();
+    }
+  }
+
+  void _handlePrimaryAction() {
+    if (_hasSavedProfile && !_isEditMode) {
+      _handleStartEditing();
+      return;
+    }
+    _nextStep();
+  }
+
   Widget _buildStepIndicators() {
     return Row(
       children: List.generate(_totalSteps, (index) {
@@ -368,7 +432,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('🧍 Data Diri Siswa', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
+          const Text('Data Diri Siswa', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
           const SizedBox(height: 14),
           TextFormField(
             controller: _namaController,
@@ -429,7 +493,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('📋 Data Ayah', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
+          const Text('Data Ayah', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
           const SizedBox(height: 14),
           TextFormField(
             controller: _fatherNameController,
@@ -468,7 +532,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('📋 Data Ibu', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
+          const Text('Data Ibu', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
           const SizedBox(height: 14),
           TextFormField(
             controller: _motherNameController,
@@ -505,7 +569,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('✍️ Persetujuan Orang Tua', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
+        const Text('Persetujuan Orang Tua', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
         const SizedBox(height: 14),
         Container(
           width: double.infinity,
@@ -598,7 +662,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('✅ Konfirmasi Data', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
+        const Text('onfirmasi Data', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
         const SizedBox(height: 12),
         Container(
           width: double.infinity,
@@ -655,7 +719,106 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
     );
   }
 
+  Widget _buildReadOnlyProfileView() {
+    Widget infoRow(String label, String value) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 138,
+              child: Text(
+                '$label:',
+                style: const TextStyle(color: _textMuted, fontSize: 13.5),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                value.isEmpty ? '-' : value,
+                style: const TextStyle(
+                  color: _textPrimary,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Data Profil Siswa',
+          style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE9EDF5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Data Siswa', style: TextStyle(fontWeight: FontWeight.w700, color: _textPrimary)),
+              const SizedBox(height: 8),
+              infoRow('Nama', _namaController.text.trim()),
+              infoRow('Kelas', _kelasController.text.trim()),
+              infoRow('Asal sekolah', _sekolahController.text.trim()),
+              infoRow('WhatsApp', _whatsappController.text.trim()),
+              infoRow('Alamat', _alamatController.text.trim()),
+              infoRow('Email', _emailController.text.trim()),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE9EDF5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Data Orang Tua', style: TextStyle(fontWeight: FontWeight.w700, color: _textPrimary)),
+              const SizedBox(height: 8),
+              infoRow('Nama ayah', _fatherNameController.text.trim()),
+              infoRow('Pekerjaan ayah', _fatherJobController.text.trim()),
+              infoRow('WhatsApp ayah', _fatherPhoneController.text.trim()),
+              infoRow('Alamat ayah', _fatherAddressController.text.trim()),
+              const SizedBox(height: 2),
+              infoRow('Nama ibu', _motherNameController.text.trim()),
+              infoRow('Pekerjaan ibu', _motherJobController.text.trim()),
+              infoRow('WhatsApp ibu', _motherPhoneController.text.trim()),
+              infoRow('Alamat ibu', _motherAddressController.text.trim()),
+              infoRow('File tanda tangan', _signatureFileName),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Data sudah tersimpan. Tekan tombol Edit Data kalau ingin mengubah isi profil.',
+          style: TextStyle(color: _textMuted, fontSize: 12.5),
+        ),
+      ],
+    );
+  }
+
   Widget _buildContent() {
+    if (_hasSavedProfile && !_isEditMode) {
+      return _buildReadOnlyProfileView();
+    }
+
     switch (_step) {
       case 0:
         return _buildStudentForm();
@@ -671,10 +834,39 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
   }
 
   String _primaryButtonLabel() {
+    if (_hasSavedProfile && !_isEditMode) {
+      return 'Edit Data';
+    }
+
     if (_step == _totalSteps - 1) {
-      return _isSaving ? 'Menyimpan...' : 'Simpan';
+      if (_isSaving) {
+        return 'Menyimpan...';
+      }
+      return _hasSavedProfile ? 'Simpan Perubahan' : 'Simpan';
     }
     return 'Lanjut';
+  }
+
+  Widget _buildSavedBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.45)),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.verified_rounded, color: Colors.white, size: 15),
+          SizedBox(width: 6),
+          Text(
+            'Data tersimpan',
+            style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -705,17 +897,25 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Registrasi Siswa Baru',
-                    style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700, height: 1),
+                  Text(
+                    _hasSavedProfile && !_isEditMode
+                        ? 'Data Profil Siswa'
+                        : 'Registrasi Siswa Baru',
+                    style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700, height: 1),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     _stepTitle(),
                     style: const TextStyle(color: Color(0xFFFFE6E6), fontSize: 13.5),
                   ),
-                  const SizedBox(height: 12),
-                  _buildStepIndicators(),
+                  if (_hasSavedProfile && !_isEditMode) ...[
+                    const SizedBox(height: 10),
+                    _buildSavedBadge(),
+                  ],
+                  if (!(_hasSavedProfile && !_isEditMode)) ...[
+                    const SizedBox(height: 12),
+                    _buildStepIndicators(),
+                  ],
                 ],
               ),
             ),
@@ -731,7 +931,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                 child: Row(
                   children: [
-                    if (_step > 0)
+                    if (!(_hasSavedProfile && !_isEditMode) && _step > 0)
                       Expanded(
                         child: OutlinedButton(
                           onPressed: _isSaving ? null : _previousStep,
@@ -743,10 +943,13 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
                           child: const Text('Kembali'),
                         ),
                       ),
-                    if (_step > 0) const SizedBox(width: 10),
+                    if (!(_hasSavedProfile && !_isEditMode) && _step > 0)
+                      const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _isSaving ? null : _nextStep,
+                        onPressed: _isSaving
+                            ? null
+                            : _handlePrimaryAction,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _accent,
                           minimumSize: const Size.fromHeight(50),

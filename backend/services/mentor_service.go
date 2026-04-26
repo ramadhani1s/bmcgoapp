@@ -36,9 +36,11 @@ func CreateMentor(email, password, namaMentor, spesialisasi, bio string) error {
 	var userID int
 	err = tx.QueryRow(
 		context.Background(),
-		`INSERT INTO users (role_id, username, password, status) VALUES ($1, $2, $3, $4) RETURNING id`,
+		`INSERT INTO users (role_id, username, email, nama, password, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
 		2,
 		email,
+		email,
+		namaMentor,
 		string(hashedPassword),
 		"aktif",
 	).Scan(&userID)
@@ -73,7 +75,7 @@ func GetMentors() ([]models.Mentor, error) {
 	SELECT
 		m.id AS mentor_id,
 		m.user_id,
-		u.username AS email,
+		COALESCE(NULLIF(u.email, ''), u.username) AS email,
 		m.nama_mentor,
 		COALESCE(m.spesialisasi, '') AS spesialisasi,
 		COALESCE(m.bio, '') AS bio,

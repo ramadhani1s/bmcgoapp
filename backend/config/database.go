@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -11,10 +10,7 @@ import (
 var DB *pgxpool.Pool
 
 func ConnectDB() {
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		dsn = "postgres://postgres:123@localhost:5432/bmcgo_app?sslmode=disable"
-	}
+	dsn := "postgres://postgres:ramadhani12@localhost:5432/bmcgo_db"
 
 	var err error
 	// 1. Membuat konfigurasi pool
@@ -35,6 +31,7 @@ func ConnectDB() {
 	_, err = DB.Exec(context.Background(), `
 		ALTER TABLE IF EXISTS users
 		ADD COLUMN IF NOT EXISTS nama VARCHAR(255),
+		ADD COLUMN IF NOT EXISTS username VARCHAR(255),
 		ADD COLUMN IF NOT EXISTS email VARCHAR(255),
 		ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20)
 	`)
@@ -58,6 +55,44 @@ func ConnectDB() {
 	`)
 	if err != nil {
 		log.Println("Warning: gagal backfill nama dari username:", err)
+	}
+
+	// Backfill data login mentor lama jika email/password masih disimpan di tabel mentor.
+	_, err = DB.Exec(context.Background(), `
+		DO $$
+		BEGIN
+			IF EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'mentor' AND column_name = 'email'
+			) THEN
+				EXECUTE '
+					UPDATE users u
+					SET
+						email = COALESCE(NULLIF(u.email, ''''), m.email),
+						username = COALESCE(NULLIF(u.username, ''''), m.email)
+					FROM mentor m
+					WHERE m.user_id = u.id
+						AND m.email IS NOT NULL AND m.email <> ''''
+				';
+			END IF;
+
+			IF EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'mentor' AND column_name = 'password'
+			) THEN
+				EXECUTE '
+					UPDATE users u
+					SET password = COALESCE(NULLIF(u.password, ''''), m.password)
+					FROM mentor m
+					WHERE m.user_id = u.id
+						AND m.password IS NOT NULL AND m.password <> ''''
+				';
+			END IF;
+		END
+		$$
+	`)
+	if err != nil {
+		log.Println("Warning: gagal backfill users dari mentor:", err)
 	}
 
 	_, err = DB.Exec(context.Background(), `
@@ -104,101 +139,49 @@ func ConnectDB() {
 	}
 
 	_, err = DB.Exec(context.Background(), `
-		CREATE TABLE IF NOT EXISTS paket_les (
+		CREATE TABLE IF NOT EXISTS attendance_sessions (
 			id SERIAL PRIMARY KEY,
-			nama VARCHAR(255),
-			created_at TIMESTAMP DEFAULT NOW()
+			mentor_id INT NOT NULL,
+			class_name VARCHAR(120) NOT NULL,
+			subject VARCHAR(120),
+			token VARCHAR(20) NOT NULL,
+			started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			hadir_deadline TIMESTAMP NOT NULL,
+			terlambat_deadline TIMESTAMP NOT NULL,
+			status VARCHAR(30) NOT NULL DEFAULT 'aktif'
 		)
 	`)
 	if err != nil {
-		log.Println("Warning: gagal membuat table paket_les:", err)
+		log.Fatal("Gagal membuat table attendance_sessions:", err)
 	}
 
 	_, err = DB.Exec(context.Background(), `
-		CREATE TABLE IF NOT EXISTS tryout (
+		CREATE TABLE IF NOT EXISTS attendance_records (
 			id SERIAL PRIMARY KEY,
-			paket_id INTEGER NOT NULL,
-			mentor_id INTEGER NOT NULL,
-			class_level VARCHAR(30) DEFAULT 'Kelas 12',
-			judul VARCHAR(255),
-			tanggal DATE,
-			durasi INT,
-			FOREIGN KEY (paket_id) REFERENCES paket_les(id),
-			FOREIGN KEY (mentor_id) REFERENCES mentor(id)
+			session_id INT NOT NULL,
+			siswa_id INT NOT NULL,
+			status VARCHAR(30) NOT NULL,
+			submitted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			UNIQUE(session_id, siswa_id)
 		)
 	`)
 	if err != nil {
-		log.Println("Warning: gagal membuat table tryout:", err)
+		log.Fatal("Gagal membuat table attendance_records:", err)
 	}
 
 	_, err = DB.Exec(context.Background(), `
-		ALTER TABLE IF EXISTS tryout
-		ADD COLUMN IF NOT EXISTS class_level VARCHAR(30) DEFAULT 'Kelas 12'
+		CREATE INDEX IF NOT EXISTS idx_attendance_sessions_token
+		ON attendance_sessions (token)
 	`)
 	if err != nil {
-		log.Println("Warning: gagal alter class_level tryout:", err)
+		log.Println("Warning: gagal membuat index token attendance_sessions:", err)
 	}
 
 	_, err = DB.Exec(context.Background(), `
-		CREATE TABLE IF NOT EXISTS hasil_tryout (
-			id SERIAL PRIMARY KEY,
-			siswa_id INTEGER NOT NULL,
-			tryout_id INTEGER NOT NULL,
-			nilai INT,
-			FOREIGN KEY (siswa_id) REFERENCES siswa(id),
-			FOREIGN KEY (tryout_id) REFERENCES tryout(id)
-		)
+		CREATE INDEX IF NOT EXISTS idx_attendance_records_siswa
+		ON attendance_records (siswa_id)
 	`)
 	if err != nil {
-		log.Println("Warning: gagal membuat table hasil_tryout:", err)
-	}
-
-	_, err = DB.Exec(context.Background(), `
-		CREATE TABLE IF NOT EXISTS evaluasi (
-			id SERIAL PRIMARY KEY,
-			siswa_id INTEGER NOT NULL,
-			nilai INT,
-			catatan TEXT,
-			FOREIGN KEY (siswa_id) REFERENCES siswa(id)
-		)
-	`)
-	if err != nil {
-		log.Println("Warning: gagal membuat table evaluasi:", err)
-	}
-
-	_, err = DB.Exec(context.Background(), `
-		CREATE TABLE IF NOT EXISTS olimpiade (
-			id SERIAL PRIMARY KEY,
-			mentor_id INTEGER NOT NULL,
-			class_level VARCHAR(30) DEFAULT 'Kelas 12',
-			nama VARCHAR(255),
-			tanggal DATE,
-			lokasi VARCHAR(100),
-			FOREIGN KEY (mentor_id) REFERENCES mentor(id)
-		)
-	`)
-	if err != nil {
-		log.Println("Warning: gagal membuat table olimpiade:", err)
-	}
-
-	_, err = DB.Exec(context.Background(), `
-		ALTER TABLE IF EXISTS olimpiade
-		ADD COLUMN IF NOT EXISTS class_level VARCHAR(30) DEFAULT 'Kelas 12'
-	`)
-	if err != nil {
-		log.Println("Warning: gagal alter class_level olimpiade:", err)
-	}
-
-	_, err = DB.Exec(context.Background(), `
-		CREATE TABLE IF NOT EXISTS peserta_olimpiade (
-			id SERIAL PRIMARY KEY,
-			siswa_id INTEGER NOT NULL,
-			olimpiade_id INTEGER NOT NULL,
-			FOREIGN KEY (siswa_id) REFERENCES siswa(id),
-			FOREIGN KEY (olimpiade_id) REFERENCES olimpiade(id)
-		)
-	`)
-	if err != nil {
-		log.Println("Warning: gagal membuat table peserta_olimpiade:", err)
+		log.Println("Warning: gagal membuat index siswa attendance_records:", err)
 	}
 }
