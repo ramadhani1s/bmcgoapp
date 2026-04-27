@@ -192,56 +192,62 @@ func UpdateMentor(c *gin.Context) {
 	var input struct {
 		NamaMentor   string `json:"nama_mentor"`
 		Email        string `json:"email"`
+		Password     string `json:"password"`
 		Spesialisasi string `json:"spesialisasi"`
 		Status       string `json:"status"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(400, gin.H{
-			"error": "Data tidak valid",
-		})
+		c.JSON(400, gin.H{"error": "Data tidak valid"})
 		return
 	}
 
-	input.NamaMentor = strings.TrimSpace(input.NamaMentor)
-	input.Email = strings.TrimSpace(input.Email)
-	input.Spesialisasi = strings.TrimSpace(input.Spesialisasi)
-	input.Status = strings.TrimSpace(input.Status)
+	// kalau password diisi → update password juga
+	if strings.TrimSpace(input.Password) != "" {
 
-	if input.NamaMentor == "" ||
-		input.Email == "" ||
-		input.Spesialisasi == "" {
-		c.JSON(400, gin.H{
-			"error": "Nama, email, dan spesialisasi wajib diisi",
-		})
-		return
-	}
+		_, err := config.DB.Exec(context.Background(), `
+			UPDATE mentor
+			SET nama_mentor=$1,
+				email=$2,
+				password=$3,
+				spesialisasi=$4,
+				status=$5
+			WHERE id=$6
+		`,
+			input.NamaMentor,
+			input.Email,
+			input.Password,
+			input.Spesialisasi,
+			input.Status,
+			id,
+		)
 
-	if input.Status == "" {
-		input.Status = "Aktif"
-	}
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
 
-	_, err := config.DB.Exec(context.Background(), `
-		UPDATE mentor
-		SET 
-			nama_mentor=$1,
-			email=$2,
-			spesialisasi=$3,
-			status=$4
-		WHERE id=$5
-	`,
-		input.NamaMentor,
-		input.Email,
-		input.Spesialisasi,
-		input.Status,
-		id,
-	)
+	} else {
 
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err.Error(),
-		})
-		return
+		_, err := config.DB.Exec(context.Background(), `
+			UPDATE mentor
+			SET nama_mentor=$1,
+				email=$2,
+				spesialisasi=$3,
+				status=$4
+			WHERE id=$5
+		`,
+			input.NamaMentor,
+			input.Email,
+			input.Spesialisasi,
+			input.Status,
+			id,
+		)
+
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
 	c.JSON(200, gin.H{
