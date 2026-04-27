@@ -9,6 +9,11 @@ import (
 
 func ProtectedRoutes(r *gin.Engine) {
 
+	// ================= PUBLIC ROUTES (NO AUTH) =================
+	// Public paket les endpoint untuk client/mobile
+	r.GET("/api/paket-les", handlers.GetPaketLesList)
+	r.GET("/api/paket-les/:id", handlers.GetPaketLesDetail)
+
 	// group yang butuh login
 	auth := r.Group("/api")
 	auth.Use(middleware.AuthMiddleware())
@@ -29,6 +34,14 @@ func ProtectedRoutes(r *gin.Engine) {
 
 	admin.GET("/dashboard", handlers.GetAdminDashboard)
 	admin.GET("/dashboard-summary", handlers.GetAdminDashboardSummary)
+
+	// Paket Les Routes
+	admin.POST("/paket-les", handlers.CreatePaketLes)
+	admin.GET("/paket-les", handlers.GetPaketLesList)
+	admin.GET("/paket-les/:id", handlers.GetPaketLesDetail)
+	admin.PUT("/paket-les/:id", handlers.UpdatePaketLes)
+	admin.DELETE("/paket-les/:id", handlers.DeletePaketLes)
+	admin.GET("/paket-les-stats", handlers.GetPaketLesStats)
 
 	// ================= MENTOR ONLY =================
 	mentor := auth.Group("/mentor")

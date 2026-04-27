@@ -23,8 +23,10 @@ class AppRoutes {
   static const String mentorExercise = '/mentor-exercise';
   static const String mentorTryout = '/mentor-tryout';
   static const String mentorOlimpiade = '/mentor-olimpiade';
+
   static const String mentorEvaluasi = '/mentor-evaluasi';
   static const String mentorMateri = '/mentor-materi';
+
   static const String paketLes = '/paket-les';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -60,6 +62,7 @@ class AppRoutes {
         );
 
       case mentorExercise:
+
         return MaterialPageRoute(
           builder: (_) => const LatihanSoalScreen(),
         );
@@ -83,6 +86,14 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (_) => const MateriPembelajaranScreen(),
         );
+
+        return MaterialPageRoute(builder: (_) => const LatihanSoalScreen());
+
+      case mentorTryout:
+        return MaterialPageRoute(builder: (_) => const MentorTryoutScreen());
+
+      case mentorOlimpiade:
+        return MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen());
 
       case paketLes:
         return MaterialPageRoute(

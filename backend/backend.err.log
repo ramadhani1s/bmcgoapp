@@ -1,0 +1,3 @@
+2026/04/27 10:14:19 ✅ Real connection established to database
+2026/04/27 10:14:20 Warning: gagal membuat index kategori paket_les: ERROR: column "kategori" does not exist (SQLSTATE 42703)
+2026/04/27 10:14:20 Warning: gagal membuat index jenjang paket_les: ERROR: column "jenjang" does not exist (SQLSTATE 42703)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/screens/payment/payment_confirmation_screen.dart';
+import 'package:frontend_mobile_bmc/services/paket_les_service.dart';
 
 class PackageScreen extends StatefulWidget {
   const PackageScreen({super.key});
@@ -11,90 +12,32 @@ class PackageScreen extends StatefulWidget {
 class _PackageScreenState extends State<PackageScreen> {
   static const Color _blueHeader = Color(0xFF2D4CC8);
   static const Color _accent = Color(0xFFFF7070);
+  static const Color _successGreen = Color(0xFF4CAF50);
+  static const Color _promoOrange = Color(0xFFFFA500);
 
-  int _parseAmount(String value) {
-    final cleaned = value.replaceAll('Rp', '').replaceAll('.', '').trim();
-    return int.tryParse(cleaned) ?? 0;
+  List<Map<String, dynamic>> _pakets = [];
+  bool _isLoading = true;
+  int? _selectedId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPakets();
   }
 
-  final List<_PackageOption> _packages = const [
-    _PackageOption(
-      id: 1,
-      title: 'Kelas 10 SMA - 1 Semester',
-      period: 'Jan 2026 - Juli 2026',
-      students: '10 siswa/kelas',
-      duration: '1 Semester',
-      description: 'Paket bimbel reguler untuk kelas 10 SMA semester 1',
-      benefits: [
-        '10 siswa per kelas',
-        'Materi lengkap semester 1',
-        'Try Out bulanan',
-        'Konsultasi dengan mentor',
-        'Akses materi digital',
-      ],
-      priceLabel: 'Total Biaya',
-      price: 'Rp 4.250.000',
-    ),
-    _PackageOption(
-      id: 2,
-      title: 'Kelas 10 SMA - 3 Semester',
-      period: 'Jan 2026 - Juli 2027',
-      students: '10 siswa/kelas',
-      duration: '3 Semester',
-      description: 'Paket bimbel 3 semester untuk kelas 10 SMA dengan diskon',
-      benefits: [
-        '10 siswa per kelas',
-        'Materi lengkap 3 semester',
-        'Try Out bulanan',
-        'Konsultasi dengan mentor',
-        'Akses materi digital',
-      ],
-      normalPrice: 'Rp 13.500.000',
-      promoPrice: 'Rp 12.750.000',
-      promoTag: 'PROMO 5%',
-      promoInfo: 'Promo berlaku 01 Jan - 31 Des 2025',
-      savingsInfo: 'Hemat Rp 750.000',
-    ),
-    _PackageOption(
-      id: 3,
-      title: 'Kelas 11 SMA - 1 Semester',
-      period: 'Jan 2026 - Juli 2026',
-      students: '10 siswa/kelas',
-      duration: '1 Semester',
-      description: 'Paket bimbel reguler untuk kelas 11 SMA semester 1',
-      benefits: [
-        '10 siswa per kelas',
-        'Materi lengkap semester 1',
-        'Try Out bulanan',
-        'Konsultasi dengan mentor',
-        'Akses materi digital',
-      ],
-      priceLabel: 'Total Biaya',
-      price: 'Rp 5.000.000',
-    ),
-    _PackageOption(
-      id: 4,
-      title: 'Kelas 12 SMA + Super Intensive 2026',
-      period: 'Jan 2026 - September 2026',
-      students: '10 siswa/kelas',
-      duration: 'Jan - September 2026',
-      description: 'Paket super intensif persiapan SNBT untuk kelas 12',
-      benefits: [
-        '10 siswa per kelas',
-        'Materi SNBT lengkap',
-        'Try Out SNBT mingguan',
-        'Drilling soal intensif',
-      ],
-      normalPrice: 'Rp 8.000.000',
-      promoPrice: 'Rp 6.000.000',
-      promoTag: 'PROMO 25%',
-      promoInfo: 'Promo berlaku 01 Jan - 31 Mar 2026',
-      savingsInfo: 'Hemat Rp 2.000.000',
-      isRecommended: true,
-    ),
-  ];
+  Future<void> _loadPakets() async {
+    setState(() => _isLoading = true);
+    final pakets = await PaketLesService.getPaketLesList();
 
-  int _selectedId = 4;
+    // Filter only aktif pakets
+    final aktivPakets = pakets.where((p) => p['status'] == 'aktif').toList();
+
+    setState(() {
+      _pakets = aktivPakets;
+      _selectedId = aktivPakets.isNotEmpty ? aktivPakets.first['id'] : null;
+      _isLoading = false;
+    });
+  }
 
   void _handleBack() {
     if (Navigator.of(context).canPop()) {
@@ -104,6 +47,92 @@ class _PackageScreenState extends State<PackageScreen> {
     Navigator.of(context).pushReplacementNamed('/dashboard');
   }
 
+  String _formatRupiah(int amount) {
+    final formatter = RegExp(r'(\d)(?=(\d{3})+(?!\d))');
+    return 'Rp ${amount.toString().replaceAllMapped(formatter, (match) => '${match.group(1)}.')}';
+  }
+
+  int _calculatePromoPrice(int hargaAwal, int diskon) {
+    return (hargaAwal * (100 - diskon) / 100).toInt();
+  }
+
+  String _formatPeriod(String? startDate, String? endDate) {
+    if (startDate == null || endDate == null) return 'Sepanjang tahun';
+    try {
+      final start = DateTime.parse(startDate);
+      final end = DateTime.parse(endDate);
+      final months = [
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des'
+      ];
+      return '${start.day} ${months[start.month]} ${start.year} - ${end.day} ${months[end.month]} ${end.year}';
+    } catch (e) {
+      return 'Sepanjang tahun';
+    }
+  }
+
+  List<String> _parseBenefits(String? deskripsi) {
+    if (deskripsi == null || deskripsi.isEmpty) return [];
+    // Split by line breaks or commas
+    return deskripsi.split('\n').where((b) => b.trim().isNotEmpty).toList();
+  }
+
+  void _handleContinuePayment() {
+    if (_selectedId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("❌ Pilih paket terlebih dahulu"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final selectedPaket =
+        _pakets.firstWhere((p) => p['id'] == _selectedId, orElse: () => {});
+
+    if (selectedPaket.isNotEmpty) {
+      final hargaAwal = selectedPaket['harga_awal'] ?? 0;
+      final diskon = selectedPaket['diskon'] ?? 0;
+      final hargaPromo = _calculatePromoPrice(hargaAwal, diskon);
+      final period = _formatPeriod(
+        selectedPaket['tanggal_mulai_promo'],
+        selectedPaket['tanggal_selesai_promo'],
+      );
+      final benefits = _parseBenefits(selectedPaket['deskripsi']);
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => PaymentConfirmationScreen(
+            packageId: selectedPaket['id'] ?? 0,
+            packageTitle: selectedPaket['nama_paket'] ?? 'Paket',
+            packagePeriod: period,
+            benefits: benefits.isNotEmpty
+                ? benefits
+                : ['Akses ke semua materi pembelajaran'],
+            normalAmount: hargaAwal,
+            finalAmount: hargaPromo,
+            promoTag: diskon > 0 ? 'PROMO ${diskon}%' : null,
+            promoInfo: selectedPaket['tanggal_mulai_promo'] != null
+                ? 'Berlaku ${_formatPeriod(selectedPaket['tanggal_mulai_promo'], selectedPaket['tanggal_selesai_promo'])}'
+                : null,
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,6 +140,7 @@ class _PackageScreenState extends State<PackageScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // Header
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
@@ -176,390 +206,231 @@ class _PackageScreenState extends State<PackageScreen> {
                 ],
               ),
             ),
+
+            // Paket List
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
-                itemCount: _packages.length,
-                itemBuilder: (context, index) {
-                  final item = _packages[index];
-                  final isSelected = item.id == _selectedId;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: _PackageCard(
-                      item: item,
-                      selected: isSelected,
-                      onTap: () {
-                        setState(() {
-                          _selectedId = item.id;
-                        });
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomSheet: Container(
-        color: const Color(0xFFF6F6F8),
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-        child: SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: () {
-              final selected = _packages.firstWhere((e) => e.id == _selectedId);
-              final normalPriceLabel =
-                  selected.normalPrice ?? selected.price ?? 'Rp 0';
-              final finalPriceLabel =
-                  selected.promoPrice ?? selected.price ?? 'Rp 0';
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PaymentConfirmationScreen(
-                    packageId: selected.id,
-                    packageTitle: selected.title,
-                    packagePeriod: selected.period,
-                    benefits: selected.benefits,
-                    normalAmount: _parseAmount(normalPriceLabel),
-                    finalAmount: _parseAmount(finalPriceLabel),
-                    promoTag: selected.promoTag,
-                    promoInfo: selected.promoInfo,
-                  ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _accent,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(13),
-              ),
-            ),
-            child: const Text(
-              'Lanjut ke Konfirmasi Pembayaran',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PackageCard extends StatelessWidget {
-  const _PackageCard({
-    required this.item,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final _PackageOption item;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: selected ? const Color(0xFFFF7F7F) : Colors.transparent,
-            width: 1.1,
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color.fromRGBO(0, 0, 0, 0.06),
-              blurRadius: 12,
-              offset: Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (item.promoTag != null || item.isRecommended)
-                    Row(
-                      children: [
-                        if (item.promoTag != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF3B30),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              item.promoTag!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        if (item.promoTag != null && item.isRecommended)
-                          const SizedBox(width: 6),
-                        if (item.isRecommended)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFC928),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: const Text(
-                              'REKOMENDASI',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  if (item.promoTag != null || item.isRecommended)
-                    const SizedBox(height: 8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: const TextStyle(
-                            color: Color(0xFF25273D),
-                            fontSize: 15.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        selected
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_off,
-                        color: selected
-                            ? const Color(0xFFFF7070)
-                            : const Color(0xFFD5D5D5),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.period,
-                    style: const TextStyle(
-                      color: Color(0xFF9194A7),
-                      fontSize: 11.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 6,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+              child: _isLoading
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
-                            Icons.people_outline,
-                            size: 14,
-                            color: Color(0xFF9A9EB0),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            item.students,
-                            style: const TextStyle(
-                              color: Color(0xFF7E8293),
-                              fontSize: 11.5,
-                            ),
-                          ),
+                          CircularProgressIndicator(color: _blueHeader),
+                          SizedBox(height: 16),
+                          Text('Memuat paket...',
+                              style: TextStyle(color: Colors.grey)),
                         ],
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.calendar_today_outlined,
-                            size: 13,
-                            color: Color(0xFF9A9EB0),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            item.duration,
-                            style: const TextStyle(
-                              color: Color(0xFF7E8293),
-                              fontSize: 11.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    item.description,
-                    style: const TextStyle(
-                      color: Color(0xFF737889),
-                      fontSize: 12.5,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2F4F9),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: List.generate(item.benefits.length, (index) {
-                        final benefit = item.benefits[index];
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: index == item.benefits.length - 1 ? 0 : 6,
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    )
+                  : _pakets.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Padding(
-                                padding: EdgeInsets.only(top: 1),
-                                child: Icon(
-                                  Icons.check_circle,
-                                  size: 15,
-                                  color: Color(0xFF4CAF50),
+                              Icon(Icons.inbox_rounded,
+                                  size: 64, color: Colors.grey[300]),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Belum ada paket yang tersedia',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  benefit,
-                                  style: const TextStyle(
-                                    color: Color(0xFF6A6F81),
-                                    fontSize: 11.5,
-                                    height: 1.35,
-                                  ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Silakan hubungi admin untuk informasi paket',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
                                 ),
                               ),
                             ],
                           ),
-                        );
-                      }),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadPakets,
+                          color: _blueHeader,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 16),
+                            itemCount: _pakets.length,
+                            itemBuilder: (context, index) {
+                              final paket = _pakets[index];
+                              return _buildPaketCard(paket);
+                            },
+                          ),
+                        ),
+            ),
+
+            // Button Lanjut Pembayaran
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _handleContinuePayment,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _accent,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  if (item.promoInfo != null && item.savingsInfo != null)
+                  child: const Text(
+                    'Lanjut ke Konfirmasi Pembayaran',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaketCard(Map<String, dynamic> paket) {
+    final isSelected = _selectedId == paket['id'];
+    final hargaAwal = paket['harga_awal'] ?? 0;
+    final diskon = paket['diskon'] ?? 0;
+    final hargaPromo = _calculatePromoPrice(hargaAwal, diskon);
+    final durasi = paket['durasi'] ?? 0;
+    final tglMulai = paket['tanggal_mulai_promo'];
+    final tglSelesai = paket['tanggal_selesai_promo'];
+
+    // Format period display
+    String periodDisplay = 'Sepanjang tahun';
+    try {
+      if (tglMulai != null && tglSelesai != null) {
+        final start = DateTime.parse(tglMulai);
+        final end = DateTime.parse(tglSelesai);
+        periodDisplay = '${start.day} ${_getMonthName(start.month)} ${start.year} - ${end.day} ${_getMonthName(end.month)} ${end.year}';
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedId = paket['id']),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? _blueHeader : Colors.transparent,
+            width: isSelected ? 2 : 0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header dengan nama dan badges
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: diskon > 0
+                    ? const Color(0xFFFFF3E0)
+                    : const Color(0xFFF0F4FF),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(14),
+                  topRight: Radius.circular(14),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      paket['nama_paket'] ?? 'Paket',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  if (diskon > 0)
                     Container(
-                      width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 8,
-                      ),
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF3F3),
-                        borderRadius: BorderRadius.circular(10),
+                        color: _accent,
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.access_time_rounded,
-                            color: Color(0xFFFF5A5A),
-                            size: 14,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              item.promoInfo!,
-                              style: const TextStyle(
-                                color: Color(0xFFFF5A5A),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 10.5,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4CAF50),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              item.savingsInfo!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        '-$diskon%',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  const SizedBox(height: 10),
-                  if (item.promoPrice != null)
-                    Row(
-                      children: [
-                        const Text(
-                          'Harga Normal',
-                          style: TextStyle(
-                            color: Color(0xFFA1A4B0),
-                            fontSize: 11.5,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          item.normalPrice!,
-                          style: const TextStyle(
-                            color: Color(0xFFB3B5BE),
-                            fontSize: 11.5,
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                      ],
+                ],
+              ),
+            ),
+
+            // Period & Info
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Tanggal & Durasi
+                  Text(
+                    periodDisplay,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey,
                     ),
-                  if (item.promoPrice != null) const SizedBox(height: 4),
+                  ),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
+                      const Icon(Icons.schedule_rounded,
+                          size: 14, color: Colors.grey),
+                      const SizedBox(width: 4),
                       Text(
-                        item.promoPrice == null
-                            ? item.priceLabel!
-                            : 'Harga Promo',
-                        style: TextStyle(
-                          color: item.promoPrice == null
-                              ? const Color(0xFF9CA0AE)
-                              : const Color(0xFF4CAF50),
-                          fontSize: 11.5,
-                          fontWeight: item.promoPrice == null
-                              ? FontWeight.w500
-                              : FontWeight.w700,
+                        '$durasi menit',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
                         ),
                       ),
-                      const Spacer(),
-                      Text(
-                        item.promoPrice ?? item.price!,
-                        style: const TextStyle(
-                          color: Color(0xFFFF7070),
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
+                      const SizedBox(width: 12),
+                      const Icon(Icons.calendar_today_rounded,
+                          size: 14, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          '1 Semester',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ],
@@ -567,45 +438,226 @@ class _PackageCard extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Deskripsi
+            if ((paket['deskripsi'] ?? '').toString().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  paket['deskripsi'] ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+
+            // Benefits checklist
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: _successGreen,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '10 sesi per kelas',
+                        style: TextStyle(fontSize: 11, color: Colors.black87),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: _successGreen,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Materi lengkap semester 1',
+                        style: TextStyle(fontSize: 11, color: Colors.black87),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: _successGreen,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Try Out bulanan',
+                        style: TextStyle(fontSize: 11, color: Colors.black87),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: _successGreen,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Konsultasi dengan mentor',
+                          style: TextStyle(fontSize: 11, color: Colors.black87),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: _successGreen,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Akses materi digital',
+                          style: TextStyle(fontSize: 11, color: Colors.black87),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Harga section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Total Harga',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (diskon > 0)
+                        Text(
+                          _formatRupiah(hargaAwal),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatRupiah(diskon > 0 ? hargaPromo : hargaAwal),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: diskon > 0 ? _accent : _blueHeader,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Selection indicator
+            if (isSelected)
+              Container(
+                width: double.infinity,
+                height: 3,
+                decoration: const BoxDecoration(
+                  color: _blueHeader,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(14),
+                    bottomRight: Radius.circular(14),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
-}
 
-class _PackageOption {
-  const _PackageOption({
-    required this.id,
-    required this.title,
-    required this.period,
-    required this.students,
-    required this.duration,
-    required this.description,
-    required this.benefits,
-    this.priceLabel,
-    this.price,
-    this.normalPrice,
-    this.promoPrice,
-    this.promoTag,
-    this.promoInfo,
-    this.savingsInfo,
-    this.isRecommended = false,
-  });
-
-  final int id;
-  final String title;
-  final String period;
-  final String students;
-  final String duration;
-  final String description;
-  final List<String> benefits;
-  final String? priceLabel;
-  final String? price;
-  final String? normalPrice;
-  final String? promoPrice;
-  final String? promoTag;
-  final String? promoInfo;
-  final String? savingsInfo;
-  final bool isRecommended;
+  String _getMonthName(int month) {
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des'
+    ];
+    return months[month];
+  }
 }
