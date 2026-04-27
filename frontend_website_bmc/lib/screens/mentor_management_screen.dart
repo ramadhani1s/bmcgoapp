@@ -41,80 +41,115 @@ class _MentorManagementScreenState
   }
 
   // ==================================================
-  // EXPORT EXCEL (FIX NO ERROR)
+  // EXPORT EXCEL
   // ==================================================
   void _exportMentorExcel(Mentor mentor) {
-    final excel = xls.Excel.createExcel();
+  final excel = xls.Excel.createExcel();
 
-    final defaultSheet =
-        excel.getDefaultSheet() ?? 'Sheet1';
+  // rename sheet default dulu
+  final defaultSheet =
+      excel.getDefaultSheet() ?? 'Sheet1';
 
-    final sheet = excel[defaultSheet];
+  excel.rename(defaultSheet, 'Mentor');
 
-    excel.rename(defaultSheet, 'Mentor');
+  // ambil sheet setelah rename
+  final sheet = excel['Mentor'];
 
-    // Use direct cell assignment for broader compatibility across excel package versions.
-    final headers = <String>[
-      'ID',
-      'Nama Mentor',
-      'Email',
-      'Password',
-      'Spesialisasi',
-      'Status',
-    ];
+  // HEADER
+  final headers = [
+    'ID',
+    'Nama Mentor',
+    'Email',
+    'Password',
+    'Mapel',
+    'Status',
+  ];
 
-    final values = <xls.CellValue>[
-      xls.IntCellValue(mentor.mentorId),
-      xls.TextCellValue(mentor.namaMentor),
-      xls.TextCellValue(mentor.email),
-      xls.TextCellValue(mentor.password),
-      xls.TextCellValue(mentor.spesialisasi),
-      xls.TextCellValue(mentor.status),
-    ];
-
-    for (var col = 0; col < headers.length; col++) {
-      sheet
-          .cell(
-            xls.CellIndex.indexByColumnRow(
-              columnIndex: col,
-              rowIndex: 0,
-            ),
-          )
-          .value = xls.TextCellValue(headers[col]);
-
-      sheet
-          .cell(
-            xls.CellIndex.indexByColumnRow(
-              columnIndex: col,
-              rowIndex: 1,
-            ),
-          )
-          .value = values[col];
-    }
-
-    final bytes = excel.encode();
-
-    if (bytes == null) return;
-
-    final blob = html.Blob([bytes]);
-
-    final url =
-        html.Url.createObjectUrlFromBlob(blob);
-
-    html.AnchorElement(href: url)
-      ..setAttribute(
-        "download",
-        "mentor_${mentor.namaMentor}.xlsx",
-      )
-      ..click();
-
-    html.Url.revokeObjectUrl(url);
-
-    _showSnack(
-      "Excel ${mentor.namaMentor} berhasil diunduh",
-    );
+  for (int col = 0; col < headers.length; col++) {
+    sheet
+        .cell(
+          xls.CellIndex.indexByColumnRow(
+            columnIndex: col,
+            rowIndex: 0,
+          ),
+        )
+        .value = xls.TextCellValue(headers[col]);
   }
 
+  // DATA
+  sheet
+      .cell(
+        xls.CellIndex.indexByString("A2"),
+      )
+      .value = xls.IntCellValue(
+    mentor.mentorId,
+  );
+
+  sheet
+      .cell(
+        xls.CellIndex.indexByString("B2"),
+      )
+      .value = xls.TextCellValue(
+    mentor.namaMentor,
+  );
+
+  sheet
+      .cell(
+        xls.CellIndex.indexByString("C2"),
+      )
+      .value = xls.TextCellValue(
+    mentor.email,
+  );
+
+  sheet
+      .cell(
+        xls.CellIndex.indexByString("D2"),
+      )
+      .value = xls.TextCellValue(
+    mentor.password,
+  );
+
+  sheet
+      .cell(
+        xls.CellIndex.indexByString("E2"),
+      )
+      .value = xls.TextCellValue(
+    mentor.spesialisasi,
+  );
+
+  sheet
+      .cell(
+        xls.CellIndex.indexByString("F2"),
+      )
+      .value = xls.TextCellValue(
+    mentor.status,
+  );
+
+  final bytes = excel.encode();
+
+  if (bytes == null) {
+    _showSnack("Gagal membuat file excel");
+    return;
+  }
+
+  final blob = html.Blob([bytes]);
+
+  final url =
+      html.Url.createObjectUrlFromBlob(blob);
+
+  html.AnchorElement(href: url)
+    ..setAttribute(
+      "download",
+      "mentor_${mentor.namaMentor}.xlsx",
+    )
+    ..click();
+
+  html.Url.revokeObjectUrl(url);
+
+  _showSnack(
+    "Excel ${mentor.namaMentor} berhasil diunduh",
+  );
+}
   // ==================================================
   // LOAD DATA
   // ==================================================
@@ -495,6 +530,236 @@ class _MentorManagementScreenState
   }
 
   // ==================================================
+  // SIDEBAR DASHBOARD STYLE
+  // ==================================================
+  Widget _menuItem(
+    String title,
+    IconData icon, {
+    bool active = false,
+    VoidCallback? onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 2,
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(9),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
+          decoration: BoxDecoration(
+            color: active
+                ? const Color(0xFF2A58F2)
+                : Colors.transparent,
+            borderRadius:
+                BorderRadius.circular(9),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 15,
+                color: active
+                    ? Colors.white
+                    : const Color(
+                        0xFF8290A6),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: active
+                        ? Colors.white
+                        : const Color(
+                            0xFF4B5972),
+                    fontSize: 12.5,
+                    fontWeight: active
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSidebar() {
+    return Container(
+      width: 214,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFD),
+        border: Border(
+          right: BorderSide(
+              color: Color(0xFFDDE4F0)),
+          top: BorderSide(
+              color: Color(0xFFDDE4F0)),
+          bottom: BorderSide(
+              color: Color(0xFFDDE4F0)),
+          left: BorderSide(
+            color: Color(0xFF2A8CF4),
+            width: 2,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding:
+                const EdgeInsets.fromLTRB(
+                    12, 16, 12, 10),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Image.asset(
+                    'assets/images/BMC .png',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment
+                            .start,
+                    children: [
+                      Text(
+                        'BMC',
+                        style: TextStyle(
+                          fontWeight:
+                              FontWeight
+                                  .w800,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Text(
+                        'Bintang Muda Center',
+                        style: TextStyle(
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(
+                horizontal: 12),
+            child: Align(
+              alignment:
+                  Alignment.centerLeft,
+              child: Text(
+                'MENU UTAMA',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight:
+                      FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          _menuItem(
+            "Dashboard",
+            Icons.grid_view_rounded,
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                '/admin-dashboard',
+              );
+            },
+          ),
+
+          _menuItem(
+            "Verifikasi Pendaftaran",
+            Icons
+                .fact_check_outlined,
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                '/payment-verification',
+              );
+            },
+          ),
+
+          _menuItem(
+            "Kelola Mentor",
+            Icons.groups_2_outlined,
+            active: true,
+          ),
+
+          _menuItem(
+            "Kelola Jadwal",
+            Icons.event_note_outlined,
+          ),
+
+          _menuItem(
+            "Kelola Absensi",
+            Icons
+                .assignment_turned_in_outlined,
+          ),
+
+          _menuItem(
+            "Kelola Pengumuman",
+            Icons.campaign_outlined,
+          ),
+
+          _menuItem(
+            "Kelola Paket Les",
+            Icons.school_outlined,
+          ),
+
+          _menuItem(
+            "Kelola Profil Alumni",
+            Icons.badge_outlined,
+          ),
+
+          const Spacer(),
+
+          ListTile(
+            leading: const Icon(
+              Icons.logout_rounded,
+              size: 15,
+            ),
+            title: const Text(
+              "Keluar",
+              style:
+                  TextStyle(fontSize: 12),
+            ),
+            onTap: () async {
+              await AuthService.logout();
+              if (mounted) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
+              }
+            },
+          ),
+
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  // ==================================================
   // MAIN UI
   // ==================================================
   @override
@@ -502,307 +767,302 @@ class _MentorManagementScreenState
     return Scaffold(
       backgroundColor:
           const Color(0xfff4f6fb),
-      body: Padding(
-        padding:
-            const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.groups,
-                  color: Colors.blue,
-                  size: 28,
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  "Kelola Mentor",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight:
-                        FontWeight.bold,
+      body: Row(
+        children: [
+          _buildSidebar(),
+
+          Expanded(
+            child: Padding(
+              padding:
+                  const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.groups,
+                        color: Colors.blue,
+                        size: 28,
+                      ),
+                      const SizedBox(
+                          width: 10),
+                      const Text(
+                        "Kelola Mentor",
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight:
+                              FontWeight
+                                  .bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      ElevatedButton.icon(
+                        style:
+                            ElevatedButton
+                                .styleFrom(
+                          backgroundColor:
+                              Colors.blue,
+                        ),
+                        onPressed:
+                            _showCreateDialog,
+                        icon:
+                            const Icon(
+                          Icons.add,
+                          color: Colors
+                              .white,
+                        ),
+                        label:
+                            const Text(
+                          "Tambah Mentor",
+                          style:
+                              TextStyle(
+                            color: Colors
+                                .white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const Spacer(),
-                ElevatedButton.icon(
-                  style:
-                      ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.blue,
-                  ),
-                  onPressed:
-                      _showCreateDialog,
-                  icon: const Icon(
-                    Icons.add,
-                    color:
-                        Colors.white,
-                  ),
-                  label: const Text(
-                    "Tambah Mentor",
-                    style: TextStyle(
+
+                  const SizedBox(
+                      height: 24),
+
+                  Container(
+                    width:
+                        double.infinity,
+                    padding:
+                        const EdgeInsets
+                            .all(14),
+                    decoration:
+                        BoxDecoration(
                       color:
                           Colors.white,
+                      borderRadius:
+                          BorderRadius
+                              .circular(
+                                  14),
+                    ),
+                    child: TextField(
+                      controller:
+                          _searchController,
+                      decoration:
+                          const InputDecoration(
+                        prefixIcon: Icon(
+                            Icons.search),
+                        hintText:
+                            "Cari mentor...",
+                        border:
+                            InputBorder
+                                .none,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
 
-            Container(
-              width: double.infinity,
-              padding:
-                  const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius:
-                    BorderRadius.circular(
-                  14,
-                ),
-              ),
-              child: TextField(
-                controller:
-                    _searchController,
-                decoration:
-                    const InputDecoration(
-                  prefixIcon:
-                      Icon(Icons.search),
-                  hintText:
-                      "Cari mentor...",
-                  border:
-                      InputBorder.none,
-                ),
-              ),
-            ),
+                  const SizedBox(
+                      height: 20),
 
-            const SizedBox(height: 20),
-
-            Expanded(
-              child: Container(
-                width:
-                    double.infinity,
-                decoration:
-                    BoxDecoration(
-                  color:
-                      Colors.white,
-                  borderRadius:
-                      BorderRadius.circular(
-                    18,
-                  ),
-                ),
-                child: _isLoading
-                    ? const Center(
-                        child:
-                            CircularProgressIndicator(),
-                      )
-                    : _filteredMentors
-                            .isEmpty
-                        ? const Center(
-                            child: Text(
-                              "Belum ada mentor terdaftar",
-                            ),
-                          )
-                        : LayoutBuilder(
-                            builder:
-                                (
-                                  context,
-                                  constraints,
-                                ) {
-                              return SingleChildScrollView(
-                                scrollDirection:
-                                    Axis.horizontal,
-                                child:
-                                    ConstrainedBox(
-                                  constraints:
-                                      BoxConstraints(
-                                    minWidth:
-                                        constraints.maxWidth,
-                                  ),
+                  Expanded(
+                    child:
+                        Container(
+                      width: double
+                          .infinity,
+                      decoration:
+                          BoxDecoration(
+                        color: Colors
+                            .white,
+                        borderRadius:
+                            BorderRadius.circular(
+                                18),
+                      ),
+                      child: _isLoading
+                          ? const Center(
+                              child:
+                                  CircularProgressIndicator(),
+                            )
+                          : _filteredMentors
+                                  .isEmpty
+                              ? const Center(
                                   child:
-                                      SingleChildScrollView(
-                                    child:
-                                        DataTable(
-                                      columnSpacing:
-                                          70,
-                                      horizontalMargin:
-                                          24,
-                                      headingRowColor:
-                                          WidgetStateProperty.all(
-                                        Colors.grey
-                                            .shade100,
-                                      ),
-                                      columns:
-                                          const [
-                                        DataColumn(
-                                          label:
-                                              Text(
-                                            "Mentor",
-                                          ),
-                                        ),
-                                        DataColumn(
-                                          label:
-                                              Text(
-                                            "Email",
-                                          ),
-                                        ),
-                                        DataColumn(
-                                          label:
-                                              Text(
-                                            "Password",
-                                          ),
-                                        ),
-                                        DataColumn(
-                                          label:
-                                              Text(
-                                            "Mapel",
-                                          ),
-                                        ),
-                                        DataColumn(
-                                          label:
-                                              Text(
-                                            "Status",
-                                          ),
-                                        ),
-                                        DataColumn(
-                                          label:
-                                              Text(
-                                            "Aksi",
-                                          ),
-                                        ),
-                                      ],
-                                      rows:
-                                          _filteredMentors.map(
-                                        (
-                                          mentor,
-                                        ) {
-                                          final visible =
-                                              _showPassword[mentor.mentorId] ??
-                                                  false;
-
-                                          return DataRow(
-                                            cells: [
-                                              DataCell(
-                                                Text(
-                                                  mentor.namaMentor,
-                                                ),
-                                              ),
-                                              DataCell(
-                                                Text(
-                                                  mentor.email,
-                                                ),
-                                              ),
-                                              DataCell(
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      visible
-                                                          ? mentor.password
-                                                          : "••••••••",
-                                                    ),
-                                                    IconButton(
-                                                      onPressed:
-                                                          () {
-                                                        setState(
-                                                          () {
-                                                            _showPassword[mentor.mentorId] =
-                                                                !visible;
-                                                          },
-                                                        );
-                                                      },
-                                                      icon:
-                                                          Icon(
-                                                        visible
-                                                            ? Icons.visibility_off
-                                                            : Icons.visibility,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              DataCell(
-                                                Text(
-                                                  mentor.spesialisasi,
-                                                ),
-                                              ),
-                                              DataCell(
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                    horizontal:
-                                                        10,
-                                                    vertical:
-                                                        4,
-                                                  ),
-                                                  decoration:
-                                                      BoxDecoration(
-                                                    color: Colors.green.shade100,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                      20,
-                                                    ),
-                                                  ),
-                                                  child:
-                                                      Text(
-                                                    mentor.status,
-                                                  ),
-                                                ),
-                                              ),
-                                              DataCell(
-                                                Row(
-                                                  children: [
-                                                    IconButton(
-                                                      onPressed:
-                                                          () => _exportMentorExcel(
-                                                        mentor,
-                                                      ),
-                                                      icon:
-                                                          const Icon(
-                                                        Icons.download,
-                                                        color:
-                                                            Colors.green,
-                                                      ),
-                                                    ),
-                                                    IconButton(
-                                                      onPressed:
-                                                          () => _showEditDialog(
-                                                        mentor,
-                                                      ),
-                                                      icon:
-                                                          const Icon(
-                                                        Icons.edit,
-                                                        color:
-                                                            Colors.blue,
-                                                      ),
-                                                    ),
-                                                    IconButton(
-                                                      onPressed:
-                                                          () => _deleteMentor(
-                                                        mentor,
-                                                      ),
-                                                      icon:
-                                                          const Icon(
-                                                        Icons.delete,
-                                                        color:
-                                                            Colors.red,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      ).toList(),
+                                      Text(
+                                  "Belum ada mentor terdaftar",
+                                ))
+                              : SingleChildScrollView(
+                                  child:
+                                      DataTable(
+                                    headingRowColor:
+                                        MaterialStateProperty.all(
+                                      Colors
+                                          .grey
+                                          .shade100,
                                     ),
+                                    columns:
+                                        const [
+                                      DataColumn(
+                                          label:
+                                              Text(
+                                        "Mentor",
+                                      )),
+                                      DataColumn(
+                                          label:
+                                              Text(
+                                        "Email",
+                                      )),
+                                      DataColumn(
+                                          label:
+                                              Text(
+                                        "Password",
+                                      )),
+                                      DataColumn(
+                                          label:
+                                              Text(
+                                        "Mapel",
+                                      )),
+                                      DataColumn(
+                                          label:
+                                              Text(
+                                        "Status",
+                                      )),
+                                      DataColumn(
+                                          label:
+                                              Text(
+                                        "Aksi",
+                                      )),
+                                    ],
+                                    rows:
+                                        _filteredMentors
+                                            .map(
+                                      (
+                                        mentor,
+                                      ) {
+                                        final visible =
+                                            _showPassword[
+                                                    mentor.mentorId] ??
+                                                false;
+
+                                        return DataRow(
+                                          cells: [
+                                            DataCell(
+                                                Text(
+                                              mentor.namaMentor,
+                                            )),
+                                            DataCell(
+                                                Text(
+                                              mentor.email,
+                                            )),
+                                            DataCell(
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    visible
+                                                        ? mentor.password
+                                                        : "••••••••",
+                                                  ),
+                                                  IconButton(
+                                                    onPressed:
+                                                        () {
+                                                      setState(
+                                                        () {
+                                                          _showPassword[mentor.mentorId] =
+                                                              !visible;
+                                                        },
+                                                      );
+                                                    },
+                                                    icon:
+                                                        Icon(
+                                                      visible
+                                                          ? Icons.visibility_off
+                                                          : Icons.visibility,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            DataCell(
+                                                Text(
+                                              mentor.spesialisasi,
+                                            )),
+                                            DataCell(
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal:
+                                                      10,
+                                                  vertical:
+                                                      4,
+                                                ),
+                                                decoration:
+                                                    BoxDecoration(
+                                                  color: Colors
+                                                      .green
+                                                      .shade100,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          20),
+                                                ),
+                                                child:
+                                                    Text(
+                                                  mentor.status,
+                                                ),
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Row(
+                                                children: [
+                                                  IconButton(
+                                                    onPressed:
+                                                        () =>
+                                                            _exportMentorExcel(
+                                                      mentor,
+                                                    ),
+                                                    icon:
+                                                        const Icon(
+                                                      Icons.download,
+                                                      color:
+                                                          Colors.green,
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    onPressed:
+                                                        () =>
+                                                            _showEditDialog(
+                                                      mentor,
+                                                    ),
+                                                    icon:
+                                                        const Icon(
+                                                      Icons.edit,
+                                                      color:
+                                                          Colors.blue,
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    onPressed:
+                                                        () =>
+                                                            _deleteMentor(
+                                                      mentor,
+                                                    ),
+                                                    icon:
+                                                        const Icon(
+                                                      Icons.delete,
+                                                      color:
+                                                          Colors.red,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ).toList(),
                                   ),
                                 ),
-                              );
-                            },
-                          ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
