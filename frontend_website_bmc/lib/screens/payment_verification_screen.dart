@@ -854,7 +854,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: SizedBox(
-                width: 70,  // Reduced from 92 to 70 for shorter status container
+                width: 70, // Reduced from 92 to 70 for shorter status container
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,

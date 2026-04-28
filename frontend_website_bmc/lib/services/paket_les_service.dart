@@ -1,0 +1,232 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+class PaketLesService {
+  static const String baseUrl = "http://172.27.66.99:8080/api/admin";
+
+  // Get token from SharedPreferences
+  static Future<String> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token =
+        (prefs.getString('token') ?? prefs.getString('auth_token') ?? '')
+            .trim();
+
+    if (token.isEmpty) {
+      throw Exception('Token login tidak ditemukan. Silakan login ulang.');
+    }
+    return token;
+  }
+
+  // Get request headers with auth
+  static Future<Map<String, String>> _getHeaders() async {
+    final token = await _getToken();
+    return {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token",
+    };
+  }
+
+  // Create new paket les
+  static Future<Map<String, dynamic>> createPaket(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final url = Uri.parse("$baseUrl/paket-les");
+      final headers = await _getHeaders();
+
+      print("🔥 CREATE REQUEST URL: $url");
+      print("🔥 REQUEST BODY: ${jsonEncode(data)}");
+
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(data),
+      );
+
+      print("🔥 STATUS CODE: ${response.statusCode}");
+      print("🔥 RESPONSE BODY: ${response.body}");
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          "status": "error",
+          "message": "Failed to create paket: ${response.statusCode}",
+          "detail": response.body,
+        };
+      }
+    } catch (e) {
+      print("❌ ERROR API: $e");
+      return {
+        "status": "error",
+        "message": "API Error",
+        "detail": e.toString(),
+      };
+    }
+  }
+
+  // Get all paket les with optional filters
+  static Future<List<Map<String, dynamic>>> getPaketLesList({
+    String? status,
+    String? search,
+  }) async {
+    try {
+      String url = "$baseUrl/paket-les";
+      Map<String, String> queryParams = {};
+
+      if (status != null && status.isNotEmpty) {
+        queryParams['status'] = status;
+      }
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+
+      final uri = Uri.parse(url).replace(queryParameters: queryParams);
+      final headers = await _getHeaders();
+
+      print("🔥 GET LIST REQUEST URL: $uri");
+
+      final response = await http.get(uri, headers: headers);
+
+      print("🔥 GET LIST STATUS CODE: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+
+        if (jsonResponse['data'] is List) {
+          return List<Map<String, dynamic>>.from(
+            jsonResponse['data'].map((x) => Map<String, dynamic>.from(x)),
+          );
+        }
+        return [];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print("❌ ERROR API: $e");
+      return [];
+    }
+  }
+
+  // Get single paket detail
+  static Future<Map<String, dynamic>?> getPaketDetail(int id) async {
+    try {
+      final url = Uri.parse("$baseUrl/paket-les/$id");
+      final headers = await _getHeaders();
+
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        return Map<String, dynamic>.from(jsonResponse['data'] ?? {});
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print("❌ ERROR API: $e");
+      return null;
+    }
+  }
+
+  // Update paket les
+  static Future<Map<String, dynamic>> updatePaket(
+    int id,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final url = Uri.parse("$baseUrl/paket-les/$id");
+      final headers = await _getHeaders();
+
+      print("🔥 UPDATE REQUEST URL: $url");
+      print("🔥 REQUEST BODY: ${jsonEncode(data)}");
+
+      final response = await http.put(
+        url,
+        headers: headers,
+        body: jsonEncode(data),
+      );
+
+      print("🔥 UPDATE STATUS CODE: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          "status": "error",
+          "message": "Failed to update paket: ${response.statusCode}",
+          "detail": response.body,
+        };
+      }
+    } catch (e) {
+      print("❌ ERROR API: $e");
+      return {
+        "status": "error",
+        "message": "API Error",
+        "detail": e.toString(),
+      };
+    }
+  }
+
+  // Delete paket les
+  static Future<Map<String, dynamic>> deletePaket(int id) async {
+    try {
+      final url = Uri.parse("$baseUrl/paket-les/$id");
+      final headers = await _getHeaders();
+
+      final response = await http.delete(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          "status": "error",
+          "message": "Failed to delete paket: ${response.statusCode}",
+          "detail": response.body,
+        };
+      }
+    } catch (e) {
+      print("❌ ERROR API: $e");
+      return {
+        "status": "error",
+        "message": "API Error",
+        "detail": e.toString(),
+      };
+    }
+  }
+
+  // Get paket statistics
+  static Future<Map<String, dynamic>> getPaketStats() async {
+    try {
+      final url = Uri.parse("$baseUrl/paket-les-stats");
+      final headers = await _getHeaders();
+
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        return Map<String, dynamic>.from(jsonResponse['data'] ?? {});
+      } else {
+        return {"total_paket": 0, "paket_aktif": 0};
+      }
+    } catch (e) {
+      print("❌ ERROR API: $e");
+      return {"total_paket": 0, "paket_aktif": 0};
+    }
+  }
+
+  // Format harga to Rupiah
+  static String formatRupiah(int harga) {
+    return "Rp" +
+        harga.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        );
+  }
+
+  // Calculate harga promo
+  static int calculateHargaPromo(int hargaAwal, int diskon) {
+    if (diskon == 0) return hargaAwal;
+    return (hargaAwal * (100 - diskon) / 100).toInt();
+  }
+}
