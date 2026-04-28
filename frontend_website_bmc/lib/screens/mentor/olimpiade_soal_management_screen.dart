@@ -254,7 +254,7 @@ class _OlimpiadseSoalManagementScreenState
               padding: const EdgeInsets.all(16),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
+                  constraints: const BoxConstraints(maxWidth: 600),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

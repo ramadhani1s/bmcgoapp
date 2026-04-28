@@ -207,24 +207,24 @@ class _MentorCompetitionManagementState
                 child: ElevatedButton.icon(
                   onPressed: () => _openTryoutSoalManagement(item),
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(32),
+                    minimumSize: const Size.fromHeight(28),
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  icon: const Icon(Icons.menu_book_outlined, size: 15),
+                  icon: const Icon(Icons.menu_book_outlined, size: 14),
                   label: const Text(
                     'Kelola Soal',
-                    style: TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: 12),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               SizedBox(
-                width: 36,
-                height: 32,
+                width: 32,
+                height: 28,
                 child: OutlinedButton(
                   onPressed: () => _openForm(item: item),
                   style: OutlinedButton.styleFrom(
@@ -236,15 +236,15 @@ class _MentorCompetitionManagementState
                   ),
                   child: const Icon(
                     Icons.edit_outlined,
-                    size: 14,
+                    size: 13,
                     color: Color(0xFF6B7280),
                   ),
                 ),
               ),
               const SizedBox(width: 6),
               SizedBox(
-                width: 36,
-                height: 32,
+                width: 32,
+                height: 28,
                 child: OutlinedButton(
                   onPressed: () => _deleteItem(item),
                   style: OutlinedButton.styleFrom(
@@ -256,7 +256,7 @@ class _MentorCompetitionManagementState
                   ),
                   child: const Icon(
                     Icons.delete_outline,
-                    size: 14,
+                    size: 13,
                     color: Color(0xFFEF4444),
                   ),
                 ),
@@ -321,24 +321,24 @@ class _MentorCompetitionManagementState
                 child: ElevatedButton.icon(
                   onPressed: () => _openOlimpiadseSoalManagement(item),
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(32),
+                    minimumSize: const Size.fromHeight(28),
                     backgroundColor: widget.accentColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  icon: const Icon(Icons.menu_book_outlined, size: 15),
+                  icon: const Icon(Icons.menu_book_outlined, size: 14),
                   label: const Text(
                     'Kelola Soal',
-                    style: TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: 12),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               SizedBox(
-                width: 36,
-                height: 32,
+                width: 32,
+                height: 28,
                 child: OutlinedButton(
                   onPressed: () => _openForm(item: item),
                   style: OutlinedButton.styleFrom(
@@ -350,15 +350,15 @@ class _MentorCompetitionManagementState
                   ),
                   child: const Icon(
                     Icons.edit_outlined,
-                    size: 14,
+                    size: 13,
                     color: Color(0xFF6B7280),
                   ),
                 ),
               ),
               const SizedBox(width: 6),
               SizedBox(
-                width: 36,
-                height: 32,
+                width: 32,
+                height: 28,
                 child: OutlinedButton(
                   onPressed: () => _deleteItem(item),
                   style: OutlinedButton.styleFrom(
@@ -370,7 +370,7 @@ class _MentorCompetitionManagementState
                   ),
                   child: const Icon(
                     Icons.delete_outline,
-                    size: 14,
+                    size: 13,
                     color: Color(0xFFEF4444),
                   ),
                 ),
@@ -540,9 +540,13 @@ class _MentorCompetitionManagementState
     );
     if (!mounted) return;
 
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(result['message']?.toString() ?? 'Proses selesai'),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
     if (result['success'] == true) {
@@ -945,27 +949,67 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
               : () async {
                   if (_titleController.text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Judul/Nama wajib diisi')),
+                      SnackBar(
+                        content: const Text('Judul/Nama wajib diisi'),
+                        behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 80,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     );
                     return;
                   }
                   if (_scheduleController.text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Tanggal wajib dipilih')),
+                      SnackBar(
+                        content: const Text('Tanggal wajib dipilih'),
+                        behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 80,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     );
                     return;
                   }
                   if (widget.type == 'olimpiade' &&
                       _locationController.text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Lokasi wajib diisi')),
+                      SnackBar(
+                        content: const Text('Lokasi wajib diisi'),
+                        behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 80,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     );
                     return;
                   }
                   if (widget.type == 'tryout' &&
                       _durationController.text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Waktu wajib diisi')),
+                      SnackBar(
+                        content: const Text('Waktu wajib diisi'),
+                        behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 80,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     );
                     return;
                   }
@@ -991,6 +1035,14 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                     SnackBar(
                       content: Text(
                         response['message']?.toString() ?? 'Proses selesai',
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 80,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   );
