@@ -408,7 +408,7 @@ func SubmitAttendanceTokenHandler(c *gin.Context) {
 		return
 	}
 
-	if existingErr != nil && !errors.Is(existingErr, pgx.ErrNoRows) {
+	if !errors.Is(existingErr, pgx.ErrNoRows) {
 		c.JSON(500, gin.H{"error": "Gagal memeriksa data absensi"})
 		return
 	}

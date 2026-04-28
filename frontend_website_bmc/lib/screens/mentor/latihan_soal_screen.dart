@@ -36,8 +36,27 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     'Bahasa Inggris',
   ];
 
-  String _selectedAnswer = 'A';
   String _selectedMapel = 'Matematika';
+
+  Future<void> _pickJadwalDate() async {
+    final now = DateTime.now();
+    final initial = DateTime.tryParse(_jadwalController.text.trim()) ?? now;
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (selected == null) {
+      return;
+    }
+
+    final yyyy = selected.year.toString().padLeft(4, '0');
+    final mm = selected.month.toString().padLeft(2, '0');
+    final dd = selected.day.toString().padLeft(2, '0');
+    _jadwalController.text = '$yyyy-$mm-$dd';
+  }
 
   @override
   void initState() {
@@ -75,12 +94,37 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   }
 
   void _showMessage(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: isError
-            ? const Color(0xFFDC2626)
-            : const Color(0xFF2563EB),
+            ? const Color(0xFFEF4444)
+            : const Color(0xFF10B981),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -126,7 +170,6 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     setState(() {
       _showForm = false;
       _editingItem = null;
-      _selectedAnswer = 'A';
     });
   }
 
@@ -148,15 +191,40 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       _isSubmitting = true;
     });
 
-    Map<String, dynamic> response = <String, dynamic>{
-      'success': true,
-      'message': 'Soal berhasil disimpan',
-    };
+    try {
+      Map<String, dynamic> response = <String, dynamic>{
+        'success': true,
+        'message': 'Soal berhasil disimpan',
+      };
 
-    if (_editingItem == null) {
-      for (int i = 0; i < _drafts.length; i++) {
-        final draft = _drafts[i];
-        final result = await LatihanSoalService.createSoalLatihan(
+      if (_editingItem == null) {
+        for (int i = 0; i < _drafts.length; i++) {
+          final draft = _drafts[i];
+          final result = await LatihanSoalService.createSoalLatihan(
+            pertanyaan: _buildStoredQuestion(
+              draft.questionController.text.trim(),
+              _selectedMapel,
+            ),
+            pilihanA: draft.optionAController.text.trim(),
+            pilihanB: draft.optionBController.text.trim(),
+            pilihanC: draft.optionCController.text.trim(),
+            pilihanD: draft.optionDController.text.trim(),
+            jawaban: draft.selectedAnswer,
+            pembahasan: draft.pembahasanController.text.trim(),
+          );
+
+          if (result['success'] != true) {
+            response = {
+              'success': false,
+              'message': 'Gagal simpan Soal ${i + 1}: ${result['message']}',
+            };
+            break;
+          }
+        }
+      } else {
+        final draft = _drafts.first;
+        response = await LatihanSoalService.updateSoalLatihan(
+          soalId: _editingItem!.id,
           pertanyaan: _buildStoredQuestion(
             draft.questionController.text.trim(),
             _selectedMapel,
@@ -166,51 +234,34 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           pilihanC: draft.optionCController.text.trim(),
           pilihanD: draft.optionDController.text.trim(),
           jawaban: draft.selectedAnswer,
+          pembahasan: draft.pembahasanController.text.trim(),
         );
-
-        if (result['success'] != true) {
-          response = {
-            'success': false,
-            'message': 'Gagal simpan Soal ${i + 1}: ${result['message']}',
-          };
-          break;
-        }
       }
-    } else {
-      final draft = _drafts.first;
-      response = await LatihanSoalService.updateSoalLatihan(
-        soalId: _editingItem!.id,
-        pertanyaan: _buildStoredQuestion(
-          draft.questionController.text.trim(),
-          _selectedMapel,
-        ),
-        pilihanA: draft.optionAController.text.trim(),
-        pilihanB: draft.optionBController.text.trim(),
-        pilihanC: draft.optionCController.text.trim(),
-        pilihanD: draft.optionDController.text.trim(),
-        jawaban: draft.selectedAnswer,
-      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isSubmitting = false;
+      });
+
+      if (response['success'] != true) {
+        _showMessage(
+          response['message'] ?? 'Gagal menyimpan soal',
+          isError: true,
+        );
+        return;
+      }
+
+      _showMessage(response['message'] ?? 'Soal berhasil disimpan');
+      _closeForm();
+      await _loadItems();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      _showMessage('Error: ${e.toString()}', isError: true);
     }
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = false;
-    });
-
-    if (response['success'] != true) {
-      _showMessage(
-        response['message'] ?? 'Gagal menyimpan soal',
-        isError: true,
-      );
-      return;
-    }
-
-    _showMessage(response['message'] ?? 'Soal berhasil disimpan');
-    _closeForm();
-    await _loadItems();
   }
 
   Future<void> _deleteItem(SoalLatihan item) async {
@@ -764,9 +815,12 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
                 Expanded(
                   child: TextField(
                     controller: _jadwalController,
+                    readOnly: true,
+                    onTap: _pickJadwalDate,
                     decoration: InputDecoration(
                       labelText: 'Jadwal Pelaksanaan',
-                      hintText: '30 April 2026',
+                      hintText: '2026-04-30',
+                      suffixIcon: const Icon(Icons.calendar_today_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -926,6 +980,27 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           _buildOptionInput('C', draft.optionCController, draft),
           const SizedBox(height: 8),
           _buildOptionInput('D', draft.optionDController, draft),
+          const SizedBox(height: 12),
+          const Text(
+            'Pembahasan (Opsional)',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF374151),
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: draft.pembahasanController,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: 'Tulis penjelasan untuk jawaban yang benar...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              contentPadding: const EdgeInsets.all(12),
+            ),
+          ),
         ],
       ),
     );
@@ -1058,6 +1133,7 @@ class _QuestionDraft {
   final TextEditingController optionBController = TextEditingController();
   final TextEditingController optionCController = TextEditingController();
   final TextEditingController optionDController = TextEditingController();
+  final TextEditingController pembahasanController = TextEditingController();
   String selectedAnswer = 'A';
 
   bool get isComplete {
@@ -1074,6 +1150,7 @@ class _QuestionDraft {
     optionBController.clear();
     optionCController.clear();
     optionDController.clear();
+    pembahasanController.clear();
     selectedAnswer = 'A';
   }
 
@@ -1083,5 +1160,6 @@ class _QuestionDraft {
     optionBController.dispose();
     optionCController.dispose();
     optionDController.dispose();
+    pembahasanController.dispose();
   }
 }

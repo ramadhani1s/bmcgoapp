@@ -8,6 +8,28 @@ import 'auth_service.dart';
 class MentorCompetitionService {
   static const String _baseUrl = AuthService.baseUrl;
 
+  static int _extractDurationMinutes(String raw, {int fallback = 60}) {
+    final onlyDigits = raw.replaceAll(RegExp(r'[^0-9]'), '');
+    final minutes = int.tryParse(onlyDigits);
+    if (minutes == null || minutes <= 0) {
+      return fallback;
+    }
+    return minutes;
+  }
+
+  static String _extractError(
+    dynamic data, {
+    String fallback = 'Terjadi kesalahan',
+  }) {
+    if (data is Map<String, dynamic>) {
+      final message = data['details'] ?? data['error'] ?? data['message'];
+      if (message != null && message.toString().trim().isNotEmpty) {
+        return message.toString();
+      }
+    }
+    return fallback;
+  }
+
   static Future<List<MentorCompetitionItem>> getByType(
     String type, {
     String? classLevel,
@@ -28,18 +50,31 @@ class MentorCompetitionService {
 
       final items = list.map((raw) {
         final row = raw as Map<String, dynamic>;
+        final rawCategories = row['category_questions'];
+        final parsedCategories = <String, int>{};
+        if (rawCategories is Map) {
+          for (final entry in rawCategories.entries) {
+            parsedCategories['${entry.key}'] =
+                int.tryParse('${entry.value}') ?? 0;
+          }
+        }
+
+        final totalFromCategories = parsedCategories.values.fold<int>(
+          0,
+          (previousValue, element) => previousValue + element,
+        );
         return MentorCompetitionItem.fromJson({
           'id': row['id'],
           'type': type,
           'class_level': row['class_level'],
           'title': row['judul'] ?? row['nama'],
-          'subject': row['lokasi'] ?? 'Try Out Online',
-          'totalQuestions': row['total_questions'] ?? 0,
+          'subject': row['lokasi'] ?? '-',
+          'totalQuestions': row['total_questions'] ?? totalFromCategories,
           'durationLabel': row['durasi'] ?? '-',
           'scheduleLabel': row['tanggal'] ?? '',
           'isPublished': true,
           'createdAt': row['tanggal'] ?? DateTime.now().toIso8601String(),
-          'categoryQuestions': row['categoryQuestions'] ?? const {},
+          'categoryQuestions': parsedCategories,
         });
       }).toList();
 
@@ -78,11 +113,17 @@ class MentorCompetitionService {
               'lokasi': subject,
             }
           : {
-              'paket_id': 1,
+              // Biarkan backend me-resolve paket_id default yang valid.
+              'paket_id': 0,
               'class_level': classLevel,
               'judul': title,
               'tanggal': scheduleLabel,
-              'durasi': int.tryParse(durationLabel) ?? totalQuestions,
+              'durasi': _extractDurationMinutes(
+                durationLabel,
+                fallback: totalQuestions > 0 ? totalQuestions : 60,
+              ),
+              'total_questions': totalQuestions,
+              'category_questions': categoryQuestions,
             };
 
       final request = isUpdate
@@ -107,7 +148,7 @@ class MentorCompetitionService {
 
       return {
         'success': false,
-        'message': data['error'] ?? 'Gagal menyimpan data',
+        'message': _extractError(data, fallback: 'Gagal menyimpan data'),
       };
     } catch (e) {
       return {'success': false, 'message': 'Terjadi kesalahan: $e'};
@@ -133,7 +174,7 @@ class MentorCompetitionService {
 
       return {
         'success': false,
-        'message': data['error'] ?? 'Gagal menghapus data',
+        'message': _extractError(data, fallback: 'Gagal menghapus data'),
       };
     } catch (e) {
       return {'success': false, 'message': 'Terjadi kesalahan: $e'};

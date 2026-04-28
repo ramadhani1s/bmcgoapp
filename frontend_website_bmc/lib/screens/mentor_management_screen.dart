@@ -8,19 +8,16 @@ class MentorManagementScreen extends StatefulWidget {
   const MentorManagementScreen({super.key});
 
   @override
-  State<MentorManagementScreen> createState() =>
-      _MentorManagementScreenState();
+  State<MentorManagementScreen> createState() => _MentorManagementScreenState();
 }
 
-class _MentorManagementScreenState
-    extends State<MentorManagementScreen> {
+class _MentorManagementScreenState extends State<MentorManagementScreen> {
   bool _isLoading = true;
 
   List<Mentor> _mentors = [];
   List<Mentor> _filteredMentors = [];
 
-  final TextEditingController _searchController =
-      TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   final Map<int, bool> _showPassword = {};
 
@@ -44,112 +41,79 @@ class _MentorManagementScreenState
   // EXPORT EXCEL
   // ==================================================
   void _exportMentorExcel(Mentor mentor) {
-  final excel = xls.Excel.createExcel();
+    final excel = xls.Excel.createExcel();
 
-  // rename sheet default dulu
-  final defaultSheet =
-      excel.getDefaultSheet() ?? 'Sheet1';
+    // rename sheet default dulu
+    final defaultSheet = excel.getDefaultSheet() ?? 'Sheet1';
 
-  excel.rename(defaultSheet, 'Mentor');
+    excel.rename(defaultSheet, 'Mentor');
 
-  // ambil sheet setelah rename
-  final sheet = excel['Mentor'];
+    // ambil sheet setelah rename
+    final sheet = excel['Mentor'];
 
-  // HEADER
-  final headers = [
-    'ID',
-    'Nama Mentor',
-    'Email',
-    'Password',
-    'Mapel',
-    'Status',
-  ];
+    // HEADER
+    final headers = [
+      'ID',
+      'Nama Mentor',
+      'Email',
+      'Password',
+      'Mata Pelajaran',
+      'Status',
+    ];
 
-  for (int col = 0; col < headers.length; col++) {
-    sheet
-        .cell(
-          xls.CellIndex.indexByColumnRow(
-            columnIndex: col,
-            rowIndex: 0,
-          ),
-        )
-        .value = xls.TextCellValue(headers[col]);
+    for (int col = 0; col < headers.length; col++) {
+      sheet
+          .cell(xls.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0))
+          .value = xls.TextCellValue(
+        headers[col],
+      );
+    }
+
+    // DATA
+    sheet.cell(xls.CellIndex.indexByString("A2")).value = xls.IntCellValue(
+      mentor.mentorId,
+    );
+
+    sheet.cell(xls.CellIndex.indexByString("B2")).value = xls.TextCellValue(
+      mentor.namaMentor,
+    );
+
+    sheet.cell(xls.CellIndex.indexByString("C2")).value = xls.TextCellValue(
+      mentor.email,
+    );
+
+    sheet.cell(xls.CellIndex.indexByString("D2")).value = xls.TextCellValue(
+      mentor.password,
+    );
+
+    sheet.cell(xls.CellIndex.indexByString("E2")).value = xls.TextCellValue(
+      mentor.spesialisasi,
+    );
+
+    sheet.cell(xls.CellIndex.indexByString("F2")).value = xls.TextCellValue(
+      mentor.status,
+    );
+
+    final bytes = excel.encode();
+
+    if (bytes == null) {
+      _showSnack("Gagal membuat file excel");
+      return;
+    }
+
+    final blob = html.Blob([bytes]);
+
+    final url = html.Url.createObjectUrlFromBlob(blob);
+
+    html.AnchorElement(href: url)
+      ..setAttribute("download", "mentor_${mentor.namaMentor}.xlsx")
+      ..click();
+
+    html.Url.revokeObjectUrl(url);
+
+    _showSnack("Excel ${mentor.namaMentor} berhasil diunduh");
   }
 
-  // DATA
-  sheet
-      .cell(
-        xls.CellIndex.indexByString("A2"),
-      )
-      .value = xls.IntCellValue(
-    mentor.mentorId,
-  );
-
-  sheet
-      .cell(
-        xls.CellIndex.indexByString("B2"),
-      )
-      .value = xls.TextCellValue(
-    mentor.namaMentor,
-  );
-
-  sheet
-      .cell(
-        xls.CellIndex.indexByString("C2"),
-      )
-      .value = xls.TextCellValue(
-    mentor.email,
-  );
-
-  sheet
-      .cell(
-        xls.CellIndex.indexByString("D2"),
-      )
-      .value = xls.TextCellValue(
-    mentor.password,
-  );
-
-  sheet
-      .cell(
-        xls.CellIndex.indexByString("E2"),
-      )
-      .value = xls.TextCellValue(
-    mentor.spesialisasi,
-  );
-
-  sheet
-      .cell(
-        xls.CellIndex.indexByString("F2"),
-      )
-      .value = xls.TextCellValue(
-    mentor.status,
-  );
-
-  final bytes = excel.encode();
-
-  if (bytes == null) {
-    _showSnack("Gagal membuat file excel");
-    return;
-  }
-
-  final blob = html.Blob([bytes]);
-
-  final url =
-      html.Url.createObjectUrlFromBlob(blob);
-
-  html.AnchorElement(href: url)
-    ..setAttribute(
-      "download",
-      "mentor_${mentor.namaMentor}.xlsx",
-    )
-    ..click();
-
-  html.Url.revokeObjectUrl(url);
-
-  _showSnack(
-    "Excel ${mentor.namaMentor} berhasil diunduh",
-  );
-}
   // ==================================================
   // LOAD DATA
   // ==================================================
@@ -175,15 +139,9 @@ class _MentorManagementScreenState
 
     setState(() {
       _filteredMentors = _mentors.where((mentor) {
-        return mentor.namaMentor
-                .toLowerCase()
-                .contains(key) ||
-            mentor.email
-                .toLowerCase()
-                .contains(key) ||
-            mentor.spesialisasi
-                .toLowerCase()
-                .contains(key);
+        return mentor.namaMentor.toLowerCase().contains(key) ||
+            mentor.email.toLowerCase().contains(key) ||
+            mentor.spesialisasi.toLowerCase().contains(key);
       }).toList();
     });
   }
@@ -192,9 +150,7 @@ class _MentorManagementScreenState
   // SNACKBAR
   // ==================================================
   void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   // ==================================================
@@ -215,86 +171,53 @@ class _MentorManagementScreenState
           builder: (context, setDialog) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(18),
               ),
-              title:
-                  const Text("Tambah Mentor Baru"),
+              title: const Text("Tambah Mentor Baru"),
               content: SizedBox(
                 width: 480,
                 child: Column(
-                  mainAxisSize:
-                      MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _field(
-                      nama,
-                      "Nama Mentor",
-                    ),
+                    _field(nama, "Nama Mentor"),
                     const SizedBox(height: 12),
-                    _field(
-                      email,
-                      "Email",
-                    ),
+                    _field(email, "Email"),
                     const SizedBox(height: 12),
                     TextField(
                       controller: pass,
-                      obscureText:
-                          hidePassword,
-                      decoration:
-                          InputDecoration(
-                        labelText:
-                            "Password",
-                        border:
-                            OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(
-                            12,
-                          ),
+                      obscureText: hidePassword,
+                      decoration: InputDecoration(
+                        labelText: "Password",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        suffixIcon:
-                            IconButton(
+                        suffixIcon: IconButton(
                           onPressed: () {
                             setDialog(() {
-                              hidePassword =
-                                  !hidePassword;
+                              hidePassword = !hidePassword;
                             });
                           },
                           icon: Icon(
                             hidePassword
-                                ? Icons
-                                    .visibility_off
-                                : Icons
-                                    .visibility,
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _field(
-                      mapel,
-                      "Spesialisasi",
-                    ),
+                    _field(mapel, "Mata Pelajaran"),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () =>
-                      Navigator.pop(
-                    context,
-                    false,
-                  ),
-                  child:
-                      const Text("Batal"),
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Batal"),
                 ),
                 ElevatedButton(
-                  onPressed: () =>
-                      Navigator.pop(
-                    context,
-                    true,
-                  ),
-                  child:
-                      const Text("Simpan"),
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text("Simpan"),
                 ),
               ],
             );
@@ -309,7 +232,7 @@ class _MentorManagementScreenState
       email: email.text.trim(),
       password: pass.text.trim(),
       namaMentor: nama.text.trim(),
-      spesialisasi: mapel.text.trim(),
+      mataPelajaran: mapel.text.trim(),
     );
 
     _showSnack(res["message"]);
@@ -322,20 +245,12 @@ class _MentorManagementScreenState
   // ==================================================
   // EDIT
   // ==================================================
-  Future<void> _showEditDialog(
-    Mentor mentor,
-  ) async {
-    final nama = TextEditingController(
-      text: mentor.namaMentor,
-    );
+  Future<void> _showEditDialog(Mentor mentor) async {
+    final nama = TextEditingController(text: mentor.namaMentor);
 
-    final email = TextEditingController(
-      text: mentor.email,
-    );
+    final email = TextEditingController(text: mentor.email);
 
-    final mapel = TextEditingController(
-      text: mentor.spesialisasi,
-    );
+    final mapel = TextEditingController(text: mentor.spesialisasi);
 
     final pass = TextEditingController();
 
@@ -348,86 +263,53 @@ class _MentorManagementScreenState
           builder: (context, setDialog) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(18),
               ),
-              title:
-                  const Text("Edit Mentor"),
+              title: const Text("Edit Mentor"),
               content: SizedBox(
                 width: 480,
                 child: Column(
-                  mainAxisSize:
-                      MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _field(
-                      nama,
-                      "Nama Mentor",
-                    ),
+                    _field(nama, "Nama Mentor"),
                     const SizedBox(height: 12),
-                    _field(
-                      email,
-                      "Email",
-                    ),
+                    _field(email, "Email"),
                     const SizedBox(height: 12),
                     TextField(
                       controller: pass,
-                      obscureText:
-                          hidePassword,
-                      decoration:
-                          InputDecoration(
-                        labelText:
-                            "Password Baru",
-                        border:
-                            OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(
-                            12,
-                          ),
+                      obscureText: hidePassword,
+                      decoration: InputDecoration(
+                        labelText: "Password Baru",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        suffixIcon:
-                            IconButton(
+                        suffixIcon: IconButton(
                           onPressed: () {
                             setDialog(() {
-                              hidePassword =
-                                  !hidePassword;
+                              hidePassword = !hidePassword;
                             });
                           },
                           icon: Icon(
                             hidePassword
-                                ? Icons
-                                    .visibility_off
-                                : Icons
-                                    .visibility,
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _field(
-                      mapel,
-                      "Spesialisasi",
-                    ),
+                    _field(mapel, "Mata Pelajaran"),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () =>
-                      Navigator.pop(
-                    context,
-                    false,
-                  ),
-                  child:
-                      const Text("Batal"),
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Batal"),
                 ),
                 ElevatedButton(
-                  onPressed: () =>
-                      Navigator.pop(
-                    context,
-                    true,
-                  ),
-                  child:
-                      const Text("Update"),
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text("Update"),
                 ),
               ],
             );
@@ -456,41 +338,22 @@ class _MentorManagementScreenState
   // ==================================================
   // DELETE
   // ==================================================
-  Future<void> _deleteMentor(
-    Mentor mentor,
-  ) async {
+  Future<void> _deleteMentor(Mentor mentor) async {
     final yes = await showDialog<bool>(
       context: context,
       builder: (_) {
         return AlertDialog(
-          title:
-              const Text("Hapus Mentor"),
-          content: Text(
-            "Yakin hapus ${mentor.namaMentor}?",
-          ),
+          title: const Text("Hapus Mentor"),
+          content: Text("Yakin hapus ${mentor.namaMentor}?"),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(
-                context,
-                false,
-              ),
-              child:
-                  const Text("Batal"),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Batal"),
             ),
             ElevatedButton(
-              style:
-                  ElevatedButton.styleFrom(
-                backgroundColor:
-                    Colors.red,
-              ),
-              onPressed: () =>
-                  Navigator.pop(
-                context,
-                true,
-              ),
-              child:
-                  const Text("Hapus"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Hapus"),
             ),
           ],
         );
@@ -499,10 +362,7 @@ class _MentorManagementScreenState
 
     if (yes != true) return;
 
-    final res =
-        await AuthService.deleteMentor(
-      mentor.mentorId,
-    );
+    final res = await AuthService.deleteMentor(mentor.mentorId);
 
     _showSnack(res["message"]);
 
@@ -511,20 +371,12 @@ class _MentorManagementScreenState
     }
   }
 
-  Widget _field(
-    TextEditingController c,
-    String label,
-  ) {
+  Widget _field(TextEditingController c, String label) {
     return TextField(
       controller: c,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-          borderRadius:
-              BorderRadius.circular(
-            12,
-          ),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -539,48 +391,31 @@ class _MentorManagementScreenState
     VoidCallback? onTap,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 2,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(9),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: active
-                ? const Color(0xFF2A58F2)
-                : Colors.transparent,
-            borderRadius:
-                BorderRadius.circular(9),
+            color: active ? const Color(0xFF2A58F2) : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
           ),
           child: Row(
             children: [
               Icon(
                 icon,
                 size: 15,
-                color: active
-                    ? Colors.white
-                    : const Color(
-                        0xFF8290A6),
+                color: active ? Colors.white : const Color(0xFF8290A6),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    color: active
-                        ? Colors.white
-                        : const Color(
-                            0xFF4B5972),
+                    color: active ? Colors.white : const Color(0xFF4B5972),
                     fontSize: 12.5,
-                    fontWeight: active
-                        ? FontWeight.w700
-                        : FontWeight.w500,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
               ),
@@ -597,54 +432,38 @@ class _MentorManagementScreenState
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFD),
         border: Border(
-          right: BorderSide(
-              color: Color(0xFFDDE4F0)),
-          top: BorderSide(
-              color: Color(0xFFDDE4F0)),
-          bottom: BorderSide(
-              color: Color(0xFFDDE4F0)),
-          left: BorderSide(
-            color: Color(0xFF2A8CF4),
-            width: 2,
-          ),
+          right: BorderSide(color: Color(0xFFDDE4F0)),
+          top: BorderSide(color: Color(0xFFDDE4F0)),
+          bottom: BorderSide(color: Color(0xFFDDE4F0)),
+          left: BorderSide(color: Color(0xFF2A8CF4), width: 2),
         ),
       ),
       child: Column(
         children: [
           Padding(
-            padding:
-                const EdgeInsets.fromLTRB(
-                    12, 16, 12, 10),
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 10),
             child: Row(
               children: [
                 SizedBox(
                   width: 36,
                   height: 36,
-                  child: Image.asset(
-                    'assets/images/BMC .png',
-                  ),
+                  child: Image.asset('assets/images/BMC .png'),
                 ),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'BMC',
                         style: TextStyle(
-                          fontWeight:
-                              FontWeight
-                                  .w800,
+                          fontWeight: FontWeight.w800,
                           fontSize: 18,
                         ),
                       ),
                       Text(
                         'Bintang Muda Center',
-                        style: TextStyle(
-                          fontSize: 11,
-                        ),
+                        style: TextStyle(fontSize: 11),
                       ),
                     ],
                   ),
@@ -656,18 +475,12 @@ class _MentorManagementScreenState
           const SizedBox(height: 8),
 
           const Padding(
-            padding: EdgeInsets.symmetric(
-                horizontal: 12),
+            padding: EdgeInsets.symmetric(horizontal: 12),
             child: Align(
-              alignment:
-                  Alignment.centerLeft,
+              alignment: Alignment.centerLeft,
               child: Text(
                 'MENU UTAMA',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight:
-                      FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -678,69 +491,35 @@ class _MentorManagementScreenState
             "Dashboard",
             Icons.grid_view_rounded,
             onTap: () {
-              Navigator.pushNamed(
-                context,
-                '/admin-dashboard',
-              );
+              Navigator.pushNamed(context, '/admin-dashboard');
             },
           ),
 
           _menuItem(
             "Verifikasi Pendaftaran",
-            Icons
-                .fact_check_outlined,
+            Icons.fact_check_outlined,
             onTap: () {
-              Navigator.pushNamed(
-                context,
-                '/payment-verification',
-              );
+              Navigator.pushNamed(context, '/payment-verification');
             },
           ),
 
-          _menuItem(
-            "Kelola Mentor",
-            Icons.groups_2_outlined,
-            active: true,
-          ),
+          _menuItem("Kelola Mentor", Icons.groups_2_outlined, active: true),
 
-          _menuItem(
-            "Kelola Jadwal",
-            Icons.event_note_outlined,
-          ),
+          _menuItem("Kelola Jadwal", Icons.event_note_outlined),
 
-          _menuItem(
-            "Kelola Absensi",
-            Icons
-                .assignment_turned_in_outlined,
-          ),
+          _menuItem("Kelola Absensi", Icons.assignment_turned_in_outlined),
 
-          _menuItem(
-            "Kelola Pengumuman",
-            Icons.campaign_outlined,
-          ),
+          _menuItem("Kelola Pengumuman", Icons.campaign_outlined),
 
-          _menuItem(
-            "Kelola Paket Les",
-            Icons.school_outlined,
-          ),
+          _menuItem("Kelola Paket Les", Icons.school_outlined),
 
-          _menuItem(
-            "Kelola Profil Alumni",
-            Icons.badge_outlined,
-          ),
+          _menuItem("Kelola Profil Alumni", Icons.badge_outlined),
 
           const Spacer(),
 
           ListTile(
-            leading: const Icon(
-              Icons.logout_rounded,
-              size: 15,
-            ),
-            title: const Text(
-              "Keluar",
-              style:
-                  TextStyle(fontSize: 12),
-            ),
+            leading: const Icon(Icons.logout_rounded, size: 15),
+            title: const Text("Keluar", style: TextStyle(fontSize: 12)),
             onTap: () async {
               await AuthService.logout();
               if (mounted) {
@@ -765,297 +544,173 @@ class _MentorManagementScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xfff4f6fb),
+      backgroundColor: const Color(0xfff4f6fb),
       body: Row(
         children: [
           _buildSidebar(),
 
           Expanded(
             child: Padding(
-              padding:
-                  const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      const Icon(
-                        Icons.groups,
-                        color: Colors.blue,
-                        size: 28,
-                      ),
-                      const SizedBox(
-                          width: 10),
+                      const Icon(Icons.groups, color: Colors.blue, size: 28),
+                      const SizedBox(width: 10),
                       const Text(
                         "Kelola Mentor",
                         style: TextStyle(
                           fontSize: 28,
-                          fontWeight:
-                              FontWeight
-                                  .bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const Spacer(),
                       ElevatedButton.icon(
-                        style:
-                            ElevatedButton
-                                .styleFrom(
-                          backgroundColor:
-                              Colors.blue,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
                         ),
-                        onPressed:
-                            _showCreateDialog,
-                        icon:
-                            const Icon(
-                          Icons.add,
-                          color: Colors
-                              .white,
-                        ),
-                        label:
-                            const Text(
+                        onPressed: _showCreateDialog,
+                        icon: const Icon(Icons.add, color: Colors.white),
+                        label: const Text(
                           "Tambah Mentor",
-                          style:
-                              TextStyle(
-                            color: Colors
-                                .white,
-                          ),
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(
-                      height: 24),
+                  const SizedBox(height: 24),
 
                   Container(
-                    width:
-                        double.infinity,
-                    padding:
-                        const EdgeInsets
-                            .all(14),
-                    decoration:
-                        BoxDecoration(
-                      color:
-                          Colors.white,
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                                  14),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: TextField(
-                      controller:
-                          _searchController,
-                      decoration:
-                          const InputDecoration(
-                        prefixIcon: Icon(
-                            Icons.search),
-                        hintText:
-                            "Cari mentor...",
-                        border:
-                            InputBorder
-                                .none,
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.search),
+                        hintText: "Cari mentor...",
+                        border: InputBorder.none,
                       ),
                     ),
                   ),
 
-                  const SizedBox(
-                      height: 20),
+                  const SizedBox(height: 20),
 
                   Expanded(
-                    child:
-                        Container(
-                      width: double
-                          .infinity,
-                      decoration:
-                          BoxDecoration(
-                        color: Colors
-                            .white,
-                        borderRadius:
-                            BorderRadius.circular(
-                                18),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
                       ),
                       child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _filteredMentors.isEmpty
                           ? const Center(
-                              child:
-                                  CircularProgressIndicator(),
+                              child: Text("Belum ada mentor terdaftar"),
                             )
-                          : _filteredMentors
-                                  .isEmpty
-                              ? const Center(
-                                  child:
-                                      Text(
-                                  "Belum ada mentor terdaftar",
-                                ))
-                              : SingleChildScrollView(
-                                  child:
-                                      DataTable(
-                                    headingRowColor:
-                                        MaterialStateProperty.all(
-                                      Colors
-                                          .grey
-                                          .shade100,
-                                    ),
-                                    columns:
-                                        const [
-                                      DataColumn(
-                                          label:
-                                              Text(
-                                        "Mentor",
-                                      )),
-                                      DataColumn(
-                                          label:
-                                              Text(
-                                        "Email",
-                                      )),
-                                      DataColumn(
-                                          label:
-                                              Text(
-                                        "Password",
-                                      )),
-                                      DataColumn(
-                                          label:
-                                              Text(
-                                        "Mapel",
-                                      )),
-                                      DataColumn(
-                                          label:
-                                              Text(
-                                        "Status",
-                                      )),
-                                      DataColumn(
-                                          label:
-                                              Text(
-                                        "Aksi",
-                                      )),
-                                    ],
-                                    rows:
-                                        _filteredMentors
-                                            .map(
-                                      (
-                                        mentor,
-                                      ) {
-                                        final visible =
-                                            _showPassword[
-                                                    mentor.mentorId] ??
-                                                false;
+                          : SingleChildScrollView(
+                              child: DataTable(
+                                headingRowColor: MaterialStateProperty.all(
+                                  Colors.grey.shade100,
+                                ),
+                                columns: const [
+                                  DataColumn(label: Text("Mentor")),
+                                  DataColumn(label: Text("Email")),
+                                  DataColumn(label: Text("Password")),
+                                  DataColumn(label: Text("Mata Pelajaran")),
+                                  DataColumn(label: Text("Status")),
+                                  DataColumn(label: Text("Aksi")),
+                                ],
+                                rows: _filteredMentors.map((mentor) {
+                                  final visible =
+                                      _showPassword[mentor.mentorId] ?? false;
 
-                                        return DataRow(
-                                          cells: [
-                                            DataCell(
-                                                Text(
-                                              mentor.namaMentor,
-                                            )),
-                                            DataCell(
-                                                Text(
-                                              mentor.email,
-                                            )),
-                                            DataCell(
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                    visible
-                                                        ? mentor.password
-                                                        : "••••••••",
-                                                  ),
-                                                  IconButton(
-                                                    onPressed:
-                                                        () {
-                                                      setState(
-                                                        () {
-                                                          _showPassword[mentor.mentorId] =
-                                                              !visible;
-                                                        },
-                                                      );
-                                                    },
-                                                    icon:
-                                                        Icon(
-                                                      visible
-                                                          ? Icons.visibility_off
-                                                          : Icons.visibility,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(Text(mentor.namaMentor)),
+                                      DataCell(Text(mentor.email)),
+                                      DataCell(
+                                        Row(
+                                          children: [
+                                            Text(
+                                              visible
+                                                  ? mentor.password
+                                                  : "••••••••",
                                             ),
-                                            DataCell(
-                                                Text(
-                                              mentor.spesialisasi,
-                                            )),
-                                            DataCell(
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  horizontal:
-                                                      10,
-                                                  vertical:
-                                                      4,
-                                                ),
-                                                decoration:
-                                                    BoxDecoration(
-                                                  color: Colors
-                                                      .green
-                                                      .shade100,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          20),
-                                                ),
-                                                child:
-                                                    Text(
-                                                  mentor.status,
-                                                ),
-                                              ),
-                                            ),
-                                            DataCell(
-                                              Row(
-                                                children: [
-                                                  IconButton(
-                                                    onPressed:
-                                                        () =>
-                                                            _exportMentorExcel(
-                                                      mentor,
-                                                    ),
-                                                    icon:
-                                                        const Icon(
-                                                      Icons.download,
-                                                      color:
-                                                          Colors.green,
-                                                    ),
-                                                  ),
-                                                  IconButton(
-                                                    onPressed:
-                                                        () =>
-                                                            _showEditDialog(
-                                                      mentor,
-                                                    ),
-                                                    icon:
-                                                        const Icon(
-                                                      Icons.edit,
-                                                      color:
-                                                          Colors.blue,
-                                                    ),
-                                                  ),
-                                                  IconButton(
-                                                    onPressed:
-                                                        () =>
-                                                            _deleteMentor(
-                                                      mentor,
-                                                    ),
-                                                    icon:
-                                                        const Icon(
-                                                      Icons.delete,
-                                                      color:
-                                                          Colors.red,
-                                                    ),
-                                                  ),
-                                                ],
+                                            IconButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  _showPassword[mentor
+                                                          .mentorId] =
+                                                      !visible;
+                                                });
+                                              },
+                                              icon: Icon(
+                                                visible
+                                                    ? Icons.visibility_off
+                                                    : Icons.visibility,
                                               ),
                                             ),
                                           ],
-                                        );
-                                      },
-                                    ).toList(),
-                                  ),
-                                ),
+                                        ),
+                                      ),
+                                      DataCell(Text(mentor.spesialisasi)),
+                                      DataCell(
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.shade100,
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Text(mentor.status),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Row(
+                                          children: [
+                                            IconButton(
+                                              onPressed: () =>
+                                                  _exportMentorExcel(mentor),
+                                              icon: const Icon(
+                                                Icons.download,
+                                                color: Colors.green,
+                                              ),
+                                            ),
+                                            IconButton(
+                                              onPressed: () =>
+                                                  _showEditDialog(mentor),
+                                              icon: const Icon(
+                                                Icons.edit,
+                                                color: Colors.blue,
+                                              ),
+                                            ),
+                                            IconButton(
+                                              onPressed: () =>
+                                                  _deleteMentor(mentor),
+                                              icon: const Icon(
+                                                Icons.delete,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
                     ),
                   ),
                 ],

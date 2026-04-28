@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -14,12 +15,14 @@ import (
 )
 
 type tryoutPayload struct {
-	PaketID    int    `json:"paket_id"`
-	MentorID   int    `json:"mentor_id"`
-	ClassLevel string `json:"class_level"`
-	Judul      string `json:"judul"`
-	Tanggal    string `json:"tanggal"`
-	Durasi     int    `json:"durasi"`
+	PaketID           int            `json:"paket_id"`
+	MentorID          int            `json:"mentor_id"`
+	ClassLevel        string         `json:"class_level"`
+	Judul             string         `json:"judul"`
+	Tanggal           string         `json:"tanggal"`
+	Durasi            int            `json:"durasi"`
+	TotalQuestions    int            `json:"total_questions"`
+	CategoryQuestions map[string]int `json:"category_questions"`
 }
 
 type olimpiadePayload struct {
@@ -69,7 +72,13 @@ func resolveMentorID(userID int, providedMentorID int) (int, error) {
 
 func resolvePaketID(providedPaketID int) (int, error) {
 	if providedPaketID > 0 {
-		return providedPaketID, nil
+		var existingID int
+		err := config.DB.QueryRow(context.Background(), `
+			SELECT id FROM paket_les WHERE id = $1 LIMIT 1
+		`, providedPaketID).Scan(&existingID)
+		if err == nil {
+			return existingID, nil
+		}
 	}
 
 	var paketID int
@@ -80,13 +89,81 @@ func resolvePaketID(providedPaketID int) (int, error) {
 		return paketID, nil
 	}
 
-	err = config.DB.QueryRow(context.Background(), `
-		INSERT INTO paket_les (nama)
-		VALUES ('Paket Default')
-		RETURNING id
-	`).Scan(&paketID)
+	rows, err := config.DB.Query(context.Background(), `
+		SELECT column_name, data_type
+		FROM information_schema.columns
+		WHERE table_schema = 'public'
+		  AND table_name = 'paket_les'
+		  AND is_nullable = 'NO'
+		  AND column_default IS NULL
+		  AND is_identity = 'NO'
+		ORDER BY ordinal_position
+	`)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("gagal membaca struktur paket_les: %w", err)
+	}
+	defer rows.Close()
+
+	columns := make([]string, 0)
+	placeholders := make([]string, 0)
+	args := make([]any, 0)
+
+	for rows.Next() {
+		var columnName string
+		var dataType string
+		if scanErr := rows.Scan(&columnName, &dataType); scanErr != nil {
+			return 0, fmt.Errorf("gagal membaca metadata kolom paket_les: %w", scanErr)
+		}
+
+		lowerCol := strings.ToLower(strings.TrimSpace(columnName))
+		lowerType := strings.ToLower(strings.TrimSpace(dataType))
+
+		var value any
+		switch {
+		case strings.Contains(lowerCol, "nama") || strings.Contains(lowerCol, "judul") || strings.Contains(lowerCol, "title"):
+			value = "Paket Default"
+		case strings.Contains(lowerCol, "status"):
+			value = "aktif"
+		case strings.Contains(lowerCol, "harga") || strings.Contains(lowerCol, "price") || strings.Contains(lowerCol, "biaya") || strings.Contains(lowerCol, "nominal"):
+			value = 0
+		case strings.Contains(lowerCol, "durasi") || strings.Contains(lowerCol, "bulan") || strings.Contains(lowerCol, "hari") || strings.Contains(lowerCol, "minggu"):
+			value = 1
+		case strings.Contains(lowerCol, "kuota") || strings.Contains(lowerCol, "jumlah") || strings.Contains(lowerCol, "maks"):
+			value = 0
+		case strings.Contains(lowerType, "int") || strings.Contains(lowerType, "numeric") || strings.Contains(lowerType, "double") || strings.Contains(lowerType, "real"):
+			value = 0
+		case strings.Contains(lowerType, "bool"):
+			value = true
+		case strings.Contains(lowerType, "date") || strings.Contains(lowerType, "time"):
+			value = time.Now().UTC()
+		default:
+			value = "-"
+		}
+
+		columns = append(columns, columnName)
+		args = append(args, value)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", len(args)))
+	}
+
+	if rows.Err() != nil {
+		return 0, fmt.Errorf("gagal membaca baris metadata paket_les: %w", rows.Err())
+	}
+
+	if len(columns) == 0 {
+		err = config.DB.QueryRow(context.Background(), `
+			INSERT INTO paket_les DEFAULT VALUES
+			RETURNING id
+		`).Scan(&paketID)
+	} else {
+		query := fmt.Sprintf(
+			"INSERT INTO paket_les (%s) VALUES (%s) RETURNING id",
+			strings.Join(columns, ", "),
+			strings.Join(placeholders, ", "),
+		)
+		err = config.DB.QueryRow(context.Background(), query, args...).Scan(&paketID)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("gagal membuat paket default: %w", err)
 	}
 
 	return paketID, nil
@@ -136,7 +213,7 @@ func GetTryoutHandler(c *gin.Context) {
 	}
 
 	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, paket_id, mentor_id, class_level, judul, tanggal, durasi
+		SELECT id, paket_id, mentor_id, class_level, judul, tanggal, durasi, total_questions, category_questions
 		FROM tryout
 		WHERE mentor_id = $1
 		ORDER BY id DESC
@@ -149,24 +226,32 @@ func GetTryoutHandler(c *gin.Context) {
 
 	items := make([]gin.H, 0)
 	for rows.Next() {
-		var id, paketID, mentorIDRow, durasi int
+		var id, paketID, mentorIDRow, durasi, totalQuestions int
 		var classLevel string
 		var judul string
 		var tanggal *time.Time
+		var categoryQuestions []byte
 
-		if err := rows.Scan(&id, &paketID, &mentorIDRow, &classLevel, &judul, &tanggal, &durasi); err != nil {
+		if err := rows.Scan(&id, &paketID, &mentorIDRow, &classLevel, &judul, &tanggal, &durasi, &totalQuestions, &categoryQuestions); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
+		catData := gin.H{}
+		if len(categoryQuestions) > 0 {
+			_ = json.Unmarshal(categoryQuestions, &catData)
+		}
+
 		items = append(items, gin.H{
-			"id":          id,
-			"paket_id":    paketID,
-			"mentor_id":   mentorIDRow,
-			"class_level": classLevel,
-			"judul":       judul,
-			"tanggal":     formatDate(tanggal),
-			"durasi":      durasi,
+			"id":                 id,
+			"paket_id":           paketID,
+			"mentor_id":          mentorIDRow,
+			"class_level":        classLevel,
+			"judul":              judul,
+			"tanggal":            formatDate(tanggal),
+			"durasi":             durasi,
+			"total_questions":    totalQuestions,
+			"category_questions": catData,
 		})
 	}
 
@@ -204,12 +289,18 @@ func CreateTryoutHandler(c *gin.Context) {
 		return
 	}
 
+	categoryQuestionsJSON, err := json.Marshal(payload.CategoryQuestions)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "category_questions format tidak valid"})
+		return
+	}
+
 	var id int
 	err = config.DB.QueryRow(context.Background(), `
-		INSERT INTO tryout (paket_id, mentor_id, class_level, judul, tanggal, durasi)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO tryout (paket_id, mentor_id, class_level, judul, tanggal, durasi, total_questions, category_questions)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
-	`, paketID, mentorID, payload.ClassLevel, payload.Judul, tanggal, payload.Durasi).Scan(&id)
+	`, paketID, mentorID, payload.ClassLevel, payload.Judul, tanggal, payload.Durasi, payload.TotalQuestions, categoryQuestionsJSON).Scan(&id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -255,15 +346,23 @@ func UpdateTryoutHandler(c *gin.Context) {
 		return
 	}
 
+	categoryQuestionsJSON, err := json.Marshal(payload.CategoryQuestions)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "category_questions format tidak valid"})
+		return
+	}
+
 	cmd, err := config.DB.Exec(context.Background(), `
 		UPDATE tryout
 		SET paket_id = $1,
 		    class_level = $2,
 		    judul = $3,
 		    tanggal = $4,
-		    durasi = $5
-		WHERE id = $6 AND mentor_id = $7
-	`, paketID, payload.ClassLevel, payload.Judul, tanggal, payload.Durasi, tryoutID, mentorID)
+		    durasi = $5,
+		    total_questions = $6,
+		    category_questions = $7
+		WHERE id = $8 AND mentor_id = $9
+	`, paketID, payload.ClassLevel, payload.Judul, tanggal, payload.Durasi, payload.TotalQuestions, categoryQuestionsJSON, tryoutID, mentorID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -7,6 +7,7 @@ class SoalLatihan {
   final String pilihanC;
   final String pilihanD;
   final String jawaban;
+  final String pembahasan;
 
   const SoalLatihan({
     required this.id,
@@ -17,6 +18,7 @@ class SoalLatihan {
     required this.pilihanC,
     required this.pilihanD,
     required this.jawaban,
+    this.pembahasan = '',
   });
 
   factory SoalLatihan.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class SoalLatihan {
       pilihanC: json['pilihan_c'] ?? '',
       pilihanD: json['pilihan_d'] ?? '',
       jawaban: (json['jawaban'] ?? '').toString().toUpperCase(),
+      pembahasan: json['pembahasan'] ?? json['explanation'] ?? '',
     );
   }
 
@@ -42,6 +45,7 @@ class SoalLatihan {
       'pilihan_c': pilihanC,
       'pilihan_d': pilihanD,
       'jawaban': jawaban,
+      'pembahasan': pembahasan,
     };
   }
 
@@ -54,6 +58,7 @@ class SoalLatihan {
     String? pilihanC,
     String? pilihanD,
     String? jawaban,
+    String? pembahasan,
   }) {
     return SoalLatihan(
       id: id ?? this.id,
@@ -64,6 +69,7 @@ class SoalLatihan {
       pilihanC: pilihanC ?? this.pilihanC,
       pilihanD: pilihanD ?? this.pilihanD,
       jawaban: jawaban ?? this.jawaban,
+      pembahasan: pembahasan ?? this.pembahasan,
     );
   }
 }

@@ -19,7 +19,7 @@ func GetMentors(c *gin.Context) {
 			nama_mentor,
 			email,
 			password,
-			spesialisasi,
+			mata_pelajaran,
 			status
 		FROM mentor
 		ORDER BY id ASC
@@ -36,12 +36,12 @@ func GetMentors(c *gin.Context) {
 
 	for rows.Next() {
 		var (
-			id           int
-			nama         string
-			email        string
-			password     string
-			spesialisasi string
-			status       string
+			id            int
+			nama          string
+			email         string
+			password      string
+			mataPelajaran string
+			status        string
 		)
 
 		err := rows.Scan(
@@ -49,7 +49,7 @@ func GetMentors(c *gin.Context) {
 			&nama,
 			&email,
 			&password,
-			&spesialisasi,
+			&mataPelajaran,
 			&status,
 		)
 
@@ -61,15 +61,16 @@ func GetMentors(c *gin.Context) {
 		}
 
 		mentors = append(mentors, gin.H{
-			"id":           id,
-			"mentor_id":    id,
-			"nama":         nama,
-			"nama_mentor":  nama,
-			"email":        email,
-			"password":     password,
-			"mapel":        spesialisasi,
-			"spesialisasi": spesialisasi,
-			"status":       status,
+			"id":             id,
+			"mentor_id":      id,
+			"nama":           nama,
+			"nama_mentor":    nama,
+			"email":          email,
+			"password":       password,
+			"mapel":          mataPelajaran,
+			"mata_pelajaran": mataPelajaran,
+			"spesialisasi":   mataPelajaran,
+			"status":         status,
 		})
 	}
 
@@ -81,11 +82,11 @@ func GetMentors(c *gin.Context) {
 // ===============================
 func CreateMentor(c *gin.Context) {
 	var input struct {
-		NamaMentor   string `json:"nama_mentor"`
-		Email        string `json:"email"`
-		Password     string `json:"password"`
-		Spesialisasi string `json:"spesialisasi"`
-		Status       string `json:"status"`
+		NamaMentor    string `json:"nama_mentor"`
+		Email         string `json:"email"`
+		Password      string `json:"password"`
+		MataPelajaran string `json:"mata_pelajaran"`
+		Status        string `json:"status"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -98,15 +99,15 @@ func CreateMentor(c *gin.Context) {
 	input.NamaMentor = strings.TrimSpace(input.NamaMentor)
 	input.Email = strings.TrimSpace(input.Email)
 	input.Password = strings.TrimSpace(input.Password)
-	input.Spesialisasi = strings.TrimSpace(input.Spesialisasi)
+	input.MataPelajaran = strings.TrimSpace(input.MataPelajaran)
 	input.Status = strings.TrimSpace(input.Status)
 
 	if input.NamaMentor == "" ||
 		input.Email == "" ||
 		input.Password == "" ||
-		input.Spesialisasi == "" {
+		input.MataPelajaran == "" {
 		c.JSON(400, gin.H{
-			"error": "Nama, email, password, dan spesialisasi wajib diisi",
+			"error": "Nama, email, password, dan mata pelajaran wajib diisi",
 		})
 		return
 	}
@@ -115,17 +116,13 @@ func CreateMentor(c *gin.Context) {
 		input.Status = "Aktif"
 	}
 
-	// =====================================================
-	// FIX: support jika tabel mentor masih punya kolom bio
-	// =====================================================
-
 	_, err := config.DB.Exec(context.Background(), `
 		INSERT INTO mentor
 		(
 			nama_mentor,
 			email,
 			password,
-			spesialisasi,
+			mata_pelajaran,
 			status
 		)
 		VALUES ($1,$2,$3,$4,$5)
@@ -133,48 +130,15 @@ func CreateMentor(c *gin.Context) {
 		input.NamaMentor,
 		input.Email,
 		input.Password,
-		input.Spesialisasi,
+		input.MataPelajaran,
 		input.Status,
 	)
 
 	if err != nil {
-
-		// jika DB masih punya kolom bio NOT NULL
-		if strings.Contains(strings.ToLower(err.Error()), "bio") {
-
-			_, err = config.DB.Exec(context.Background(), `
-				INSERT INTO mentor
-				(
-					nama_mentor,
-					email,
-					password,
-					spesialisasi,
-					status,
-					bio
-				)
-				VALUES ($1,$2,$3,$4,$5,$6)
-			`,
-				input.NamaMentor,
-				input.Email,
-				input.Password,
-				input.Spesialisasi,
-				input.Status,
-				"-",
-			)
-
-			if err != nil {
-				c.JSON(500, gin.H{
-					"error": err.Error(),
-				})
-				return
-			}
-
-		} else {
-			c.JSON(500, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
 	}
 
 	c.JSON(200, gin.H{
@@ -190,11 +154,11 @@ func UpdateMentor(c *gin.Context) {
 	id := c.Param("id")
 
 	var input struct {
-		NamaMentor   string `json:"nama_mentor"`
-		Email        string `json:"email"`
-		Password     string `json:"password"`
-		Spesialisasi string `json:"spesialisasi"`
-		Status       string `json:"status"`
+		NamaMentor    string `json:"nama_mentor"`
+		Email         string `json:"email"`
+		Password      string `json:"password"`
+		MataPelajaran string `json:"mata_pelajaran"`
+		Status        string `json:"status"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -210,14 +174,14 @@ func UpdateMentor(c *gin.Context) {
 			SET nama_mentor=$1,
 				email=$2,
 				password=$3,
-				spesialisasi=$4,
+				mata_pelajaran=$4,
 				status=$5
 			WHERE id=$6
 		`,
 			input.NamaMentor,
 			input.Email,
 			input.Password,
-			input.Spesialisasi,
+			input.MataPelajaran,
 			input.Status,
 			id,
 		)
@@ -233,13 +197,13 @@ func UpdateMentor(c *gin.Context) {
 			UPDATE mentor
 			SET nama_mentor=$1,
 				email=$2,
-				spesialisasi=$3,
+				mata_pelajaran=$3,
 				status=$4
 			WHERE id=$5
 		`,
 			input.NamaMentor,
 			input.Email,
-			input.Spesialisasi,
+			input.MataPelajaran,
 			input.Status,
 			id,
 		)

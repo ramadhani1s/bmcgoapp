@@ -44,7 +44,7 @@ func GetSoalLatihanByMentorUserID(userID int) ([]models.SoalLatihan, error) {
 
 	rows, err := config.DB.Query(
 		context.Background(),
-		`SELECT id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, '') FROM soal_latihan WHERE mentor_id = $1 ORDER BY id DESC`,
+		`SELECT id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, '') FROM soal_latihan WHERE mentor_id = $1 ORDER BY id DESC`,
 		mentorID,
 	)
 	if err != nil {
@@ -64,6 +64,7 @@ func GetSoalLatihanByMentorUserID(userID int) ([]models.SoalLatihan, error) {
 			&item.PilihanC,
 			&item.PilihanD,
 			&item.Jawaban,
+			&item.Pembahasan,
 		); err != nil {
 			return nil, err
 		}
@@ -90,7 +91,7 @@ func CreateSoalLatihan(userID int, input models.SoalLatihan) (*models.SoalLatiha
 	created := &models.SoalLatihan{}
 	err = config.DB.QueryRow(
 		context.Background(),
-		`INSERT INTO soal_latihan (mentor_id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, jawaban) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, '')`,
+		`INSERT INTO soal_latihan (mentor_id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, jawaban, pembahasan) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, '')`,
 		mentorID,
 		input.Pertanyaan,
 		input.PilihanA,
@@ -98,6 +99,7 @@ func CreateSoalLatihan(userID int, input models.SoalLatihan) (*models.SoalLatiha
 		input.PilihanC,
 		input.PilihanD,
 		input.Jawaban,
+		input.Pembahasan,
 	).Scan(
 		&created.ID,
 		&created.MentorID,
@@ -107,6 +109,7 @@ func CreateSoalLatihan(userID int, input models.SoalLatihan) (*models.SoalLatiha
 		&created.PilihanC,
 		&created.PilihanD,
 		&created.Jawaban,
+		&created.Pembahasan,
 	)
 	if err != nil {
 		return nil, err
@@ -124,13 +127,14 @@ func UpdateSoalLatihan(userID, soalID int, input models.SoalLatihan) (*models.So
 	updated := &models.SoalLatihan{}
 	err = config.DB.QueryRow(
 		context.Background(),
-		`UPDATE soal_latihan SET pertanyaan = $1, pilihan_a = $2, pilihan_b = $3, pilihan_c = $4, pilihan_d = $5, jawaban = $6 WHERE id = $7 AND mentor_id = $8 RETURNING id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, '')`,
+		`UPDATE soal_latihan SET pertanyaan = $1, pilihan_a = $2, pilihan_b = $3, pilihan_c = $4, pilihan_d = $5, jawaban = $6, pembahasan = $7 WHERE id = $8 AND mentor_id = $9 RETURNING id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, '')`,
 		input.Pertanyaan,
 		input.PilihanA,
 		input.PilihanB,
 		input.PilihanC,
 		input.PilihanD,
 		input.Jawaban,
+		input.Pembahasan,
 		soalID,
 		mentorID,
 	).Scan(
@@ -142,6 +146,7 @@ func UpdateSoalLatihan(userID, soalID int, input models.SoalLatihan) (*models.So
 		&updated.PilihanC,
 		&updated.PilihanD,
 		&updated.Jawaban,
+		&updated.Pembahasan,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

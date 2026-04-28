@@ -6,6 +6,7 @@ import '../screens/dashboard/mentor_attendance_screen.dart';
 import '../screens/dashboard/mentor_olimpiade_screen.dart';
 import '../screens/dashboard/mentor_tryout_screen.dart';
 import '../screens/dashboard/paket_les_screen.dart';
+import '../screens/dashboard/soal_latihan_management_screen.dart';
 import '../screens/mentor/evaluasi_siswa_screen.dart';
 import '../screens/mentor/latihan_soal_screen.dart';
 import '../screens/mentor/materi_pembelajaran_screen.dart';
@@ -26,18 +27,15 @@ class AppRoutes {
   static const String mentorEvaluasi = '/mentor-evaluasi';
   static const String mentorMateri = '/mentor-materi';
   static const String paketLes = '/paket-les';
+  static const String soalLatihanManagement = '/soal-latihan-management';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case login:
-        return MaterialPageRoute(
-          builder: (_) => const LoginScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const LoginScreen());
 
       case adminDashboard:
-        return MaterialPageRoute(
-          builder: (_) => const AdminDashboard(),
-        );
+        return MaterialPageRoute(builder: (_) => const AdminDashboard());
 
       case paymentVerification:
         return MaterialPageRoute(
@@ -45,9 +43,7 @@ class AppRoutes {
         );
 
       case mentorDashboard:
-        return MaterialPageRoute(
-          builder: (_) => const MentorDashboard(),
-        );
+        return MaterialPageRoute(builder: (_) => const MentorDashboard());
 
       case mentorAttendance:
         return MaterialPageRoute(
@@ -60,24 +56,16 @@ class AppRoutes {
         );
 
       case mentorExercise:
-        return MaterialPageRoute(
-          builder: (_) => const LatihanSoalScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const LatihanSoalScreen());
 
       case mentorTryout:
-        return MaterialPageRoute(
-          builder: (_) => const MentorTryoutScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const MentorTryoutScreen());
 
       case mentorOlimpiade:
-        return MaterialPageRoute(
-          builder: (_) => const MentorOlimpiadeScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen());
 
       case mentorEvaluasi:
-        return MaterialPageRoute(
-          builder: (_) => const EvaluasiSiswaScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const EvaluasiSiswaScreen());
 
       case mentorMateri:
         return MaterialPageRoute(
@@ -85,16 +73,17 @@ class AppRoutes {
         );
 
       case paketLes:
+        return MaterialPageRoute(builder: (_) => const PaketLesScreen());
+
+      case soalLatihanManagement:
         return MaterialPageRoute(
-          builder: (_) => const PaketLesScreen(),
+          builder: (_) => const SoalLatihanManagementScreen(),
         );
 
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(
-            body: Center(
-              child: Text('Halaman tidak ditemukan'),
-            ),
+            body: Center(child: Text('Halaman tidak ditemukan')),
           ),
         );
     }

@@ -17,40 +17,22 @@ class Mentor {
     required this.status,
   });
 
-  factory Mentor.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory Mentor.fromJson(Map<String, dynamic> json) {
     return Mentor(
-      mentorId:
-          json['mentor_id'] ??
-          json['id'] ??
-          0,
+      mentorId: json['mentor_id'] ?? json['id'] ?? 0,
 
-      userId:
-          json['user_id'] ??
-          0,
+      userId: json['user_id'] ?? 0,
 
-      email:
-          json['email'] ??
-          '',
+      email: json['email'] ?? '',
 
-      namaMentor:
-          json['nama_mentor'] ??
-          json['nama'] ??
-          '',
+      namaMentor: json['nama_mentor'] ?? json['nama'] ?? '',
 
       spesialisasi:
-          json['spesialisasi'] ??
-          json['mapel'] ??
-          '',
+          json['spesialisasi'] ?? json['mapel'] ?? json['mata_pelajaran'] ?? '',
 
-      password:
-          json['password'] ??
-          '',
+      password: json['password'] ?? '',
 
-      status:
-          json['status'] ??
-          'Aktif',
+      status: json['status'] ?? 'Aktif',
     );
   }
 

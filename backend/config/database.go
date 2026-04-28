@@ -185,6 +185,107 @@ func ConnectDB() {
 		log.Println("Warning: gagal membuat index siswa attendance_records:", err)
 	}
 
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS tryout (
+			id SERIAL PRIMARY KEY,
+			paket_id INT NOT NULL,
+			mentor_id INT NOT NULL,
+			class_level VARCHAR(50) DEFAULT 'Kelas 12',
+			judul TEXT,
+			tanggal TIMESTAMP,
+			durasi INT DEFAULT 0,
+			total_questions INT DEFAULT 0,
+			category_questions JSONB DEFAULT '{}'::jsonb
+		)
+	`)
+	if err != nil {
+		log.Fatal("Gagal membuat table tryout:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		ALTER TABLE IF EXISTS tryout
+		ADD COLUMN IF NOT EXISTS class_level VARCHAR(50) DEFAULT 'Kelas 12',
+		ADD COLUMN IF NOT EXISTS judul TEXT,
+		ADD COLUMN IF NOT EXISTS tanggal TIMESTAMP,
+		ADD COLUMN IF NOT EXISTS durasi INT DEFAULT 0,
+		ADD COLUMN IF NOT EXISTS total_questions INT DEFAULT 0,
+		ADD COLUMN IF NOT EXISTS category_questions JSONB DEFAULT '{}'::jsonb
+	`)
+	if err != nil {
+		log.Println("Warning: gagal sinkronisasi kolom tryout:", err)
+	}
+
+	// Buat table mentor
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS mentor (
+			id SERIAL PRIMARY KEY,
+			user_id INT,
+			nama_mentor VARCHAR(255) NOT NULL,
+			email VARCHAR(255),
+			password VARCHAR(500),
+			mata_pelajaran VARCHAR(255),
+			status VARCHAR(50) DEFAULT 'Aktif',
+			bio TEXT,
+			created_at TIMESTAMP DEFAULT NOW(),
+			updated_at TIMESTAMP DEFAULT NOW()
+		)
+	`)
+	if err != nil {
+		log.Fatal("Gagal membuat table mentor:", err)
+	}
+
+	// Add missing columns to mentor table for existing databases
+	_, err = DB.Exec(context.Background(), `
+		ALTER TABLE IF EXISTS mentor
+		ADD COLUMN IF NOT EXISTS email VARCHAR(255),
+		ADD COLUMN IF NOT EXISTS password VARCHAR(500),
+		ADD COLUMN IF NOT EXISTS user_id INT,
+		ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Aktif'
+	`)
+	if err != nil {
+		log.Println("Warning: gagal sinkronisasi kolom mentor:", err)
+	}
+
+	// Pastikan user_id nullable (tidak ada NOT NULL constraint)
+	_, err = DB.Exec(context.Background(), `
+		ALTER TABLE IF EXISTS mentor
+		ALTER COLUMN user_id DROP NOT NULL
+	`)
+	if err != nil {
+		log.Println("Warning: gagal alter user_id to nullable:", err)
+	}
+
+	// Rename spesialisasi to mata_pelajaran jika belum
+	_, err = DB.Exec(context.Background(), `
+		DO $$
+		BEGIN
+			IF EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'mentor' AND column_name = 'spesialisasi'
+			) THEN
+				IF NOT EXISTS (
+					SELECT 1 FROM information_schema.columns
+					WHERE table_name = 'mentor' AND column_name = 'mata_pelajaran'
+				) THEN
+					EXECUTE 'ALTER TABLE mentor RENAME COLUMN spesialisasi TO mata_pelajaran';
+				END IF;
+			END IF;
+		END
+		$$
+	`)
+	if err != nil {
+		log.Println("Warning: gagal rename spesialisasi to mata_pelajaran:", err)
+	}
+
+	// Add mata_pelajaran if it doesn't exist
+	_, err = DB.Exec(context.Background(), `
+		ALTER TABLE IF EXISTS mentor
+		ADD COLUMN IF NOT EXISTS mata_pelajaran VARCHAR(255)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal add mata_pelajaran:", err)
+	}
+
 	// Buat table materi_pembelajaran (learning_materials)
 	_, err = DB.Exec(context.Background(), `
 		CREATE TABLE IF NOT EXISTS learning_materials (

@@ -34,6 +34,7 @@ class LatihanSoalService {
     required String pilihanC,
     required String pilihanD,
     required String jawaban,
+    String pembahasan = '',
   }) async {
     try {
       final headers = await AuthService.getAuthHeaders();
@@ -48,24 +49,26 @@ class LatihanSoalService {
               'pilihan_c': pilihanC,
               'pilihan_d': pilihanD,
               'jawaban': jawaban,
+              'pembahasan': pembahasan,
             }),
           )
           .timeout(const Duration(seconds: 15));
 
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      if (response.statusCode != 201 && response.statusCode != 200) {
         return {
-          'success': true,
-          'message': data['message'] ?? 'Soal berhasil dibuat',
-          'data': data['data'] != null
-              ? SoalLatihan.fromJson(data['data'])
-              : null,
+          'success': false,
+          'message':
+              'Endpoint tidak tersedia (HTTP ${response.statusCode}). Hubungi admin.',
         };
       }
 
+      final data = jsonDecode(response.body);
       return {
-        'success': false,
-        'message': data['details'] ?? data['error'] ?? 'Gagal membuat soal',
+        'success': true,
+        'message': data['message'] ?? 'Soal berhasil dibuat',
+        'data': data['data'] != null
+            ? SoalLatihan.fromJson(data['data'])
+            : null,
       };
     } catch (e) {
       return {
@@ -83,6 +86,7 @@ class LatihanSoalService {
     required String pilihanC,
     required String pilihanD,
     required String jawaban,
+    String pembahasan = '',
   }) async {
     try {
       final headers = await AuthService.getAuthHeaders();
@@ -97,24 +101,26 @@ class LatihanSoalService {
               'pilihan_c': pilihanC,
               'pilihan_d': pilihanD,
               'jawaban': jawaban,
+              'pembahasan': pembahasan,
             }),
           )
           .timeout(const Duration(seconds: 15));
 
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200) {
+      if (response.statusCode != 200) {
         return {
-          'success': true,
-          'message': data['message'] ?? 'Soal berhasil diupdate',
-          'data': data['data'] != null
-              ? SoalLatihan.fromJson(data['data'])
-              : null,
+          'success': false,
+          'message':
+              'Endpoint tidak tersedia (HTTP ${response.statusCode}). Hubungi admin.',
         };
       }
 
+      final data = jsonDecode(response.body);
       return {
-        'success': false,
-        'message': data['details'] ?? data['error'] ?? 'Gagal mengupdate soal',
+        'success': true,
+        'message': data['message'] ?? 'Soal berhasil diupdate',
+        'data': data['data'] != null
+            ? SoalLatihan.fromJson(data['data'])
+            : null,
       };
     } catch (e) {
       return {
@@ -134,17 +140,18 @@ class LatihanSoalService {
           )
           .timeout(const Duration(seconds: 15));
 
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200) {
+      if (response.statusCode != 200) {
         return {
-          'success': true,
-          'message': data['message'] ?? 'Soal berhasil dihapus',
+          'success': false,
+          'message':
+              'Endpoint tidak tersedia (HTTP ${response.statusCode}). Hubungi admin.',
         };
       }
 
+      final data = jsonDecode(response.body);
       return {
-        'success': false,
-        'message': data['details'] ?? data['error'] ?? 'Gagal menghapus soal',
+        'success': true,
+        'message': data['message'] ?? 'Soal berhasil dihapus',
       };
     } catch (e) {
       return {

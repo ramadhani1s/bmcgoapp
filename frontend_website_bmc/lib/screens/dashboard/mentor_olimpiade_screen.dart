@@ -11,7 +11,7 @@ class MentorOlimpiadeScreen extends StatelessWidget {
       type: 'olimpiade',
       title: 'Kelola Olimpiade Akademik',
       subtitle: 'Buat dan kelola event olimpiade akademik untuk siswa',
-      accentColor: Color(0xFFD99600),
+      accentColor: Color(0xFFFB5607),
     );
   }
 }

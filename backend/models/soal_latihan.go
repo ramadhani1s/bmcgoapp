@@ -9,4 +9,5 @@ type SoalLatihan struct {
 	PilihanC   string `json:"pilihan_c"`
 	PilihanD   string `json:"pilihan_d"`
 	Jawaban    string `json:"jawaban"`
+	Pembahasan string `json:"pembahasan"`
 }

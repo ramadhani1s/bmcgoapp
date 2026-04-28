@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../models/mentor_competition_item.dart';
 import '../../services/mentor_competition_service.dart';
+import '../mentor/tryout_soal_management_screen.dart';
+import '../mentor/olimpiade_soal_management_screen.dart';
 
 class MentorCompetitionManagement extends StatefulWidget {
   final String type;
@@ -30,18 +32,6 @@ class _MentorCompetitionManagementState
   String _mapelFilter = 'Semua Mapel';
   bool _isLoading = true;
   List<MentorCompetitionItem> _items = const [];
-
-  final List<String> _kelasOptions = const ['Kelas 10', 'Kelas 11', 'Kelas 12'];
-  final List<String> _mapelOptions = const [
-    'Matematika',
-    'Fisika',
-    'Kimia',
-    'Biologi',
-    'Bahasa Indonesia',
-    'Bahasa Inggris',
-    'Try Out Online',
-    'Olimpiade Akademik',
-  ];
 
   @override
   void initState() {
@@ -76,12 +66,320 @@ class _MentorCompetitionManagementState
     return _items.where((e) {
       final kelasMatch =
           _kelasFilter == 'Semua Kelas' || e.classLevel == _kelasFilter;
+      final statusMatch =
+          _statusFilter == 'Semua Status' ||
+          (_statusFilter == 'Dipublikasi' && e.isPublished) ||
+          (_statusFilter == 'Draft' && !e.isPublished);
       final subjectMatch =
           _mapelFilter == 'Semua Mapel' || e.subject == _mapelFilter;
       final keywordMatch =
           keyword.isEmpty || e.title.toLowerCase().contains(keyword);
-      return kelasMatch && subjectMatch && keywordMatch;
+      return kelasMatch && statusMatch && subjectMatch && keywordMatch;
     }).toList();
+  }
+
+  Widget _buildTryoutCard(MentorCompetitionItem item) {
+    final categories = item.categoryQuestions;
+    final total = item.totalQuestions > 0
+        ? item.totalQuestions
+        : categories.values.fold<int>(
+            0,
+            (previousValue, element) => previousValue + element,
+          );
+    final completed = 0;
+    final progress = total <= 0 ? 0.0 : (completed / total).clamp(0.0, 1.0);
+
+    final shortCategories = <MapEntry<String, String>>[
+      const MapEntry('PU', 'Penalaran Umum'),
+      const MapEntry('PPU', 'Pemahaman dan Penulisan Umum'),
+      const MapEntry('PBM', 'Pengetahuan dan Pemahaman Bacaan Matematika'),
+      const MapEntry('PK', 'Pengetahuan Kuantitatif'),
+      const MapEntry('PM', 'Penalaran Matematika'),
+      const MapEntry('Literasi', 'Literasi Bahasa Indonesia'),
+    ];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  item.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  item.isPublished ? 'Publish' : 'Draft',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel}   ${item.durationLabel} menit   0/$total soal',
+            style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Progress Soal',
+            style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 5,
+              backgroundColor: const Color(0xFFE5E7EB),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF2563EB),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
+            childAspectRatio: 4.5,
+            children: shortCategories.map((entry) {
+              final value = categories[entry.value] ?? 0;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.key,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                    Text(
+                      '0/$value',
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _openTryoutSoalManagement(item),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(32),
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.menu_book_outlined, size: 15),
+                  label: const Text(
+                    'Kelola Soal',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 36,
+                height: 32,
+                child: OutlinedButton(
+                  onPressed: () => _openForm(item: item),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.edit_outlined,
+                    size: 14,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 36,
+                height: 32,
+                child: OutlinedButton(
+                  onPressed: () => _deleteItem(item),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 14,
+                    color: Color(0xFFEF4444),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOlimpiadCard(MentorCompetitionItem item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  item.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  item.isPublished ? 'Publish' : 'Draft',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${item.classLevel} • ${item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel}${item.subject.isEmpty ? '' : ' • ${item.subject}'}',
+            style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _openOlimpiadseSoalManagement(item),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(32),
+                    backgroundColor: widget.accentColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.menu_book_outlined, size: 15),
+                  label: const Text(
+                    'Kelola Soal',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 36,
+                height: 32,
+                child: OutlinedButton(
+                  onPressed: () => _openForm(item: item),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.edit_outlined,
+                    size: 14,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 36,
+                height: 32,
+                child: OutlinedButton(
+                  onPressed: () => _deleteItem(item),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 14,
+                    color: Color(0xFFEF4444),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _chooseKelas() async {
@@ -103,11 +401,7 @@ class _MentorCompetitionManagementState
   }
 
   Future<void> _chooseStatus() async {
-    final selected = await _chooseFromSheet([
-      'Semua Status',
-      'Dipublikasi',
-      'Draft',
-    ]);
+    final selected = await _chooseFromSheet(['Semua Status', 'Dipublikasi']);
     if (selected == null || !mounted) return;
     setState(() => _statusFilter = selected);
   }
@@ -115,18 +409,90 @@ class _MentorCompetitionManagementState
   Future<String?> _chooseFromSheet(List<String> options) async {
     return showModalBottomSheet<String>(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      backgroundColor: Colors.white,
       builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: options
-              .map(
-                (label) => ListTile(
-                  title: Text(label),
-                  onTap: () => Navigator.of(context).pop(label),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-              )
-              .toList(),
+              ),
+              const SizedBox(height: 16),
+              // Options
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: options.length,
+                separatorBuilder: (_, __) =>
+                    const Divider(height: 12, color: Color(0xFFF3F4F6)),
+                itemBuilder: (context, index) {
+                  final label = options[index];
+                  return InkWell(
+                    onTap: () => Navigator.of(context).pop(label),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.check_circle_outline,
+                            size: 20,
+                            color: Color(0xFF2563EB),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              label,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF1F2937),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _openTryoutSoalManagement(MentorCompetitionItem tryout) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => TryoutSoalManagementScreen(tryout: tryout),
+      ),
+    );
+  }
+
+  Future<void> _openOlimpiadseSoalManagement(
+    MentorCompetitionItem olimpiade,
+  ) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            OlimpiadseSoalManagementScreen(olimpiade: olimpiade),
       ),
     );
   }
@@ -187,9 +553,14 @@ class _MentorCompetitionManagementState
   @override
   Widget build(BuildContext context) {
     final visibleItems = _visibleItems;
+    final isTryout = widget.type == 'tryout';
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(title: Text(widget.title), backgroundColor: Colors.white),
+      appBar: AppBar(
+        title: Text(widget.title),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1F2937),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -212,47 +583,96 @@ class _MentorCompetitionManagementState
                   ),
                   child: Column(
                     children: [
-                      TextField(
-                        controller: _searchController,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.search),
-                          hintText: 'Cari data...',
+                      if (isTryout)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                decoration: const InputDecoration(
+                                  prefixIcon: Icon(Icons.search),
+                                  hintText: 'Cari try out...',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: ElevatedButton(
+                                onPressed: () => _openForm(),
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  backgroundColor: widget.accentColor,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Icon(Icons.add),
+                              ),
+                            ),
+                          ],
+                        )
+                      else ...[
+                        TextField(
+                          controller: _searchController,
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.search),
+                            hintText: 'Cari data...',
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _chooseKelas,
-                              child: Text(_kelasFilter),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _chooseKelas,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: widget.accentColor,
+                                  side: BorderSide(color: widget.accentColor),
+                                ),
+                                child: Text(_kelasFilter),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _chooseStatus,
-                              child: Text(_statusFilter),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _chooseStatus,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: widget.accentColor,
+                                  side: BorderSide(color: widget.accentColor),
+                                ),
+                                child: Text(_statusFilter),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _chooseMapel,
-                              child: Text(_mapelFilter),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _chooseMapel,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: widget.accentColor,
+                                  side: BorderSide(color: widget.accentColor),
+                                ),
+                                child: Text(_mapelFilter),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _openForm(),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Tambah Baru'),
+                          ],
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _openForm(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: widget.accentColor,
+                              foregroundColor: Colors.white,
+                            ),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Tambah Baru'),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -266,25 +686,9 @@ class _MentorCompetitionManagementState
                   )
                 else
                   ...visibleItems.map(
-                    (item) => Card(
-                      child: ListTile(
-                        title: Text(item.title),
-                        subtitle: Text('${item.classLevel} • ${item.subject}'),
-                        trailing: Wrap(
-                          spacing: 8,
-                          children: [
-                            IconButton(
-                              onPressed: () => _openForm(item: item),
-                              icon: const Icon(Icons.edit_outlined),
-                            ),
-                            IconButton(
-                              onPressed: () => _deleteItem(item),
-                              icon: const Icon(Icons.delete_outline),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    (item) => isTryout
+                        ? _buildTryoutCard(item)
+                        : _buildOlimpiadCard(item),
                   ),
               ],
             ),
@@ -312,22 +716,42 @@ class _CompetitionFormDialog extends StatefulWidget {
 class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
   final _titleController = TextEditingController();
   final _scheduleController = TextEditingController();
+  final _locationController = TextEditingController();
   final _durationController = TextEditingController();
   final _questionsController = TextEditingController(text: '0');
   final _classOptions = const ['Kelas 10', 'Kelas 11', 'Kelas 12'];
-  final _mapelOptions = const [
-    'Matematika',
-    'Fisika',
-    'Kimia',
-    'Biologi',
-    'Bahasa Indonesia',
-    'Bahasa Inggris',
-    'Try Out Online',
-    'Olimpiade Akademik',
-  ];
+  final Map<String, TextEditingController> _categoryControllers = {
+    'Penalaran Umum': TextEditingController(text: '0'),
+    'Pemahaman dan Penulisan Umum': TextEditingController(text: '0'),
+    'Pengetahuan dan Pemahaman Bacaan Matematika': TextEditingController(
+      text: '0',
+    ),
+    'Pengetahuan Kuantitatif': TextEditingController(text: '0'),
+    'Penalaran Matematika': TextEditingController(text: '0'),
+    'Literasi Bahasa Indonesia': TextEditingController(text: '0'),
+  };
   String _classLevel = 'Kelas 12';
-  String _subject = 'Matematika';
   bool _saving = false;
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final initial = DateTime.tryParse(_scheduleController.text.trim()) ?? now;
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (selected == null) {
+      return;
+    }
+
+    final yyyy = selected.year.toString().padLeft(4, '0');
+    final mm = selected.month.toString().padLeft(2, '0');
+    final dd = selected.day.toString().padLeft(2, '0');
+    _scheduleController.text = '$yyyy-$mm-$dd';
+  }
 
   @override
   void initState() {
@@ -339,7 +763,12 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
       _durationController.text = item.durationLabel;
       _questionsController.text = item.totalQuestions.toString();
       _classLevel = item.classLevel;
-      _subject = item.subject;
+      _locationController.text = item.subject == '-' ? '' : item.subject;
+
+      for (final entry in _categoryControllers.entries) {
+        final value = item.categoryQuestions[entry.key] ?? 0;
+        entry.value.text = value.toString();
+      }
     }
   }
 
@@ -347,9 +776,29 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
   void dispose() {
     _titleController.dispose();
     _scheduleController.dispose();
+    _locationController.dispose();
     _durationController.dispose();
     _questionsController.dispose();
+    for (final c in _categoryControllers.values) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  int _sumTryoutQuestions() {
+    var total = 0;
+    for (final controller in _categoryControllers.values) {
+      total += int.tryParse(controller.text.trim()) ?? 0;
+    }
+    return total;
+  }
+
+  Map<String, int> _collectCategoryQuestions() {
+    final result = <String, int>{};
+    for (final entry in _categoryControllers.entries) {
+      result[entry.key] = int.tryParse(entry.value.text.trim()) ?? 0;
+    }
+    return result;
   }
 
   @override
@@ -377,32 +826,109 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                 decoration: const InputDecoration(labelText: 'Kelas'),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _subject,
-                items: _mapelOptions
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (v) => setState(() => _subject = v ?? _subject),
-                decoration: const InputDecoration(
-                  labelText: 'Mapel / Keterangan',
+              if (widget.type == 'olimpiade') ...[
+                TextField(
+                  controller: _locationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Lokasi',
+                    hintText: 'Isi lokasi sesuai kebutuhan mentor',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _scheduleController,
-                decoration: const InputDecoration(labelText: 'Tanggal'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _durationController,
-                decoration: const InputDecoration(labelText: 'Durasi / Info'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _questionsController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Total Soal'),
-              ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _scheduleController,
+                  readOnly: true,
+                  onTap: _pickDate,
+                  decoration: const InputDecoration(
+                    labelText: 'Tanggal Pelaksanaan',
+                    suffixIcon: Icon(Icons.calendar_today_outlined),
+                  ),
+                ),
+              ],
+              if (widget.type == 'tryout') ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _scheduleController,
+                        readOnly: true,
+                        onTap: _pickDate,
+                        decoration: const InputDecoration(
+                          labelText: 'Tanggal Pelaksanaan',
+                          suffixIcon: Icon(Icons.calendar_today_outlined),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _durationController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Waktu (menit)',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Jumlah Latihan Soal',
+                  ),
+                  child: Text(
+                    '${_sumTryoutQuestions()}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Jumlah Soal per Kategori',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF374151),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ..._categoryControllers.entries.map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.key,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF1F2937),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          width: 88,
+                          child: TextField(
+                            controller: entry.value,
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setState(() {}),
+                            textAlign: TextAlign.center,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              hintText: '0',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -417,18 +943,47 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
           onPressed: _saving
               ? null
               : () async {
+                  if (_titleController.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Judul/Nama wajib diisi')),
+                    );
+                    return;
+                  }
+                  if (_scheduleController.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tanggal wajib dipilih')),
+                    );
+                    return;
+                  }
+                  if (widget.type == 'olimpiade' &&
+                      _locationController.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Lokasi wajib diisi')),
+                    );
+                    return;
+                  }
+                  if (widget.type == 'tryout' &&
+                      _durationController.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Waktu wajib diisi')),
+                    );
+                    return;
+                  }
                   setState(() => _saving = true);
+                  final totalQuestions = widget.type == 'tryout'
+                      ? _sumTryoutQuestions()
+                      : int.tryParse(_questionsController.text.trim()) ?? 0;
                   final response =
                       await MentorCompetitionService.createOrUpdate(
                         type: widget.type,
                         id: widget.initialItem?.id,
                         classLevel: _classLevel,
                         title: _titleController.text.trim(),
-                        subject: _subject,
+                        subject: _locationController.text.trim(),
                         scheduleLabel: _scheduleController.text.trim(),
                         durationLabel: _durationController.text.trim(),
-                        totalQuestions:
-                            int.tryParse(_questionsController.text.trim()) ?? 0,
+                        totalQuestions: totalQuestions,
+                        categoryQuestions: _collectCategoryQuestions(),
                       );
                   if (!mounted) return;
                   setState(() => _saving = false);
