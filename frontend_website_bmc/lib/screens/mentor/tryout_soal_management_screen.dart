@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../models/mentor_competition_item.dart';
 import '../../models/soal_kompetisi.dart';
-import '../../services/mentor_competition_service.dart';
 import '../../services/soal_kompetisi_service.dart';
 
 class TryoutSoalManagementScreen extends StatefulWidget {
@@ -316,7 +315,7 @@ class _TryoutSoalManagementScreenState
                                     vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withAlpha((0.2 * 255).round()),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -363,9 +362,7 @@ class _TryoutSoalManagementScreenState
                                   boxShadow: isSelected
                                       ? [
                                           BoxShadow(
-                                            color: const Color(
-                                              0xFF2563EB,
-                                            ).withOpacity(0.2),
+                                            color: const Color(0xFF2563EB).withAlpha((0.2 * 255).round()),
                                             blurRadius: 8,
                                             offset: const Offset(0, 4),
                                           ),
@@ -397,7 +394,7 @@ class _TryoutSoalManagementScreenState
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
                                           color: isSelected
-                                              ? Colors.white.withOpacity(0.9)
+                                              ? Colors.white.withAlpha((0.9 * 255).round())
                                               : const Color(0xFF6B7280),
                                         ),
                                       ),
@@ -420,7 +417,7 @@ class _TryoutSoalManagementScreenState
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withAlpha((0.05 * 255).round()),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -758,7 +755,7 @@ class _TryoutSoalManagementScreenState
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withAlpha((0.08 * 255).round()),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -789,7 +786,7 @@ class _TryoutSoalManagementScreenState
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF2563EB).withOpacity(0.3),
+                            color: Color(0xFF2563EB).withAlpha((0.3 * 255).round()),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),

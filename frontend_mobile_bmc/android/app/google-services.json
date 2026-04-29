@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "568597422823",
+    "project_id": "bintang-muda-center",
+    "storage_bucket": "bintang-muda-center.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:568597422823:android:16a860db301fd8e9b3b842",
+        "android_client_info": {
+          "package_name": "com.example.frontend_mobile_bmc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwuL2UaaFmNC3WzwGMiCM1IzNzzrvPxEI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

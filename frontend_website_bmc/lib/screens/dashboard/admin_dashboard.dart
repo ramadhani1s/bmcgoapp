@@ -524,7 +524,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               width: 110,
               height: 110,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: Colors.white.withAlpha((0.05 * 255).round()),
                 shape: BoxShape.circle,
               ),
             ),
@@ -536,7 +536,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.06),
+                color: Colors.white.withAlpha((0.06 * 255).round()),
                 shape: BoxShape.circle,
               ),
             ),
@@ -774,7 +774,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 TextButton(
                   onPressed: () {},
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    backgroundColor: Colors.white.withAlpha((0.2 * 255).round()),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
@@ -784,7 +784,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 TextButton(
                   onPressed: () {},
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    backgroundColor: Colors.white.withAlpha((0.2 * 255).round()),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
@@ -981,7 +981,7 @@ class _PendingItemRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: _statusColor(row.status).withValues(alpha: 0.14),
+                color: _statusColor(row.status).withAlpha((0.14 * 255).round()),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

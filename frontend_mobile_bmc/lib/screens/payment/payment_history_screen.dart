@@ -210,7 +210,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: color.withOpacity(0.12),
+                                    color: color.withValues(alpha: (0.12 * 255).round()),
                                     borderRadius: BorderRadius.circular(99),
                                   ),
                                   child: Text(

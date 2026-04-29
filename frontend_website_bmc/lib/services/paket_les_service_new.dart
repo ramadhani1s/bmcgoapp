@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -81,8 +83,7 @@ class PaketLesService {
 
       if (queryParams.isNotEmpty) {
         url +=
-            '?' +
-            queryParams.entries.map((e) => '${e.key}=${e.value}').join('&');
+            '?${queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')}';
       }
 
       final headers = await _getHeaders();
@@ -215,11 +216,10 @@ class PaketLesService {
 
   // Format harga to Rupiah
   static String formatRupiah(int harga) {
-    return "Rp" +
-        harga.toString().replaceAllMapped(
+    return "Rp${harga.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]}.',
-        );
+        )}";
   }
 
   // Calculate harga promo

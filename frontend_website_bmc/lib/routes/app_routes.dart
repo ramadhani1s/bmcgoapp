@@ -58,13 +58,7 @@ class AppRoutes {
         );
 
       case mentorExercise:
-
         return MaterialPageRoute(builder: (_) => const LatihanSoalScreen());
-
-
-        return MaterialPageRoute(
-          builder: (_) => const LatihanSoalScreen(),
-        );
 
       case mentorTryout:
         return MaterialPageRoute(builder: (_) => const MentorTryoutScreen());
@@ -79,14 +73,6 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (_) => const MateriPembelajaranScreen(),
         );
-
-        return MaterialPageRoute(builder: (_) => const LatihanSoalScreen());
-
-      case mentorTryout:
-        return MaterialPageRoute(builder: (_) => const MentorTryoutScreen());
-
-      case mentorOlimpiade:
-        return MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen());
 
       case paketLes:
         return MaterialPageRoute(builder: (_) => const PaketLesScreen());

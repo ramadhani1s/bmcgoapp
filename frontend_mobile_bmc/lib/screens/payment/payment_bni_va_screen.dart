@@ -141,7 +141,7 @@ class _PaymentBniVaScreenState extends State<PaymentBniVaScreen> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.22),
+                        color: Colors.white.withValues(alpha: (0.22 * 255).round()),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
@@ -273,7 +273,7 @@ class _PaymentBniVaScreenState extends State<PaymentBniVaScreen> {
                             icon: const Icon(Icons.copy_rounded, size: 18),
                             label: const Text('Salin Nomor VA'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white.withOpacity(0.2),
+                              backgroundColor: Colors.white.withValues(alpha: (0.2 * 255).round()),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
