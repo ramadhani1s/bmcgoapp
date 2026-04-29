@@ -41,14 +41,23 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result['success'] == true) {
       final user = result['user'] as User;
 
+      print(
+        'DEBUG: Login user - ID: ${user.id}, Role: ${user.roleId}, Nama: ${user.nama}',
+      );
+      print(
+        'DEBUG: isAdmin=${user.isAdmin}, isMentor=${user.isMentor}, isSiswa=${user.isSiswa}',
+      );
+
       if (user.isAdmin) {
         Navigator.of(context).pushReplacementNamed('/admin-dashboard');
       } else if (user.isMentor) {
         Navigator.of(context).pushReplacementNamed('/mentor-dashboard');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Role tidak didukung untuk website ini'),
+          SnackBar(
+            content: Text(
+              'Role tidak didukung (ID: ${user.roleId}). Hubungi admin.',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -247,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 border: Border.all(color: const Color(0xFFBFDBFE)),
               ),
               child: const Text(
-                'Akun mentor sementara: mentor@bmc.local / mentor123\nNanti bisa diganti setelah admin membuat akun mentor resmi.',
+                'Gunakan akun admin atau akun mentor yang sudah dibuat dari menu manajemen mentor.',
                 style: TextStyle(
                   fontSize: 12,
                   color: Color(0xFF1E3A8A),
