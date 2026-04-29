@@ -7,6 +7,7 @@ import (
 	"bmcgoapp-backend/config"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // ===============================
@@ -17,10 +18,10 @@ func GetMentors(c *gin.Context) {
 		SELECT 
 			id,
 			nama_mentor,
-			email,
-			password,
-			mata_pelajaran,
-			status
+			COALESCE(email, ''),
+			COALESCE(password, ''),
+			COALESCE(mata_pelajaran, ''),
+			COALESCE(status, 'Aktif')
 		FROM mentor
 		ORDER BY id ASC
 	`)
@@ -116,17 +117,78 @@ func CreateMentor(c *gin.Context) {
 		input.Status = "Aktif"
 	}
 
-	_, err := config.DB.Exec(context.Background(), `
+	userStatus := "aktif"
+	if strings.EqualFold(input.Status, "nonaktif") {
+		userStatus = "nonaktif"
+	}
+
+	// First, ensure there is a corresponding user record so mentor can login.
+	// If the email already exists as a siswa/admin account, promote it to mentor.
+	var userID int
+	var existingUserPassword string
+	lookupErr := config.DB.QueryRow(context.Background(), `
+		SELECT id, COALESCE(password, '')
+		FROM users
+		WHERE LOWER(COALESCE(NULLIF(email, ''), username)) = LOWER($1)
+		LIMIT 1
+	`, input.Email).Scan(&userID, &existingUserPassword)
+
+	hashed, hashErr := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	if hashErr != nil {
+		c.JSON(500, gin.H{"error": "gagal hash password"})
+		return
+	}
+
+	if lookupErr != nil {
+		insert := `
+			INSERT INTO users (nama, username, email, password, role_id, status)
+			VALUES ($1,$2,$3,$4,$5,$6)
+			RETURNING id
+		`
+		insertErr := config.DB.QueryRow(context.Background(), insert, input.NamaMentor, input.Email, input.Email, string(hashed), 2, userStatus).Scan(&userID)
+		if insertErr != nil {
+			c.JSON(500, gin.H{"error": insertErr.Error()})
+			return
+		}
+	} else {
+		// Update existing user row so the mentor gets proper mentor privileges.
+		_, updateErr := config.DB.Exec(context.Background(), `
+			UPDATE users
+			SET nama = $1,
+			    username = $2,
+			    email = $3,
+			    password = $4,
+			    role_id = 2,
+			    status = $5
+			WHERE id = $6
+		`, input.NamaMentor, input.Email, input.Email, string(hashed), userStatus, userID)
+		if updateErr != nil {
+			c.JSON(500, gin.H{"error": updateErr.Error()})
+			return
+		}
+	}
+
+	// Upsert mentor row so existing mentor accounts can be promoted without duplicate errors.
+	_, mentorErr := config.DB.Exec(context.Background(), `
 		INSERT INTO mentor
 		(
+			user_id,
 			nama_mentor,
 			email,
 			password,
 			mata_pelajaran,
 			status
 		)
-		VALUES ($1,$2,$3,$4,$5)
+		VALUES ($1,$2,$3,$4,$5,$6)
+		ON CONFLICT (user_id)
+		DO UPDATE SET
+			nama_mentor = EXCLUDED.nama_mentor,
+			email = EXCLUDED.email,
+			password = EXCLUDED.password,
+			mata_pelajaran = EXCLUDED.mata_pelajaran,
+			status = EXCLUDED.status
 	`,
+		userID,
 		input.NamaMentor,
 		input.Email,
 		input.Password,
@@ -134,17 +196,12 @@ func CreateMentor(c *gin.Context) {
 		input.Status,
 	)
 
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+	if mentorErr != nil {
+		c.JSON(500, gin.H{"error": mentorErr.Error()})
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"success": true,
-		"message": "Mentor berhasil ditambahkan",
-	})
+	c.JSON(200, gin.H{"success": true, "message": "Mentor berhasil ditambahkan"})
 }
 
 // ===============================

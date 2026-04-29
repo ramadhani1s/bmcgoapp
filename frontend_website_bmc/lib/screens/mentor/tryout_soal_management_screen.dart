@@ -245,7 +245,7 @@ class _TryoutSoalManagementScreenState
             : const Color(0xFF10B981),
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -341,7 +341,6 @@ class _TryoutSoalManagementScreenState
                           children: _kategoriOptions.map((kategori) {
                             final shortName = _getShortKategori(kategori);
                             final count = counts[kategori] ?? 0;
-                            final target = _getTargetCount(kategori);
                             final isSelected = _selectedKategori == kategori;
 
                             return Padding(
@@ -389,7 +388,7 @@ class _TryoutSoalManagementScreenState
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        '$count/$target',
+                                        '$count',
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
@@ -1021,10 +1020,5 @@ class _TryoutSoalManagementScreenState
       'Literasi Bahasa Indonesia': 'LI',
     };
     return mapping[kategori] ?? 'XX';
-  }
-
-  int _getTargetCount(String kategori) {
-    final categoryQuestions = widget.tryout.categoryQuestions;
-    return categoryQuestions[kategori] ?? 0;
   }
 }

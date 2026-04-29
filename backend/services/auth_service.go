@@ -31,16 +31,7 @@ func Login(email string, password string) (*models.User, error) {
 	}
 
 	// LOGIN DEFAULT MENTOR
-	if email == "mentor@bmc.local" && password == "mentor123" {
-		return &models.User{
-			ID:       2,
-			Nama:     "Mentor Sementara",
-			Email:    "mentor@bmc.local",
-			RoleID:   2,
-			Status:   "aktif",
-			Password: "",
-		}, nil
-	}
+	// NOTE: removed hardcoded mentor account to enforce DB-backed authentication
 
 	var user models.User
 
