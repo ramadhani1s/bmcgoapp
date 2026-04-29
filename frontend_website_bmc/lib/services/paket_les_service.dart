@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, duplicate_ignore
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -147,6 +149,7 @@ class PaketLesService {
         body: jsonEncode(data),
       );
 
+      // ignore: avoid_print
       print("🔥 UPDATE STATUS CODE: ${response.statusCode}");
 
       if (response.statusCode == 200) {
@@ -159,6 +162,7 @@ class PaketLesService {
         };
       }
     } catch (e) {
+      // ignore: avoid_print
       print("❌ ERROR API: $e");
       return {
         "status": "error",
@@ -210,6 +214,8 @@ class PaketLesService {
         return {"total_paket": 0, "paket_aktif": 0};
       }
     } catch (e) {
+      // ignore: duplicate_ignore
+      // ignore: avoid_print
       print("❌ ERROR API: $e");
       return {"total_paket": 0, "paket_aktif": 0};
     }
@@ -217,6 +223,7 @@ class PaketLesService {
 
   // Format harga to Rupiah
   static String formatRupiah(int harga) {
+    // ignore: prefer_interpolation_to_compose_strings
     return "Rp" +
         harga.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),

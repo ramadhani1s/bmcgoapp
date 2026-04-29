@@ -1,9 +1,12 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../models/user.dart';
 import '../../models/materi_pembelajaran.dart';
 import '../../services/auth_service.dart';
 import '../../services/materi_service.dart';
+import 'dart:html' as html;
 
 class MateriPembelajaranScreen extends StatefulWidget {
   const MateriPembelajaranScreen({super.key});
@@ -65,6 +68,27 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
+  }
+
+  void _downloadFile(String filePath, String filename) {
+    try {
+      final origin = Uri.parse(MateriService.baseUrl).origin;
+        final url = filePath.startsWith('http')
+          ? filePath
+          : (filePath.startsWith('/') ? '$origin$filePath' : '$origin/$filePath');
+
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', filename)
+        ..target = '_blank';
+
+      html.document.body?.append(anchor);
+      anchor.click();
+      anchor.remove();
+
+      _showSuccessSnackBar('Mengunduh "${filename}"');
+    } catch (e) {
+      _showErrorSnackBar('Gagal mengunduh file');
+    }
   }
 
   Future<void> _handleDelete(int id) async {
@@ -198,7 +222,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withValues(alpha:0.3),
+            color: Colors.blue.withAlpha((0.3 * 255).round()),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -222,7 +246,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                 Text(
                   'Bagikan modul, presentasi, atau dokumen pendukung untuk membantu siswa memahami pelajaran lebih baik.',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Colors.white.withAlpha((0.9 * 255).round()),
                     fontSize: 14,
                   ),
                 ),
@@ -298,7 +322,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.03),
+            color: Colors.black.withAlpha((0.03 * 255).round()),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -309,12 +333,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            // Bisa tambahkan fitur preview / download di sini
-            ScaffoldMessenger.of(context).showSnackBar(
-               const SnackBar(content: Text('Fitur unduh segera hadir'))
-            );
-          },
+          onTap: () => _downloadFile(materi.filePath, '${materi.title}${materi.fileType}'),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -323,7 +342,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: _getFileColor(materi.fileType).withValues(alpha: 0.1),
+                    color: _getFileColor(materi.fileType).withAlpha((0.1 * 255).round()),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -390,6 +409,11 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                       ),
                     ],
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.download_outlined, color: Color(0xFF2563EB)),
+                  onPressed: () => _downloadFile(materi.filePath, '${materi.title}${materi.fileType}'),
+                  tooltip: 'Unduh Materi',
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),

@@ -329,7 +329,7 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withAlpha((0.12 * 255).round()),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -360,7 +360,7 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -534,7 +534,7 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: _statusColor(status).withValues(alpha: 0.14),
+                                        color: _statusColor(status).withAlpha((0.14 * 255).round()),
                                         borderRadius: BorderRadius.circular(999),
                                       ),
                                       child: Text(

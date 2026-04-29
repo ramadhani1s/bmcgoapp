@@ -239,7 +239,7 @@ class _MentorDashboardState extends State<MentorDashboard> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _currentUser?.email ?? 'mentor@bmc.local',
+                  _currentUser?.email ?? '-',
                   style: const TextStyle(color: _textSecondary, fontSize: 12),
                   textAlign: TextAlign.center,
                 ),
