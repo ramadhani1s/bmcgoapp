@@ -431,10 +431,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '$_studentName 👋',
+                      '$_studentName ',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 34,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         height: 1,
                       ),
