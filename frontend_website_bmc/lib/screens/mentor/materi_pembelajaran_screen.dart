@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../models/user.dart';
@@ -83,7 +85,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       anchor.click();
       anchor.remove();
 
-      _showSuccessSnackBar('Mengunduh "' + filename + '"');
+      _showSuccessSnackBar('Mengunduh "${filename}"');
     } catch (e) {
       _showErrorSnackBar('Gagal mengunduh file');
     }
@@ -220,7 +222,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withValues(alpha:0.3),
+            color: Colors.blue.withAlpha((0.3 * 255).round()),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -244,7 +246,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                 Text(
                   'Bagikan modul, presentasi, atau dokumen pendukung untuk membantu siswa memahami pelajaran lebih baik.',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Colors.white.withAlpha((0.9 * 255).round()),
                     fontSize: 14,
                   ),
                 ),
@@ -320,7 +322,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.03),
+            color: Colors.black.withAlpha((0.03 * 255).round()),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -340,7 +342,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: _getFileColor(materi.fileType).withValues(alpha: 0.1),
+                    color: _getFileColor(materi.fileType).withAlpha((0.1 * 255).round()),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(

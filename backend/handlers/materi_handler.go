@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 )
 
 // Constanta untuk upload
@@ -37,9 +38,9 @@ func UploadMateri(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: mentor_id required"})
 			return
 		}
-		// Di sini idealnya query ke DB untuk dapat mentor_id dari user_id. 
+		// Di sini idealnya query ke DB untuk dapat mentor_id dari user_id.
 		// Untuk kemudahan dan sesuai struktur saat ini, kita gunakan user_id sebagai mentor_id (jika mereka sama di tabel mentor)
-		mentorIDStr = fmt.Sprintf("%v", userID) 
+		mentorIDStr = fmt.Sprintf("%v", userID)
 	}
 
 	mentorID, err := strconv.Atoi(mentorIDStr)
@@ -193,4 +194,81 @@ func DeleteMateri(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Material deleted successfully"})
+}
+func GetAllMateri(c *gin.Context) {
+	subject := c.Query("subject")
+
+	var rows pgx.Rows
+	var err error
+
+	if subject != "" && subject != "Semua" {
+		rows, err = config.DB.Query(context.Background(), `
+			SELECT 
+				lm.id, lm.mentor_id, lm.title, lm.description, 
+				lm.file_path, lm.file_type, lm.file_size, lm.subject,
+				COALESCE(m.nama, u.nama, 'Mentor') AS mentor_name,
+				lm.created_at, lm.updated_at
+			FROM learning_materials lm
+			LEFT JOIN mentor m ON m.id = lm.mentor_id
+			LEFT JOIN users u ON u.id = m.user_id
+			WHERE lm.subject = $1
+			ORDER BY lm.created_at DESC
+		`, subject)
+	} else {
+		rows, err = config.DB.Query(context.Background(), `
+			SELECT 
+				lm.id, lm.mentor_id, lm.title, lm.description, 
+				lm.file_path, lm.file_type, lm.file_size, lm.subject,
+				COALESCE(m.nama, u.nama, 'Mentor') AS mentor_name,
+				lm.created_at, lm.updated_at
+			FROM learning_materials lm
+			LEFT JOIN mentor m ON m.id = lm.mentor_id
+			LEFT JOIN users u ON u.id = m.user_id
+			ORDER BY lm.created_at DESC
+		`)
+	}
+
+	if err != nil {
+		log.Println("Gagal query semua materi:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil materi"})
+		return
+	}
+	defer rows.Close()
+
+	type MateriWithMentor struct {
+		ID          int       `json:"id"`
+		MentorID    int       `json:"mentor_id"`
+		Title       string    `json:"title"`
+		Description string    `json:"description"`
+		FilePath    string    `json:"file_path"`
+		FileType    string    `json:"file_type"`
+		FileSize    int64     `json:"file_size"`
+		Subject     string    `json:"subject"`
+		MentorName  string    `json:"mentor_name"`
+		CreatedAt   time.Time `json:"created_at"`
+		UpdatedAt   time.Time `json:"updated_at"`
+	}
+
+	var materials []MateriWithMentor
+	for rows.Next() {
+		var m MateriWithMentor
+		if err := rows.Scan(
+			&m.ID, &m.MentorID, &m.Title, &m.Description,
+			&m.FilePath, &m.FileType, &m.FileSize, &m.Subject,
+			&m.MentorName, &m.CreatedAt, &m.UpdatedAt,
+		); err != nil {
+			log.Println("Gagal scan row:", err)
+			continue
+		}
+		materials = append(materials, m)
+	}
+
+	if materials == nil {
+		materials = []MateriWithMentor{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Berhasil mengambil materi",
+		"data":    materials,
+	})
 }

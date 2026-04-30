@@ -22,6 +22,8 @@ func AuthRoutes(r *gin.Engine) {
 		adminAuth.GET("/mentors", handlers.GetMentors)
 		adminAuth.DELETE("/mentors/:id", handlers.DeleteMentor)
 	}
+<<<<<<< HEAD
+=======
 
 	// also register same routes under /api/auth to support frontend API prefix
 	apiAuth := r.Group("/api/auth")
@@ -37,4 +39,5 @@ func AuthRoutes(r *gin.Engine) {
 		apiAdminAuth.GET("/mentors", handlers.GetMentors)
 		apiAdminAuth.DELETE("/mentors/:id", handlers.DeleteMentor)
 	}
+>>>>>>> 105b65fc647e97b01e70c342e0555c9c2c40631c
 }

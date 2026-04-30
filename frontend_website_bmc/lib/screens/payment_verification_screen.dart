@@ -934,7 +934,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
             height: 24,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: color.withValues(alpha: 0.55)),
+              border: Border.all(color: color.withAlpha((0.55 * 255).round())),
             ),
             alignment: Alignment.center,
             child: Icon(icon, size: 14, color: color),

@@ -1,9 +1,63 @@
+// ignore_for_file: avoid_print, duplicate_ignore
+
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PaketLesService {
-  static const String baseUrl = "http://172.27.66.99:8080/api/admin";
+  static const String _defaultBaseUrl = "http://localhost:8080/api/admin";
+  static String? _activeBaseUrl;
+
+  static List<String> _candidateBaseUrls() {
+    final urls = <String>[
+      "http://localhost:8080/api/admin",
+      "http://127.0.0.1:8080/api/admin",
+      "http://172.27.66.99:8080/api/admin",
+    ];
+
+    if (kIsWeb) {
+      final host = Uri.base.host;
+      if (host.isNotEmpty && host != "localhost" && host != "127.0.0.1") {
+        final scheme = Uri.base.scheme.isEmpty ? "http" : Uri.base.scheme;
+        urls.insert(0, "$scheme://$host:8080/api/admin");
+      }
+      if (host == "localhost" || host == "127.0.0.1") {
+        final scheme = Uri.base.scheme.isEmpty ? "http" : Uri.base.scheme;
+        urls.insert(0, "$scheme://$host:8080/api/admin");
+      }
+    }
+
+    urls.insert(0, _defaultBaseUrl);
+
+    if (_activeBaseUrl != null && _activeBaseUrl!.isNotEmpty) {
+      urls.insert(0, _activeBaseUrl!);
+    }
+
+    return urls.toSet().toList();
+  }
+
+  static Future<http.Response> _requestWithFallback(
+    Future<http.Response> Function(String baseUrl) request,
+  ) async {
+    Object? lastError;
+
+    for (final baseUrl in _candidateBaseUrls()) {
+      try {
+        print("🌐 Trying API base: $baseUrl");
+        final response = await request(
+          baseUrl,
+        ).timeout(const Duration(seconds: 15));
+        _activeBaseUrl = baseUrl;
+        return response;
+      } catch (e) {
+        lastError = e;
+        print("❌ Failed with base $baseUrl: $e");
+      }
+    }
+
+    throw Exception("All API base URLs failed. Last error: $lastError");
+  }
 
   // Get token from SharedPreferences
   static Future<String> _getToken() async {
@@ -32,16 +86,15 @@ class PaketLesService {
     Map<String, dynamic> data,
   ) async {
     try {
-      final url = Uri.parse("$baseUrl/paket-les");
       final headers = await _getHeaders();
-
-      print("🔥 CREATE REQUEST URL: $url");
       print("🔥 REQUEST BODY: ${jsonEncode(data)}");
 
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(data),
+      final response = await _requestWithFallback(
+        (baseUrl) => http.post(
+          Uri.parse("$baseUrl/paket-les"),
+          headers: headers,
+          body: jsonEncode(data),
+        ),
       );
 
       print("🔥 STATUS CODE: ${response.statusCode}");
@@ -72,7 +125,6 @@ class PaketLesService {
     String? search,
   }) async {
     try {
-      String url = "$baseUrl/paket-les";
       Map<String, String> queryParams = {};
 
       if (status != null && status.isNotEmpty) {
@@ -82,14 +134,17 @@ class PaketLesService {
         queryParams['search'] = search;
       }
 
-      final uri = Uri.parse(url).replace(queryParameters: queryParams);
       final headers = await _getHeaders();
 
-      print("🔥 GET LIST REQUEST URL: $uri");
-
-      final response = await http.get(uri, headers: headers);
+      final response = await _requestWithFallback(
+        (baseUrl) => http.get(
+          Uri.parse("$baseUrl/paket-les").replace(queryParameters: queryParams),
+          headers: headers,
+        ),
+      );
 
       print("🔥 GET LIST STATUS CODE: ${response.statusCode}");
+      print("🔥 GET LIST RESPONSE BODY: ${response.body}");
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -101,10 +156,13 @@ class PaketLesService {
         }
         return [];
       } else {
+        print("❌ ERROR: Got status code ${response.statusCode}");
+        print("❌ ERROR BODY: ${response.body}");
         return [];
       }
     } catch (e) {
-      print("❌ ERROR API: $e");
+      print("❌ ERROR API: ClientException: $e");
+      print("❌ ERROR TYPE: ${e.runtimeType}");
       return [];
     }
   }
@@ -112,10 +170,12 @@ class PaketLesService {
   // Get single paket detail
   static Future<Map<String, dynamic>?> getPaketDetail(int id) async {
     try {
-      final url = Uri.parse("$baseUrl/paket-les/$id");
       final headers = await _getHeaders();
 
-      final response = await http.get(url, headers: headers);
+      final response = await _requestWithFallback(
+        (baseUrl) =>
+            http.get(Uri.parse("$baseUrl/paket-les/$id"), headers: headers),
+      );
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -135,18 +195,18 @@ class PaketLesService {
     Map<String, dynamic> data,
   ) async {
     try {
-      final url = Uri.parse("$baseUrl/paket-les/$id");
       final headers = await _getHeaders();
-
-      print("🔥 UPDATE REQUEST URL: $url");
       print("🔥 REQUEST BODY: ${jsonEncode(data)}");
 
-      final response = await http.put(
-        url,
-        headers: headers,
-        body: jsonEncode(data),
+      final response = await _requestWithFallback(
+        (baseUrl) => http.put(
+          Uri.parse("$baseUrl/paket-les/$id"),
+          headers: headers,
+          body: jsonEncode(data),
+        ),
       );
 
+      // ignore: avoid_print
       print("🔥 UPDATE STATUS CODE: ${response.statusCode}");
 
       if (response.statusCode == 200) {
@@ -159,6 +219,7 @@ class PaketLesService {
         };
       }
     } catch (e) {
+      // ignore: avoid_print
       print("❌ ERROR API: $e");
       return {
         "status": "error",
@@ -171,10 +232,12 @@ class PaketLesService {
   // Delete paket les
   static Future<Map<String, dynamic>> deletePaket(int id) async {
     try {
-      final url = Uri.parse("$baseUrl/paket-les/$id");
       final headers = await _getHeaders();
 
-      final response = await http.delete(url, headers: headers);
+      final response = await _requestWithFallback(
+        (baseUrl) =>
+            http.delete(Uri.parse("$baseUrl/paket-les/$id"), headers: headers),
+      );
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -198,10 +261,12 @@ class PaketLesService {
   // Get paket statistics
   static Future<Map<String, dynamic>> getPaketStats() async {
     try {
-      final url = Uri.parse("$baseUrl/paket-les-stats");
       final headers = await _getHeaders();
 
-      final response = await http.get(url, headers: headers);
+      final response = await _requestWithFallback(
+        (baseUrl) =>
+            http.get(Uri.parse("$baseUrl/paket-les-stats"), headers: headers),
+      );
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -210,6 +275,8 @@ class PaketLesService {
         return {"total_paket": 0, "paket_aktif": 0};
       }
     } catch (e) {
+      // ignore: duplicate_ignore
+      // ignore: avoid_print
       print("❌ ERROR API: $e");
       return {"total_paket": 0, "paket_aktif": 0};
     }
@@ -217,6 +284,7 @@ class PaketLesService {
 
   // Format harga to Rupiah
   static String formatRupiah(int harga) {
+    // ignore: prefer_interpolation_to_compose_strings
     return "Rp" +
         harga.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
