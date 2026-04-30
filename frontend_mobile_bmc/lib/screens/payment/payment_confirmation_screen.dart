@@ -87,7 +87,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: (0.22 * 255).round()),
+                        color: Colors.white.withValues(alpha: 0.22),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(

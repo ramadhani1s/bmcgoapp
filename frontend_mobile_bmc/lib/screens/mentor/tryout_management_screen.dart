@@ -255,7 +255,7 @@ class _TryoutManagementScreenState extends State<TryoutManagementScreen> {
                         const SizedBox(height: 12),
                         if (visibleItems.isEmpty)
                           const Text(
-                            'Belum ada try out. Tekan tombol + untuk membuat.',
+                            'Belum ada try out. Tekan tombol tambah untuk membuat.',
                             style: TextStyle(color: _textMuted),
                           ),
                         for (final item in visibleItems)

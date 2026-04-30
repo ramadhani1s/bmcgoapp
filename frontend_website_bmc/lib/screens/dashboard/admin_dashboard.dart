@@ -4,6 +4,9 @@ import '../../models/admin_dashboard_data.dart';
 import '../../services/admin_dashboard_service.dart';
 import '../../services/auth_service.dart';
 import 'paket_les_screen.dart';
+import 'jadwal_pembelajaran_screen.dart';
+import 'verifikasi_pendaftaran_screen.dart';
+import 'pengumuman_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -85,6 +88,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     if (item.title == 'Verifikasi Pendaftaran') {
       Navigator.of(context).pushNamed('/payment-verification');
+    }
+
+    if (item.title == 'Kelola Jadwal') {
+      // Just update state, screen will be built in the build method
+    }
+
+    if (item.title == 'Kelola Paket Les') {
+      // Just update state, screen will be built in the build method
     }
   }
 
@@ -179,8 +190,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (_selectedMenuTitle == 'Kelola Paket Les')
+                        if (_selectedMenuTitle == 'Kelola Jadwal')
+                          const JadwalPembelajaranScreen()
+                        else if (_selectedMenuTitle == 'Kelola Paket Les')
                           const PaketLesScreen()
+                        else if (_selectedMenuTitle == 'Kelola Pengumuman')
+                          const PengumumanScreen()
+                        else if (_selectedMenuTitle == 'Verifikasi Pendaftaran')
+                          const VerifikasiPendaftaranScreen()
                         else ...[
                           _buildTopBar(),
                           const SizedBox(height: 14),

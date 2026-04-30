@@ -44,6 +44,9 @@ class _LoginScreenState extends State<LoginScreen> {
       AuthService.login(email, password)
           .then((response) async {
             if (mounted) {
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
               setState(() {
                 _isLoading = false;
               });
@@ -69,30 +72,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   user['whatsapp']?.toString() ?? '08xxxxxxxxxx',
                 );
 
-                Navigator.of(context).pushReplacementNamed(
+                navigator.pushReplacementNamed(
                   '/dashboard',
                   arguments: {'user': user, 'token': token},
                 );
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(
                     content: Text(response['message'] ?? 'Login berhasil'),
                     backgroundColor: Colors.green,
                   ),
                 );
-                Navigator.of(
-                  context,
-                ).pushReplacementNamed('/dashboard', arguments: {'user': {}});
+                navigator.pushReplacementNamed('/dashboard', arguments: {'user': {}});
               }
             }
           })
           .catchError((error) {
             if (mounted) {
+              final messenger = ScaffoldMessenger.of(context);
+
               setState(() {
                 _isLoading = false;
               });
 
-              ScaffoldMessenger.of(context).showSnackBar(
+              messenger.showSnackBar(
                 SnackBar(
                   content: Text(error.toString()),
                   backgroundColor: Colors.red,

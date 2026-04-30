@@ -38,9 +38,9 @@ func UploadMateri(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: mentor_id required"})
 			return
 		}
-		// Di sini idealnya query ke DB untuk dapat mentor_id dari user_id. 
+		// Di sini idealnya query ke DB untuk dapat mentor_id dari user_id.
 		// Untuk kemudahan dan sesuai struktur saat ini, kita gunakan user_id sebagai mentor_id (jika mereka sama di tabel mentor)
-		mentorIDStr = fmt.Sprintf("%v", userID) 
+		mentorIDStr = fmt.Sprintf("%v", userID)
 	}
 
 	mentorID, err := strconv.Atoi(mentorIDStr)

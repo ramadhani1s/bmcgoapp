@@ -26,10 +26,7 @@ class _PackageScreenState extends State<PackageScreen> {
 
   Future<void> _loadPakets() async {
     setState(() => _isLoading = true);
-    final pakets = await PaketLesService.getPaketLesList();
-
-    // Filter only aktif pakets
-    final aktivPakets = pakets.where((p) => p['status'] == 'aktif').toList();
+    final aktivPakets = await PaketLesService.getPaketLesList(status: 'aktif');
 
     setState(() {
       _pakets = aktivPakets;
@@ -73,7 +70,7 @@ class _PackageScreenState extends State<PackageScreen> {
         'Sep',
         'Okt',
         'Nov',
-        'Des'
+        'Des',
       ];
       return '${start.day} ${months[start.month]} ${start.year} - ${end.day} ${months[end.month]} ${end.year}';
     } catch (e) {
@@ -98,8 +95,10 @@ class _PackageScreenState extends State<PackageScreen> {
       return;
     }
 
-    final selectedPaket =
-        _pakets.firstWhere((p) => p['id'] == _selectedId, orElse: () => {});
+    final selectedPaket = _pakets.firstWhere(
+      (p) => p['id'] == _selectedId,
+      orElse: () => {},
+    );
 
     if (selectedPaket.isNotEmpty) {
       final hargaAwal = selectedPaket['harga_awal'] ?? 0;
@@ -122,7 +121,7 @@ class _PackageScreenState extends State<PackageScreen> {
                 : ['Akses ke semua materi pembelajaran'],
             normalAmount: hargaAwal,
             finalAmount: hargaPromo,
-            promoTag: diskon > 0 ? 'PROMO ${diskon}%' : null,
+            promoTag: diskon > 0 ? 'PROMO $diskon%' : null,
             promoInfo: selectedPaket['tanggal_mulai_promo'] != null
                 ? 'Berlaku ${_formatPeriod(selectedPaket['tanggal_mulai_promo'], selectedPaket['tanggal_selesai_promo'])}'
                 : null,
@@ -159,7 +158,7 @@ class _PackageScreenState extends State<PackageScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: Colors.white.withAlpha((0.18 * 255).round()),
+                        color: Colors.white.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -215,51 +214,55 @@ class _PackageScreenState extends State<PackageScreen> {
                         children: [
                           CircularProgressIndicator(color: _blueHeader),
                           SizedBox(height: 16),
-                          Text('Memuat paket...',
-                              style: TextStyle(color: Colors.grey)),
+                          Text(
+                            'Memuat paket...',
+                            style: TextStyle(color: Colors.grey),
+                          ),
                         ],
                       ),
                     )
                   : _pakets.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.inbox_rounded,
-                                  size: 64, color: Colors.grey[300]),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Belum ada paket yang tersedia',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Silakan hubungi admin untuk informasi paket',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inbox_rounded,
+                            size: 64,
+                            color: Colors.grey[300],
                           ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _loadPakets,
-                          color: _blueHeader,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 16, horizontal: 16),
-                            itemCount: _pakets.length,
-                            itemBuilder: (context, index) {
-                              final paket = _pakets[index];
-                              return _buildPaketCard(paket);
-                            },
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Belum ada paket yang tersedia',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Silakan hubungi admin untuk informasi paket',
+                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadPakets,
+                      color: _blueHeader,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 16,
                         ),
+                        itemCount: _pakets.length,
+                        itemBuilder: (context, index) {
+                          final paket = _pakets[index];
+                          return _buildPaketCard(paket);
+                        },
+                      ),
+                    ),
             ),
 
             // Button Lanjut Pembayaran
@@ -269,7 +272,7 @@ class _PackageScreenState extends State<PackageScreen> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withAlpha((0.1 * 255).round()),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -318,7 +321,8 @@ class _PackageScreenState extends State<PackageScreen> {
       if (tglMulai != null && tglSelesai != null) {
         final start = DateTime.parse(tglMulai);
         final end = DateTime.parse(tglSelesai);
-        periodDisplay = '${start.day} ${_getMonthName(start.month)} ${start.year} - ${end.day} ${_getMonthName(end.month)} ${end.year}';
+        periodDisplay =
+            '${start.day} ${_getMonthName(start.month)} ${start.year} - ${end.day} ${_getMonthName(end.month)} ${end.year}';
       }
     } catch (e) {
       // ignore
@@ -337,7 +341,7 @@ class _PackageScreenState extends State<PackageScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha((0.08 * 255).round()),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -374,7 +378,9 @@ class _PackageScreenState extends State<PackageScreen> {
                   if (diskon > 0)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: _accent,
                         borderRadius: BorderRadius.circular(6),
@@ -401,16 +407,16 @@ class _PackageScreenState extends State<PackageScreen> {
                   // Tanggal & Durasi
                   Text(
                     periodDisplay,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey,
-                    ),
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.schedule_rounded,
-                          size: 14, color: Colors.grey),
+                      const Icon(
+                        Icons.schedule_rounded,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '$durasi menit',
@@ -420,8 +426,11 @@ class _PackageScreenState extends State<PackageScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Icon(Icons.calendar_today_rounded,
-                          size: 14, color: Colors.grey),
+                      const Icon(
+                        Icons.calendar_today_rounded,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -446,10 +455,7 @@ class _PackageScreenState extends State<PackageScreen> {
                   paket['deskripsi'] ?? '',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ),
 
@@ -655,7 +661,7 @@ class _PackageScreenState extends State<PackageScreen> {
       'Sep',
       'Okt',
       'Nov',
-      'Des'
+      'Des',
     ];
     return months[month];
   }
