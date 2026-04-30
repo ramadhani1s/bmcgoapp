@@ -29,7 +29,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // Jadwal variables
   List<Map<String, dynamic>> _jadwalList = [];
-  bool _isLoadingJadwal = true;
 
   int get _totalMateriTarget => 24;
   int get _totalTryoutTarget => 12;
@@ -177,14 +176,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       setState(() {
         _jadwalList = jadwalData;
-        _isLoadingJadwal = false;
       });
     } catch (e) {
       print("❌ Error loading jadwal: $e");
       if (!mounted) return;
-      setState(() {
-        _isLoadingJadwal = false;
-      });
+      setState(() {});
     }
   }
 

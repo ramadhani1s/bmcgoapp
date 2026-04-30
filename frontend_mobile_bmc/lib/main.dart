@@ -16,11 +16,9 @@ import 'package:frontend_mobile_bmc/screens/onboarding_screen.dart';
 import 'package:frontend_mobile_bmc/screens/splash_screen.dart';
 import 'package:frontend_mobile_bmc/screens/payment/payment_confirmation_screen.dart';
 import 'package:frontend_mobile_bmc/screens/payment/payment_history_screen.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 

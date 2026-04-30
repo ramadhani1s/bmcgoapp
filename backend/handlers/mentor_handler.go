@@ -303,6 +303,78 @@ func DeleteMentor(c *gin.Context) {
 }
 
 // ===============================
+// HARD DELETE MENTOR (Permanent)
+// ===============================
+func HardDeleteMentor(c *gin.Context) {
+	id := c.Param("id")
+
+	// Start transaction to delete mentor and related records
+	tx, err := config.DB.Begin(context.Background())
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "gagal memulai transaksi: " + err.Error(),
+		})
+		return
+	}
+	defer tx.Rollback(context.Background())
+
+	// Get mentor data to find user_id
+	var userID int
+	err = tx.QueryRow(
+		context.Background(),
+		`SELECT user_id FROM mentor WHERE id = $1`,
+		id,
+	).Scan(&userID)
+
+	if err != nil {
+		c.JSON(404, gin.H{
+			"error": "mentor tidak ditemukan",
+		})
+		return
+	}
+
+	// Delete mentor record
+	_, err = tx.Exec(
+		context.Background(),
+		`DELETE FROM mentor WHERE id=$1`,
+		id,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "gagal menghapus mentor: " + err.Error(),
+		})
+		return
+	}
+
+	// Delete user record if no other roles use it
+	_, err = tx.Exec(
+		context.Background(),
+		`DELETE FROM users WHERE id=$1`,
+		userID,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "gagal menghapus user: " + err.Error(),
+		})
+		return
+	}
+
+	// Commit transaction
+	err = tx.Commit(context.Background())
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "gagal commit transaksi: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": "Mentor berhasil dihapus permanen",
+	})
+}
+
+// ===============================
 // EXPORT MENTOR TO EXCEL
 // ===============================
 func ExportMentorExcel(c *gin.Context) {

@@ -11,7 +11,6 @@ class JadwalPembelajaranScreen extends StatefulWidget {
 
 class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   static const Color _headerBlue = Color(0xFF175CFF);
-  static const Color _pageSurface = Color(0xFFF7FAFF);
 
   List<Map<String, dynamic>> jadwalList = [];
   List<Map<String, dynamic>> paketList = [];
@@ -81,8 +80,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     }).toList();
   }
 
-  void _resetFormState() {}
-
   String _timeToString(dynamic value) {
     if (value == null) return '';
     final text = value.toString();
@@ -101,12 +98,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     }
 
     return text;
-  }
-
-  String _formatDateBadge(String value) {
-    final parsed = DateTime.tryParse(value);
-    if (parsed == null) return value;
-    return '${parsed.day.toString().padLeft(2, '0')}/${parsed.month.toString().padLeft(2, '0')}/${parsed.year}';
   }
 
   String _packageLabel(Map<String, dynamic> paket) {
@@ -131,11 +122,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       if (mentor['id'] == id) return mentor;
     }
     return null;
-  }
-
-  String _resolvePackageName(int paketId) {
-    final paket = _findPaketById(paketId);
-    return paket == null ? 'Paket #$paketId' : _packageLabel(paket);
   }
 
   String _resolveMentorName(int mentorId) {

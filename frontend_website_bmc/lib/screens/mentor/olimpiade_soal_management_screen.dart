@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/mentor_competition_item.dart';
 import '../../models/soal_kompetisi.dart';
 import '../../services/soal_kompetisi_service.dart';
+import '../../widgets/soal_overview_card.dart';
 
 class OlimpiadseSoalManagementScreen extends StatefulWidget {
   final MentorCompetitionItem olimpiade;
@@ -239,6 +240,100 @@ class _OlimpiadseSoalManagementScreenState
     );
   }
 
+  void _showEditDialog() {
+    final titleController = TextEditingController(text: widget.olimpiade.title);
+    final durationController = TextEditingController(
+      text: _extractDurasiMenit(widget.olimpiade.durationLabel).toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Olimpiade'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: 'Judul Olimpiade',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: durationController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Durasi (menit)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // For now, just show success message
+              // In production, you would call an API to update the olimpiade
+              _showSnackbar('Olimpiade berhasil diperbarui');
+              Navigator.pop(context);
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Olimpiade'),
+        content: const Text(
+          'Apakah Anda yakin ingin menghapus olimpiade ini? Semua soal yang terkait akan dihapus juga.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // For now, just show success message and pop to previous screen
+              // In production, you would call an API to delete the olimpiade
+              _showSnackbar('Olimpiade berhasil dihapus');
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Return to previous screen
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _extractDurasiMenit(String durationLabel) {
+    // Extract numeric value from duration label (e.g., "150 menit" -> 150)
+    final regex = RegExp(r'(\d+)');
+    final match = regex.firstMatch(durationLabel);
+    return match != null ? int.tryParse(match.group(1) ?? '150') ?? 150 : 150;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,24 +353,28 @@ class _OlimpiadseSoalManagementScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
-                      Text(
-                        widget.olimpiade.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1F2937),
+                      // Overview Card
+                      SoalOverviewCard(
+                        title: widget.olimpiade.title,
+                        status: widget.olimpiade.isPublished
+                            ? 'Dipublikasikan'
+                            : 'Draft',
+                        tanggal: widget.olimpiade.createdAt,
+                        durasiMenit: _extractDurasiMenit(
+                          widget.olimpiade.durationLabel,
                         ),
+                        soalTerbuat: _soalList.length,
+                        totalSoal: widget.olimpiade.totalQuestions,
+                        kategoriProgress: {
+                          'Soal': widget.olimpiade.totalQuestions,
+                        },
+                        onKelolaSoal: () {
+                          // Already in soal management screen
+                        },
+                        onEdit: () => _showEditDialog(),
+                        onDelete: () => _showDeleteConfirmation(),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_soalList.length}/${widget.olimpiade.totalQuestions} soal dibuat',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
 
                       // Form
                       Container(

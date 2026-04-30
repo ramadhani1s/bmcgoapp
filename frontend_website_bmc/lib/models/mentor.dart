@@ -3,7 +3,7 @@ class Mentor {
   final int userId;
   final String email;
   final String namaMentor;
-  final String spesialisasi;
+  final String mataPelajaran;
   final String password;
   final String status;
 
@@ -12,7 +12,7 @@ class Mentor {
     required this.userId,
     required this.email,
     required this.namaMentor,
-    required this.spesialisasi,
+    required this.mataPelajaran,
     required this.password,
     required this.status,
   });
@@ -27,8 +27,8 @@ class Mentor {
 
       namaMentor: json['nama_mentor'] ?? json['nama'] ?? '',
 
-      spesialisasi:
-          json['spesialisasi'] ?? json['mapel'] ?? json['mata_pelajaran'] ?? '',
+      mataPelajaran:
+          json['mapel'] ?? json['mata_pelajaran'] ?? json['spesialisasi'] ?? '',
 
       password: json['password'] ?? '',
 
@@ -42,7 +42,7 @@ class Mentor {
       'user_id': userId,
       'email': email,
       'nama_mentor': namaMentor,
-      'spesialisasi': spesialisasi,
+      'mata_pelajaran': mataPelajaran,
       'password': password,
       'status': status,
     };
