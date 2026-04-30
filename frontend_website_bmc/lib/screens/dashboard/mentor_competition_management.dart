@@ -99,11 +99,11 @@ class _MentorCompetitionManagementState
     ];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -116,13 +116,13 @@ class _MentorCompetitionManagementState
                   item.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontSize: 13,
                     color: Color(0xFF111827),
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(999),
@@ -130,7 +130,7 @@ class _MentorCompetitionManagementState
                 child: Text(
                   item.isPublished ? 'Publish' : 'Draft',
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: Color(0xFF6B7280),
                     fontWeight: FontWeight.w600,
                   ),
@@ -138,40 +138,40 @@ class _MentorCompetitionManagementState
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             '${item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel}   ${item.durationLabel} menit   0/$total soal',
-            style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+            style: const TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
             'Progress Soal',
-            style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+            style: TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 5,
+              minHeight: 4,
               backgroundColor: const Color(0xFFE5E7EB),
               valueColor: const AlwaysStoppedAnimation<Color>(
                 Color(0xFF2563EB),
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           GridView.count(
             crossAxisCount: 3,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 4,
-            crossAxisSpacing: 4,
-            childAspectRatio: 4.5,
+            mainAxisSpacing: 3,
+            crossAxisSpacing: 3,
+            childAspectRatio: 5.2,
             children: shortCategories.map((entry) {
               final value = categories[entry.value] ?? 0;
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(6),
@@ -183,7 +183,7 @@ class _MentorCompetitionManagementState
                     Text(
                       entry.key,
                       style: const TextStyle(
-                        fontSize: 9,
+                        fontSize: 8,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF374151),
                       ),
@@ -191,7 +191,7 @@ class _MentorCompetitionManagementState
                     Text(
                       '0/$value',
                       style: const TextStyle(
-                        fontSize: 9,
+                        fontSize: 8,
                         color: Color(0xFF6B7280),
                       ),
                     ),
@@ -200,31 +200,32 @@ class _MentorCompetitionManagementState
               );
             }).toList(),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () => _openTryoutSoalManagement(item),
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(28),
+                    minimumSize: const Size.fromHeight(26),
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  icon: const Icon(Icons.menu_book_outlined, size: 14),
+                  icon: const Icon(Icons.menu_book_outlined, size: 13),
                   label: const Text(
                     'Kelola Soal',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: 11),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               SizedBox(
-                width: 32,
-                height: 28,
+                width: 28,
+                height: 26,
                 child: OutlinedButton(
                   onPressed: () => _openForm(item: item),
                   style: OutlinedButton.styleFrom(
@@ -236,15 +237,15 @@ class _MentorCompetitionManagementState
                   ),
                   child: const Icon(
                     Icons.edit_outlined,
-                    size: 13,
+                    size: 12,
                     color: Color(0xFF6B7280),
                   ),
                 ),
               ),
               const SizedBox(width: 6),
               SizedBox(
-                width: 32,
-                height: 28,
+                width: 28,
+                height: 26,
                 child: OutlinedButton(
                   onPressed: () => _deleteItem(item),
                   style: OutlinedButton.styleFrom(
@@ -256,7 +257,7 @@ class _MentorCompetitionManagementState
                   ),
                   child: const Icon(
                     Icons.delete_outline,
-                    size: 13,
+                    size: 12,
                     color: Color(0xFFEF4444),
                   ),
                 ),
@@ -270,11 +271,11 @@ class _MentorCompetitionManagementState
 
   Widget _buildOlimpiadCard(MentorCompetitionItem item) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -287,13 +288,13 @@ class _MentorCompetitionManagementState
                   item.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontSize: 13,
                     color: Color(0xFF111827),
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(999),
@@ -301,7 +302,7 @@ class _MentorCompetitionManagementState
                 child: Text(
                   item.isPublished ? 'Publish' : 'Draft',
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: Color(0xFF6B7280),
                     fontWeight: FontWeight.w600,
                   ),
@@ -309,36 +310,37 @@ class _MentorCompetitionManagementState
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             '${item.classLevel} • ${item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel}${item.subject.isEmpty ? '' : ' • ${item.subject}'}',
-            style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+            style: const TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () => _openOlimpiadseSoalManagement(item),
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(28),
+                    minimumSize: const Size.fromHeight(26),
                     backgroundColor: widget.accentColor,
                     foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  icon: const Icon(Icons.menu_book_outlined, size: 14),
+                  icon: const Icon(Icons.menu_book_outlined, size: 13),
                   label: const Text(
                     'Kelola Soal',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: 11),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               SizedBox(
-                width: 32,
-                height: 28,
+                width: 28,
+                height: 26,
                 child: OutlinedButton(
                   onPressed: () => _openForm(item: item),
                   style: OutlinedButton.styleFrom(
@@ -350,15 +352,15 @@ class _MentorCompetitionManagementState
                   ),
                   child: const Icon(
                     Icons.edit_outlined,
-                    size: 13,
+                    size: 12,
                     color: Color(0xFF6B7280),
                   ),
                 ),
               ),
               const SizedBox(width: 6),
               SizedBox(
-                width: 32,
-                height: 28,
+                width: 28,
+                height: 26,
                 child: OutlinedButton(
                   onPressed: () => _deleteItem(item),
                   style: OutlinedButton.styleFrom(
@@ -370,7 +372,7 @@ class _MentorCompetitionManagementState
                   ),
                   child: const Icon(
                     Icons.delete_outline,
-                    size: 13,
+                    size: 12,
                     color: Color(0xFFEF4444),
                   ),
                 ),
@@ -579,7 +581,7 @@ class _MentorCompetitionManagementState
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
@@ -689,10 +691,38 @@ class _MentorCompetitionManagementState
                     ),
                   )
                 else
-                  ...visibleItems.map(
-                    (item) => isTryout
-                        ? _buildTryoutCard(item)
-                        : _buildOlimpiadCard(item),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      int columns = 4;
+                      final w = constraints.maxWidth;
+                      if (w < 600) {
+                        columns = 1;
+                      } else if (w < 900) {
+                        columns = 2;
+                      } else if (w < 1200) {
+                        columns = 3;
+                      } else {
+                        columns = 4;
+                      }
+
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: visibleItems.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          mainAxisExtent: isTryout ? 320 : 170,
+                        ),
+                        itemBuilder: (context, index) {
+                          final item = visibleItems[index];
+                          return isTryout
+                              ? _buildTryoutCard(item)
+                              : _buildOlimpiadCard(item);
+                        },
+                      );
+                    },
                   ),
               ],
             ),

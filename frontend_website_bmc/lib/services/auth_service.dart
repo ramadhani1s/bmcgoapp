@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -9,7 +11,7 @@ class AuthService {
   // =====================================================
   // BASE URL
   // =====================================================
-  static const String baseUrl = 'http://127.0.0.1:8080';
+  static const String baseUrl = 'http://localhost:8080';
 
   // =====================================================
   // LOGIN
@@ -21,7 +23,7 @@ class AuthService {
     try {
       final response = await http
           .post(
-            Uri.parse('$baseUrl/auth/login'),
+            Uri.parse('$baseUrl/api/auth/login'),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',

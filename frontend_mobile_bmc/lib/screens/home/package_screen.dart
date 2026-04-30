@@ -13,7 +13,6 @@ class _PackageScreenState extends State<PackageScreen> {
   static const Color _blueHeader = Color(0xFF2D4CC8);
   static const Color _accent = Color(0xFFFF7070);
   static const Color _successGreen = Color(0xFF4CAF50);
-  static const Color _promoOrange = Color(0xFFFFA500);
 
   List<Map<String, dynamic>> _pakets = [];
   bool _isLoading = true;
@@ -159,7 +158,7 @@ class _PackageScreenState extends State<PackageScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
+                        color: Colors.white.withAlpha((0.18 * 255).round()),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -273,7 +272,7 @@ class _PackageScreenState extends State<PackageScreen> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withAlpha((0.1 * 255).round()),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -342,7 +341,7 @@ class _PackageScreenState extends State<PackageScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withAlpha((0.08 * 255).round()),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

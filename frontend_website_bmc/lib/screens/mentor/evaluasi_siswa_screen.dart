@@ -145,7 +145,7 @@ class _EvaluasiSiswaScreenState extends State<EvaluasiSiswaScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+            color: Color(0xFF4F46E5).withAlpha((0.3 * 255).round()),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -181,7 +181,7 @@ class _EvaluasiSiswaScreenState extends State<EvaluasiSiswaScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withAlpha((0.2 * 255).round()),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -254,7 +254,7 @@ class _EvaluasiSiswaScreenState extends State<EvaluasiSiswaScreen>
             border: Border.all(color: isEvaluated ? Colors.green.shade200 : Colors.blue.shade200),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
+                color: Colors.black.withAlpha((0.02 * 255).round()),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -504,7 +504,7 @@ class _EvaluationModalState extends State<EvaluationModal> {
                         activeTrackColor: _getScoreColor(_nilai),
                         inactiveTrackColor: Colors.grey.shade200,
                         thumbColor: _getScoreColor(_nilai),
-                        overlayColor: _getScoreColor(_nilai).withValues(alpha: 0.2),
+                        overlayColor: _getScoreColor(_nilai).withAlpha((0.2 * 255).round()),
                         trackHeight: 8,
                       ),
                       child: Slider(
@@ -524,9 +524,9 @@ class _EvaluationModalState extends State<EvaluationModal> {
                     width: 70,
                     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                     decoration: BoxDecoration(
-                      color: _getScoreColor(_nilai).withValues(alpha: 0.1),
+                      color: _getScoreColor(_nilai).withAlpha((0.1 * 255).round()),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _getScoreColor(_nilai).withValues(alpha: 0.5)),
+                      border: Border.all(color: _getScoreColor(_nilai).withAlpha((0.5 * 255).round())),
                     ),
                     child: Center(
                       child: Text(

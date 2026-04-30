@@ -600,6 +600,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
     );
   }
 
+<<<<<<< HEAD
   String _formatCurrency(int value) {
     return 'Rp${value.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (match) => '${match.group(1)}.')}';
   }
@@ -922,6 +923,22 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                     withSearchIcon: true,
                   ),
                 ),
+=======
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.blue,
+>>>>>>> 105b65fc647e97b01e70c342e0555c9c2c40631c
               ),
               const SizedBox(width: 10),
               SizedBox(
@@ -1373,6 +1390,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
   }
 
   @override
+<<<<<<< HEAD
   void dispose() {
     namaController.dispose();
     deskripsiController.dispose();
@@ -1381,5 +1399,302 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
     durasiController.dispose();
     _searchController.dispose();
     super.dispose();
+=======
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ================= HEADER =================
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Kelola Paket Les",
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Buat dan atur paket les bimbingan",
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+              ElevatedButton.icon(
+                onPressed: _showTambahModal,
+                icon: const Icon(Icons.add),
+                label: const Text("Tambah Paket Les"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2A58F2),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // ================= STATS CARDS =================
+          Row(
+            children: [
+              _buildStatCard(
+                "Total Paket",
+                stats['total_paket']?.toString() ?? '0',
+                Colors.blue,
+              ),
+              const SizedBox(width: 16),
+              _buildStatCard(
+                "Paket Aktif",
+                stats['paket_aktif']?.toString() ?? '0',
+                Colors.green,
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+
+          // ================= PAKET LIST =================
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : paketList.isEmpty
+              ? Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.inbox, size: 64, color: Colors.grey.shade300),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Belum ada paket les",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 1.0,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: paketList.length,
+                  itemBuilder: (context, index) {
+                    final paket = paketList[index];
+                    int hargaPromo = PaketLesService.calculateHargaPromo(
+                      paket['harga_awal'] ?? 0,
+                      paket['diskon'] ?? 0,
+                    );
+
+                    return Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header dengan status
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: paket['status'] == 'aktif'
+                                  ? Colors.green.shade100
+                                  : Colors.red.shade100,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                topRight: Radius.circular(12),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  paket['nama_paket'] ?? 'N/A',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  paket['status'] == 'aktif'
+                                      ? '✅ Aktif'
+                                      : '❌ Nonaktif',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: paket['status'] == 'aktif'
+                                        ? Colors.green.shade700
+                                        : Colors.red.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Content
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Harga
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        PaketLesService.formatRupiah(
+                                          paket['harga_awal'] ?? 0,
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                          decoration:
+                                              TextDecoration.lineThrough,
+                                        ),
+                                      ),
+                                      if ((paket['diskon'] ?? 0) > 0)
+                                        Text(
+                                          "${paket['diskon']}% OFF",
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      Text(
+                                        PaketLesService.formatRupiah(
+                                          hargaPromo,
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Durasi
+                                  if (paket['durasi'] != null)
+                                    Text(
+                                      "⏱️ ${paket['durasi']} menit",
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Buttons
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _showDetailModal(paket),
+                                    icon: const Icon(
+                                      Icons.visibility,
+                                      size: 16,
+                                    ),
+                                    label: const Text(
+                                      "Detail",
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _showEditModal(paket),
+                                    icon: const Icon(Icons.edit, size: 16),
+                                    label: const Text(
+                                      "Edit",
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () =>
+                                        _showDeleteConfirmation(paket),
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      size: 16,
+                                      color: Colors.red,
+                                    ),
+                                    label: const Text(
+                                      "Hapus",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: color.withAlpha((0.1 * 255).round()),
+          border: Border.all(color: color.withAlpha((0.3 * 255).round())),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+>>>>>>> 105b65fc647e97b01e70c342e0555c9c2c40631c
   }
 }

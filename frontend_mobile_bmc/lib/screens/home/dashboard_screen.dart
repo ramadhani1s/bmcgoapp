@@ -459,7 +459,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.95),
+                            color: Colors.white.withAlpha((0.95 * 255).round()),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Stack(
@@ -502,10 +502,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '$_studentName 👋',
+                      '$_studentName ',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 34,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         height: 1,
                       ),
@@ -664,7 +664,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: Colors.white.withAlpha((0.12 * 255).round()),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -676,7 +676,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.09),
+                    color: Colors.white.withAlpha((0.09 * 255).round()),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -1034,7 +1034,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.22),
+                      color: Colors.white.withAlpha((0.22 * 255).round()),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(

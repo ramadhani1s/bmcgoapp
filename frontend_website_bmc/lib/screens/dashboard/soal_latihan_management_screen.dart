@@ -91,7 +91,6 @@ class _SoalLatihanManagementScreenState
 
   void _showCreateDialog() {
     final titleController = TextEditingController();
-    final mapelController = TextEditingController();
     final soalController = TextEditingController(text: '1');
     String selectedMapel = 'Matematika';
 
@@ -408,7 +407,7 @@ class _SoalLatihanManagementScreenState
                 padding: const EdgeInsets.only(bottom: 20),
                 child: _buildDetailedLatihanCard(latihan, soalList),
               );
-            }).toList(),
+            }),
           ],
         ),
       );
@@ -560,7 +559,7 @@ class _SoalLatihanManagementScreenState
               final index = entry.key + 1;
               final soal = entry.value;
               return _buildSoalCard(index, soal);
-            }).toList(),
+            }),
 
           const SizedBox(height: 16),
 
@@ -689,7 +688,7 @@ class _SoalLatihanManagementScreenState
                 ],
               ),
             );
-          }).toList(),
+          }),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -937,8 +936,4 @@ class _SoalLatihanManagementScreenState
     );
   }
 
-  Widget _buildLatihanCard(Latihan latihan) {
-    // This method is deprecated - use _buildDetailedLatihanCard instead
-    return Container();
-  }
 }
