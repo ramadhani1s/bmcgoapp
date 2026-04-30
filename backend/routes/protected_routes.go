@@ -101,4 +101,5 @@ func ProtectedRoutes(r *gin.Engine) {
 
 	siswa.POST("/attendance/submit", handlers.SubmitAttendanceTokenHandler)
 	siswa.GET("/attendance/history", handlers.GetStudentAttendanceHistoryHandler)
+	siswa.GET("/materi", handlers.GetAllMateri)
 }
