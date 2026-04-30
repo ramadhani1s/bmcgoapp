@@ -6,6 +6,7 @@ import '../../models/user.dart';
 import '../../models/materi_pembelajaran.dart';
 import '../../services/auth_service.dart';
 import '../../services/materi_service.dart';
+// ignore: deprecated_member_use
 import 'dart:html' as html;
 
 class MateriPembelajaranScreen extends StatefulWidget {
@@ -85,7 +86,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       anchor.click();
       anchor.remove();
 
-      _showSuccessSnackBar('Mengunduh "${filename}"');
+      _showSuccessSnackBar('Mengunduh "$filename"');
     } catch (e) {
       _showErrorSnackBar('Gagal mengunduh file');
     }

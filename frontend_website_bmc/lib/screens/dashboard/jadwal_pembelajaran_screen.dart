@@ -699,7 +699,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: selectedHari.isEmpty ? null : selectedHari,
+                      initialValue: selectedHari.isEmpty ? null : selectedHari,
                       items: [
                         const DropdownMenuItem<String>(
                           value: '',
