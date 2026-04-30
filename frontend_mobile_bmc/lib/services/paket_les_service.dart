@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,7 +12,7 @@ class PaketLesService {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString('token') ?? prefs.getString('auth_token');
     } catch (e) {
-      print("❌ Error getting token: $e");
+      debugPrint("Error getting token: $e");
       return null;
     }
   }
@@ -21,14 +22,14 @@ class PaketLesService {
     try {
       final url = Uri.parse("$baseUrl/paket-les");
 
-      print("🔥 GET PAKET LIST FROM: $url");
+      debugPrint("GET PAKET LIST FROM: $url");
 
       final response = await http
           .get(url, headers: {"Content-Type": "application/json"})
           .timeout(const Duration(seconds: 10));
 
-      print("🔥 STATUS CODE: ${response.statusCode}");
-      print("🔥 RESPONSE: ${response.body}");
+        debugPrint("STATUS CODE: ${response.statusCode}");
+        debugPrint("RESPONSE: ${response.body}");
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -39,16 +40,16 @@ class PaketLesService {
           for (var item in jsonResponse['data']) {
             pakets.add(Map<String, dynamic>.from(item));
           }
-          print("✅ Found ${pakets.length} pakets");
+          debugPrint("Found ${pakets.length} pakets");
           return pakets;
         }
         return [];
       } else {
-        print("❌ API Error: ${response.statusCode}");
+        debugPrint("API Error: ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("❌ ERROR API: $e");
+      debugPrint("ERROR API: $e");
       return [];
     }
   }
@@ -72,14 +73,14 @@ class PaketLesService {
         "Content-Type": "application/json",
       };
 
-      print("🔥 CREATE PAKET FROM MOBILE: $data");
+      debugPrint("CREATE PAKET FROM MOBILE: $data");
 
       final response = await http
           .post(url, headers: headers, body: jsonEncode(data))
           .timeout(const Duration(seconds: 10));
 
-      print("🔥 CREATE STATUS: ${response.statusCode}");
-      print("🔥 CREATE RESPONSE: ${response.body}");
+        debugPrint("CREATE STATUS: ${response.statusCode}");
+        debugPrint("CREATE RESPONSE: ${response.body}");
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -91,7 +92,7 @@ class PaketLesService {
         };
       }
     } catch (e) {
-      print("❌ ERROR CREATE: $e");
+      debugPrint("ERROR CREATE: $e");
       return {"status": "error", "message": "Error: $e"};
     }
   }

@@ -331,7 +331,7 @@ class _TryoutQuestionManagementScreenState
                               backgroundColor: _accent,
                             ),
                             child: const Text(
-                              '+ Tambah Soal',
+                              'Tambah Soal',
                               style: TextStyle(color: Colors.white),
                             ),
                           ),

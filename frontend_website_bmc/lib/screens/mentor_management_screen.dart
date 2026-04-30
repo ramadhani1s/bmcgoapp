@@ -38,17 +38,12 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
   }
 
   // ==================================================
-  // EXPORT EXCEL
+  // EXPORT ALL MENTORS TO EXCEL
   // ==================================================
-  void _exportMentorExcel(Mentor mentor) {
+  void _exportAllMentorExcel() {
     final excel = xls.Excel.createExcel();
-
-    // rename sheet default dulu
     final defaultSheet = excel.getDefaultSheet() ?? 'Sheet1';
-
     excel.rename(defaultSheet, 'Mentor');
-
-    // ambil sheet setelah rename
     final sheet = excel['Mentor'];
 
     // HEADER
@@ -64,54 +59,34 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
     for (int col = 0; col < headers.length; col++) {
       sheet
           .cell(xls.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0))
-          .value = xls.TextCellValue(
-        headers[col],
-      );
+          .value = xls.TextCellValue(headers[col]);
     }
 
-    // DATA
-    sheet.cell(xls.CellIndex.indexByString("A2")).value = xls.IntCellValue(
-      mentor.mentorId,
-    );
-
-    sheet.cell(xls.CellIndex.indexByString("B2")).value = xls.TextCellValue(
-      mentor.namaMentor,
-    );
-
-    sheet.cell(xls.CellIndex.indexByString("C2")).value = xls.TextCellValue(
-      mentor.email,
-    );
-
-    sheet.cell(xls.CellIndex.indexByString("D2")).value = xls.TextCellValue(
-      mentor.password,
-    );
-
-    sheet.cell(xls.CellIndex.indexByString("E2")).value = xls.TextCellValue(
-      mentor.spesialisasi,
-    );
-
-    sheet.cell(xls.CellIndex.indexByString("F2")).value = xls.TextCellValue(
-      mentor.status,
-    );
+    // DATA - All mentors in single file
+    int rowIndex = 1;
+    for (final mentor in _mentors) {
+      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex)).value = xls.IntCellValue(mentor.mentorId);
+      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex)).value = xls.TextCellValue(mentor.namaMentor);
+      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex)).value = xls.TextCellValue(mentor.email);
+      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex)).value = xls.TextCellValue(mentor.password);
+      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex)).value = xls.TextCellValue(mentor.spesialisasi);
+      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex)).value = xls.TextCellValue(mentor.status);
+      rowIndex++;
+    }
 
     final bytes = excel.encode();
-
     if (bytes == null) {
       _showSnack("Gagal membuat file excel");
       return;
     }
 
     final blob = html.Blob([bytes]);
-
     final url = html.Url.createObjectUrlFromBlob(blob);
-
     html.AnchorElement(href: url)
-      ..setAttribute("download", "mentor_${mentor.namaMentor}.xlsx")
+      ..setAttribute("download", "data_mentor_bmc_${DateTime.now().toString().split(' ')[0]}.xlsx")
       ..click();
-
     html.Url.revokeObjectUrl(url);
-
-    _showSnack("Excel ${mentor.namaMentor} berhasil diunduh");
+    _showSnack("Excel semua mentor berhasil diunduh");
   }
 
   // ==================================================
@@ -336,24 +311,53 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
   }
 
   // ==================================================
-  // DELETE
+  // DEACTIVATE MENTOR (Soft Delete - Status Nonaktif)
   // ==================================================
-  Future<void> _deleteMentor(Mentor mentor) async {
+  Future<void> _deactivateMentor(Mentor mentor) async {
     final yes = await showDialog<bool>(
       context: context,
       builder: (_) {
         return AlertDialog(
-          title: const Text("Hapus Mentor"),
-          content: Text("Yakin hapus ${mentor.namaMentor}?"),
+          title: const Text("Nonaktifkan Mentor"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Yakin nonaktifkan ${mentor.namaMentor}?",
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info, color: Colors.amber, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Data mentor tetap tersimpan. Soal latihan yang ada tidak akan terhapus.",
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: const Text("Batal"),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text("Hapus"),
+              child: const Text("Nonaktifkan"),
             ),
           ],
         );
@@ -363,7 +367,6 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
     if (yes != true) return;
 
     final res = await AuthService.deleteMentor(mentor.mentorId);
-
     _showSnack(res["message"]);
 
     if (res["success"] == true) {
@@ -601,6 +604,24 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
 
                   const SizedBox(height: 20),
 
+                  // Export all mentors button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _mentors.isEmpty ? null : _exportAllMentorExcel,
+                        icon: const Icon(Icons.download),
+                        label: const Text("Unduh Semua Data Mentor (Excel)"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -668,12 +689,20 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                             vertical: 4,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Colors.green.shade100,
-                                            borderRadius: BorderRadius.circular(
-                                              20,
+                                            color: mentor.status.toLowerCase() == 'aktif'
+                                                ? Colors.green.shade100
+                                                : Colors.red.shade100,
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            mentor.status,
+                                            style: TextStyle(
+                                              color: mentor.status.toLowerCase() == 'aktif'
+                                                  ? Colors.green.shade700
+                                                  : Colors.red.shade700,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                          child: Text(mentor.status),
                                         ),
                                       ),
                                       DataCell(
@@ -681,27 +710,21 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                           children: [
                                             IconButton(
                                               onPressed: () =>
-                                                  _exportMentorExcel(mentor),
-                                              icon: const Icon(
-                                                Icons.download,
-                                                color: Colors.green,
-                                              ),
-                                            ),
-                                            IconButton(
-                                              onPressed: () =>
                                                   _showEditDialog(mentor),
                                               icon: const Icon(
                                                 Icons.edit,
                                                 color: Colors.blue,
                                               ),
+                                              tooltip: "Edit Mentor",
                                             ),
                                             IconButton(
                                               onPressed: () =>
-                                                  _deleteMentor(mentor),
+                                                  _deactivateMentor(mentor),
                                               icon: const Icon(
-                                                Icons.delete,
-                                                color: Colors.red,
+                                                Icons.block,
+                                                color: Colors.orange,
                                               ),
+                                              tooltip: "Nonaktifkan Mentor",
                                             ),
                                           ],
                                         ),

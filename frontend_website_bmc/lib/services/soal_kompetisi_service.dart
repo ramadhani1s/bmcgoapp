@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/soal_kompetisi.dart';
@@ -74,10 +75,23 @@ class SoalKompetisiService {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 201 && response.statusCode != 200) {
+        String details = response.body;
+        try {
+          final parsed = jsonDecode(response.body);
+          if (parsed is Map && parsed['error'] != null) {
+            details = parsed['error'].toString();
+          }
+        } catch (_) {}
+        if (kDebugMode) {
+          debugPrint('createSoal error status=${response.statusCode} body=${response.body}');
+        }
+
         return {
           'success': false,
           'message':
               'Endpoint tidak tersedia (HTTP ${response.statusCode}). Hubungi admin.',
+          'statusCode': response.statusCode,
+          'details': details,
         };
       }
 

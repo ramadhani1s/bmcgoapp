@@ -139,9 +139,50 @@ class _MentorCompetitionManagementState
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            '${item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel}   ${item.durationLabel} menit   0/$total soal',
-            style: const TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
+          
+          Row(
+            children: [
+              // Badge Tanggal - Warna Ungu
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E8FF),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: const Color(0xFFE9D5FF)),
+                ),
+                child: Text(
+                  item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel,
+                  style: const TextStyle(
+                    fontSize: 8,
+                    color: Color(0xFF7C3AED),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Badge Waktu - Warna Oranye
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: const Color(0xFFFFEDD5)),
+                ),
+                child: Text(
+                  '${item.durationLabel} menit',
+                  style: const TextStyle(
+                    fontSize: 8,
+                    color: Color(0xFFF59E0B),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '0/$total soal',
+                style: const TextStyle(fontSize: 8, color: Color(0xFF6B7280)),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           const Text(
@@ -161,41 +202,50 @@ class _MentorCompetitionManagementState
             ),
           ),
           const SizedBox(height: 6),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 3,
-            crossAxisSpacing: 3,
-            childAspectRatio: 5.2,
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
             children: shortCategories.map((entry) {
               final value = categories[entry.value] ?? 0;
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry.key,
-                      style: const TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF374151),
+              return IntrinsicWidth(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        entry.key,
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF374151),
+                        ),
                       ),
-                    ),
-                    Text(
-                      '0/$value',
-                      style: const TextStyle(
-                        fontSize: 8,
-                        color: Color(0xFF6B7280),
+                      const SizedBox(height: 2),
+                      Text(
+                        '0/$value',
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 8,
+                          color: Color(0xFF6B7280),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             }).toList(),
@@ -311,9 +361,40 @@ class _MentorCompetitionManagementState
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            '${item.classLevel} • ${item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel}${item.subject.isEmpty ? '' : ' • ${item.subject}'}',
-            style: const TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
+          // PERBAIKAN: Tampilkan kelas, tanggal (ungu), dan subject dengan layout yang rapi
+          // Tanggal: warna ungu (#7C3AED) dengan background #F3E8FF (konsisten dengan try out)
+          Row(
+            children: [
+              Text(
+                item.classLevel,
+                style: const TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(width: 6),
+              // Badge Tanggal - Warna Ungu (sama seperti di Try Out)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E8FF),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: const Color(0xFFE9D5FF)),
+                ),
+                child: Text(
+                  item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel,
+                  style: const TextStyle(
+                    fontSize: 8,
+                    color: Color(0xFF7C3AED),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (item.subject.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Text(
+                  item.subject,
+                  style: const TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 8),
           Row(
@@ -436,7 +517,7 @@ class _MentorCompetitionManagementState
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: options.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (context, index) =>
                     const Divider(height: 12, color: Color(0xFFF3F4F6)),
                 itemBuilder: (context, index) {
                   final label = options[index];
@@ -682,8 +763,10 @@ class _MentorCompetitionManagementState
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                if (visibleItems.isEmpty)
+                  const SizedBox(height: 16),
+                  // PERBAIKAN: Info box "Kelola Try Out"
+                  
+                  if (visibleItems.isEmpty)
                   const Card(
                     child: Padding(
                       padding: EdgeInsets.all(20),
@@ -713,7 +796,8 @@ class _MentorCompetitionManagementState
                           crossAxisCount: columns,
                           mainAxisSpacing: 12,
                           crossAxisSpacing: 12,
-                          mainAxisExtent: isTryout ? 320 : 170,
+                          // PERBAIKAN: Kurangi height card dari 360 ke 280 untuk layout lebih rapi (tidak terlalu besar dan kosong di bawah)
+                          mainAxisExtent: isTryout ? 280 : 170,
                         ),
                         itemBuilder: (context, index) {
                           final item = visibleItems[index];
@@ -851,7 +935,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _classLevel,
+                initialValue: _classLevel,
                 items: _classOptions
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
@@ -1043,6 +1127,10 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                     );
                     return;
                   }
+
+                  final messenger = ScaffoldMessenger.of(context);
+                  final navigator = Navigator.of(context);
+
                   setState(() => _saving = true);
                   final totalQuestions = widget.type == 'tryout'
                       ? _sumTryoutQuestions()
@@ -1061,7 +1149,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                       );
                   if (!mounted) return;
                   setState(() => _saving = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     SnackBar(
                       content: Text(
                         response['message']?.toString() ?? 'Proses selesai',
@@ -1078,7 +1166,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                   );
                   if (response['success'] == true) {
                     widget.onSaved();
-                    Navigator.of(context).pop(true);
+                    navigator.pop(true);
                   }
                 },
           child: const Text('Simpan'),

@@ -278,14 +278,14 @@ func UpdateMentor(c *gin.Context) {
 }
 
 // ===============================
-// DELETE MENTOR
+// DELETE MENTOR (Soft Delete - set status to Nonaktif)
 // ===============================
 func DeleteMentor(c *gin.Context) {
 	id := c.Param("id")
 
 	_, err := config.DB.Exec(
 		context.Background(),
-		`DELETE FROM mentor WHERE id=$1`,
+		`UPDATE mentor SET status='Nonaktif' WHERE id=$1`,
 		id,
 	)
 
@@ -298,6 +298,61 @@ func DeleteMentor(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"success": true,
-		"message": "Mentor berhasil dihapus",
+		"message": "Mentor berhasil dinonaktifkan",
+	})
+}
+
+// ===============================
+// EXPORT MENTOR TO EXCEL
+// ===============================
+func ExportMentorExcel(c *gin.Context) {
+	rows, err := config.DB.Query(context.Background(), `
+		SELECT 
+			id,
+			nama_mentor,
+			COALESCE(email, ''),
+			COALESCE(mata_pelajaran, ''),
+			COALESCE(status, 'Aktif')
+		FROM mentor
+		ORDER BY id ASC
+	`)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Gagal mengambil data mentor",
+		})
+		return
+	}
+	defer rows.Close()
+
+	var mentors []map[string]interface{}
+
+	for rows.Next() {
+		var (
+			id            int
+			nama          string
+			email         string
+			mataPelajaran string
+			status        string
+		)
+
+		err := rows.Scan(&id, &nama, &email, &mataPelajaran, &status)
+		if err != nil {
+			continue
+		}
+
+		mentors = append(mentors, map[string]interface{}{
+			"ID":             id,
+			"Nama Mentor":    nama,
+			"Email":          email,
+			"Mata Pelajaran": mataPelajaran,
+			"Status":         status,
+		})
+	}
+
+	// Return data as JSON for frontend to generate Excel
+	c.Header("Content-Disposition", "attachment; filename=mentor_data.xlsx")
+	c.JSON(200, gin.H{
+		"success": true,
+		"data":    mentors,
 	})
 }

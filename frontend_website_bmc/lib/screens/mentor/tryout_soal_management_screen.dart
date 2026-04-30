@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../models/mentor_competition_item.dart';
 import '../../models/soal_kompetisi.dart';
-import '../../services/mentor_competition_service.dart';
 import '../../services/soal_kompetisi_service.dart';
 
 class TryoutSoalManagementScreen extends StatefulWidget {
@@ -105,7 +105,24 @@ class _TryoutSoalManagementScreenState
     try {
       Map<String, dynamic> response;
 
+      // Guard: ensure kompetisi id is valid before sending
+      if (widget.tryout.id <= 0) {
+        setState(() => _isSubmitting = false);
+        _showSnackbar(
+          'ID tryout tidak valid. Tidak dapat menyimpan soal.',
+          isError: true,
+        );
+        return;
+      }
+
       if (_editingItem == null) {
+        // Debug: print payload for server troubleshooting
+        if (kDebugMode) {
+          debugPrint(
+            'createSoal payload: kompetisi_id=${widget.tryout.id}, pertanyaan=${_pertanyaanController.text.trim()}, jawaban=$_selectedJawaban, kategori=$_selectedKategori',
+          );
+        }
+
         response = await SoalKompetisiService.createSoal(
           kompetisiId: widget.tryout.id,
           tipe: 'tryout',
@@ -143,10 +160,38 @@ class _TryoutSoalManagementScreenState
         _clearForm();
         await _loadSoal();
       } else {
-        _showSnackbar(
-          response['message'] ?? 'Gagal menyimpan soal',
-          isError: true,
-        );
+        // Log full response for debugging
+        if (kDebugMode) debugPrint('createSoal failed: ${response.toString()}');
+
+        // Build concise user-facing message. If server returned details, include short snippet.
+        String userMsg = response['message'] ?? 'Gagal menyimpan soal';
+        String? details;
+        if (response.containsKey('details') && response['details'] != null) {
+          details = response['details'].toString();
+          final snippet = details.length > 200
+              ? '${details.substring(0, 200)}...'
+              : details;
+          userMsg = '$userMsg: $snippet';
+        }
+
+        _showSnackbar(userMsg, isError: true);
+
+        // If server provided details, show them in a dialog for copying/debugging
+        if (details != null && mounted) {
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Detail respons server'),
+              content: SingleChildScrollView(child: SelectableText(details)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Tutup'),
+                ),
+              ],
+            ),
+          );
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -207,8 +252,8 @@ class _TryoutSoalManagementScreenState
           : soal.kategori;
     });
 
-    // Scroll to form
-    Future.delayed(const Duration(milliseconds: 100), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       Scrollable.ensureVisible(
         context,
         duration: const Duration(milliseconds: 300),
@@ -280,7 +325,7 @@ class _TryoutSoalManagementScreenState
               padding: const EdgeInsets.all(14),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 50),
+                  constraints: const BoxConstraints(maxWidth: 980),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -316,7 +361,7 @@ class _TryoutSoalManagementScreenState
                                     vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -364,7 +409,7 @@ class _TryoutSoalManagementScreenState
                                           BoxShadow(
                                             color: const Color(
                                               0xFF2563EB,
-                                            ).withOpacity(0.2),
+                                            ).withValues(alpha: 0.2),
                                             blurRadius: 8,
                                             offset: const Offset(0, 4),
                                           ),
@@ -396,7 +441,9 @@ class _TryoutSoalManagementScreenState
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
                                           color: isSelected
-                                              ? Colors.white.withOpacity(0.9)
+                                              ? Colors.white.withValues(
+                                                  alpha: 0.9,
+                                                )
                                               : const Color(0xFF6B7280),
                                         ),
                                       ),
@@ -419,7 +466,7 @@ class _TryoutSoalManagementScreenState
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -430,7 +477,7 @@ class _TryoutSoalManagementScreenState
                           children: [
                             Text(
                               _editingItem == null
-                                  ? '+ Tambah Soal Baru'
+                                  ? 'Tambah Soal Baru'
                                   : '✏️ Edit Soal',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
@@ -512,7 +559,7 @@ class _TryoutSoalManagementScreenState
                                 ),
                               ),
                               child: DropdownButtonFormField<String>(
-                                value: _selectedJawaban,
+                                initialValue: _selectedJawaban,
                                 items: ['A', 'B', 'C', 'D', 'E']
                                     .map(
                                       (e) => DropdownMenuItem(
@@ -607,7 +654,7 @@ class _TryoutSoalManagementScreenState
                                     ),
                                     label: Text(
                                       _editingItem == null
-                                          ? '+ Tambah Soal'
+                                          ? 'Tambah Soal'
                                           : 'Simpan Perubahan',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w600,
@@ -682,7 +729,7 @@ class _TryoutSoalManagementScreenState
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _soalList.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (context, index) =>
                               const SizedBox(height: 16),
                           itemBuilder: (context, index) {
                             final soal = _soalList[index];
@@ -751,13 +798,14 @@ class _TryoutSoalManagementScreenState
 
   Widget _buildSoalCard(SoalKompetisi soal, int nomer) {
     return Container(
+      constraints: const BoxConstraints(minHeight: 240),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -788,7 +836,9 @@ class _TryoutSoalManagementScreenState
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF2563EB).withOpacity(0.3),
+                            color: const Color(
+                              0xFF2563EB,
+                            ).withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),

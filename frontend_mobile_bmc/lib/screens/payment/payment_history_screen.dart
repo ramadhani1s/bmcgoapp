@@ -181,7 +181,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                   itemCount: data.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final item = data[index];
                     final color = _statusColor(item.status);
@@ -210,7 +210,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: color.withOpacity(0.12),
+                                    color: color.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(99),
                                   ),
                                   child: Text(

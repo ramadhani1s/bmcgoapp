@@ -13,7 +13,6 @@ class _PackageScreenState extends State<PackageScreen> {
   static const Color _blueHeader = Color(0xFF2D4CC8);
   static const Color _accent = Color(0xFFFF7070);
   static const Color _successGreen = Color(0xFF4CAF50);
-  static const Color _promoOrange = Color(0xFFFFA500);
 
   List<Map<String, dynamic>> _pakets = [];
   bool _isLoading = true;
@@ -123,7 +122,7 @@ class _PackageScreenState extends State<PackageScreen> {
                 : ['Akses ke semua materi pembelajaran'],
             normalAmount: hargaAwal,
             finalAmount: hargaPromo,
-            promoTag: diskon > 0 ? 'PROMO ${diskon}%' : null,
+            promoTag: diskon > 0 ? 'PROMO $diskon%' : null,
             promoInfo: selectedPaket['tanggal_mulai_promo'] != null
                 ? 'Berlaku ${_formatPeriod(selectedPaket['tanggal_mulai_promo'], selectedPaket['tanggal_selesai_promo'])}'
                 : null,
@@ -160,7 +159,7 @@ class _PackageScreenState extends State<PackageScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
+                        color: Colors.white.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -270,7 +269,7 @@ class _PackageScreenState extends State<PackageScreen> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -338,7 +337,7 @@ class _PackageScreenState extends State<PackageScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

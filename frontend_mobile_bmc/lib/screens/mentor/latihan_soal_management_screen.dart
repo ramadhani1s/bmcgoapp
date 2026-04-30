@@ -508,7 +508,7 @@ class _LatihanSoalManagementScreenState
                                 border: Border.all(color: _border),
                               ),
                               child: const Text(
-                                'Belum ada latihan soal. Tekan tombol + untuk membuat latihan baru.',
+                                'Belum ada latihan soal. Tekan tombol tambah untuk membuat latihan baru.',
                                 style: TextStyle(color: _textMuted),
                               ),
                             ),

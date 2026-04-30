@@ -412,7 +412,7 @@ class _OlimpiadeManagementScreenState extends State<OlimpiadeManagementScreen> {
                               border: Border.all(color: _border),
                             ),
                             child: const Text(
-                              'Belum ada data olimpiade. Tekan tombol + untuk membuat event baru.',
+                              'Belum ada data olimpiade. Tekan tombol tambah untuk membuat event baru.',
                               style: TextStyle(color: _textMuted),
                             ),
                           ),

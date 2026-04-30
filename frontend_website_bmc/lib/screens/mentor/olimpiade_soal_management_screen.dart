@@ -193,8 +193,8 @@ class _OlimpiadseSoalManagementScreenState
       _selectedJawaban = soal.jawaban;
     });
 
-    // Scroll to form
-    Future.delayed(const Duration(milliseconds: 100), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       Scrollable.ensureVisible(
         context,
         duration: const Duration(milliseconds: 300),
@@ -355,7 +355,7 @@ class _OlimpiadseSoalManagementScreenState
                             ),
                             const SizedBox(height: 6),
                             DropdownButtonFormField<String>(
-                              value: _selectedJawaban,
+                              initialValue: _selectedJawaban,
                               items: ['A', 'B', 'C', 'D', 'E']
                                   .map(
                                     (e) => DropdownMenuItem(
@@ -426,7 +426,7 @@ class _OlimpiadseSoalManagementScreenState
                                     icon: const Icon(Icons.add, size: 16),
                                     label: Text(
                                       _editingItem == null
-                                          ? '+ Tambah Soal'
+                                          ? 'Tambah Soal'
                                           : 'Simpan Perubahan',
                                     ),
                                     style: ElevatedButton.styleFrom(
@@ -467,7 +467,7 @@ class _OlimpiadseSoalManagementScreenState
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _soalList.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (context, index) =>
                               const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final soal = _soalList[index];

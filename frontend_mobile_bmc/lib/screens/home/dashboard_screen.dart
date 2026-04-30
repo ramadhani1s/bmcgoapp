@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_mobile_bmc/screens/home/latihan_siswa_screen.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -268,6 +269,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (index == 1) {
       _incrementMateriProgress();
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const LatihanSiswaScreen()));
+      return;
     }
     if (index == 2) {
       _incrementTryoutProgress();
@@ -312,6 +317,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (menuKey.toLowerCase() == 'materi') {
       _incrementMateriProgress();
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const LatihanSiswaScreen()));
+      return;
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -793,11 +802,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onTap: _showDynamicInfo,
                 ),
                 const SizedBox(height: 12),
-                const _EmptyDataCard(
-                  icon: Icons.menu_book_rounded,
-                  title: 'Materi belum tersedia',
-                  description:
-                      'Materi terbaru akan tampil di sini setelah mentor mengunggah konten.',
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFFFD8D8)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.menu_book_rounded, color: _accent),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Materi belum tersedia',
+                              style: TextStyle(
+                                color: _textPrimary,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Materi terbaru akan tampil di sini setelah mentor mengunggah konten. Setelah belajar, siswa bisa langsung lanjut latihan 5 soal.',
+                        style: TextStyle(
+                          color: _textMuted,
+                          fontSize: 12.5,
+                          height: 1.45,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            _incrementMateriProgress();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const LatihanSiswaScreen(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _accent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.play_circle_outline),
+                          label: const Text(
+                            'Mulai Latihan 5 Soal',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 22),
                 const _SectionTitleRow(
@@ -1573,68 +1645,6 @@ class _AlumniPreviewCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: Color(0xFFA2A7B5), fontSize: 11.5),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyDataCard extends StatelessWidget {
-  const _EmptyDataCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  final IconData icon;
-  final String title;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFCECED),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: const Color(0xFFFF7070)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFF25273D),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    color: Color(0xFF8D90A3),
-                    fontSize: 12.5,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
