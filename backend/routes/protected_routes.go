@@ -14,6 +14,15 @@ func ProtectedRoutes(r *gin.Engine) {
 	r.GET("/api/paket-les", handlers.GetPaketLesList)
 	r.GET("/api/paket-les/:id", handlers.GetPaketLesDetail)
 
+	// Public pengumuman endpoint
+	r.GET("/api/pengumuman", handlers.GetPengumumanList)
+	r.GET("/api/pengumuman/:id", handlers.GetPengumumanDetail)
+
+	// Public jadwal pembelajaran endpoint untuk siswa
+	r.GET("/api/jadwal", handlers.GetJadwalList)
+	r.GET("/api/jadwal/:id", handlers.GetJadwalDetail)
+	r.GET("/api/jadwal-by-hari", handlers.GetJadwalByHari)
+
 	// group yang butuh login
 	auth := r.Group("/api")
 	auth.Use(middleware.AuthMiddleware())
@@ -42,6 +51,26 @@ func ProtectedRoutes(r *gin.Engine) {
 	admin.PUT("/paket-les/:id", handlers.UpdatePaketLes)
 	admin.DELETE("/paket-les/:id", handlers.DeletePaketLes)
 	admin.GET("/paket-les-stats", handlers.GetPaketLesStats)
+
+	// Jadwal Pembelajaran Routes
+	admin.POST("/jadwal", handlers.CreateJadwal)
+	admin.GET("/jadwal", handlers.GetJadwalList)
+	admin.GET("/jadwal/:id", handlers.GetJadwalDetail)
+	admin.PUT("/jadwal/:id", handlers.UpdateJadwal)
+	admin.DELETE("/jadwal/:id", handlers.DeleteJadwal)
+
+	// Pengumuman Routes (admin)
+	admin.POST("/pengumuman", handlers.CreatePengumuman)
+	admin.GET("/pengumuman", handlers.AdminGetPengumumanList)
+	admin.GET("/pengumuman/:id", handlers.GetPengumumanDetail)
+	admin.PUT("/pengumuman/:id", handlers.UpdatePengumuman)
+	admin.DELETE("/pengumuman/:id", handlers.DeletePengumuman)
+
+	// Admin mapping Routes
+	admin.GET("/mappings", handlers.GetAdminMappings)
+	admin.GET("/mappings/users", handlers.GetUsersForMapping)
+	admin.POST("/mappings/sync", handlers.SyncAdminMappings)
+	admin.PUT("/mappings/:adminId", handlers.UpdateAdminMapping)
 
 	// ================= MENTOR ONLY =================
 	mentor := auth.Group("/mentor")

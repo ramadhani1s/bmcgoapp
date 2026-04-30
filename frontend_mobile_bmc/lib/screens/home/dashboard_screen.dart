@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
+import 'package:frontend_mobile_bmc/services/jadwal_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -25,6 +26,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _openedMateriCount = 0;
   int _openedTryoutCount = 0;
 
+  // Jadwal variables
+  List<Map<String, dynamic>> _jadwalList = [];
+  bool _isLoadingJadwal = true;
+
   int get _totalMateriTarget => 24;
   int get _totalTryoutTarget => 12;
 
@@ -44,6 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _loadLearningProgress();
     _loadDashboardStatus();
+    _loadJadwalHariIni();
   }
 
   String _progressKey(String suffix) {
@@ -149,6 +155,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return (user?['email'] as String?) ?? '-';
   }
 
+  Future<void> _loadJadwalHariIni() async {
+    try {
+      // Get current day name in Indonesian
+      final now = DateTime.now();
+      const hariList = [
+        'Minggu',
+        'Senin',
+        'Selasa',
+        'Rabu',
+        'Kamis',
+        'Jumat',
+        'Sabtu',
+      ];
+      final hariIni = hariList[now.weekday % 7];
+
+      final jadwalData = await JadwalMobileService.getJadwalByHari(hariIni);
+
+      if (!mounted) return;
+
+      setState(() {
+        _jadwalList = jadwalData;
+        _isLoadingJadwal = false;
+      });
+    } catch (e) {
+      print("❌ Error loading jadwal: $e");
+      if (!mounted) return;
+      setState(() {
+        _isLoadingJadwal = false;
+      });
+    }
+  }
+
   String get _firstName {
     final parts = _studentName.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty || parts.first.isEmpty) {
@@ -226,32 +264,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ),
   ];
 
-  List<_SchedulePreviewItem> get _schedulePreview => const [
-    _SchedulePreviewItem(
-      time: '08:00',
-      subject: 'Matematika',
-      mentorRoom: 'Kak Budi · Ruang A',
-      status: 'Sekarang',
-      statusColor: Color(0xFF1CC08A),
-      statusBackground: Color(0xFFDEF8EF),
-    ),
-    _SchedulePreviewItem(
-      time: '10:00',
-      subject: 'IPA Terpadu',
-      mentorRoom: 'Kak Rina · Ruang B',
-      status: 'Segera',
-      statusColor: Color(0xFFF39A44),
-      statusBackground: Color(0xFFFFF0E0),
-    ),
-    _SchedulePreviewItem(
-      time: '13:00',
-      subject: 'Bahasa Indonesia',
-      mentorRoom: 'Kak Dewi · Ruang C',
-      status: 'Akan Datang',
-      statusColor: Color(0xFF5194F8),
-      statusBackground: Color(0xFFE9F2FF),
-    ),
-  ];
+  List<_SchedulePreviewItem> get _schedulePreview {
+    // Convert dynamic jadwal data to SchedulePreviewItem
+    if (_jadwalList.isEmpty) {
+      return const [];
+    }
+
+    return _jadwalList.map((jadwal) {
+      final waktuMulai = jadwal['waktu_mulai'] as String? ?? '00:00';
+      final mataPelajaran =
+          jadwal['mata_pelajaran'] as String? ?? 'Pembelajaran';
+      final mentor = jadwal['mentor'] as String? ?? 'Mentor';
+      final ruang = jadwal['ruang'] as String? ?? 'Ruang';
+
+      // Determine status based on current time
+      String status = 'Akan Datang';
+      Color statusColor = const Color(0xFF5194F8);
+      Color statusBackground = const Color(0xFFE9F2FF);
+
+      final now = DateTime.now();
+      final scheduledTime = _parseTime(waktuMulai);
+      final timeDiff = scheduledTime.difference(now).inMinutes;
+
+      if (timeDiff < -30) {
+        status = 'Selesai';
+        statusColor = const Color(0xFF8D90A3);
+        statusBackground = const Color(0xFFF0F2F7);
+      } else if (timeDiff <= 0) {
+        status = 'Sekarang';
+        statusColor = const Color(0xFF1CC08A);
+        statusBackground = const Color(0xFFDEF8EF);
+      } else if (timeDiff <= 30) {
+        status = 'Segera';
+        statusColor = const Color(0xFFF39A44);
+        statusBackground = const Color(0xFFFFF0E0);
+      }
+
+      return _SchedulePreviewItem(
+        time: waktuMulai,
+        subject: mataPelajaran,
+        mentorRoom: '$mentor · $ruang',
+        status: status,
+        statusColor: statusColor,
+        statusBackground: statusBackground,
+      );
+    }).toList();
+  }
+
+  DateTime _parseTime(String timeStr) {
+    // Parse time string like "08:00" to DateTime
+    try {
+      final parts = timeStr.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = parts.length > 1 ? int.parse(parts[1]) : 0;
+      final now = DateTime.now();
+      return DateTime(now.year, now.month, now.day, hour, minute);
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
 
   void _onBottomNavTap(int index) {
     if (!_isActive && (index == 1 || index == 2)) {

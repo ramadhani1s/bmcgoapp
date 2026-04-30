@@ -26,7 +26,7 @@ class AdminDashboardService {
           Uri.parse('$baseUrl/api/admin/dashboard-summary'),
           headers: {'Authorization': 'Bearer $token'},
         )
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 20));
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;

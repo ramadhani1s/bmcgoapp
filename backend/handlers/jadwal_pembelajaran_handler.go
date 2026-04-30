@@ -1,0 +1,370 @@
+package handlers
+
+import (
+	"bmcgoapp-backend/config"
+	"bmcgoapp-backend/models"
+	"context"
+	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+)
+
+// CreateJadwal - Create new jadwal
+func CreateJadwal(c *gin.Context) {
+	var req models.CreateJadwalRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request data",
+			"detail":  err.Error(),
+		})
+		return
+	}
+
+	// Validate required fields
+	if req.PaketID <= 0 || req.MentorID <= 0 || req.JamMulai == "" || req.JamSelesai == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "paket_id, mentor_id, jam_mulai, jam_selesai wajib",
+		})
+		return
+	}
+
+	// Parse jam
+	jamMulai, err := time.Parse("15:04", req.JamMulai)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Format jam_mulai harus HH:MM",
+			"detail":  err.Error(),
+		})
+		return
+	}
+
+	jamSelesai, err := time.Parse("15:04", req.JamSelesai)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Format jam_selesai harus HH:MM",
+			"detail":  err.Error(),
+		})
+		return
+	}
+
+	var jadwalID int
+
+	// Insert into database
+	err = config.DB.QueryRow(context.Background(), `
+		INSERT INTO jadwal (paket_id, mentor_id, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id
+	`, req.PaketID, req.MentorID, req.MataPelajaran, req.Hari, jamMulai, jamSelesai, req.Ruang).Scan(&jadwalID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Gagal membuat jadwal",
+			"detail":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Jadwal berhasil dibuat",
+		"data": gin.H{
+			"id": jadwalID,
+		},
+	})
+}
+
+// GetJadwalList - Get all jadwal
+func GetJadwalList(c *gin.Context) {
+	paketID := c.Query("paket_id")
+	mentorID := c.Query("mentor_id")
+	hari := c.Query("hari")
+
+	query := `
+		SELECT id, paket_id, mentor_id, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
+		FROM jadwal
+		WHERE 1=1
+	`
+	var args []interface{}
+	argCount := 1
+
+	if paketID != "" {
+		query += ` AND paket_id = $` + strconv.Itoa(argCount)
+		args = append(args, paketID)
+		argCount++
+	}
+
+	if mentorID != "" {
+		query += ` AND mentor_id = $` + strconv.Itoa(argCount)
+		args = append(args, mentorID)
+		argCount++
+	}
+
+	if hari != "" {
+		query += ` AND hari = $` + strconv.Itoa(argCount)
+		args = append(args, hari)
+		argCount++
+	}
+
+	query += ` ORDER BY hari, jam_mulai`
+
+	rows, err := config.DB.Query(context.Background(), query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Gagal fetch jadwal",
+			"detail":  err.Error(),
+		})
+		return
+	}
+	defer rows.Close()
+
+	var jadwals []models.Jadwal
+	for rows.Next() {
+		var j models.Jadwal
+		if err := rows.Scan(&j.ID, &j.PaketID, &j.MentorID, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang); err != nil {
+			fmt.Println("Scan error:", err)
+			continue
+		}
+		jadwals = append(jadwals, j)
+	}
+
+	if jadwals == nil {
+		jadwals = []models.Jadwal{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Jadwal list fetched",
+		"data":    jadwals,
+		"count":   len(jadwals),
+	})
+}
+
+// GetJadwalDetail - Get single jadwal
+func GetJadwalDetail(c *gin.Context) {
+	id := c.Param("id")
+
+	var j models.Jadwal
+	err := config.DB.QueryRow(context.Background(), `
+		SELECT id, paket_id, mentor_id, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
+		FROM jadwal
+		WHERE id = $1
+	`, id).Scan(&j.ID, &j.PaketID, &j.MentorID, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"status":  "error",
+			"message": "Jadwal not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Jadwal detail fetched",
+		"data":    j,
+	})
+}
+
+// UpdateJadwal - Update jadwal
+func UpdateJadwal(c *gin.Context) {
+	id := c.Param("id")
+	var req models.UpdateJadwalRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request data",
+			"detail":  err.Error(),
+		})
+		return
+	}
+
+	query := `UPDATE jadwal SET `
+	var updateFields []string
+	var args []interface{}
+	argCount := 1
+
+	if req.PaketID != nil {
+		updateFields = append(updateFields, fmt.Sprintf(`paket_id = $%d`, argCount))
+		args = append(args, *req.PaketID)
+		argCount++
+	}
+
+	if req.MentorID != nil {
+		updateFields = append(updateFields, fmt.Sprintf(`mentor_id = $%d`, argCount))
+		args = append(args, *req.MentorID)
+		argCount++
+	}
+
+	if req.MataPelajaran != nil {
+		updateFields = append(updateFields, fmt.Sprintf(`mata_pelajaran = $%d`, argCount))
+		args = append(args, *req.MataPelajaran)
+		argCount++
+	}
+
+	if req.Hari != nil {
+		updateFields = append(updateFields, fmt.Sprintf(`hari = $%d`, argCount))
+		args = append(args, *req.Hari)
+		argCount++
+	}
+
+	if req.JamMulai != nil {
+		jamMulai, err := time.Parse("15:04", *req.JamMulai)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": "Format jam_mulai harus HH:MM",
+			})
+			return
+		}
+		updateFields = append(updateFields, fmt.Sprintf(`jam_mulai = $%d`, argCount))
+		args = append(args, jamMulai)
+		argCount++
+	}
+
+	if req.JamSelesai != nil {
+		jamSelesai, err := time.Parse("15:04", *req.JamSelesai)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": "Format jam_selesai harus HH:MM",
+			})
+			return
+		}
+		updateFields = append(updateFields, fmt.Sprintf(`jam_selesai = $%d`, argCount))
+		args = append(args, jamSelesai)
+		argCount++
+	}
+
+	if req.Ruang != nil {
+		updateFields = append(updateFields, fmt.Sprintf(`ruang = $%d`, argCount))
+		args = append(args, *req.Ruang)
+		argCount++
+	}
+
+	if len(updateFields) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Tidak ada field untuk diupdate",
+		})
+		return
+	}
+
+	query += fmt.Sprintf(`%s WHERE id = $%d`, joinStrings(updateFields, ", "), argCount)
+	args = append(args, id)
+
+	_, err := config.DB.Exec(context.Background(), query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Gagal update jadwal",
+			"detail":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Jadwal berhasil diupdate",
+	})
+}
+
+// DeleteJadwal - Delete jadwal
+func DeleteJadwal(c *gin.Context) {
+	id := c.Param("id")
+
+	result, err := config.DB.Exec(context.Background(), `DELETE FROM jadwal WHERE id = $1`, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Gagal hapus jadwal",
+			"detail":  err.Error(),
+		})
+		return
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"status":  "error",
+			"message": "Jadwal not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Jadwal berhasil dihapus",
+	})
+}
+
+// GetJadwalByHari - Get jadwal by hari (for students)
+func GetJadwalByHari(c *gin.Context) {
+	hari := c.Query("hari")
+
+	if hari == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Parameter hari wajib",
+		})
+		return
+	}
+
+	rows, err := config.DB.Query(context.Background(), `
+		SELECT id, paket_id, mentor_id, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
+		FROM jadwal
+		WHERE hari = $1
+		ORDER BY jam_mulai
+	`, hari)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Gagal fetch jadwal",
+			"detail":  err.Error(),
+		})
+		return
+	}
+	defer rows.Close()
+
+	var jadwals []models.Jadwal
+	for rows.Next() {
+		var j models.Jadwal
+		if err := rows.Scan(&j.ID, &j.PaketID, &j.MentorID, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang); err != nil {
+			continue
+		}
+		jadwals = append(jadwals, j)
+	}
+
+	if jadwals == nil {
+		jadwals = []models.Jadwal{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Jadwal by hari fetched",
+		"data":    jadwals,
+		"count":   len(jadwals),
+	})
+}
+
+// Helper function
+func joinStrings(arr []string, sep string) string {
+	if len(arr) == 0 {
+		return ""
+	}
+	result := arr[0]
+	for _, s := range arr[1:] {
+		result += sep + s
+	}
+	return result
+}

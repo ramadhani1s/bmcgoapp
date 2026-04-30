@@ -10,7 +10,7 @@ import (
 var DB *pgxpool.Pool
 
 func ConnectDB() {
-	dsn := "postgres://postgres:ramadhani12@localhost:5432/bmcgo_db"
+	dsn := "postgres://postgres:yohana@localhost:5432/bmcgo_db"
 
 	var err error
 	// 1. Membuat konfigurasi pool
@@ -303,4 +303,122 @@ func ConnectDB() {
 	if err != nil {
 		log.Fatal("Gagal membuat table learning_materials:", err)
 	}
+
+	// Buat table paket_les (lesson packages)
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS paket_les (
+			id SERIAL PRIMARY KEY,
+			nama_paket VARCHAR(100) NOT NULL,
+			harga_awal BIGINT NOT NULL,
+			diskon INT DEFAULT 0,
+			tanggal_mulai_promo DATE,
+			tanggal_selesai_promo DATE,
+			deskripsi TEXT,
+			durasi INT,
+			status VARCHAR(50) DEFAULT 'aktif',
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	if err != nil {
+		log.Fatal("Gagal membuat table paket_les:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE INDEX IF NOT EXISTS idx_paket_les_status
+		ON paket_les (status)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat index status paket_les:", err)
+	}
+
+	// Drop jadwal_pembelajaran jika ada (migration)
+	_, err = DB.Exec(context.Background(), `
+		DROP TABLE IF EXISTS jadwal_pembelajaran CASCADE
+	`)
+	if err != nil {
+		log.Println("Warning: gagal drop jadwal_pembelajaran:", err)
+	}
+
+	// Buat table jadwal (learning schedule) dengan relational schema
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS jadwal (
+			id SERIAL PRIMARY KEY,
+			paket_id INTEGER NOT NULL,
+			mentor_id INTEGER NOT NULL,
+			mata_pelajaran VARCHAR(100),
+			hari VARCHAR(20),
+			jam_mulai TIME,
+			jam_selesai TIME,
+			ruang VARCHAR(50),
+			FOREIGN KEY (paket_id) REFERENCES paket_les(id) ON DELETE CASCADE,
+			FOREIGN KEY (mentor_id) REFERENCES mentor(id) ON DELETE CASCADE
+		)
+	`)
+	if err != nil {
+		log.Fatal("Gagal membuat table jadwal:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE INDEX IF NOT EXISTS idx_jadwal_paket_id
+		ON jadwal (paket_id)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat index paket_id jadwal:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE INDEX IF NOT EXISTS idx_jadwal_mentor_id
+		ON jadwal (mentor_id)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat index mentor_id jadwal:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE INDEX IF NOT EXISTS idx_jadwal_hari
+		ON jadwal (hari)
+	`)
+	if err != nil {
+		log.Println("Warning: gagal membuat index hari jadwal:", err)
+	}
+
+	// Buat table pengumuman (announcements)
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS pengumuman (
+			id SERIAL PRIMARY KEY,
+			admin_id INTEGER NOT NULL,
+			judul VARCHAR(255) NOT NULL,
+			isi TEXT NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (admin_id) REFERENCES admin(id)
+		)
+	`)
+	if err != nil {
+		log.Fatal("Gagal membuat table pengumuman:", err)
+	}
+
+	// Sinkronkan admin.user_id berdasarkan email agar FK pengumuman selalu menunjuk admin yang benar.
+	_, err = DB.Exec(context.Background(), `
+		DO $$
+		BEGIN
+			IF EXISTS (
+				SELECT 1 FROM information_schema.tables WHERE table_name = 'admin'
+			) AND EXISTS (
+				SELECT 1 FROM information_schema.tables WHERE table_name = 'users'
+			) THEN
+				EXECUTE '
+					UPDATE admin a
+					SET user_id = u.id
+					FROM users u
+					WHERE lower(trim(a.email)) = lower(trim(u.email))
+						AND (a.user_id IS DISTINCT FROM u.id)
+				';
+			END IF;
+		END
+		$$
+	`)
+	if err != nil {
+		log.Println("Warning: gagal sinkronisasi admin.user_id:", err)
+	}
+
 }
