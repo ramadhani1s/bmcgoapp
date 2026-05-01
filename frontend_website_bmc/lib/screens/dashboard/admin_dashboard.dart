@@ -7,6 +7,7 @@ import 'paket_les_screen.dart';
 import 'jadwal_pembelajaran_screen.dart';
 import 'verifikasi_pendaftaran_screen.dart';
 import 'pengumuman_screen.dart';
+import 'admin_kelola_absensi_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -89,7 +90,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     if (item.title == 'Verifikasi Pendaftaran') {
       Navigator.of(context).pushNamed('/payment-verification');
     }
-
+    
     if (item.title == 'Kelola Jadwal') {
       // Just update state, screen will be built in the build method
     }
@@ -108,7 +109,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
     ),
     _SideMenuItem('Kelola Mentor', Icons.groups_2_outlined),
     _SideMenuItem('Kelola Jadwal', Icons.event_note_outlined),
-    _SideMenuItem('Kelola Absensi', Icons.assignment_turned_in_outlined),
+    _SideMenuItem(
+      'Kelola Absensi', 
+      Icons.assignment_turned_in_outlined,
+      route: '/admin-kelola-absensi',
+    ),
     _SideMenuItem('Kelola Pengumuman', Icons.campaign_outlined),
     _SideMenuItem(
       'Kelola Paket Les',
@@ -198,6 +203,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           const PengumumanScreen()
                         else if (_selectedMenuTitle == 'Verifikasi Pendaftaran')
                           const VerifikasiPendaftaranScreen()
+                        else if (_selectedMenuTitle == 'Kelola Absensi') 
+                          const AdminKelolaAbsensiScreen()
                         else ...[
                           _buildTopBar(),
                           const SizedBox(height: 14),
