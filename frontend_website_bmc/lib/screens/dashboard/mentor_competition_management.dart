@@ -27,9 +27,6 @@ class MentorCompetitionManagement extends StatefulWidget {
 class _MentorCompetitionManagementState
     extends State<MentorCompetitionManagement> {
   final TextEditingController _searchController = TextEditingController();
-  String _kelasFilter = 'Semua Kelas';
-  String _statusFilter = 'Semua Status';
-  String _mapelFilter = 'Semua Mapel';
   bool _isLoading = true;
   List<MentorCompetitionItem> _items = const [];
 
@@ -64,17 +61,9 @@ class _MentorCompetitionManagementState
   List<MentorCompetitionItem> get _visibleItems {
     final keyword = _searchController.text.trim().toLowerCase();
     return _items.where((e) {
-      final kelasMatch =
-          _kelasFilter == 'Semua Kelas' || e.classLevel == _kelasFilter;
-      final statusMatch =
-          _statusFilter == 'Semua Status' ||
-          (_statusFilter == 'Dipublikasi' && e.isPublished) ||
-          (_statusFilter == 'Draft' && !e.isPublished);
-      final subjectMatch =
-          _mapelFilter == 'Semua Mapel' || e.subject == _mapelFilter;
       final keywordMatch =
           keyword.isEmpty || e.title.toLowerCase().contains(keyword);
-      return kelasMatch && statusMatch && subjectMatch && keywordMatch;
+      return keywordMatch;
     }).toList();
   }
 
@@ -296,46 +285,22 @@ class _MentorCompetitionManagementState
                 ),
               ),
               const SizedBox(width: 8),
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: OutlinedButton(
-                  onPressed: () => _openForm(item: item),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF9FAFB),
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: EdgeInsets.zero,
-                  ),
-                  child: const Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
+              _buildActionIconButton(
+                icon: Icons.edit_outlined,
+                iconColor: const Color(0xFF6B7280),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: const Color(0xFFF9FAFB),
+                onPressed: () => _openForm(item: item),
+                tooltip: 'Edit',
               ),
               const SizedBox(width: 6),
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: OutlinedButton(
-                  onPressed: () => _deleteItem(item),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFF1F2),
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: EdgeInsets.zero,
-                  ),
-                  child: const Icon(
-                    Icons.delete_outline,
-                    size: 16,
-                    color: Color(0xFFEF4444),
-                  ),
-                ),
+              _buildActionIconButton(
+                icon: Icons.delete_outline,
+                iconColor: const Color(0xFFEF4444),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: const Color(0xFFFFF1F2),
+                onPressed: () => _deleteItem(item),
+                tooltip: 'Hapus',
               ),
             ],
           ),
@@ -465,42 +430,22 @@ class _MentorCompetitionManagementState
                 ),
               ),
               const SizedBox(width: 8),
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: OutlinedButton(
-                  onPressed: () => _openForm(item: item),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
+              _buildActionIconButton(
+                icon: Icons.edit_outlined,
+                iconColor: const Color(0xFF6B7280),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: Colors.white,
+                onPressed: () => _openForm(item: item),
+                tooltip: 'Edit',
               ),
               const SizedBox(width: 6),
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: OutlinedButton(
-                  onPressed: () => _deleteItem(item),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.delete_outline,
-                    size: 16,
-                    color: Color(0xFFEF4444),
-                  ),
-                ),
+              _buildActionIconButton(
+                icon: Icons.delete_outline,
+                iconColor: const Color(0xFFEF4444),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: Colors.white,
+                onPressed: () => _deleteItem(item),
+                tooltip: 'Hapus',
               ),
             ],
           ),
@@ -509,97 +454,32 @@ class _MentorCompetitionManagementState
     );
   }
 
-  Future<void> _chooseKelas() async {
-    final selected = await _chooseFromSheet([
-      'Semua Kelas',
-      ..._items.map((e) => e.classLevel).toSet(),
-    ]);
-    if (selected == null || !mounted) return;
-    setState(() => _kelasFilter = selected);
-  }
-
-  Future<void> _chooseMapel() async {
-    final selected = await _chooseFromSheet([
-      'Semua Mapel',
-      ..._items.map((e) => e.subject).toSet(),
-    ]);
-    if (selected == null || !mounted) return;
-    setState(() => _mapelFilter = selected);
-  }
-
-  Future<void> _chooseStatus() async {
-    final selected = await _chooseFromSheet(['Semua Status', 'Dipublikasi']);
-    if (selected == null || !mounted) return;
-    setState(() => _statusFilter = selected);
-  }
-
-  Future<String?> _chooseFromSheet(List<String> options) async {
-    return showModalBottomSheet<String>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE5E7EB),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Options
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: options.length,
-                separatorBuilder: (context, index) =>
-                    const Divider(height: 12, color: Color(0xFFF3F4F6)),
-                itemBuilder: (context, index) {
-                  final label = options[index];
-                  return InkWell(
-                    onTap: () => Navigator.of(context).pop(label),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle_outline,
-                            size: 20,
-                            color: Color(0xFF2563EB),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              label,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF1F2937),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
+  Widget _buildActionIconButton({
+    required IconData icon,
+    required Color iconColor,
+    required Color borderColor,
+    required Color backgroundColor,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: backgroundColor,
+            side: BorderSide(color: borderColor),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: EdgeInsets.zero,
+            alignment: Alignment.center,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
+          child: Icon(icon, size: 16, color: iconColor),
         ),
       ),
     );
@@ -836,75 +716,6 @@ class _MentorCompetitionManagementState
                           ),
                         ],
                       ),
-                      if (!isTryout) ...[
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _chooseKelas,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: widget.accentColor,
-                                  side: BorderSide(color: widget.accentColor),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.school_outlined,
-                                  size: 18,
-                                ),
-                                label: Text(_kelasFilter),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _chooseStatus,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: widget.accentColor,
-                                  side: BorderSide(color: widget.accentColor),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.verified_outlined,
-                                  size: 18,
-                                ),
-                                label: Text(_statusFilter),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _chooseMapel,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: widget.accentColor,
-                                  side: BorderSide(color: widget.accentColor),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.menu_book_outlined,
-                                  size: 18,
-                                ),
-                                label: Text(_mapelFilter),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
                     ],
                   ),
                 ),

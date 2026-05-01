@@ -54,15 +54,20 @@ class LatihanSoalService {
           )
           .timeout(const Duration(seconds: 15));
 
+      final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+
       if (response.statusCode != 201 && response.statusCode != 200) {
         return {
           'success': false,
           'message':
-              'Endpoint tidak tersedia (HTTP ${response.statusCode}). Hubungi admin.',
+              data['error'] ??
+              data['message'] ??
+              'Gagal menambah soal latihan (HTTP ${response.statusCode})',
+          'details': data['details'],
+          'statusCode': response.statusCode,
         };
       }
 
-      final data = jsonDecode(response.body);
       return {
         'success': true,
         'message': data['message'] ?? 'Soal berhasil dibuat',
@@ -106,15 +111,20 @@ class LatihanSoalService {
           )
           .timeout(const Duration(seconds: 15));
 
+      final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+
       if (response.statusCode != 200) {
         return {
           'success': false,
           'message':
-              'Endpoint tidak tersedia (HTTP ${response.statusCode}). Hubungi admin.',
+              data['error'] ??
+              data['message'] ??
+              'Gagal update soal latihan (HTTP ${response.statusCode})',
+          'details': data['details'],
+          'statusCode': response.statusCode,
         };
       }
 
-      final data = jsonDecode(response.body);
       return {
         'success': true,
         'message': data['message'] ?? 'Soal berhasil diupdate',
@@ -140,15 +150,20 @@ class LatihanSoalService {
           )
           .timeout(const Duration(seconds: 15));
 
+      final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+
       if (response.statusCode != 200) {
         return {
           'success': false,
           'message':
-              'Endpoint tidak tersedia (HTTP ${response.statusCode}). Hubungi admin.',
+              data['error'] ??
+              data['message'] ??
+              'Gagal hapus soal latihan (HTTP ${response.statusCode})',
+          'details': data['details'],
+          'statusCode': response.statusCode,
         };
       }
 
-      final data = jsonDecode(response.body);
       return {
         'success': true,
         'message': data['message'] ?? 'Soal berhasil dihapus',

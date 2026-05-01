@@ -11,6 +11,7 @@ class SoalOverviewCard extends StatelessWidget {
   final VoidCallback onKelolaSoal;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final Color primaryColor;
 
   const SoalOverviewCard({
     Key? key,
@@ -24,6 +25,7 @@ class SoalOverviewCard extends StatelessWidget {
     required this.onKelolaSoal,
     this.onEdit,
     this.onDelete,
+    this.primaryColor = const Color(0xFF2563EB),
   }) : super(key: key);
 
   @override
@@ -164,63 +166,82 @@ class SoalOverviewCard extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Action buttons
+          // Action buttons: primary action + centered square edit/delete icons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                ElevatedButton.icon(
-                  onPressed: onKelolaSoal,
-                  icon: const Icon(Icons.edit_note_outlined, size: 18),
-                  label: const Text('Kelola Soal'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      onPressed: onKelolaSoal,
+                      icon: const Icon(Icons.menu_book_outlined, size: 18),
+                      label: const Text('Kelola Soal'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: onEdit,
-                        icon: const Icon(Icons.edit_outlined, size: 18),
-                        label: const Text('Edit'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF6B7280),
-                          side: const BorderSide(color: Color(0xFFD1D5DB)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: onDelete,
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        label: const Text('Hapus'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Color(0xFFEF4444)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 10),
+                _buildActionIconButton(
+                  icon: Icons.edit_outlined,
+                  iconColor: const Color(0xFF6B7280),
+                  borderColor: const Color(0xFFE5E7EB),
+                  onPressed: onEdit,
+                  tooltip: 'Edit',
+                ),
+                const SizedBox(width: 8),
+                _buildActionIconButton(
+                  icon: Icons.delete_outline,
+                  iconColor: const Color(0xFFEF4444),
+                  borderColor: const Color(0xFFFECACA),
+                  onPressed: onDelete,
+                  tooltip: 'Hapus',
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionIconButton({
+    required IconData icon,
+    required Color iconColor,
+    required Color borderColor,
+    required VoidCallback? onPressed,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Center(child: Icon(icon, size: 18, color: iconColor)),
+        ),
       ),
     );
   }

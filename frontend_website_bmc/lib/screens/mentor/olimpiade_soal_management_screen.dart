@@ -622,6 +622,35 @@ class _OlimpiadseSoalManagementScreenState
     );
   }
 
+  Widget _buildActionIconButton({
+    required IconData icon,
+    required Color iconColor,
+    required Color borderColor,
+    required VoidCallback? onPressed,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: borderColor),
+        ),
+        elevation: 1,
+        shadowColor: Colors.black.withOpacity(0.03),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox.square(
+            dimension: 36,
+            child: Center(child: Icon(icon, size: 17, color: iconColor)),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSoalCard(SoalKompetisi soal, int nomer) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -679,20 +708,21 @@ class _OlimpiadseSoalManagementScreenState
                   ],
                 ),
               ),
-              PopupMenuButton(
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    child: const Text('Edit'),
-                    onTap: () => _editSoal(soal),
-                  ),
-                  PopupMenuItem(
-                    child: const Text(
-                      'Hapus',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                    onTap: () => _deleteSoal(soal),
-                  ),
-                ],
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.edit_outlined,
+                iconColor: const Color(0xFF6B7280),
+                borderColor: const Color(0xFFE5E7EB),
+                onPressed: () => _editSoal(soal),
+                tooltip: 'Edit',
+              ),
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.delete_outline,
+                iconColor: const Color(0xFFEF4444),
+                borderColor: const Color(0xFFFECACA),
+                onPressed: () => _deleteSoal(soal),
+                tooltip: 'Hapus',
               ),
             ],
           ),
