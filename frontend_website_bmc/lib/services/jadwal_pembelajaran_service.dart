@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -360,7 +362,7 @@ class JadwalService {
 
       final response = await _requestAdminWithFallback(
         (baseUrl) => http.get(
-          Uri.parse(baseUrl.replaceAll('/admin', '/auth') + '/mentors'),
+          Uri.parse('${baseUrl.replaceAll('/admin', '/auth')}/mentors'),
           headers: headers,
         ),
       );

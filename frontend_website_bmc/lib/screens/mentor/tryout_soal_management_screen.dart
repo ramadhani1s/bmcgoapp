@@ -179,11 +179,14 @@ class _TryoutSoalManagementScreenState
 
         // If server provided details, show them in a dialog for copying/debugging
         if (details != null && mounted) {
+          final String detailsText = details;
           await showDialog<void>(
             context: context,
             builder: (ctx) => AlertDialog(
               title: const Text('Detail respons server'),
-              content: SingleChildScrollView(child: SelectableText(details!)),
+              content: SingleChildScrollView(
+                child: SelectableText(detailsText),
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
