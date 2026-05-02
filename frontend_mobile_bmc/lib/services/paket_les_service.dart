@@ -18,7 +18,7 @@ class PaketLesService {
   }
 
   // Get all active paket les (public endpoint - no auth needed)
-  static Future<List<Map<String, dynamic>>> getPaketLesList() async {
+  static Future<List<Map<String, dynamic>>> getPaketLesList({required String status}) async {
     try {
       final url = Uri.parse("$baseUrl/paket-les");
 

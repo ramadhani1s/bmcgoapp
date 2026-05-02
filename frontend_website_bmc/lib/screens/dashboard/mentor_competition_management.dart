@@ -27,9 +27,6 @@ class MentorCompetitionManagement extends StatefulWidget {
 class _MentorCompetitionManagementState
     extends State<MentorCompetitionManagement> {
   final TextEditingController _searchController = TextEditingController();
-  String _kelasFilter = 'Semua Kelas';
-  String _statusFilter = 'Semua Status';
-  String _mapelFilter = 'Semua Mapel';
   bool _isLoading = true;
   List<MentorCompetitionItem> _items = const [];
 
@@ -64,19 +61,16 @@ class _MentorCompetitionManagementState
   List<MentorCompetitionItem> get _visibleItems {
     final keyword = _searchController.text.trim().toLowerCase();
     return _items.where((e) {
-      final kelasMatch =
-          _kelasFilter == 'Semua Kelas' || e.classLevel == _kelasFilter;
-      final statusMatch =
-          _statusFilter == 'Semua Status' ||
-          (_statusFilter == 'Dipublikasi' && e.isPublished) ||
-          (_statusFilter == 'Draft' && !e.isPublished);
-      final subjectMatch =
-          _mapelFilter == 'Semua Mapel' || e.subject == _mapelFilter;
       final keywordMatch =
           keyword.isEmpty || e.title.toLowerCase().contains(keyword);
-      return kelasMatch && statusMatch && subjectMatch && keywordMatch;
+      return keywordMatch;
     }).toList();
   }
+
+  String get _pageTag => widget.type == 'tryout' ? 'Try Out' : 'Olimpiade';
+
+  List<MentorCompetitionItem> get _publishedItems =>
+      _items.where((item) => item.isPublished).toList();
 
   Widget _buildTryoutCard(MentorCompetitionItem item) {
     final categories = item.categoryQuestions;
@@ -100,78 +94,96 @@ class _MentorCompetitionManagementState
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2563EB),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   item.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                    fontSize: 15,
                     color: Color(0xFF111827),
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
+                  color: item.isPublished
+                      ? const Color(0xFFDCFCE7)
+                      : const Color(0xFFFEF3C7),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  item.isPublished ? 'Publish' : 'Draft',
+                  item.isPublished ? 'Dipublikasikan' : 'Draft',
                   style: const TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF6B7280),
+                    color: Color(0xFF065F46),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          
+          const SizedBox(height: 10),
           Row(
             children: [
-              // Badge Tanggal - Warna Ungu
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3E8FF),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: const Color(0xFFE9D5FF)),
                 ),
                 child: Text(
                   item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel,
                   style: const TextStyle(
-                    fontSize: 8,
+                    fontSize: 10,
                     color: Color(0xFF7C3AED),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
               const SizedBox(width: 6),
-              // Badge Waktu - Warna Oranye
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: const Color(0xFFFFEDD5)),
                 ),
                 child: Text(
                   '${item.durationLabel} menit',
                   style: const TextStyle(
-                    fontSize: 8,
+                    fontSize: 10,
                     color: Color(0xFFF59E0B),
                     fontWeight: FontWeight.w600,
                   ),
@@ -180,42 +192,42 @@ class _MentorCompetitionManagementState
               const SizedBox(width: 6),
               Text(
                 '0/$total soal',
-                style: const TextStyle(fontSize: 8, color: Color(0xFF6B7280)),
+                style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
           const Text(
             'Progress Soal',
-            style: TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
+            style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 6),
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 4,
+              minHeight: 6,
               backgroundColor: const Color(0xFFE5E7EB),
               valueColor: const AlwaysStoppedAnimation<Color>(
                 Color(0xFF2563EB),
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           Wrap(
-            spacing: 4,
-            runSpacing: 4,
+            spacing: 6,
+            runSpacing: 6,
             children: shortCategories.map((entry) {
               final value = categories[entry.value] ?? 0;
               return IntrinsicWidth(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 5,
+                    horizontal: 10,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
                   child: Column(
@@ -228,7 +240,7 @@ class _MentorCompetitionManagementState
                         softWrap: false,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 8,
+                          fontSize: 9,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF374151),
                         ),
@@ -240,7 +252,7 @@ class _MentorCompetitionManagementState
                         softWrap: false,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 8,
+                          fontSize: 9,
                           color: Color(0xFF6B7280),
                         ),
                       ),
@@ -250,67 +262,45 @@ class _MentorCompetitionManagementState
               );
             }).toList(),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () => _openTryoutSoalManagement(item),
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(26),
+                    minimumSize: const Size.fromHeight(40),
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  icon: const Icon(Icons.menu_book_outlined, size: 13),
+                  icon: const Icon(Icons.menu_book_outlined, size: 16),
                   label: const Text(
                     'Kelola Soal',
-                    style: TextStyle(fontSize: 11),
+                    style: TextStyle(fontSize: 13),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              SizedBox(
-                width: 28,
-                height: 26,
-                child: OutlinedButton(
-                  onPressed: () => _openForm(item: item),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.edit_outlined,
-                    size: 12,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
+              _buildActionIconButton(
+                icon: Icons.edit_outlined,
+                iconColor: const Color(0xFF6B7280),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: const Color(0xFFF9FAFB),
+                onPressed: () => _openForm(item: item),
+                tooltip: 'Edit',
               ),
               const SizedBox(width: 6),
-              SizedBox(
-                width: 28,
-                height: 26,
-                child: OutlinedButton(
-                  onPressed: () => _deleteItem(item),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.delete_outline,
-                    size: 12,
-                    color: Color(0xFFEF4444),
-                  ),
-                ),
+              _buildActionIconButton(
+                icon: Icons.delete_outline,
+                iconColor: const Color(0xFFEF4444),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: const Color(0xFFFFF1F2),
+                onPressed: () => _deleteItem(item),
+                tooltip: 'Hapus',
               ),
             ],
           ),
@@ -322,66 +312,84 @@ class _MentorCompetitionManagementState
   Widget _buildOlimpiadCard(MentorCompetitionItem item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0EA5E9),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   item.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                    fontSize: 15,
                     color: Color(0xFF111827),
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
+                  color: item.isPublished
+                      ? const Color(0xFFDCFCE7)
+                      : const Color(0xFFFEF3C7),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  item.isPublished ? 'Publish' : 'Draft',
+                  item.isPublished ? 'Dipublikasikan' : 'Draft',
                   style: const TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF6B7280),
+                    color: Color(0xFF065F46),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          // PERBAIKAN: Tampilkan kelas, tanggal (ungu), dan subject dengan layout yang rapi
-          // Tanggal: warna ungu (#7C3AED) dengan background #F3E8FF (konsisten dengan try out)
+          const SizedBox(height: 10),
           Row(
             children: [
               Text(
                 item.classLevel,
-                style: const TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
+                style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
               ),
               const SizedBox(width: 6),
-              // Badge Tanggal - Warna Ungu (sama seperti di Try Out)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3E8FF),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: const Color(0xFFE9D5FF)),
                 ),
                 child: Text(
                   item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel,
                   style: const TextStyle(
-                    fontSize: 8,
+                    fontSize: 10,
                     color: Color(0xFF7C3AED),
                     fontWeight: FontWeight.w600,
                   ),
@@ -391,72 +399,53 @@ class _MentorCompetitionManagementState
                 const SizedBox(width: 6),
                 Text(
                   item.subject,
-                  style: const TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF6B7280),
+                  ),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () => _openOlimpiadseSoalManagement(item),
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(26),
+                    minimumSize: const Size.fromHeight(40),
                     backgroundColor: widget.accentColor,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  icon: const Icon(Icons.menu_book_outlined, size: 13),
+                  icon: const Icon(Icons.menu_book_outlined, size: 16),
                   label: const Text(
                     'Kelola Soal',
-                    style: TextStyle(fontSize: 11),
+                    style: TextStyle(fontSize: 13),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              SizedBox(
-                width: 28,
-                height: 26,
-                child: OutlinedButton(
-                  onPressed: () => _openForm(item: item),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.edit_outlined,
-                    size: 12,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
+              _buildActionIconButton(
+                icon: Icons.edit_outlined,
+                iconColor: const Color(0xFF6B7280),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: Colors.white,
+                onPressed: () => _openForm(item: item),
+                tooltip: 'Edit',
               ),
               const SizedBox(width: 6),
-              SizedBox(
-                width: 28,
-                height: 26,
-                child: OutlinedButton(
-                  onPressed: () => _deleteItem(item),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.delete_outline,
-                    size: 12,
-                    color: Color(0xFFEF4444),
-                  ),
-                ),
+              _buildActionIconButton(
+                icon: Icons.delete_outline,
+                iconColor: const Color(0xFFEF4444),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: Colors.white,
+                onPressed: () => _deleteItem(item),
+                tooltip: 'Hapus',
               ),
             ],
           ),
@@ -465,97 +454,32 @@ class _MentorCompetitionManagementState
     );
   }
 
-  Future<void> _chooseKelas() async {
-    final selected = await _chooseFromSheet([
-      'Semua Kelas',
-      ..._items.map((e) => e.classLevel).toSet(),
-    ]);
-    if (selected == null || !mounted) return;
-    setState(() => _kelasFilter = selected);
-  }
-
-  Future<void> _chooseMapel() async {
-    final selected = await _chooseFromSheet([
-      'Semua Mapel',
-      ..._items.map((e) => e.subject).toSet(),
-    ]);
-    if (selected == null || !mounted) return;
-    setState(() => _mapelFilter = selected);
-  }
-
-  Future<void> _chooseStatus() async {
-    final selected = await _chooseFromSheet(['Semua Status', 'Dipublikasi']);
-    if (selected == null || !mounted) return;
-    setState(() => _statusFilter = selected);
-  }
-
-  Future<String?> _chooseFromSheet(List<String> options) async {
-    return showModalBottomSheet<String>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE5E7EB),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Options
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: options.length,
-                separatorBuilder: (context, index) =>
-                    const Divider(height: 12, color: Color(0xFFF3F4F6)),
-                itemBuilder: (context, index) {
-                  final label = options[index];
-                  return InkWell(
-                    onTap: () => Navigator.of(context).pop(label),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle_outline,
-                            size: 20,
-                            color: Color(0xFF2563EB),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              label,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF1F2937),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
+  Widget _buildActionIconButton({
+    required IconData icon,
+    required Color iconColor,
+    required Color borderColor,
+    required Color backgroundColor,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: backgroundColor,
+            side: BorderSide(color: borderColor),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: EdgeInsets.zero,
+            alignment: Alignment.center,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
+          child: Icon(icon, size: 16, color: iconColor),
         ),
       ),
     );
@@ -641,6 +565,8 @@ class _MentorCompetitionManagementState
   Widget build(BuildContext context) {
     final visibleItems = _visibleItems;
     final isTryout = widget.type == 'tryout';
+    final totalItems = _items.length;
+    final publishedCount = _publishedItems.length;
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -653,125 +579,165 @@ class _MentorCompetitionManagementState
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                Text(
-                  widget.subtitle,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        widget.accentColor.withOpacity(0.12),
+                        Colors.white,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _pageTag,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: widget.accentColor,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.subtitle,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Kelola data ${widget.type == 'tryout' ? 'try out' : 'olimpiade'} dengan alur yang rapi, cepat, dan konsisten.',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          height: 1.5,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          _StatChip(
+                            label: 'Total Data',
+                            value: totalItems.toString(),
+                            icon: Icons.dataset_outlined,
+                            color: widget.accentColor,
+                          ),
+                          _StatChip(
+                            label: 'Publish',
+                            value: publishedCount.toString(),
+                            icon: Icons.verified_outlined,
+                            color: const Color(0xFF10B981),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
                   child: Column(
                     children: [
-                      if (isTryout)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _searchController,
-                                decoration: const InputDecoration(
-                                  prefixIcon: Icon(Icons.search),
-                                  hintText: 'Cari try out...',
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            SizedBox(
-                              width: 44,
-                              height: 44,
-                              child: ElevatedButton(
-                                onPressed: () => _openForm(),
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  backgroundColor: widget.accentColor,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              controller: _searchController,
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(Icons.search),
+                                hintText: isTryout
+                                    ? 'Cari try out...'
+                                    : 'Cari data...',
+                                filled: true,
+                                fillColor: const Color(0xFFF9FAFB),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB),
                                   ),
                                 ),
-                                child: const Icon(Icons.add),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: widget.accentColor,
+                                    width: 1.5,
+                                  ),
+                                ),
                               ),
                             ),
-                          ],
-                        )
-                      else ...[
-                        TextField(
-                          controller: _searchController,
-                          decoration: const InputDecoration(
-                            prefixIcon: Icon(Icons.search),
-                            hintText: 'Cari data...',
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _chooseKelas,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: widget.accentColor,
-                                  side: BorderSide(color: widget.accentColor),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 156,
+                            height: 46,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _openForm(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: widget.accentColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
                                 ),
-                                child: Text(_kelasFilter),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text(
+                                'Tambah Baru',
+                                style: TextStyle(fontWeight: FontWeight.w600),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _chooseStatus,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: widget.accentColor,
-                                  side: BorderSide(color: widget.accentColor),
-                                ),
-                                child: Text(_statusFilter),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _chooseMapel,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: widget.accentColor,
-                                  side: BorderSide(color: widget.accentColor),
-                                ),
-                                child: Text(_mapelFilter),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _openForm(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: widget.accentColor,
-                              foregroundColor: Colors.white,
-                            ),
-                            icon: const Icon(Icons.add),
-                            label: const Text('Tambah Baru'),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                  const SizedBox(height: 16),
-                  // PERBAIKAN: Info box "Kelola Try Out"
-                  
-                  if (visibleItems.isEmpty)
-                  const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Text('Belum ada data'),
+                const SizedBox(height: 16),
+                Text(
+                  'Daftar ${_pageTag.toLowerCase()}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (visibleItems.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
+                    child: const Text('Belum ada data'),
                   )
                 else
                   LayoutBuilder(
@@ -788,28 +754,90 @@ class _MentorCompetitionManagementState
                         columns = 4;
                       }
 
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: visibleItems.length,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: columns,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          // PERBAIKAN: Kurangi height card dari 360 ke 280 untuk layout lebih rapi (tidak terlalu besar dan kosong di bawah)
-                          mainAxisExtent: isTryout ? 280 : 170,
-                        ),
-                        itemBuilder: (context, index) {
-                          final item = visibleItems[index];
-                          return isTryout
-                              ? _buildTryoutCard(item)
-                              : _buildOlimpiadCard(item);
-                        },
+                      final itemWidth = (w - (columns - 1) * 12) / columns;
+
+                      return Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: visibleItems.map((item) {
+                          return SizedBox(
+                            width: itemWidth,
+                            child: isTryout
+                                ? _buildTryoutCard(item)
+                                : _buildOlimpiadCard(item),
+                          );
+                        }).toList(),
                       );
                     },
                   ),
               ],
             ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _StatChip({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF6B7280),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

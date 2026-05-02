@@ -13,6 +13,8 @@ import '../screens/mentor/materi_pembelajaran_screen.dart';
 import '../screens/mentor_management_screen.dart';
 import '../screens/payment_verification_screen.dart';
 import '../services/auth_service.dart';
+import '../screens/dashboard/admin_kelola_absensi_screen.dart';
+
 
 class AppRoutes {
   static const String login = '/login';
@@ -30,7 +32,7 @@ class AppRoutes {
 
   static const String paketLes = '/paket-les';
   static const String soalLatihanManagement = '/soal-latihan-management';
-
+  static const String adminKelolaAbsensi = '/admin-kelola-absensi';
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case login:
@@ -38,6 +40,9 @@ class AppRoutes {
 
       case adminDashboard:
         return MaterialPageRoute(builder: (_) => const AdminDashboard());
+
+      case adminKelolaAbsensi:
+        return MaterialPageRoute(builder: (_) => const AdminKelolaAbsensiScreen());
 
       case paymentVerification:
         return MaterialPageRoute(

@@ -13,6 +13,7 @@ func MentorRoutes(r *gin.Engine) {
 		mentor.POST("/", handlers.CreateMentor)
 		mentor.PUT("/:id", handlers.UpdateMentor)
 		mentor.DELETE("/:id", handlers.DeleteMentor)
+		mentor.DELETE("/:id/hard-delete", handlers.HardDeleteMentor)
 		mentor.GET("/export/excel", handlers.ExportMentorExcel)
 
 		// Materi Pembelajaran Routes

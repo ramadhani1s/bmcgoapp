@@ -41,7 +41,8 @@ func Login(email string, password string) (*models.User, error) {
 			COALESCE(NULLIF(nama, ''), NULLIF(username, ''), 'User') AS nama,
 			COALESCE(NULLIF(email, ''), username) AS email,
 			password,
-			COALESCE(role_id, 0) AS role_id
+			COALESCE(role_id, 0) AS role_id,
+			COALESCE(status, 'aktif') AS status
 		FROM users
 		WHERE
 			LOWER(COALESCE(NULLIF(email, ''), username)) = LOWER($1)
@@ -60,6 +61,7 @@ func Login(email string, password string) (*models.User, error) {
 		&user.Email,
 		&user.Password,
 		&user.RoleID,
+		&user.Status,
 	)
 
 	if err != nil {
@@ -96,6 +98,11 @@ func Login(email string, password string) (*models.User, error) {
 
 	if !passwordMatched {
 		return nil, errors.New("password salah")
+	}
+
+	// Check if user account is active
+	if user.Status != "aktif" {
+		return nil, errors.New("akun anda telah dinonaktifkan")
 	}
 
 	if user.RoleID == 0 {

@@ -35,7 +35,18 @@ class AuthService {
           )
           .timeout(const Duration(seconds: 15));
 
-      final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+      // Try to parse JSON response safely and log raw body on failure
+      dynamic data = {};
+      if (response.body.isNotEmpty) {
+        try {
+          data = jsonDecode(response.body);
+        } catch (e) {
+          print('AuthService.login: failed to parse JSON response');
+          print('Status: ${response.statusCode}');
+          print('Body: ${response.body}');
+          return {'success': false, 'message': 'Invalid server response: ${response.body}'};
+        }
+      }
 
       if (response.statusCode == 200) {
         final user = User.fromJson(data['user']);

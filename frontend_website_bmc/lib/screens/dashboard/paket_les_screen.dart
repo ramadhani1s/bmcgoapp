@@ -91,7 +91,9 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
     // Parse harga
     int? hargaAwal;
     try {
-      hargaAwal = int.parse(hargaController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+      hargaAwal = int.parse(
+        hargaController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -118,15 +120,23 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
       final data = {
         "nama_paket": namaController.text.trim(),
         "harga_awal": hargaAwal,
-        "diskon": int.tryParse(diskonController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-        "durasi": int.tryParse(durasiController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+        "diskon":
+            int.tryParse(
+              diskonController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+            ) ??
+            0,
+        "durasi":
+            int.tryParse(
+              durasiController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+            ) ??
+            0,
         "deskripsi": deskripsiController.text.trim().isNotEmpty
             ? deskripsiController.text.trim()
             : null,
-        "tanggal_mulai_promo": tanggalMulaiPromo != null 
+        "tanggal_mulai_promo": tanggalMulaiPromo != null
             ? "${tanggalMulaiPromo!.year.toString().padLeft(4, '0')}-${tanggalMulaiPromo!.month.toString().padLeft(2, '0')}-${tanggalMulaiPromo!.day.toString().padLeft(2, '0')}"
             : null,
-        "tanggal_selesai_promo": tanggalSelesaiPromo != null 
+        "tanggal_selesai_promo": tanggalSelesaiPromo != null
             ? "${tanggalSelesaiPromo!.year.toString().padLeft(4, '0')}-${tanggalSelesaiPromo!.month.toString().padLeft(2, '0')}-${tanggalSelesaiPromo!.day.toString().padLeft(2, '0')}"
             : null,
         "status": selectedStatus,
@@ -195,7 +205,9 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
     // Parse harga
     int? hargaAwal;
     try {
-      hargaAwal = int.parse(hargaController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+      hargaAwal = int.parse(
+        hargaController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -222,15 +234,23 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
       final data = {
         "nama_paket": namaController.text.trim(),
         "harga_awal": hargaAwal,
-        "diskon": int.tryParse(diskonController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-        "durasi": int.tryParse(durasiController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+        "diskon":
+            int.tryParse(
+              diskonController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+            ) ??
+            0,
+        "durasi":
+            int.tryParse(
+              durasiController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+            ) ??
+            0,
         "deskripsi": deskripsiController.text.trim().isNotEmpty
             ? deskripsiController.text.trim()
             : null,
-        "tanggal_mulai_promo": tanggalMulaiPromo != null 
+        "tanggal_mulai_promo": tanggalMulaiPromo != null
             ? "${tanggalMulaiPromo!.year.toString().padLeft(4, '0')}-${tanggalMulaiPromo!.month.toString().padLeft(2, '0')}-${tanggalMulaiPromo!.day.toString().padLeft(2, '0')}"
             : null,
-        "tanggal_selesai_promo": tanggalSelesaiPromo != null 
+        "tanggal_selesai_promo": tanggalSelesaiPromo != null
             ? "${tanggalSelesaiPromo!.year.toString().padLeft(4, '0')}-${tanggalSelesaiPromo!.month.toString().padLeft(2, '0')}-${tanggalSelesaiPromo!.day.toString().padLeft(2, '0')}"
             : null,
         "status": selectedStatus,
@@ -647,85 +667,6 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
-            filled: true,
-            fillColor: const Color(0xFFF5F7FA),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateField(
-    String label,
-    DateTime? value,
-    Function(DateTime?) onChanged,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        ),
-        const SizedBox(height: 6),
-        GestureDetector(
-          onTap: () async {
-            final date = await showDatePicker(
-              context: context,
-              initialDate: value ?? DateTime.now(),
-              firstDate: DateTime(2020),
-              lastDate: DateTime(2030),
-            );
-            if (date != null) onChanged(date);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F7FA),
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  value?.toString().split(' ')[0] ?? 'Pilih tanggal',
-                  style: const TextStyle(fontSize: 14),
-                ),
-                const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Status",
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        ),
-        const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          value: selectedStatus,
-          items: [
-            'aktif',
-            'nonaktif',
-          ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-          onChanged: (val) => setState(() => selectedStatus = val ?? 'aktif'),
-          decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFFF5F7FA),
             border: OutlineInputBorder(

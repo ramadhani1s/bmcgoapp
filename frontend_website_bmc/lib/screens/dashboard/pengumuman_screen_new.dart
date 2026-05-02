@@ -10,8 +10,6 @@ class PengumumanScreen extends StatefulWidget {
 
 class _PengumumanScreenState extends State<PengumumanScreen> {
   static const Color _primaryPurple = Color(0xFF7C3AED);
-  static const Color _lightPurple = Color(0xFFF3E8FF);
-  static const Color _cream = Color(0xFFF8FAFD);
   static const Color _border = Color(0xFFDDE4F0);
   static const Color _textDark = Color(0xFF1E2A3E);
   static const Color _textLight = Color(0xFF667287);

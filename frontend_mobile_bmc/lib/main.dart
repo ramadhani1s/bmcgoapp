@@ -21,10 +21,8 @@ import 'package:frontend_mobile_bmc/screens/siswa/materi_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/pengumuman_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/olimpiade_screen.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
