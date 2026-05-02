@@ -48,6 +48,24 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
     }
   }
 
+  List<String> _buildMapelOptions() {
+    const defaults = [
+      'Matematika',
+      'Fisika',
+      'Kimia',
+      'Biologi',
+      'Bahasa Indonesia',
+      'Bahasa Inggris',
+    ];
+
+    final options = <String>{
+      ...defaults,
+      ...widget.mapelOptions.where((value) => value != 'Semua Mapel'),
+    }.toList();
+
+    return options.isEmpty ? defaults : options;
+  }
+
   @override
   void dispose() {
     _judulController.dispose();
@@ -357,8 +375,12 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
                           _buildFieldLabel('Mata Pelajaran *'),
                           const SizedBox(height: 6),
                           DropdownButtonFormField<String>(
-                            initialValue: _selectedMapel,
-                            items: widget.mapelOptions
+                            initialValue: _buildMapelOptions().contains(
+                                  _selectedMapel,
+                                )
+                                ? _selectedMapel
+                                : _buildMapelOptions().first,
+                            items: _buildMapelOptions()
                                 .map(
                                   (value) => DropdownMenuItem<String>(
                                     value: value,
@@ -698,11 +720,30 @@ class _SoalLatihanManagementScreenState
       text: latihan.totalSoal.toString(),
     );
 
+    final mapelOptions = <String>{
+      'Matematika',
+      'Fisika',
+      'Kimia',
+      'Biologi',
+      'Bahasa Indonesia',
+      'Bahasa Inggris',
+      latihan.mapel,
+    }.toList();
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Edit Latihan'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Edit Latihan',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -719,26 +760,18 @@ class _SoalLatihanManagementScreenState
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedMapel,
+                  initialValue: mapelOptions.contains(selectedMapel)
+                      ? selectedMapel
+                      : mapelOptions.first,
                   decoration: InputDecoration(
                     labelText: 'Mata Pelajaran',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  items:
-                      [
-                            'Matematika',
-                            'Fisika',
-                            'Kimia',
-                            'Biologi',
-                            'Bahasa Indonesia',
-                            'Bahasa Inggris',
-                          ]
-                          .map(
-                            (e) => DropdownMenuItem(value: e, child: Text(e)),
-                          )
-                          .toList(),
+                  items: mapelOptions
+                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                      .toList(),
                   onChanged: (value) {
                     if (value != null) {
                       setDialogState(() => selectedMapel = value);
@@ -791,6 +824,17 @@ class _SoalLatihanManagementScreenState
                   );
                 }
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: const Text('Simpan'),
             ),
           ],
@@ -803,16 +847,38 @@ class _SoalLatihanManagementScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Latihan'),
-        content: Text('Hapus "${latihan.title}"?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Hapus Latihan',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        content: Text(
+          'Hapus "${latihan.title}"?',
+          style: const TextStyle(color: Color(0xFF6B7280), height: 1.45),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
             child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Hapus'),
           ),
         ],
@@ -1082,7 +1148,7 @@ class _SoalLatihanManagementScreenState
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: List.generate(totalSoal.clamp(1, 20), (index) {
+            children: List.generate(totalSoal.clamp(1, 20).toInt(), (index) {
               final number = index + 1;
               final isDone = index < createdSoal;
               return Container(

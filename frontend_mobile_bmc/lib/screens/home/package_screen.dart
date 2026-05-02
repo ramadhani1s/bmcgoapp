@@ -26,7 +26,7 @@ class _PackageScreenState extends State<PackageScreen> {
 
   Future<void> _loadPakets() async {
     setState(() => _isLoading = true);
-    final aktivPakets = await PaketLesService.getPaketLesList();
+    final aktivPakets = await PaketLesService.getPaketLesList(status: 'aktif');
 
     setState(() {
       _pakets = aktivPakets;

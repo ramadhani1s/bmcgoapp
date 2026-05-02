@@ -99,13 +99,6 @@ class _MentorCompetitionManagementState
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,13 +310,6 @@ class _MentorCompetitionManagementState
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,15 +510,38 @@ class _MentorCompetitionManagementState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus data?'),
-        content: Text('Yakin hapus ${item.title}?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Hapus data?',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        content: Text(
+          'Yakin hapus ${item.title}?',
+          style: const TextStyle(color: Color(0xFF6B7280), height: 1.45),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
             child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Hapus'),
           ),
         ],
@@ -573,6 +582,9 @@ class _MentorCompetitionManagementState
         title: Text(widget.title),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1F2937),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.white,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -582,14 +594,7 @@ class _MentorCompetitionManagementState
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        widget.accentColor.withOpacity(0.12),
-                        Colors.white,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
@@ -597,50 +602,21 @@ class _MentorCompetitionManagementState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _pageTag,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: widget.accentColor,
-                          letterSpacing: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
                         widget.subtitle,
                         style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF111827),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
-                        'Kelola data ${widget.type == 'tryout' ? 'try out' : 'olimpiade'} dengan alur yang rapi, cepat, dan konsisten.',
+                        'Kelola data ${widget.type == 'tryout' ? 'try out' : 'olimpiade'} dengan tampilan yang sederhana dan jelas.',
                         style: const TextStyle(
                           fontSize: 14,
                           height: 1.5,
                           color: Color(0xFF6B7280),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _StatChip(
-                            label: 'Total Data',
-                            value: totalItems.toString(),
-                            icon: Icons.dataset_outlined,
-                            color: widget.accentColor,
-                          ),
-                          _StatChip(
-                            label: 'Publish',
-                            value: publishedCount.toString(),
-                            icon: Icons.verified_outlined,
-                            color: const Color(0xFF10B981),
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -949,13 +925,84 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    Future<void> submit() async {
+      if (_titleController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Judul/Nama wajib diisi')));
+        return;
+      }
+
+      if (_scheduleController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Tanggal wajib dipilih')));
+        return;
+      }
+
+      if (widget.type == 'olimpiade' &&
+          _locationController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Lokasi wajib diisi')));
+        return;
+      }
+
+      if (widget.type == 'tryout' && _durationController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Waktu wajib diisi')));
+        return;
+      }
+
+      setState(() => _saving = true);
+      final totalQuestions = widget.type == 'tryout'
+          ? _sumTryoutQuestions()
+          : int.tryParse(_questionsController.text.trim()) ?? 0;
+      final response = await MentorCompetitionService.createOrUpdate(
+        type: widget.type,
+        id: widget.initialItem?.id,
+        classLevel: _classLevel,
+        title: _titleController.text.trim(),
+        subject: _locationController.text.trim(),
+        scheduleLabel: _scheduleController.text.trim(),
+        durationLabel: _durationController.text.trim(),
+        totalQuestions: totalQuestions,
+        categoryQuestions: _collectCategoryQuestions(),
+      );
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response['message']?.toString() ?? 'Proses selesai'),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      if (response['success'] == true) {
+        widget.onSaved();
+        if (mounted) {
+          Navigator.of(context).pop(true);
+        }
+      }
+    }
+
     return AlertDialog(
-      title: Text(widget.initialItem == null ? 'Tambah Data' : 'Edit Data'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Text(
+        widget.initialItem == null ? 'Tambah Data' : 'Edit Data',
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF111827),
+        ),
+      ),
       content: SizedBox(
         width: 480,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextField(
                 controller: _titleController,
@@ -989,6 +1036,20 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                     labelText: 'Tanggal Pelaksanaan',
                     suffixIcon: Icon(Icons.calendar_today_outlined),
                   ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _durationController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Durasi (menit)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _questionsController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Jumlah Soal'),
                 ),
               ],
               if (widget.type == 'tryout') ...[
@@ -1079,125 +1140,27 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
           ),
         ),
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       actions: [
         TextButton(
           onPressed: _saving ? null : () => Navigator.of(context).pop(false),
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF6B7280),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
           child: const Text('Batal'),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: widget.accentColor),
-          onPressed: _saving
-              ? null
-              : () async {
-                  if (_titleController.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Judul/Nama wajib diisi'),
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 80,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-                  if (_scheduleController.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Tanggal wajib dipilih'),
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 80,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-                  if (widget.type == 'olimpiade' &&
-                      _locationController.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Lokasi wajib diisi'),
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 80,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-                  if (widget.type == 'tryout' &&
-                      _durationController.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Waktu wajib diisi'),
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 80,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-
-                  final messenger = ScaffoldMessenger.of(context);
-                  final navigator = Navigator.of(context);
-
-                  setState(() => _saving = true);
-                  final totalQuestions = widget.type == 'tryout'
-                      ? _sumTryoutQuestions()
-                      : int.tryParse(_questionsController.text.trim()) ?? 0;
-                  final response =
-                      await MentorCompetitionService.createOrUpdate(
-                        type: widget.type,
-                        id: widget.initialItem?.id,
-                        classLevel: _classLevel,
-                        title: _titleController.text.trim(),
-                        subject: _locationController.text.trim(),
-                        scheduleLabel: _scheduleController.text.trim(),
-                        durationLabel: _durationController.text.trim(),
-                        totalQuestions: totalQuestions,
-                        categoryQuestions: _collectCategoryQuestions(),
-                      );
-                  if (!mounted) return;
-                  setState(() => _saving = false);
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        response['message']?.toString() ?? 'Proses selesai',
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 80,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  );
-                  if (response['success'] == true) {
-                    widget.onSaved();
-                    navigator.pop(true);
-                  }
-                },
-          child: const Text('Simpan'),
+          onPressed: _saving ? null : submit,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: widget.accentColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: Text(widget.initialItem == null ? 'Simpan' : 'Update'),
         ),
       ],
     );

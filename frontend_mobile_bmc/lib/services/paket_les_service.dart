@@ -18,9 +18,11 @@ class PaketLesService {
   }
 
   // Get all active paket les (public endpoint - no auth needed)
-  static Future<List<Map<String, dynamic>>> getPaketLesList({required String status}) async {
+  static Future<List<Map<String, dynamic>>> getPaketLesList({
+    required String status,
+  }) async {
     try {
-      final url = Uri.parse("$baseUrl/paket-les");
+      final url = Uri.parse("$baseUrl/paket-les?status=$status");
 
       debugPrint("GET PAKET LIST FROM: $url");
 
@@ -28,8 +30,8 @@ class PaketLesService {
           .get(url, headers: {"Content-Type": "application/json"})
           .timeout(const Duration(seconds: 10));
 
-        debugPrint("STATUS CODE: ${response.statusCode}");
-        debugPrint("RESPONSE: ${response.body}");
+      debugPrint("STATUS CODE: ${response.statusCode}");
+      debugPrint("RESPONSE: ${response.body}");
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -79,8 +81,8 @@ class PaketLesService {
           .post(url, headers: headers, body: jsonEncode(data))
           .timeout(const Duration(seconds: 10));
 
-        debugPrint("CREATE STATUS: ${response.statusCode}");
-        debugPrint("CREATE RESPONSE: ${response.body}");
+      debugPrint("CREATE STATUS: ${response.statusCode}");
+      debugPrint("CREATE RESPONSE: ${response.body}");
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);

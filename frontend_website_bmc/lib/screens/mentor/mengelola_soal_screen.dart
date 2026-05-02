@@ -95,6 +95,15 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
       _clearForm();
       await _loadSoal();
       setState(() => _isAddingNew = false);
+      // If target reached, close this flow and signal success to caller
+      if (_soalList.length >= widget.targetSoal) {
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        if (!mounted) return;
+        Navigator.of(context).pop(); // close MengelolaSoalScreen
+        Navigator.of(
+          context,
+        ).pop(true); // close CreateLatihanScreen with success
+      }
     } else {
       final detailText = res['details'] != null
           ? '\nDetail: ${res['details']}'
@@ -121,8 +130,9 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor:
-            isError ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+        backgroundColor: isError
+            ? const Color(0xFFEF4444)
+            : const Color(0xFF10B981),
       ),
     );
   }
@@ -345,8 +355,7 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
                           ),
                           const Spacer(),
                           ElevatedButton(
-                            onPressed:
-                                _isSubmitting ? null : _submitSoal,
+                            onPressed: _isSubmitting ? null : _submitSoal,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF2563EB),
                             ),
@@ -449,10 +458,7 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
           const SizedBox(height: 8),
           Text(
             'Kunci: ${soal.jawaban}',
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-            ),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
           ),
         ],
       ),

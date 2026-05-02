@@ -4,7 +4,6 @@ import '../../models/soal_latihan.dart';
 import '../../services/latihan_soal_service.dart';
 import '../../widgets/soal_overview_card.dart';
 import 'create_latihan_screen.dart';
-import 'latihan_soal_view_screen.dart';
 import 'mengelola_soal_screen.dart';
 
 class LatihanSoalScreen extends StatefulWidget {
@@ -260,15 +259,46 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Hapus soal latihan?'),
-          content: const Text('Data soal ini akan dihapus permanen.'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Hapus soal latihan?',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
+          ),
+          content: const Text(
+            'Data soal ini akan dihapus permanen.',
+            style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF6B7280),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
               child: const Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEF4444),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: const Text('Hapus'),
             ),
           ],
@@ -297,6 +327,98 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     await _loadItems();
   }
 
+  Future<void> _deleteLatihanByMapel(
+    String mapel,
+    List<SoalLatihan> items,
+  ) async {
+    if (items.isEmpty) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Hapus latihan ini?',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
+          ),
+          content: Text(
+            'Semua soal latihan mapel $mapel akan dihapus permanen (${items.length} soal).',
+            style: const TextStyle(color: Color(0xFF6B7280), height: 1.45),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF6B7280),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEF4444),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Hapus Semua'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    int successCount = 0;
+    String? failedMessage;
+
+    for (final soal in items) {
+      final result = await LatihanSoalService.deleteSoalLatihan(soal.id);
+      if (result['success'] == true) {
+        successCount++;
+      } else {
+        failedMessage = result['message']?.toString() ?? 'Gagal menghapus soal';
+        break;
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    if (failedMessage != null) {
+      _showMessage(
+        'Proses berhenti. Berhasil hapus $successCount/${items.length} soal. $failedMessage',
+        isError: true,
+      );
+    } else {
+      _showMessage('Semua soal latihan $mapel berhasil dihapus');
+    }
+
+    await _loadItems();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -313,37 +435,27 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1180),
-            child: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: _isLoading
-                  ? const Padding(
-                      padding: EdgeInsets.only(top: 80),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildPageHeader(),
-                        const SizedBox(height: 20),
-                        _buildTopSummary(),
-                        const SizedBox(height: 16),
-                        _buildToolbar(),
-                        const SizedBox(height: 18),
-                        _buildListView(),
-                        if (_showForm) ...[
-                          const SizedBox(height: 18),
-                          _buildFormView(),
-                        ],
-                      ],
-                    ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPageHeader(),
+                  const SizedBox(height: 20),
+                  _buildTopSummary(),
+                  const SizedBox(height: 16),
+                  _buildToolbar(),
+                  const SizedBox(height: 18),
+                  _buildListView(),
+                  if (_showForm) ...[
+                    const SizedBox(height: 18),
+                    _buildFormView(),
+                  ],
+                ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -582,29 +694,25 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width >= 1400
+        final columns = width >= 1400
             ? 4
             : width >= 1100
             ? 3
             : width >= 700
             ? 2
             : 1;
+        final itemWidth = (width - ((columns - 1) * 12)) / columns;
 
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: mapelKeys.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: crossAxisCount == 1 ? 0.95 : 0.9,
-          ),
-          itemBuilder: (context, index) {
-            final mapel = mapelKeys[index];
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: mapelKeys.map((mapel) {
             final list = grouped[mapel] ?? const <SoalLatihan>[];
-            return _buildMapelSectionCard(mapel, list);
-          },
+            return SizedBox(
+              width: itemWidth,
+              child: _buildMapelSectionCard(mapel, list),
+            );
+          }).toList(),
         );
       },
     );
@@ -631,14 +739,14 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Color(0x0D000000),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -648,24 +756,32 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2563EB),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Latihan $mapel - ${parsed.questionText.isNotEmpty ? parsed.questionText : 'Soal Latihan'}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1F2937),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF111827),
                   ),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: 10,
+                  vertical: 4,
                 ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFDCFCE7),
@@ -674,133 +790,96 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
                 child: const Text(
                   'Dipublikasi',
                   style: TextStyle(
-                    color: Color(0xFF166534),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
+                    fontSize: 10,
+                    color: Color(0xFF065F46),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          const SizedBox(height: 10),
+          Row(
             children: [
-              _buildBadge(
+              Text(
                 mapel,
-                const Color(0xFFDBEAFE),
-                const Color(0xFF2563EB),
+                style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
               ),
-              _buildBadge(
-                'Dipublikasi',
-                const Color(0xFFDCFCE7),
-                const Color(0xFF16A34A),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E8FF),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFE9D5FF)),
+                ),
+                child: const Text(
+                  '-',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF7C3AED),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFFFEDD5)),
+                ),
+                child: const Text(
+                  '30 menit',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFFF59E0B),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '$progressCount/$targetCount soal',
+                style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final cardWidth = (constraints.maxWidth - 24) / 3;
-
-              return Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  SizedBox(
-                    width: cardWidth,
-                    child: _buildMiniInfoCard(
-                      icon: Icons.description_outlined,
-                      title: '$progressCount',
-                      subtitle: 'Soal',
-                    ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    child: _buildMiniInfoCard(
-                      icon: Icons.timer_outlined,
-                      title: '30',
-                      subtitle: 'Menit',
-                    ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    child: _buildMiniInfoCard(
-                      icon: Icons.calendar_today_outlined,
-                      title: '10/04/2026',
-                      subtitle: 'Dibuat',
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Row(
             children: [
               const Expanded(
                 child: Text(
                   'Progress Soal',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151),
-                  ),
+                  style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                 ),
               ),
               Text(
-                '$progressCount/$targetCount ✓',
+                '$progressCount/$targetCount',
                 style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF16A34A),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF6B7280),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
             child: LinearProgressIndicator(
               value: progress.clamp(0, 1),
-              minHeight: 8,
+              minHeight: 6,
               backgroundColor: const Color(0xFFE5E7EB),
               valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF22C55E),
+                Color(0xFF2563EB),
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (ctx) => LatihanSoalViewScreen(
-                          mapel: mapel,
-                          latihanTitle: 'Latihan $mapel',
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.visibility_outlined, size: 18),
-                  label: const Text('Lihat'),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFFEFF6FF),
-                    foregroundColor: const Color(0xFF2563EB),
-                    side: const BorderSide(color: Color(0xFFE0E7FF)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
@@ -814,57 +893,74 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
                       ),
                     ).then((_) => _loadItems());
                   },
-                  icon: const Icon(Icons.format_list_bulleted, size: 18),
-                  label: const Text('Kelola'),
+                  icon: const Icon(Icons.menu_book_outlined, size: 16),
+                  label: const Text(
+                    'Kelola Soal',
+                    style: TextStyle(fontSize: 13),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFB923C),
+                    minimumSize: const Size.fromHeight(40),
+                    backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                ),
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  alignment: Alignment.center,
-                  onPressed: () => _openEditForm(first),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  color: const Color(0xFF6B7280),
-                ),
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.edit_outlined,
+                iconColor: const Color(0xFF6B7280),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: const Color(0xFFF9FAFB),
+                onPressed: () => _openEditForm(first),
+                tooltip: 'Edit',
               ),
               const SizedBox(width: 8),
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFECACA)),
-                ),
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  alignment: Alignment.center,
-                  onPressed: () => _deleteItem(first),
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  color: const Color(0xFFEF4444),
-                ),
+              _buildActionIconButton(
+                icon: Icons.delete_outline,
+                iconColor: const Color(0xFFEF4444),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: const Color(0xFFFFF1F2),
+                onPressed: () => _deleteLatihanByMapel(mapel, list),
+                tooltip: 'Hapus',
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionIconButton({
+    required IconData icon,
+    required Color iconColor,
+    required Color borderColor,
+    required Color backgroundColor,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: backgroundColor,
+            side: BorderSide(color: borderColor),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: EdgeInsets.zero,
+            alignment: Alignment.center,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Icon(icon, size: 16, color: iconColor),
+        ),
       ),
     );
   }

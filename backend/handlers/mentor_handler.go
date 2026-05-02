@@ -223,8 +223,49 @@ func UpdateMentor(c *gin.Context) {
 		return
 	}
 
+	input.NamaMentor = strings.TrimSpace(input.NamaMentor)
+	input.Email = strings.TrimSpace(input.Email)
+	input.Password = strings.TrimSpace(input.Password)
+	input.MataPelajaran = strings.TrimSpace(input.MataPelajaran)
+	input.Status = strings.TrimSpace(input.Status)
+
+	if input.NamaMentor == "" || input.Email == "" || input.MataPelajaran == "" {
+		c.JSON(400, gin.H{"error": "Nama, email, dan mata pelajaran wajib diisi"})
+		return
+	}
+
+	if input.Status == "" {
+		input.Status = "Aktif"
+	}
+
+	userStatus := "aktif"
+	if strings.EqualFold(input.Status, "nonaktif") {
+		userStatus = "nonaktif"
+	}
+
+	var (
+		mentorID int
+		userID   int
+	)
+
+	err := config.DB.QueryRow(context.Background(), `
+		SELECT id, user_id
+		FROM mentor
+		WHERE id = $1
+		LIMIT 1
+	`, id).Scan(&mentorID, &userID)
+	if err != nil {
+		c.JSON(404, gin.H{"error": "Mentor tidak ditemukan"})
+		return
+	}
+
 	// kalau password diisi → update password juga
 	if strings.TrimSpace(input.Password) != "" {
+		hashed, hashErr := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+		if hashErr != nil {
+			c.JSON(500, gin.H{"error": "gagal hash password"})
+			return
+		}
 
 		_, err := config.DB.Exec(context.Background(), `
 			UPDATE mentor
@@ -240,7 +281,30 @@ func UpdateMentor(c *gin.Context) {
 			input.Password,
 			input.MataPelajaran,
 			input.Status,
-			id,
+			mentorID,
+		)
+
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		_, err = config.DB.Exec(context.Background(), `
+			UPDATE users
+			SET nama=$1,
+				username=$2,
+				email=$3,
+				password=$4,
+				role_id=2,
+				status=$5
+			WHERE id=$6
+		`,
+			input.NamaMentor,
+			input.Email,
+			input.Email,
+			string(hashed),
+			userStatus,
+			userID,
 		)
 
 		if err != nil {
@@ -262,7 +326,28 @@ func UpdateMentor(c *gin.Context) {
 			input.Email,
 			input.MataPelajaran,
 			input.Status,
-			id,
+			mentorID,
+		)
+
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		_, err = config.DB.Exec(context.Background(), `
+			UPDATE users
+			SET nama=$1,
+				username=$2,
+				email=$3,
+				role_id=2,
+				status=$4
+			WHERE id=$5
+		`,
+			input.NamaMentor,
+			input.Email,
+			input.Email,
+			userStatus,
+			userID,
 		)
 
 		if err != nil {
@@ -283,10 +368,37 @@ func UpdateMentor(c *gin.Context) {
 func DeleteMentor(c *gin.Context) {
 	id := c.Param("id")
 
-	_, err := config.DB.Exec(
+	var userID int
+	err := config.DB.QueryRow(
+		context.Background(),
+		`SELECT user_id FROM mentor WHERE id=$1`,
+		id,
+	).Scan(&userID)
+
+	if err != nil {
+		c.JSON(404, gin.H{
+			"error": "mentor tidak ditemukan",
+		})
+		return
+	}
+
+	_, err = config.DB.Exec(
 		context.Background(),
 		`UPDATE mentor SET status='Nonaktif' WHERE id=$1`,
 		id,
+	)
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	_, err = config.DB.Exec(
+		context.Background(),
+		`UPDATE users SET status='nonaktif', role_id=2 WHERE id=$1`,
+		userID,
 	)
 
 	if err != nil {
