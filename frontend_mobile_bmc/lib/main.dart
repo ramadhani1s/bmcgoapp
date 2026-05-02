@@ -17,6 +17,10 @@ import 'package:frontend_mobile_bmc/screens/splash_screen.dart';
 import 'package:frontend_mobile_bmc/screens/payment/payment_confirmation_screen.dart';
 import 'package:frontend_mobile_bmc/screens/payment/payment_history_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/materi_screen.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/pengumuman_screen.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/olimpiade_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +69,9 @@ class MyApp extends StatelessWidget {
           normalAmount: 0,
           finalAmount: 0,
         ),
+        '/materi': (context) => const MateriScreen(),
+        '/pengumuman': (context) => const PengumumanScreen(),
+        '/olimpiade': (context) => const OlimpiadeScreen(),
       },
     );
   }

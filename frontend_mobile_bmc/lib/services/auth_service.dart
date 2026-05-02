@@ -2,10 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+
 class AuthService {
   // Jika menjalankan Flutter di Android emulator, gunakan 10.0.2.2 untuk mengakses backend di localhost PC.
   // Jika menggunakan perangkat fisik, ganti dengan IP PC kamu, misalnya http://192.168.1.100:8080/auth
-  static const String baseUrl = 'http://10.0.2.2:8080/auth';
+  static const String baseUrl = 'http://10.0.2.2:8080';
 
   static Future<Map<String, dynamic>> login(
     String email,
@@ -17,7 +18,7 @@ class AuthService {
 
       final response = await http
           .post(
-            Uri.parse('$baseUrl/login'),
+            Uri.parse('$baseUrl/auth/login'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'email': normalizedEmail,
@@ -60,7 +61,7 @@ class AuthService {
     try {
       final response = await http
           .post(
-            Uri.parse('$baseUrl/register'),
+            Uri.parse('$baseUrl/auth/register'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'nama': nama,
@@ -75,7 +76,7 @@ class AuthService {
             }),
           )
           .timeout(const Duration(seconds: 15));
-
+          
       if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {

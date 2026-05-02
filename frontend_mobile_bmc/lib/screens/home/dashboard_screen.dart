@@ -365,12 +365,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (menuKey.toLowerCase() == 'olimpiade') {
-      Navigator.of(context).pushNamed('/mentor-olimpiade');
+      Navigator.of(context).pushNamed('/olimpiade');
       return;
     }
 
     if (menuKey.toLowerCase() == 'absensi') {
       Navigator.of(context).pushNamed('/attendance');
+      return;
+    }
+
+    if (menuKey.toLowerCase() == 'pengumuman') {
+      Navigator.of(context).pushNamed('/pengumuman');
       return;
     }
 
@@ -385,7 +390,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
       return;
     }
-
     if (menuKey.toLowerCase() == 'materi') {
       _incrementMateriProgress();
       Navigator.of(
