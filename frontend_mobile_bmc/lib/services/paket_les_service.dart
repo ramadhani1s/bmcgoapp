@@ -4,7 +4,44 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PaketLesService {
-  static const String baseUrl = "http://172.27.66.99:8080/api";
+  static const String _defaultBaseUrl = "http://10.0.2.2:8080/api";
+  static String? _activeBaseUrl;
+
+  static List<String> _candidateBaseUrls() {
+    final urls = <String>[
+      "http://10.0.2.2:8080/api",
+      "http://localhost:8080/api",
+      "http://127.0.0.1:8080/api",
+      "http://172.27.66.99:8080/api",
+    ];
+
+    if (_activeBaseUrl != null && _activeBaseUrl!.isNotEmpty) {
+      urls.insert(0, _activeBaseUrl!);
+    }
+
+    urls.insert(0, _defaultBaseUrl);
+    return urls.toSet().toList();
+  }
+
+  static Future<http.Response> _requestWithFallback(
+    Future<http.Response> Function(String baseUrl) request,
+  ) async {
+    Object? lastError;
+
+    for (final baseUrl in _candidateBaseUrls()) {
+      try {
+        debugPrint("🌐 Trying API base: $baseUrl");
+        final response = await request(baseUrl).timeout(const Duration(seconds: 10));
+        _activeBaseUrl = baseUrl;
+        return response;
+      } catch (e) {
+        lastError = e;
+        debugPrint("❌ Failed with base $baseUrl: $e");
+      }
+    }
+
+    throw Exception("All API base URLs failed. Last error: $lastError");
+  }
 
   // Get token from SharedPreferences
   static Future<String?> _getToken() async {
@@ -17,18 +54,26 @@ class PaketLesService {
     }
   }
 
-  // Get all active paket les (public endpoint - no auth needed)
-  static Future<List<Map<String, dynamic>>> getPaketLesList({
-    required String status,
-  }) async {
+  // Get all paket les with optional filters (public endpoint - no auth needed)
+  static Future<List<Map<String, dynamic>>> getPaketLesList({String? status, String? search}) async {
     try {
-      final url = Uri.parse("$baseUrl/paket-les?status=$status");
+      final queryParams = <String, String>{};
 
-      debugPrint("GET PAKET LIST FROM: $url");
+      if (status != null && status.isNotEmpty) {
+        queryParams['status'] = status;
+      }
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
 
-      final response = await http
-          .get(url, headers: {"Content-Type": "application/json"})
-          .timeout(const Duration(seconds: 10));
+      final response = await _requestWithFallback(
+        (baseUrl) => http.get(
+          Uri.parse("$baseUrl/paket-les").replace(
+            queryParameters: queryParams.isEmpty ? null : queryParams,
+          ),
+          headers: {"Content-Type": "application/json"},
+        ),
+      );
 
       debugPrint("STATUS CODE: ${response.statusCode}");
       debugPrint("RESPONSE: ${response.body}");
@@ -36,9 +81,8 @@ class PaketLesService {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
 
-        // Check if response has data field
         if (jsonResponse['data'] is List) {
-          List<Map<String, dynamic>> pakets = [];
+          final pakets = <Map<String, dynamic>>[];
           for (var item in jsonResponse['data']) {
             pakets.add(Map<String, dynamic>.from(item));
           }
@@ -69,7 +113,6 @@ class PaketLesService {
         };
       }
 
-      final url = Uri.parse("$baseUrl/admin/paket-les");
       final headers = {
         "Authorization": "Bearer $token",
         "Content-Type": "application/json",
@@ -77,12 +120,16 @@ class PaketLesService {
 
       debugPrint("CREATE PAKET FROM MOBILE: $data");
 
-      final response = await http
-          .post(url, headers: headers, body: jsonEncode(data))
-          .timeout(const Duration(seconds: 10));
+      final response = await _requestWithFallback(
+        (baseUrl) => http.post(
+          Uri.parse("$baseUrl/admin/paket-les"),
+          headers: headers,
+          body: jsonEncode(data),
+        ),
+      );
 
-      debugPrint("CREATE STATUS: ${response.statusCode}");
-      debugPrint("CREATE RESPONSE: ${response.body}");
+        debugPrint("CREATE STATUS: ${response.statusCode}");
+        debugPrint("CREATE RESPONSE: ${response.body}");
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);

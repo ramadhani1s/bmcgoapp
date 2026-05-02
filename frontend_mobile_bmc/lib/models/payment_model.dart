@@ -94,8 +94,8 @@ class PaymentHistoryItem {
   final int amount;
   final String status;
   final String paymentType;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   PaymentHistoryItem({
     required this.transactionId,
@@ -109,28 +109,15 @@ class PaymentHistoryItem {
   });
 
   factory PaymentHistoryItem.fromJson(Map<String, dynamic> json) {
-    DateTime? parseDate(dynamic value) {
-      if (value == null) return null;
-      final text = value.toString();
-      if (text.isEmpty) return null;
-      return DateTime.tryParse(text);
-    }
-
-    int parseAmount(dynamic value) {
-      if (value is int) return value;
-      if (value is String) return int.tryParse(value) ?? 0;
-      return 0;
-    }
-
     return PaymentHistoryItem(
-      transactionId: json['transaction_id']?.toString() ?? '',
-      packageId: json['package_id']?.toString() ?? '',
-      packageTitle: json['package_title']?.toString() ?? '-',
-      amount: parseAmount(json['amount']),
-      status: json['status']?.toString() ?? 'unknown',
-      paymentType: json['payment_type']?.toString() ?? '-',
-      createdAt: parseDate(json['created_at']),
-      updatedAt: parseDate(json['updated_at']),
+      transactionId: json['transaction_id'] ?? '',
+      packageId: json['package_id'] ?? '',
+      packageTitle: json['package_title'] ?? '',
+      amount: (json['amount'] is int) ? json['amount'] : int.tryParse('${json['amount']}') ?? 0,
+      status: json['status'] ?? '',
+      paymentType: json['payment_type'] ?? '',
+      createdAt: DateTime.tryParse('${json['created_at']}') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse('${json['updated_at']}') ?? DateTime.now(),
     );
   }
 }

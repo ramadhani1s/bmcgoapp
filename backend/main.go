@@ -5,6 +5,7 @@ import (
 	"bmcgoapp-backend/routes"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -50,7 +51,12 @@ func main() {
 	routes.PaymentRoutes(r)
 	routes.MentorRoutes(r)
 
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("failed to start server on :8080: %v", err)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	if err := r.Run(":" + port); err != nil {
+		log.Fatalf("failed to start server on :%s: %v", port, err)
 	}
 }
