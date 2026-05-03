@@ -13,16 +13,9 @@ class JadwalPembelajaranScreen extends StatefulWidget {
 
 class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   static const Color _headerBlue = Color(0xFF175CFF);
-<<<<<<< HEAD
-<<<<<<< HEAD
   static const Color _accentGreen = Color(0xFF1CB58A);
   static const Color _lightGray = Color(0xFFF7F8FC);
   static const Color _borderGray = Color(0xFFE6EAF0);
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-
   List<Map<String, dynamic>> jadwalList = [];
   List<Map<String, dynamic>> paketList = [];
   List<Map<String, dynamic>> mentorList = [];
@@ -103,19 +96,11 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       return hariMatch && mentorMatch;
     }).toList();
   }
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
   int _asInt(dynamic value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
-
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
   String _timeToString(dynamic value) {
     if (value == null) return '-';
     final text = value.toString();
@@ -136,8 +121,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     return text;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+
   List<String>? _parseWaktuRange(String value) {
     final match = RegExp(
       r'(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})',
@@ -152,11 +136,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     final minute = parts.length > 1 ? int.tryParse(parts[1]) : null;
     return TimeOfDay(hour: hour ?? fallbackHour, minute: minute ?? 0);
   }
-
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
   String _packageLabel(Map<String, dynamic> paket) {
     return (paket['nama_paket'] ?? paket['nama'] ?? 'Paket').toString();
   }
@@ -191,9 +170,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     if (paket == null) return '-';
     return _packageLabel(paket);
   }
-
-<<<<<<< HEAD
-<<<<<<< HEAD
   InputDecoration _fieldDecoration(
     String label, {
     String? hintText,
@@ -220,17 +196,11 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
     );
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+
   int _countJadwalHariIni() {
     final now = DateTime.now();
     final hariIni = hariList[now.weekday - 1];
     return jadwalList.where((jadwal) => jadwal['hari'] == hariIni).length;
-<<<<<<< HEAD
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
   }
 
   Future<void> _createOrUpdateJadwal({Map<String, dynamic>? existing}) async {
@@ -266,7 +236,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-<<<<<<< HEAD
+
             Future<void> pickAndSetWaktu() async {
               final currentRange = _parseWaktuRange(waktuController.text);
               final startInitial = currentRange == null
@@ -292,7 +262,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                 waktuController.text =
                     '${pickedStart.hour.toString().padLeft(2, '0')}:${pickedStart.minute.toString().padLeft(2, '0')} - ${pickedEnd.hour.toString().padLeft(2, '0')}:${pickedEnd.minute.toString().padLeft(2, '0')}';
               });
-=======
+
             Future<void> pickAndSetTime(
               TextEditingController controller,
             ) async {
@@ -313,7 +283,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                       '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
                 });
               }
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
             }
 
             Future<void> submit() async {
@@ -328,8 +297,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                 return;
               }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
               final waktuParts = _parseWaktuRange(waktuController.text.trim());
               if (waktuParts == null) {
                 ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -344,17 +311,11 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
               }
 
               if (isSubmitting) return;
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+
               final rootMessenger = ScaffoldMessenger.of(context);
               final dialogMessenger = ScaffoldMessenger.of(dialogContext);
               final navigator = Navigator.of(dialogContext);
 
-<<<<<<< HEAD
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
               setModalState(() => isSubmitting = true);
 
               final payload = <String, dynamic>{
@@ -377,8 +338,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
               if (!dialogContext.mounted) return;
 
               if (result['status'] == 'success') {
-<<<<<<< HEAD
-<<<<<<< HEAD
                 Navigator.of(dialogContext).pop();
                 if (mounted) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -389,9 +348,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                             : '✅ Jadwal berhasil diupdate',
                       ),
                       backgroundColor: Colors.green,
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
                 navigator.pop();
                 rootMessenger.showSnackBar(
                   SnackBar(
@@ -399,25 +355,18 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                       existing == null
                           ? 'Jadwal berhasil dibuat'
                           : 'Jadwal berhasil diupdate',
-<<<<<<< HEAD
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
                     ),
                   );
                   _loadInitialData();
                 }
               } else {
-<<<<<<< HEAD
-<<<<<<< HEAD
                 setModalState(() => isSubmitting = false);
                 ScaffoldMessenger.of(dialogContext).showSnackBar(
-=======
                 dialogMessenger.showSnackBar(
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-=======
+
                 dialogMessenger.showSnackBar(
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+
+                dialogMessenger.showSnackBar(
                   SnackBar(
                     content: Text(
                       'Gagal menyimpan jadwal: ${result['message'] ?? 'Unknown error'}',
@@ -428,8 +377,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
               }
             }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+
             return Dialog(
               insetPadding: const EdgeInsets.symmetric(
                 horizontal: 96,
@@ -488,9 +436,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                                   ),
                                 ],
                               ),
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+
             final title = existing == null ? 'Tambah Jadwal' : 'Edit Jadwal';
 
             return AlertDialog(
@@ -643,7 +589,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade700,
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
                             ),
                             IconButton(
                               onPressed: isSubmitting
@@ -907,11 +852,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                   ),
                 ),
               ),
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
               actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               actions: [
                 TextButton(
@@ -952,7 +892,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                       : Text(existing == null ? 'Simpan' : 'Update'),
                 ),
               ],
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
             );
           },
         );
@@ -968,8 +907,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-<<<<<<< HEAD
-<<<<<<< HEAD
+
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -980,9 +918,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         content: const Text(
           'Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan.',
         ),
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: const Text(
           'Hapus Jadwal',
@@ -996,10 +932,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
           style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-<<<<<<< HEAD
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -1012,8 +945,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-<<<<<<< HEAD
-<<<<<<< HEAD
+
               backgroundColor: Colors.red,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
@@ -1026,9 +958,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+
               backgroundColor: const Color(0xFFEF4444),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -1037,10 +967,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
               ),
             ),
             child: const Text('Hapus'),
-<<<<<<< HEAD
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
           ),
         ],
       ),
@@ -1123,13 +1049,10 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
             ),
           ),
         ),
-<<<<<<< HEAD
-=======
         DataCell(Text((jadwal['mata_pelajaran'] ?? '-').toString())),
         DataCell(Text(_resolveMentorName(mentorId))),
         DataCell(Text((jadwal['ruang'] ?? '-').toString())),
         const DataCell(Text('0')),
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
         DataCell(
           Text(
             (jadwal['mata_pelajaran'] ?? '-').toString(),
@@ -1170,8 +1093,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                     ),
                   ),
                 ),
-<<<<<<< HEAD
-<<<<<<< HEAD
                 Tooltip(
                   message: 'Hapus Jadwal',
                   child: IconButton(
@@ -1190,21 +1111,15 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                 ),
               ],
             ),
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
                 onPressed: () => _showDeleteDialog(_asInt(jadwal['id'])),
               ),
             ],
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
           ),
         ),
       ],
     );
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -1628,9 +1543,6 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
   Widget _buildStatCard({
     required String title,
     required String value,
@@ -1639,10 +1551,7 @@ class _StatCard extends StatelessWidget {
     required Color backgroundColor,
     required IconData icon,
   }) {
-<<<<<<< HEAD
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

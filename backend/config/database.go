@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -10,7 +11,13 @@ import (
 var DB *pgxpool.Pool
 
 func ConnectDB() {
-	dsn := "postgres://postgres:yohana@localhost:5432/bmcgo_db"
+	// Allow overriding via environment variable DATABASE_URL
+	// Default includes sslmode=disable for local development where Postgres may not accept TLS
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		// Use the project's default local database name if no DATABASE_URL provided
+		dsn = "postgres://postgres:ramadhani12@localhost:5432/bmcgo_db?sslmode=disable"
+	}
 
 	var err error
 	// 1. Membuat konfigurasi pool
@@ -395,6 +402,44 @@ func ConnectDB() {
 	`)
 	if err != nil {
 		log.Fatal("Gagal membuat table pengumuman:", err)
+	}
+
+	// Buat table soal_latihan untuk menyimpan soal latihan mentor
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS soal_latihan (
+			id SERIAL PRIMARY KEY,
+			mentor_id INT NOT NULL,
+			pertanyaan TEXT NOT NULL,
+			pilihan_a TEXT NOT NULL,
+			pilihan_b TEXT NOT NULL,
+			pilihan_c TEXT NOT NULL,
+			pilihan_d TEXT NOT NULL,
+			jawaban VARCHAR(1) NOT NULL,
+			pembahasan TEXT,
+			created_at TIMESTAMP DEFAULT NOW(),
+			updated_at TIMESTAMP DEFAULT NOW(),
+			FOREIGN KEY (mentor_id) REFERENCES mentor(id) ON DELETE CASCADE
+		)
+	`)
+	if err != nil {
+		log.Fatal("Gagal membuat table soal_latihan:", err)
+	}
+
+	// Pastikan kolom pembahasan ada (untuk database lama yang tidak memiliki kolom ini)
+	_, err = DB.Exec(context.Background(), `
+		DO $$
+		BEGIN
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'soal_latihan' AND column_name = 'pembahasan'
+			) THEN
+				ALTER TABLE soal_latihan ADD COLUMN pembahasan TEXT;
+			END IF;
+		END
+		$$
+	`)
+	if err != nil {
+		log.Println("Warning: gagal add kolom pembahasan di soal_latihan:", err)
 	}
 
 	// Sinkronkan admin.user_id berdasarkan email agar FK pengumuman selalu menunjuk admin yang benar.

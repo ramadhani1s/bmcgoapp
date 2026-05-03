@@ -117,7 +117,6 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
       return;
     }
 
-<<<<<<< HEAD
     final data = {
       'nama_paket': namaController.text.trim(),
       'deskripsi': deskripsiController.text.trim(),
@@ -136,7 +135,6 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
       'tanggal_selesai_promo': _formatDateToString(tanggalSelesaiPromo),
       'status': selectedStatus,
     };
-=======
     try {
       final data = {
         "nama_paket": namaController.text.trim(),
@@ -168,10 +166,9 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
 
     final result = await PaketLesService.createPaket(data);
 
-<<<<<<< HEAD
+
     if (mounted) {
       if (result['status'] == 'success') {
-=======
       if (mounted) {
         if (response['status'] == 'success') {
           _clearControllers();
@@ -270,11 +267,9 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
 
     int? hargaAwal;
     try {
-<<<<<<< HEAD
       hargaAwal = int.parse(
         hargaController.text.replaceAll(RegExp(r'[^0-9]'), ''),
       );
-=======
       final data = {
         "nama_paket": namaController.text.trim(),
         "harga_awal": hargaAwal,
@@ -327,7 +322,6 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
           );
         }
       }
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -486,8 +480,6 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
     );
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   String _formatCurrency(int value) {
     return 'Rp${value.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (match) => '${match.group(1)}.')}';
   }
@@ -682,9 +674,6 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
             height: 34,
             decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
             child: Icon(icon, size: 18, color: Colors.white),
-=======
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -701,7 +690,6 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                 color: Colors.blue,
               ),
             ),
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
           ),
         ],
       ),

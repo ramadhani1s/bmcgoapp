@@ -37,11 +37,4 @@ func AuthRoutes(r *gin.Engine) {
 		apiAdminAuth.GET("/mentors", handlers.GetMentors)
 		apiAdminAuth.DELETE("/mentors/:id", handlers.DeleteMentor)
 	}
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
 }
-=======
-}
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98

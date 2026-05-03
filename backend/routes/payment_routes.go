@@ -20,7 +20,6 @@ func PaymentRoutes(r *gin.Engine) {
 		payment.Use(middleware.AuthMiddleware())
 		{
 			payment.POST("/create-transaction", handlers.CreateTransaction)
-			payment.POST("/submit-transfer", handlers.SubmitManualTransferConfirmation)
 			payment.GET("/history", handlers.GetPaymentHistory)
 			payment.GET("/status/:transactionId", handlers.CheckPaymentStatus)
 			payment.POST("/finish-transaction", handlers.FinishTransaction)
@@ -30,11 +29,11 @@ func PaymentRoutes(r *gin.Engine) {
 
 	// Admin payment verification routes
 	admin := r.Group("/admin/payment")
-	admin.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware(1))
+	admin.Use(middleware.AuthMiddleware())
+	admin.Use(middleware.RoleMiddleware(1)) // 1 = Admin role
 	{
-		admin.GET("/overview", handlers.GetVerificationOverview)
-		admin.GET("/pending-verifications", handlers.GetPendingVerifications)
-		admin.POST("/verify/:transactionId", handlers.VerifyPayment)
-		admin.POST("/reject/:transactionId", handlers.RejectPayment)
+		admin.GET("/pending-verifications", handlers.GetPendingPaymentVerifications)
+		admin.POST("/:transactionId/approve", handlers.ApprovePaymentVerification)
+		admin.POST("/:transactionId/reject", handlers.RejectPaymentVerification)
 	}
 }

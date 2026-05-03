@@ -179,25 +179,26 @@ class _TryoutSoalManagementScreenState
 
         // If server provided details, show them in a dialog for copying/debugging
         if (details != null && mounted) {
-<<<<<<< HEAD
-<<<<<<< HEAD
           final detailText = details;
           await showDialog<void>(
             context: context,
             builder: (ctx) => AlertDialog(
               title: const Text('Detail respons server'),
               content: SingleChildScrollView(child: SelectableText(detailText)),
-=======
+            ),
+          );
           final String detailsText = details;
           await showDialog<void>(
             context: context,
             builder: (ctx) => AlertDialog(
-=======
           final String detailsText = details;
           await showDialog<void>(
             context: context,
             builder: (ctx) => AlertDialog(
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+          final String detailsText = details;
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -212,10 +213,6 @@ class _TryoutSoalManagementScreenState
                 child: SelectableText(detailsText),
               ),
               actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-<<<<<<< HEAD
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
-=======
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
