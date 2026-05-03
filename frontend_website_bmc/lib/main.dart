@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'routes/app_routes.dart';
+import 'routes/route_observer.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +47,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: AppRoutes.login,
       onGenerateRoute: AppRoutes.generateRoute,
+      navigatorObservers: [routeObserver],
     );
   }
 }

@@ -5,6 +5,7 @@ import (
 	"bmcgoapp-backend/routes"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,8 +20,12 @@ func main() {
 
 	// Allow browser clients (Flutter web) to call backend APIs.
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		origin := c.GetHeader("Origin")
+		if origin != "" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+		} else {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 
@@ -46,7 +51,12 @@ func main() {
 	routes.PaymentRoutes(r)
 	routes.MentorRoutes(r)
 
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("failed to start server on :8080: %v", err)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	if err := r.Run(":" + port); err != nil {
+		log.Fatalf("failed to start server on :%s: %v", port, err)
 	}
 }

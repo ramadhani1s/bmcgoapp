@@ -1,8 +1,12 @@
 import 'dart:html' as html;
+import 'dart:convert';
 import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../models/mentor.dart';
 import '../services/auth_service.dart';
+import '../../models/admin_kelola_absensi.dart';
+import '../../services/admin_kelola_absensi_service.dart';
 
 class MentorManagementScreen extends StatefulWidget {
   const MentorManagementScreen({super.key});
@@ -59,18 +63,56 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
     for (int col = 0; col < headers.length; col++) {
       sheet
           .cell(xls.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0))
-          .value = xls.TextCellValue(headers[col]);
+          .value = xls.TextCellValue(
+        headers[col],
+      );
     }
 
     // DATA - All mentors in single file
     int rowIndex = 1;
     for (final mentor in _mentors) {
-      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex)).value = xls.IntCellValue(mentor.mentorId);
-      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex)).value = xls.TextCellValue(mentor.namaMentor);
-      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex)).value = xls.TextCellValue(mentor.email);
-      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex)).value = xls.TextCellValue(mentor.password);
-      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex)).value = xls.TextCellValue(mentor.spesialisasi);
-      sheet.cell(xls.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex)).value = xls.TextCellValue(mentor.status);
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex),
+          )
+          .value = xls.IntCellValue(
+        mentor.mentorId,
+      );
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex),
+          )
+          .value = xls.TextCellValue(
+        mentor.namaMentor,
+      );
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex),
+          )
+          .value = xls.TextCellValue(
+        mentor.email,
+      );
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex),
+          )
+          .value = xls.TextCellValue(
+        mentor.password,
+      );
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex),
+          )
+          .value = xls.TextCellValue(
+        mentor.mataPelajaran,
+      );
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex),
+          )
+          .value = xls.TextCellValue(
+        mentor.status,
+      );
       rowIndex++;
     }
 
@@ -83,7 +125,10 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
     final blob = html.Blob([bytes]);
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)
-      ..setAttribute("download", "data_mentor_bmc_${DateTime.now().toString().split(' ')[0]}.xlsx")
+      ..setAttribute(
+        "download",
+        "data_mentor_bmc_${DateTime.now().toString().split(' ')[0]}.xlsx",
+      )
       ..click();
     html.Url.revokeObjectUrl(url);
     _showSnack("Excel semua mentor berhasil diunduh");
@@ -116,7 +161,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
       _filteredMentors = _mentors.where((mentor) {
         return mentor.namaMentor.toLowerCase().contains(key) ||
             mentor.email.toLowerCase().contains(key) ||
-            mentor.spesialisasi.toLowerCase().contains(key);
+            mentor.mataPelajaran.toLowerCase().contains(key);
       }).toList();
     });
   }
@@ -148,7 +193,13 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
-              title: const Text("Tambah Mentor Baru"),
+              title: const Text(
+                "Tambah Mentor Baru",
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
+                ),
+              ),
               content: SizedBox(
                 width: 480,
                 child: Column(
@@ -188,10 +239,28 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF6B7280),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
                   child: const Text("Batal"),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   child: const Text("Simpan"),
                 ),
               ],
@@ -225,7 +294,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
 
     final email = TextEditingController(text: mentor.email);
 
-    final mapel = TextEditingController(text: mentor.spesialisasi);
+    final mapel = TextEditingController(text: mentor.mataPelajaran);
 
     final pass = TextEditingController();
 
@@ -240,7 +309,13 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
-              title: const Text("Edit Mentor"),
+              title: const Text(
+                "Edit Mentor",
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
+                ),
+              ),
               content: SizedBox(
                 width: 480,
                 child: Column(
@@ -280,10 +355,28 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF6B7280),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
                   child: const Text("Batal"),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   child: const Text("Update"),
                 ),
               ],
@@ -318,7 +411,16 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
       context: context,
       builder: (_) {
         return AlertDialog(
-          title: const Text("Nonaktifkan Mentor"),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            "Nonaktifkan Mentor",
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,10 +454,27 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF6B7280),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
               child: const Text("Batal"),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF59E0B),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               onPressed: () => Navigator.pop(context, true),
               child: const Text("Nonaktifkan"),
             ),
@@ -371,6 +490,100 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
 
     if (res["success"] == true) {
       _loadMentors();
+    }
+  }
+
+  // ==================================================
+  // HARD DELETE MENTOR (Permanent Delete)
+  // ==================================================
+  Future<void> _hardDeleteMentor(Mentor mentor) async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            "Hapus Mentor Permanen",
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Yakin hapus ${mentor.namaMentor} permanen?",
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.red, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "⚠️ Aksi ini tidak bisa dibatalkan. Data mentor dan semua datanya akan dihapus selamanya.",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                "Hapus Permanen",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (yes != true) return;
+
+    try {
+      final token = await AuthService.getToken();
+      final response = await http.delete(
+        Uri.parse(
+          "${AuthService.baseUrl}/api/mentor/${mentor.mentorId}/hard-delete",
+        ),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      final body = jsonDecode(response.body);
+      _showSnack(body["message"] ?? "Mentor berhasil dihapus");
+
+      if (response.statusCode == 200) {
+        _loadMentors();
+      }
+    } catch (e) {
+      _showSnack("❌ Error: $e");
     }
   }
 
@@ -394,21 +607,21 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
     VoidCallback? onTap,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: active ? const Color(0xFF2A58F2) : Colors.transparent,
-            borderRadius: BorderRadius.circular(9),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             children: [
               Icon(
                 icon,
-                size: 15,
+                size: 16,
                 color: active ? Colors.white : const Color(0xFF8290A6),
               ),
               const SizedBox(width: 8),
@@ -431,28 +644,25 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
 
   Widget _buildSidebar() {
     return Container(
-      width: 214,
+      width: 232,
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFD),
         border: Border(
           right: BorderSide(color: Color(0xFFDDE4F0)),
-          top: BorderSide(color: Color(0xFFDDE4F0)),
-          bottom: BorderSide(color: Color(0xFFDDE4F0)),
-          left: BorderSide(color: Color(0xFF2A8CF4), width: 2),
         ),
       ),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 16, 12, 10),
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 10),
             child: Row(
               children: [
                 SizedBox(
-                  width: 36,
-                  height: 36,
+                  width: 38,
+                  height: 38,
                   child: Image.asset('assets/images/BMC .png'),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,12 +688,16 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
           const SizedBox(height: 8),
 
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.symmetric(horizontal: 14),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'MENU UTAMA',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF6B7280),
+                ),
               ),
             ),
           ),
@@ -609,12 +823,17 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       ElevatedButton.icon(
-                        onPressed: _mentors.isEmpty ? null : _exportAllMentorExcel,
+                        onPressed: _mentors.isEmpty
+                            ? null
+                            : _exportAllMentorExcel,
                         icon: const Icon(Icons.download),
                         label: const Text("Unduh Semua Data Mentor (Excel)"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -648,7 +867,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                   DataColumn(label: Text("Status")),
                                   DataColumn(label: Text("Aksi")),
                                 ],
-                                  rows: _filteredMentors.map((mentor) {
+                                rows: _filteredMentors.map((mentor) {
                                   final visible =
                                       _showPassword[mentor.mentorId] ?? false;
 
@@ -681,7 +900,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                           ],
                                         ),
                                       ),
-                                      DataCell(Text(mentor.spesialisasi)),
+                                      DataCell(Text(mentor.mataPelajaran)),
                                       DataCell(
                                         Container(
                                           padding: const EdgeInsets.symmetric(
@@ -689,15 +908,21 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                             vertical: 4,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: mentor.status.toLowerCase() == 'aktif'
+                                            color:
+                                                mentor.status.toLowerCase() ==
+                                                    'aktif'
                                                 ? Colors.green.shade100
                                                 : Colors.red.shade100,
-                                            borderRadius: BorderRadius.circular(20),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
                                           ),
                                           child: Text(
                                             mentor.status,
                                             style: TextStyle(
-                                              color: mentor.status.toLowerCase() == 'aktif'
+                                              color:
+                                                  mentor.status.toLowerCase() ==
+                                                      'aktif'
                                                   ? Colors.green.shade700
                                                   : Colors.red.shade700,
                                               fontWeight: FontWeight.w600,
@@ -725,6 +950,15 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                                 color: Colors.orange,
                                               ),
                                               tooltip: "Nonaktifkan Mentor",
+                                            ),
+                                            IconButton(
+                                              onPressed: () =>
+                                                  _hardDeleteMentor(mentor),
+                                              icon: const Icon(
+                                                Icons.delete_forever,
+                                                color: Colors.red,
+                                              ),
+                                              tooltip: "Hapus Permanen",
                                             ),
                                           ],
                                         ),

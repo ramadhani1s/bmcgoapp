@@ -14,13 +14,13 @@ import 'package:frontend_mobile_bmc/screens/mentor/tryout_management_screen.dart
 import 'package:frontend_mobile_bmc/screens/home/profile_detail_form_screen.dart';
 import 'package:frontend_mobile_bmc/screens/onboarding_screen.dart';
 import 'package:frontend_mobile_bmc/screens/splash_screen.dart';
-import 'package:frontend_mobile_bmc/screens/payment/payment_confirmation_screen.dart';
 import 'package:frontend_mobile_bmc/screens/payment/payment_history_screen.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/materi_screen.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/pengumuman_screen.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/olimpiade_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -57,14 +57,10 @@ class MyApp extends StatelessWidget {
         '/profile-detail': (context) => const ProfileDetailFormScreen(),
         '/package': (context) => const PackageScreen(),
         '/payment-history': (context) => const PaymentHistoryScreen(),
-        '/payment': (context) => const PaymentConfirmationScreen(
-          packageId: 0,
-          packageTitle: '',
-          packagePeriod: '',
-          benefits: [],
-          normalAmount: 0,
-          finalAmount: 0,
-        ),
+        '/payment': (context) => const PaymentHistoryScreen(),
+        '/materi': (context) => const MateriScreen(),
+        '/pengumuman': (context) => const PengumumanScreen(),
+        '/olimpiade': (context) => const OlimpiadeScreen(),
       },
     );
   }

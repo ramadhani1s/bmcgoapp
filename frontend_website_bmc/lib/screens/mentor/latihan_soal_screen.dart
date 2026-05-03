@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../models/soal_latihan.dart';
 import '../../services/latihan_soal_service.dart';
+import '../../widgets/soal_overview_card.dart';
+import 'create_latihan_screen.dart';
+import 'mengelola_soal_screen.dart';
 
 class LatihanSoalScreen extends StatefulWidget {
   const LatihanSoalScreen({super.key});
@@ -16,14 +19,13 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   bool _showForm = false;
   List<SoalLatihan> _items = const [];
   SoalLatihan? _editingItem;
+  final TextEditingController _searchController = TextEditingController();
 
   final TextEditingController _judulController = TextEditingController();
   final TextEditingController _jumlahSoalController = TextEditingController(
     text: '1',
   );
-  final TextEditingController _durasiController = TextEditingController(
-    text: '20',
-  );
+  final TextEditingController _durasiController = TextEditingController();
   final TextEditingController _jadwalController = TextEditingController();
   final List<_QuestionDraft> _drafts = <_QuestionDraft>[];
 
@@ -37,6 +39,8 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   ];
 
   String _selectedMapel = 'Matematika';
+  String _selectedStatusFilter = '';
+  String _selectedMapelFilter = '';
 
   Future<void> _pickJadwalDate() async {
     final now = DateTime.now();
@@ -70,6 +74,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     _jumlahSoalController.dispose();
     _durasiController.dispose();
     _jadwalController.dispose();
+    _searchController.dispose();
     for (final draft in _drafts) {
       draft.dispose();
     }
@@ -105,56 +110,41 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
               size: 20,
             ),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            Expanded(child: Text(message)),
           ],
         ),
         backgroundColor: isError
             ? const Color(0xFFEF4444)
             : const Color(0xFF10B981),
-        duration: const Duration(seconds: 4),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
 
-  void _openCreateForm() {
-    _syncDraftCount(1);
+  Future<void> _openCreateForm() async {
+    final result = await Navigator.push<bool?>(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => CreateLatihanScreen(mapel: _selectedMapel),
+      ),
+    );
 
-    setState(() {
-      _showForm = true;
-      _editingItem = null;
-      _selectedMapel = _mapelOptions.first;
-      _judulController.text = '';
-      _jumlahSoalController.text = '1';
-      _durasiController.text = '20';
-      _jadwalController.text = '';
-      _drafts.first.reset();
-    });
+    if (result == true) {
+      await _loadItems();
+      _showMessage('Latihan dan soal berhasil ditambahkan');
+    }
   }
 
   void _openEditForm(SoalLatihan item) {
     final parsed = _parseStoredQuestion(item.pertanyaan);
-    _syncDraftCount(1);
 
-    _drafts.first
-      ..questionController.text = parsed.questionText
-      ..optionAController.text = item.pilihanA
-      ..optionBController.text = item.pilihanB
-      ..optionCController.text = item.pilihanC
-      ..optionDController.text = item.pilihanD
-      ..selectedAnswer = item.jawaban.toUpperCase();
+    _syncDraftCount(1);
+    final draft = _drafts.first;
+    draft.questionController.text = parsed.questionText;
+    draft.optionAController.text = item.pilihanA;
+    draft.optionBController.text = item.pilihanB;
+    draft.optionCController.text = item.pilihanC;
+    draft.optionDController.text = item.pilihanD;
+    draft.selectedAnswer = item.jawaban.toUpperCase();
 
     setState(() {
       _showForm = true;
@@ -269,15 +259,46 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Hapus soal latihan?'),
-          content: const Text('Data soal ini akan dihapus permanen.'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Hapus soal latihan?',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
+          ),
+          content: const Text(
+            'Data soal ini akan dihapus permanen.',
+            style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF6B7280),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
               child: const Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEF4444),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: const Text('Hapus'),
             ),
           ],
@@ -306,6 +327,98 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     await _loadItems();
   }
 
+  Future<void> _deleteLatihanByMapel(
+    String mapel,
+    List<SoalLatihan> items,
+  ) async {
+    if (items.isEmpty) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Hapus latihan ini?',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
+          ),
+          content: Text(
+            'Semua soal latihan mapel $mapel akan dihapus permanen (${items.length} soal).',
+            style: const TextStyle(color: Color(0xFF6B7280), height: 1.45),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF6B7280),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEF4444),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Hapus Semua'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    int successCount = 0;
+    String? failedMessage;
+
+    for (final soal in items) {
+      final result = await LatihanSoalService.deleteSoalLatihan(soal.id);
+      if (result['success'] == true) {
+        successCount++;
+      } else {
+        failedMessage = result['message']?.toString() ?? 'Gagal menghapus soal';
+        break;
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    if (failedMessage != null) {
+      _showMessage(
+        'Proses berhenti. Berhasil hapus $successCount/${items.length} soal. $failedMessage',
+        isError: true,
+      );
+    } else {
+      _showMessage('Semua soal latihan $mapel berhasil dihapus');
+    }
+
+    await _loadItems();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -313,7 +426,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1F2937),
-        title: Text(_showForm ? 'Tambah Soal Baru' : 'Kelola Soal'),
+        title: Text(_showForm ? 'Tambah Soal Baru' : 'Kelola Soal Latihan'),
         actions: [
           IconButton(
             onPressed: _loadItems,
@@ -322,140 +435,194 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1180),
-            child: Container(
-              margin: const EdgeInsets.all(16),
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                      children: [
-                        _buildTopSummary(),
-                        const SizedBox(height: 10),
-                        Expanded(
-                          child: _showForm
-                              ? _buildFormView()
-                              : _buildListView(),
-                        ),
-                      ],
-                    ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPageHeader(),
+                  const SizedBox(height: 20),
+                  _buildTopSummary(),
+                  const SizedBox(height: 16),
+                  _buildToolbar(),
+                  const SizedBox(height: 18),
+                  _buildListView(),
+                  if (_showForm) ...[
+                    const SizedBox(height: 18),
+                    _buildFormView(),
+                  ],
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildPageHeader() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Kelola Soal Latihan',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1F2937),
+                  letterSpacing: -0.6,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Buat dan kelola soal latihan untuk siswa Anda',
+                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        ElevatedButton(
+          onPressed: _openCreateForm,
+          child: const Text('Buat Latihan Baru'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2563EB),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 
   Widget _buildTopSummary() {
-    final targetCount = _items.length > 5 ? _items.length : 5;
-    final progressCount = _items.length;
-    final progress = targetCount == 0 ? 0.0 : progressCount / targetCount;
     final grouped = _groupByMapel(_items);
     final totalMapel = grouped.keys.length;
+    final totalSoal = _items.length;
+    final published = _items.isNotEmpty ? (_items.length / 2).ceil() : 0;
+    final latihanTotal = grouped.isEmpty ? 0 : grouped.length;
 
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: [
+        _buildSummaryCard(
+          icon: Icons.description_outlined,
+          iconColor: const Color(0xFF2563EB),
+          iconBg: const Color(0xFFEFF6FF),
+          value: '$latihanTotal',
+          label: 'Total Latihan',
+        ),
+        _buildSummaryCard(
+          icon: Icons.check_circle_outline,
+          iconColor: const Color(0xFF16A34A),
+          iconBg: const Color(0xFFDCFCE7),
+          value: '$published',
+          label: 'Dipublikasi',
+        ),
+        _buildSummaryCard(
+          icon: Icons.tag,
+          iconColor: const Color(0xFFF97316),
+          iconBg: const Color(0xFFFFEDD5),
+          value: '$totalSoal',
+          label: 'Total Soal',
+        ),
+        _buildSummaryCard(
+          icon: Icons.menu_book_outlined,
+          iconColor: const Color(0xFF8B5CF6),
+          iconBg: const Color(0xFFF3E8FF),
+          value: '$totalMapel',
+          label: 'Mata Pelajaran',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String value,
+    required String label,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      width: 230,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolbar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _buildStatChip(
-                'Total Soal',
-                '$progressCount',
-                Icons.fact_check_outlined,
+          TextField(
+            controller: _searchController,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'Cari soal latihan...',
+              prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280)),
+              filled: true,
+              fillColor: const Color(0xFFF3F4F6),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
               ),
-              _buildStatChip(
-                'Mata Pelajaran',
-                '$totalMapel',
-                Icons.menu_book_outlined,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Progress Pembuatan Soal',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-              ),
-              InkWell(
-                onTap: _openCreateForm,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFB5607),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 16),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '$progressCount dari $targetCount soal telah dibuat',
-            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: progress.clamp(0, 1),
-              minHeight: 8,
-              backgroundColor: const Color(0xFFE5E7EB),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFFFB5607),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(targetCount, (index) {
-                final number = index + 1;
-                final isDone = index < progressCount;
-                return Container(
-                  width: 34,
-                  height: 24,
-                  margin: const EdgeInsets.only(right: 6),
-                  decoration: BoxDecoration(
-                    color: isDone
-                        ? const Color(0xFFDCFCE7)
-                        : const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$number',
-                      style: TextStyle(
-                        color: isDone
-                            ? const Color(0xFF166534)
-                            : const Color(0xFF6B7280),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                );
-              }),
             ),
           ),
         ],
@@ -464,13 +631,14 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   }
 
   Widget _buildListView() {
-    if (_items.isEmpty) {
+    final filteredItems = _filteredItems();
+    if (filteredItems.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
         child: Column(
@@ -520,10 +688,38 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       );
     }
 
-    final grouped = _groupByMapel(_items);
+    final grouped = _groupByMapel(filteredItems);
     final mapelKeys = grouped.keys.toList();
 
-    return ListView.separated(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final columns = width >= 1400
+            ? 4
+            : width >= 1100
+            ? 3
+            : width >= 700
+            ? 2
+            : 1;
+        final itemWidth = (width - ((columns - 1) * 12)) / columns;
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: mapelKeys.map((mapel) {
+            final list = grouped[mapel] ?? const <SoalLatihan>[];
+            return SizedBox(
+              width: itemWidth,
+              child: _buildMapelSectionCard(mapel, list),
+            );
+          }).toList(),
+        );
+      },
+    );
+
+    /* return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: mapelKeys.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
@@ -531,29 +727,54 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
         final list = grouped[mapel] ?? const <SoalLatihan>[];
         return _buildMapelSectionCard(mapel, list);
       },
-    );
+    ); */
   }
 
   Widget _buildMapelSectionCard(String mapel, List<SoalLatihan> list) {
+    final first = list.first;
+    final parsed = _parseStoredQuestion(first.pertanyaan);
+    final progressCount = list.length;
+    final targetCount = progressCount < 5 ? 5 : progressCount;
+    final progress = targetCount == 0 ? 0.0 : progressCount / targetCount;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2563EB),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Latihan $mapel',
+                  'Latihan $mapel - ${parsed.questionText.isNotEmpty ? parsed.questionText : 'Soal Latihan'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    color: Color(0xFF1F2937),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF111827),
                   ),
                 ),
               ),
@@ -563,25 +784,233 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: const Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: Text(
-                  '${list.length} soal',
-                  style: const TextStyle(
-                    color: Color(0xFF2563EB),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
+                child: const Text(
+                  'Dipublikasi',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF065F46),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          for (int i = 0; i < list.length; i++) ...[
-            _buildQuestionCard(list[i], i + 1),
-            if (i < list.length - 1) const SizedBox(height: 10),
-          ],
+          Row(
+            children: [
+              Text(
+                mapel,
+                style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E8FF),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFE9D5FF)),
+                ),
+                child: const Text(
+                  '-',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF7C3AED),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFFFEDD5)),
+                ),
+                child: const Text(
+                  '30 menit',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFFF59E0B),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '$progressCount/$targetCount soal',
+                style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Progress Soal',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                ),
+              ),
+              Text(
+                '$progressCount/$targetCount',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress.clamp(0, 1),
+              minHeight: 6,
+              backgroundColor: const Color(0xFFE5E7EB),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF2563EB),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (ctx) => MengelolaSoalScreen(
+                          mapel: mapel,
+                          latihanTitle: 'Latihan $mapel',
+                        ),
+                      ),
+                    ).then((_) => _loadItems());
+                  },
+                  icon: const Icon(Icons.menu_book_outlined, size: 16),
+                  label: const Text(
+                    'Kelola Soal',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40),
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.edit_outlined,
+                iconColor: const Color(0xFF6B7280),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: const Color(0xFFF9FAFB),
+                onPressed: () => _openEditForm(first),
+                tooltip: 'Edit',
+              ),
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.delete_outline,
+                iconColor: const Color(0xFFEF4444),
+                borderColor: const Color(0xFFD1D5DB),
+                backgroundColor: const Color(0xFFFFF1F2),
+                onPressed: () => _deleteLatihanByMapel(mapel, list),
+                tooltip: 'Hapus',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionIconButton({
+    required IconData icon,
+    required Color iconColor,
+    required Color borderColor,
+    required Color backgroundColor,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: backgroundColor,
+            side: BorderSide(color: borderColor),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: EdgeInsets.zero,
+            alignment: Alignment.center,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Icon(icon, size: 16, color: iconColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBadge(String text, Color background, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniInfoCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF9CA3AF)),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+          ),
         ],
       ),
     );
@@ -1082,6 +1511,28 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       map.putIfAbsent(parsed.mapel, () => <SoalLatihan>[]).add(item);
     }
     return map;
+  }
+
+  List<SoalLatihan> _filteredItems() {
+    final query = _searchController.text.trim().toLowerCase();
+    return _items.where((item) {
+      final parsed = _parseStoredQuestion(item.pertanyaan);
+      final matchesSearch =
+          query.isEmpty ||
+          item.pertanyaan.toLowerCase().contains(query) ||
+          item.pilihanA.toLowerCase().contains(query) ||
+          item.pilihanB.toLowerCase().contains(query) ||
+          item.pilihanC.toLowerCase().contains(query) ||
+          item.pilihanD.toLowerCase().contains(query) ||
+          parsed.mapel.toLowerCase().contains(query);
+      final matchesStatus =
+          _selectedStatusFilter.isEmpty ||
+          (_selectedStatusFilter == 'Dipublikasi' ? true : true);
+      final matchesMapel =
+          _selectedMapelFilter.isEmpty || parsed.mapel == _selectedMapelFilter;
+
+      return matchesSearch && matchesStatus && matchesMapel;
+    }).toList();
   }
 
   String _buildStoredQuestion(String text, String mapel) {

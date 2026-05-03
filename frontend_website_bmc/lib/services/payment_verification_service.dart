@@ -51,7 +51,7 @@ class PaymentVerificationOverview {
 
 class PaymentVerificationService {
   static const String baseUrl =
-      'http://127.0.0.1:8080';
+      'http://localhost:8081';
 
   // ==================================================
   // TOKEN
@@ -321,7 +321,7 @@ class PaymentVerificationService {
 
     final response = await http.post(
       Uri.parse(
-        '$baseUrl/admin/payment/verify/$transactionId',
+        '$baseUrl/admin/payment/$transactionId/approve',
       ),
       headers: {
         'Authorization':
@@ -358,7 +358,7 @@ class PaymentVerificationService {
 
     final response = await http.post(
       Uri.parse(
-        '$baseUrl/admin/payment/reject/$transactionId',
+        '$baseUrl/admin/payment/$transactionId/reject',
       ),
       headers: {
         'Authorization':

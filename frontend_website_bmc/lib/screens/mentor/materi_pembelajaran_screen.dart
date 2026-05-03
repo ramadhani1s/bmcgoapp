@@ -6,13 +6,15 @@ import '../../models/user.dart';
 import '../../models/materi_pembelajaran.dart';
 import '../../services/auth_service.dart';
 import '../../services/materi_service.dart';
+// ignore: deprecated_member_use
 import 'dart:html' as html;
 
 class MateriPembelajaranScreen extends StatefulWidget {
   const MateriPembelajaranScreen({super.key});
 
   @override
-  State<MateriPembelajaranScreen> createState() => _MateriPembelajaranScreenState();
+  State<MateriPembelajaranScreen> createState() =>
+      _MateriPembelajaranScreenState();
 }
 
 class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
@@ -73,9 +75,11 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
   void _downloadFile(String filePath, String filename) {
     try {
       final origin = Uri.parse(MateriService.baseUrl).origin;
-        final url = filePath.startsWith('http')
+      final url = filePath.startsWith('http')
           ? filePath
-          : (filePath.startsWith('/') ? '$origin$filePath' : '$origin/$filePath');
+          : (filePath.startsWith('/')
+                ? '$origin$filePath'
+                : '$origin/$filePath');
 
       final anchor = html.AnchorElement(href: url)
         ..setAttribute('download', filename)
@@ -85,7 +89,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       anchor.click();
       anchor.remove();
 
-      _showSuccessSnackBar('Mengunduh "${filename}"');
+      _showSuccessSnackBar('Mengunduh "$filename"');
     } catch (e) {
       _showErrorSnackBar('Gagal mengunduh file');
     }
@@ -95,16 +99,38 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Materi'),
-        content: const Text('Apakah Anda yakin ingin menghapus materi ini? File fisik juga akan terhapus secara permanen.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Hapus Materi',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        content: const Text(
+          'Apakah Anda yakin ingin menghapus materi ini? File fisik juga akan terhapus secara permanen.',
+          style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
             child: const Text('Batal'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Hapus'),
           ),
         ],
@@ -179,7 +205,10 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     return Scaffold(
       backgroundColor: _bgGray,
       appBar: AppBar(
-        title: const Text('Materi Pembelajaran', style: TextStyle(fontWeight: FontWeight.bold, color: _textPrimary)),
+        title: const Text(
+          'Materi Pembelajaran',
+          style: TextStyle(fontWeight: FontWeight.bold, color: _textPrimary),
+        ),
         backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: _textPrimary),
         elevation: 0.5,
@@ -204,7 +233,10 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
         onPressed: _openUploadDialog,
         backgroundColor: _primaryBlue,
         icon: const Icon(Icons.cloud_upload, color: Colors.white),
-        label: const Text('Upload Materi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text(
+          'Upload Materi',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
@@ -254,11 +286,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
             ),
           ),
           const SizedBox(width: 24),
-          const Icon(
-            Icons.menu_book,
-            color: Colors.white,
-            size: 64,
-          ),
+          const Icon(Icons.menu_book, color: Colors.white, size: 64),
         ],
       ),
     );
@@ -333,7 +361,10 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => _downloadFile(materi.filePath, '${materi.title}${materi.fileType}'),
+          onTap: () => _downloadFile(
+            materi.filePath,
+            '${materi.title}${materi.fileType}',
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -342,7 +373,9 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: _getFileColor(materi.fileType).withAlpha((0.1 * 255).round()),
+                    color: _getFileColor(
+                      materi.fileType,
+                    ).withAlpha((0.1 * 255).round()),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -383,7 +416,10 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.grey.shade100,
                               borderRadius: BorderRadius.circular(4),
@@ -411,8 +447,14 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.download_outlined, color: Color(0xFF2563EB)),
-                  onPressed: () => _downloadFile(materi.filePath, '${materi.title}${materi.fileType}'),
+                  icon: const Icon(
+                    Icons.download_outlined,
+                    color: Color(0xFF2563EB),
+                  ),
+                  onPressed: () => _downloadFile(
+                    materi.filePath,
+                    '${materi.title}${materi.fileType}',
+                  ),
                   tooltip: 'Unduh Materi',
                 ),
                 IconButton(
@@ -447,7 +489,7 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
-  
+
   PlatformFile? _selectedFile;
   bool _isUploading = false;
 
@@ -465,11 +507,14 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
         if (file.size > 15 * 1024 * 1024) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ukuran file maksimal 15MB'), backgroundColor: Colors.red),
+            const SnackBar(
+              content: Text('Ukuran file maksimal 15MB'),
+              backgroundColor: Colors.red,
+            ),
           );
           return;
         }
-        
+
         setState(() {
           _selectedFile = file;
           // Auto fill title if empty
@@ -487,7 +532,10 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih file terlebih dahulu'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Pilih file terlebih dahulu'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -510,7 +558,10 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal mengupload materi'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Gagal mengupload materi'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -546,7 +597,7 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                 ],
               ),
               const SizedBox(height: 24),
-              
+
               // File Selector
               GestureDetector(
                 onTap: _pickFile,
@@ -557,7 +608,9 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                     color: const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _selectedFile != null ? const Color(0xFF2563EB) : Colors.grey.shade300,
+                      color: _selectedFile != null
+                          ? const Color(0xFF2563EB)
+                          : Colors.grey.shade300,
                       width: 2,
                       style: BorderStyle.solid,
                     ),
@@ -565,17 +618,27 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                   child: Column(
                     children: [
                       Icon(
-                        _selectedFile != null ? Icons.check_circle : Icons.upload_file,
+                        _selectedFile != null
+                            ? Icons.check_circle
+                            : Icons.upload_file,
                         size: 48,
-                        color: _selectedFile != null ? const Color(0xFF2563EB) : Colors.grey.shade400,
+                        color: _selectedFile != null
+                            ? const Color(0xFF2563EB)
+                            : Colors.grey.shade400,
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _selectedFile != null ? _selectedFile!.name : 'Klik untuk memilih file',
+                        _selectedFile != null
+                            ? _selectedFile!.name
+                            : 'Klik untuk memilih file',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: _selectedFile != null ? const Color(0xFF2563EB) : const Color(0xFF6B7280),
-                          fontWeight: _selectedFile != null ? FontWeight.bold : FontWeight.normal,
+                          color: _selectedFile != null
+                              ? const Color(0xFF2563EB)
+                              : const Color(0xFF6B7280),
+                          fontWeight: _selectedFile != null
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                       if (_selectedFile == null) ...[
@@ -595,18 +658,23 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Judul Materi',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   prefixIcon: const Icon(Icons.title),
                 ),
-                validator: (value) => value == null || value.isEmpty ? 'Judul wajib diisi' : null,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Judul wajib diisi' : null,
               ),
               const SizedBox(height: 16),
-              
+
               TextFormField(
                 controller: _descController,
                 decoration: InputDecoration(
                   labelText: 'Deskripsi (Opsional)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   prefixIcon: const Icon(Icons.description),
                 ),
                 maxLines: 3,
@@ -620,14 +688,27 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                   onPressed: _isUploading ? null : _handleUpload,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: _isUploading
                       ? const SizedBox(
-                          width: 24, height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
-                      : const Text('Upload Sekarang', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      : const Text(
+                          'Upload Sekarang',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],

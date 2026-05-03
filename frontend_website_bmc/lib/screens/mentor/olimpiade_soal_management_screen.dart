@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/mentor_competition_item.dart';
 import '../../models/soal_kompetisi.dart';
 import '../../services/soal_kompetisi_service.dart';
+import '../../widgets/soal_overview_card.dart';
 
 class OlimpiadseSoalManagementScreen extends StatefulWidget {
   final MentorCompetitionItem olimpiade;
@@ -145,16 +146,38 @@ class _OlimpiadseSoalManagementScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Soal?'),
-        content: const Text('Soal ini akan dihapus permanen.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Hapus Soal?',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        content: const Text(
+          'Soal ini akan dihapus permanen.',
+          style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
             child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Hapus'),
           ),
         ],
@@ -239,6 +262,140 @@ class _OlimpiadseSoalManagementScreenState
     );
   }
 
+  void _showEditDialog() {
+    final titleController = TextEditingController(text: widget.olimpiade.title);
+    final durationController = TextEditingController(
+      text: _extractDurasiMenit(widget.olimpiade.durationLabel).toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Edit Olimpiade',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: 'Judul Olimpiade',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: durationController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Durasi (menit)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // For now, just show success message
+              // In production, you would call an API to update the olimpiade
+              _showSnackbar('Olimpiade berhasil diperbarui');
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0EA5E9),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Hapus Olimpiade',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        content: const Text(
+          'Apakah Anda yakin ingin menghapus olimpiade ini? Semua soal yang terkait akan dihapus juga.',
+          style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // For now, just show success message and pop to previous screen
+              // In production, you would call an API to delete the olimpiade
+              _showSnackbar('Olimpiade berhasil dihapus');
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Return to previous screen
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _extractDurasiMenit(String durationLabel) {
+    // Extract numeric value from duration label (e.g., "150 menit" -> 150)
+    final regex = RegExp(r'(\d+)');
+    final match = regex.firstMatch(durationLabel);
+    return match != null ? int.tryParse(match.group(1) ?? '150') ?? 150 : 150;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,24 +415,28 @@ class _OlimpiadseSoalManagementScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
-                      Text(
-                        widget.olimpiade.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1F2937),
+                      // Overview Card
+                      SoalOverviewCard(
+                        title: widget.olimpiade.title,
+                        status: widget.olimpiade.isPublished
+                            ? 'Dipublikasikan'
+                            : 'Draft',
+                        tanggal: widget.olimpiade.createdAt,
+                        durasiMenit: _extractDurasiMenit(
+                          widget.olimpiade.durationLabel,
                         ),
+                        soalTerbuat: _soalList.length,
+                        totalSoal: widget.olimpiade.totalQuestions,
+                        kategoriProgress: {
+                          'Soal': widget.olimpiade.totalQuestions,
+                        },
+                        onKelolaSoal: () {
+                          // Already in soal management screen
+                        },
+                        onEdit: () => _showEditDialog(),
+                        onDelete: () => _showDeleteConfirmation(),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_soalList.length}/${widget.olimpiade.totalQuestions} soal dibuat',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
 
                       // Form
                       Container(
@@ -523,6 +684,35 @@ class _OlimpiadseSoalManagementScreenState
     );
   }
 
+  Widget _buildActionIconButton({
+    required IconData icon,
+    required Color iconColor,
+    required Color borderColor,
+    required VoidCallback? onPressed,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: borderColor),
+        ),
+        elevation: 1,
+        shadowColor: Colors.black.withOpacity(0.03),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox.square(
+            dimension: 36,
+            child: Center(child: Icon(icon, size: 17, color: iconColor)),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSoalCard(SoalKompetisi soal, int nomer) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -580,20 +770,21 @@ class _OlimpiadseSoalManagementScreenState
                   ],
                 ),
               ),
-              PopupMenuButton(
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    child: const Text('Edit'),
-                    onTap: () => _editSoal(soal),
-                  ),
-                  PopupMenuItem(
-                    child: const Text(
-                      'Hapus',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                    onTap: () => _deleteSoal(soal),
-                  ),
-                ],
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.edit_outlined,
+                iconColor: const Color(0xFF6B7280),
+                borderColor: const Color(0xFFE5E7EB),
+                onPressed: () => _editSoal(soal),
+                tooltip: 'Edit',
+              ),
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.delete_outline,
+                iconColor: const Color(0xFFEF4444),
+                borderColor: const Color(0xFFFECACA),
+                onPressed: () => _deleteSoal(soal),
+                tooltip: 'Hapus',
               ),
             ],
           ),

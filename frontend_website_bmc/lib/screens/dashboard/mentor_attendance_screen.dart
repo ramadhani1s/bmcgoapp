@@ -52,7 +52,8 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
   void _updateCountdown() {
     final session = _session;
     if (session == null) {
-      if (_hadirRemaining != Duration.zero || _terlambatRemaining != Duration.zero) {
+      if (_hadirRemaining != Duration.zero ||
+          _terlambatRemaining != Duration.zero) {
         setState(() {
           _hadirRemaining = Duration.zero;
           _terlambatRemaining = Duration.zero;
@@ -84,7 +85,9 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
 
     setState(() {
       _hadirRemaining = nextHadir.isNegative ? Duration.zero : nextHadir;
-      _terlambatRemaining = nextTerlambat.isNegative ? Duration.zero : nextTerlambat;
+      _terlambatRemaining = nextTerlambat.isNegative
+          ? Duration.zero
+          : nextTerlambat;
     });
   }
 
@@ -184,7 +187,16 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Mulai Absensi Kelas'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Mulai Absensi Kelas',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
+          ),
           content: SizedBox(
             width: 420,
             child: Column(
@@ -208,13 +220,32 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
               ],
             ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF6B7280),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
               child: const Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: const Text('Mulai'),
             ),
           ],
@@ -246,7 +277,9 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     if (result['success'] != true) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text((result['message'] ?? 'Gagal memulai absensi').toString()),
+          content: Text(
+            (result['message'] ?? 'Gagal memulai absensi').toString(),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -342,7 +375,11 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
           const SizedBox(height: 6),
           Text(
             value.toString(),
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: color),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
           ),
         ],
       ),
@@ -355,12 +392,20 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text('Absensi Kelas Mentor'),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1F2937),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.white,
         actions: [
-          IconButton(onPressed: _loadActiveSession, icon: const Icon(Icons.refresh)),
+          IconButton(
+            onPressed: _loadActiveSession,
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
       body: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -372,7 +417,9 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _isStarting ? null : _startAttendance,
                           icon: const Icon(Icons.play_arrow_rounded),
-                          label: Text(_isStarting ? 'Memulai...' : 'Mulai Absensi'),
+                          label: Text(
+                            _isStarting ? 'Memulai...' : 'Mulai Absensi',
+                          ),
                         ),
                       ),
                     ],
@@ -393,16 +440,23 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                       ],
                     ),
                     child: _session == null
-                        ? const Text('Belum ada sesi absensi aktif. Tekan tombol "Mulai Absensi".')
+                        ? const Text(
+                            'Belum ada sesi absensi aktif. Tekan tombol "Mulai Absensi".',
+                          )
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 (_session!['class_name'] ?? '-').toString(),
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                               const SizedBox(height: 6),
-                              Text('Mapel: ${(_session!['subject'] ?? '-').toString()}'),
+                              Text(
+                                'Mapel: ${(_session!['subject'] ?? '-').toString()}',
+                              ),
                               const SizedBox(height: 6),
                               Text(
                                 _showToken
@@ -410,22 +464,35 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                                     : 'Token belum dibuat. Klik Mulai Absensi.',
                                 style: TextStyle(
                                   fontSize: _showToken ? 28 : 14,
-                                  fontWeight: _showToken ? FontWeight.w800 : FontWeight.w600,
+                                  fontWeight: _showToken
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
                                   letterSpacing: _showToken ? 2 : 0,
-                                  color: _showToken ? const Color(0xFF111827) : const Color(0xFF64748B),
+                                  color: _showToken
+                                      ? const Color(0xFF111827)
+                                      : const Color(0xFF64748B),
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Text('Mulai: ${_formatDate(_session!['started_at'])}'),
-                              Text('Batas hadir: ${_formatDate(_session!['hadir_deadline'])}'),
-                              Text('Batas terlambat: ${_formatDate(_session!['terlambat_deadline'])}'),
+                              Text(
+                                'Mulai: ${_formatDate(_session!['started_at'])}',
+                              ),
+                              Text(
+                                'Batas hadir: ${_formatDate(_session!['hadir_deadline'])}',
+                              ),
+                              Text(
+                                'Batas terlambat: ${_formatDate(_session!['terlambat_deadline'])}',
+                              ),
                               const SizedBox(height: 12),
                               Wrap(
                                 spacing: 10,
                                 runSpacing: 10,
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFDCFCE7),
                                       borderRadius: BorderRadius.circular(999),
@@ -439,7 +506,10 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                                     ),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFFFEDD5),
                                       borderRadius: BorderRadius.circular(999),
@@ -463,10 +533,26 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                       builder: (context, constraints) {
                         final isWide = constraints.maxWidth > 740;
                         final children = [
-                          _buildSummaryCard('Hadir', _summary!['hadir'] ?? 0, const Color(0xFF16A34A)),
-                          _buildSummaryCard('Terlambat', _summary!['terlambat'] ?? 0, const Color(0xFFE67E22)),
-                          _buildSummaryCard('Tidak Hadir', _summary!['tidak_hadir'] ?? 0, const Color(0xFFDC2626)),
-                          _buildSummaryCard('Total Masuk', _summary!['total_masuk'] ?? 0, const Color(0xFF1D4ED8)),
+                          _buildSummaryCard(
+                            'Hadir',
+                            _summary!['hadir'] ?? 0,
+                            const Color(0xFF16A34A),
+                          ),
+                          _buildSummaryCard(
+                            'Terlambat',
+                            _summary!['terlambat'] ?? 0,
+                            const Color(0xFFE67E22),
+                          ),
+                          _buildSummaryCard(
+                            'Tidak Hadir',
+                            _summary!['tidak_hadir'] ?? 0,
+                            const Color(0xFFDC2626),
+                          ),
+                          _buildSummaryCard(
+                            'Total Masuk',
+                            _summary!['total_masuk'] ?? 0,
+                            const Color(0xFF1D4ED8),
+                          ),
                         ];
 
                         if (isWide) {
@@ -483,10 +569,12 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
 
                         return Column(
                           children: children
-                              .map((item) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 10),
-                                    child: item,
-                                  ))
+                              .map(
+                                (item) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: item,
+                                ),
+                              )
                               .toList(),
                         );
                       },
@@ -514,7 +602,9 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                     child: _records.isEmpty
                         ? const Padding(
                             padding: EdgeInsets.all(16),
-                            child: Text('Belum ada siswa yang mengisi token absensi.'),
+                            child: Text(
+                              'Belum ada siswa yang mengisi token absensi.',
+                            ),
                           )
                         : SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -526,28 +616,44 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                                 DataColumn(label: Text('Waktu Input')),
                               ],
                               rows: _records.map((item) {
-                                final status = (item['status'] ?? '-').toString();
-                                return DataRow(cells: [
-                                  DataCell(Text((item['nama'] ?? '-').toString())),
-                                  DataCell(Text((item['email'] ?? '-').toString())),
-                                  DataCell(
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: _statusColor(status).withAlpha((0.14 * 255).round()),
-                                        borderRadius: BorderRadius.circular(999),
-                                      ),
-                                      child: Text(
-                                        status,
-                                        style: TextStyle(
-                                          color: _statusColor(status),
-                                          fontWeight: FontWeight.w700,
+                                final status = (item['status'] ?? '-')
+                                    .toString();
+                                return DataRow(
+                                  cells: [
+                                    DataCell(
+                                      Text((item['nama'] ?? '-').toString()),
+                                    ),
+                                    DataCell(
+                                      Text((item['email'] ?? '-').toString()),
+                                    ),
+                                    DataCell(
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _statusColor(
+                                            status,
+                                          ).withAlpha((0.14 * 255).round()),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          status,
+                                          style: TextStyle(
+                                            color: _statusColor(status),
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  DataCell(Text(_formatDate(item['submitted_at']))),
-                                ]);
+                                    DataCell(
+                                      Text(_formatDate(item['submitted_at'])),
+                                    ),
+                                  ],
+                                );
                               }).toList(),
                             ),
                           ),

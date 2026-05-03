@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/mentor_competition_item.dart';
 import '../../models/soal_kompetisi.dart';
 import '../../services/soal_kompetisi_service.dart';
+import '../../widgets/soal_overview_card.dart';
 
 class TryoutSoalManagementScreen extends StatefulWidget {
   final MentorCompetitionItem tryout;
@@ -178,14 +179,53 @@ class _TryoutSoalManagementScreenState
 
         // If server provided details, show them in a dialog for copying/debugging
         if (details != null && mounted) {
+<<<<<<< HEAD
+<<<<<<< HEAD
+          final detailText = details;
           await showDialog<void>(
             context: context,
             builder: (ctx) => AlertDialog(
               title: const Text('Detail respons server'),
-              content: SingleChildScrollView(child: SelectableText(details)),
+              content: SingleChildScrollView(child: SelectableText(detailText)),
+=======
+          final String detailsText = details;
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+=======
+          final String detailsText = details;
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+>>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              title: const Text(
+                'Detail respons server',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: SelectableText(detailsText),
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+<<<<<<< HEAD
+>>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+=======
+>>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF6B7280),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
                   child: const Text('Tutup'),
                 ),
               ],
@@ -204,16 +244,38 @@ class _TryoutSoalManagementScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Soal?'),
-        content: const Text('Soal ini akan dihapus permanen.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Hapus Soal?',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        content: const Text(
+          'Soal ini akan dihapus permanen.',
+          style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
             child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Hapus'),
           ),
         ],
@@ -298,6 +360,140 @@ class _TryoutSoalManagementScreenState
     );
   }
 
+  void _showEditDialog() {
+    final titleController = TextEditingController(text: widget.tryout.title);
+    final durationController = TextEditingController(
+      text: _extractDurasiMenit(widget.tryout.durationLabel).toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Edit Try Out',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: 'Judul Try Out',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: durationController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Durasi (menit)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // For now, just show success message
+              // In production, you would call an API to update the tryout
+              _showSnackbar('Try Out berhasil diperbarui');
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Hapus Try Out',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        content: const Text(
+          'Apakah Anda yakin ingin menghapus try out ini? Semua soal yang terkait akan dihapus juga.',
+          style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // For now, just show success message and pop to previous screen
+              // In production, you would call an API to delete the tryout
+              _showSnackbar('Try Out berhasil dihapus');
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Return to previous screen
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _extractDurasiMenit(String durationLabel) {
+    // Extract numeric value from duration label (e.g., "150 menit" -> 150)
+    final regex = RegExp(r'(\d+)');
+    final match = regex.firstMatch(durationLabel);
+    return match != null ? int.tryParse(match.group(1) ?? '150') ?? 150 : 150;
+  }
+
   Map<String, int> _countByKategori() {
     final counts = <String, int>{};
     for (final soal in _soalList) {
@@ -322,63 +518,48 @@ class _TryoutSoalManagementScreenState
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 980),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header Card with Gradient
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
+                      // Overview Card
+                      SoalOverviewCard(
+                        title: widget.tryout.title,
+                        status: widget.tryout.isPublished
+                            ? 'Dipublikasikan'
+                            : 'Draft',
+                        tanggal: widget.tryout.createdAt,
+                        durasiMenit: _extractDurasiMenit(
+                          widget.tryout.durationLabel,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.tryout.title,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    '${_soalList.length}/${widget.tryout.totalQuestions} soal',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                        soalTerbuat: _soalList.length,
+                        totalSoal: widget.tryout.totalQuestions,
+                        kategoriProgress: {
+                          'PU': _countByKategori()['Penalaran Umum'] ?? 0,
+                          'PPU':
+                              _countByKategori()['Pemahaman dan Penulisan Umum'] ??
+                              0,
+                          'PBM':
+                              _countByKategori()['Pengetahuan dan Pemahaman Bacaan Matematika'] ??
+                              0,
+                          'PK':
+                              _countByKategori()['Pengetahuan Kuantitatif'] ??
+                              0,
+                          'PM': _countByKategori()['Penalaran Matematika'] ?? 0,
+                          'Literasi':
+                              _countByKategori()['Literasi Bahasa Indonesia'] ??
+                              0,
+                        },
+                        onKelolaSoal: () {
+                          // Already in soal management screen
+                        },
+                        onEdit: () => _showEditDialog(),
+                        onDelete: () => _showDeleteConfirmation(),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
 
                       // Kategori Navigation
                       SingleChildScrollView(
@@ -391,38 +572,40 @@ class _TryoutSoalManagementScreenState
 
                             return Padding(
                               padding: const EdgeInsets.only(right: 12),
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(0xFF2563EB)
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() => _selectedKategori = kategori);
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
                                     color: isSelected
                                         ? const Color(0xFF2563EB)
-                                        : const Color(0xFFE5E7EB),
-                                    width: 2,
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? const Color(0xFF2563EB)
+                                          : const Color(0xFFE5E7EB),
+                                    ),
+                                    boxShadow: isSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: const Color(
+                                                0xFF2563EB,
+                                              ).withOpacity(0.15),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ]
+                                        : [],
                                   ),
-                                  boxShadow: isSelected
-                                      ? [
-                                          BoxShadow(
-                                            color: const Color(
-                                              0xFF2563EB,
-                                            ).withValues(alpha: 0.2),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ]
-                                      : [],
-                                ),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(
-                                      () => _selectedKategori = kategori,
-                                    );
-                                  },
                                   child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
                                         shortName,
@@ -434,16 +617,14 @@ class _TryoutSoalManagementScreenState
                                               : const Color(0xFF374151),
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 2),
                                       Text(
                                         '$count',
                                         style: TextStyle(
-                                          fontSize: 11,
+                                          fontSize: 10,
                                           fontWeight: FontWeight.w600,
                                           color: isSelected
-                                              ? Colors.white.withValues(
-                                                  alpha: 0.9,
-                                                )
+                                              ? Colors.white.withOpacity(0.9)
                                               : const Color(0xFF6B7280),
                                         ),
                                       ),
@@ -455,7 +636,7 @@ class _TryoutSoalManagementScreenState
                           }).toList(),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
                       // Form Card
                       Container(

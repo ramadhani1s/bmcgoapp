@@ -1,41 +1,36 @@
 name: frontend_mobile_bmc
 description: "A new Flutter project."
 
-publish_to: 'none' 
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
   sdk: ^3.10.7
 
-
 dependencies:
   flutter:
     sdk: flutter
 
-  firebase_core: ^latest
-  firebase_messaging: ^latest
-  firebase_storage: ^latest
-  image_picker: ^latest
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.5
+  firebase_storage: ^12.3.3
+  image_picker: ^1.1.2
 
   cupertino_icons: ^1.0.8
   http: ^1.1.0
   shared_preferences: ^2.2.2
   intl: ^0.19.0
   midtrans_sdk: ^1.2.0
+  url_launcher: ^6.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  
   flutter_lints: ^6.0.0
 
-
 flutter:
-
-  
   uses-material-design: true
   assets:
     - assets/images/
-  

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/screens/home/latihan_siswa_screen.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
@@ -29,7 +31,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // Jadwal variables
   List<Map<String, dynamic>> _jadwalList = [];
-  bool _isLoadingJadwal = true;
 
   int get _totalMateriTarget => 24;
   int get _totalTryoutTarget => 12;
@@ -177,14 +178,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       setState(() {
         _jadwalList = jadwalData;
-        _isLoadingJadwal = false;
       });
     } catch (e) {
       print("❌ Error loading jadwal: $e");
       if (!mounted) return;
-      setState(() {
-        _isLoadingJadwal = false;
-      });
+      setState(() {});
     }
   }
 
@@ -365,12 +363,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (menuKey.toLowerCase() == 'olimpiade') {
-      Navigator.of(context).pushNamed('/mentor-olimpiade');
+      Navigator.of(context).pushNamed('/olimpiade');
       return;
     }
 
     if (menuKey.toLowerCase() == 'absensi') {
       Navigator.of(context).pushNamed('/attendance');
+      return;
+    }
+
+    if (menuKey.toLowerCase() == 'pengumuman') {
+      Navigator.of(context).pushNamed('/pengumuman');
       return;
     }
 
@@ -385,7 +388,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
       return;
     }
-
     if (menuKey.toLowerCase() == 'materi') {
       _incrementMateriProgress();
       Navigator.of(
