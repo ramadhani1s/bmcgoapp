@@ -1,6 +1,4 @@
-<<<<<<< HEAD
 export 'pengumuman_screen.dart';                    style: TextStyle(color: _textLight, fontSize: 12),
-=======
 import 'package:flutter/material.dart';
 import '../../services/pengumuman_service.dart';
 
@@ -260,7 +258,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
                   Text(
                     'Buat, kelola, dan terbitkan pengumuman untuk siswa, mentor, dan orang tua',
                     style: TextStyle(color: _textLight, fontSize: 12),
->>>>>>> 44babeedb4d212486e41dd7ced134688cb1ddc98
+
                   ),
                 ],
               ),
