@@ -4,12 +4,18 @@ import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/mentor.dart';
+import '../routes/app_routes.dart';
 import '../services/auth_service.dart';
 import '../../models/admin_kelola_absensi.dart';
 import '../../services/admin_kelola_absensi_service.dart';
 
 class MentorManagementScreen extends StatefulWidget {
-  const MentorManagementScreen({super.key});
+  const MentorManagementScreen({
+    super.key,
+    this.embeddedInDashboard = false,
+  });
+
+  final bool embeddedInDashboard;
 
   @override
   State<MentorManagementScreen> createState() => _MentorManagementScreenState();
@@ -643,6 +649,14 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
   }
 
   Widget _buildSidebar() {
+    void navigateToAdminMenu(String menuTitle) {
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.adminDashboard,
+        arguments: menuTitle,
+      );
+    }
+
     return Container(
       width: 232,
       decoration: const BoxDecoration(
@@ -708,7 +722,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
             "Dashboard",
             Icons.grid_view_rounded,
             onTap: () {
-              Navigator.pushNamed(context, '/admin-dashboard');
+              navigateToAdminMenu('Dashboard');
             },
           ),
 
@@ -716,21 +730,51 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
             "Verifikasi Pendaftaran",
             Icons.fact_check_outlined,
             onTap: () {
-              Navigator.pushNamed(context, '/payment-verification');
+              navigateToAdminMenu('Verifikasi Pendaftaran');
             },
           ),
 
           _menuItem("Kelola Mentor", Icons.groups_2_outlined, active: true),
 
-          _menuItem("Kelola Jadwal", Icons.event_note_outlined),
+          _menuItem(
+            "Kelola Jadwal",
+            Icons.event_note_outlined,
+            onTap: () {
+              navigateToAdminMenu('Kelola Jadwal');
+            },
+          ),
 
-          _menuItem("Kelola Absensi", Icons.assignment_turned_in_outlined),
+          _menuItem(
+            "Kelola Absensi",
+            Icons.assignment_turned_in_outlined,
+            onTap: () {
+              navigateToAdminMenu('Kelola Absensi');
+            },
+          ),
 
-          _menuItem("Kelola Pengumuman", Icons.campaign_outlined),
+          _menuItem(
+            "Kelola Pengumuman",
+            Icons.campaign_outlined,
+            onTap: () {
+              navigateToAdminMenu('Kelola Pengumuman');
+            },
+          ),
 
-          _menuItem("Kelola Paket Les", Icons.school_outlined),
+          _menuItem(
+            "Kelola Paket Les",
+            Icons.school_outlined,
+            onTap: () {
+              navigateToAdminMenu('Kelola Paket Les');
+            },
+          ),
 
-          _menuItem("Kelola Profil Alumni", Icons.badge_outlined),
+          _menuItem(
+            "Kelola Profil Alumni",
+            Icons.badge_outlined,
+            onTap: () {
+              navigateToAdminMenu('Kelola Profil Alumni');
+            },
+          ),
 
           const Spacer(),
 
@@ -758,8 +802,195 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
   // ==================================================
   // MAIN UI
   // ==================================================
+  Widget _buildMentorTableCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _filteredMentors.isEmpty
+          ? const Center(child: Text("Belum ada mentor terdaftar"))
+          : SingleChildScrollView(
+              child: DataTable(
+                headingRowColor: MaterialStateProperty.all(
+                  Colors.grey.shade100,
+                ),
+                columns: const [
+                  DataColumn(label: Text("Mentor")),
+                  DataColumn(label: Text("Email")),
+                  DataColumn(label: Text("Password")),
+                  DataColumn(label: Text("Mata Pelajaran")),
+                  DataColumn(label: Text("Status")),
+                  DataColumn(label: Text("Aksi")),
+                ],
+                rows: _filteredMentors.map((mentor) {
+                  final visible = _showPassword[mentor.mentorId] ?? false;
+
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(mentor.namaMentor)),
+                      DataCell(Text(mentor.email)),
+                      DataCell(
+                        Row(
+                          children: [
+                            Text(visible ? mentor.password : "••••••••"),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _showPassword[mentor.mentorId] = !visible;
+                                });
+                              },
+                              icon: Icon(
+                                visible
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      DataCell(Text(mentor.mataPelajaran)),
+                      DataCell(
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: mentor.status.toLowerCase() == 'aktif'
+                                ? Colors.green.shade100
+                                : Colors.red.shade100,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            mentor.status,
+                            style: TextStyle(
+                              color: mentor.status.toLowerCase() == 'aktif'
+                                  ? Colors.green.shade700
+                                  : Colors.red.shade700,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () => _showEditDialog(mentor),
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              tooltip: "Edit Mentor",
+                            ),
+                            IconButton(
+                              onPressed: () => _deactivateMentor(mentor),
+                              icon: const Icon(
+                                Icons.block,
+                                color: Colors.orange,
+                              ),
+                              tooltip: "Nonaktifkan Mentor",
+                            ),
+                            IconButton(
+                              onPressed: () => _hardDeleteMentor(mentor),
+                              icon: const Icon(
+                                Icons.delete_forever,
+                                color: Colors.red,
+                              ),
+                              tooltip: "Hapus Permanen",
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildMainContent({required bool useExpandedTable}) {
+    final tableSection = useExpandedTable
+        ? Expanded(child: _buildMentorTableCard())
+        : SizedBox(height: 500, child: _buildMentorTableCard());
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.groups, color: Colors.blue, size: 28),
+              const SizedBox(width: 10),
+              const Text(
+                "Kelola Mentor",
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                onPressed: _showCreateDialog,
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text(
+                  "Tambah Mentor",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: "Cari mentor...",
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton.icon(
+                onPressed: _mentors.isEmpty ? null : _exportAllMentorExcel,
+                icon: const Icon(Icons.download),
+                label: const Text("Unduh Semua Data Mentor (Excel)"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          tableSection,
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.embeddedInDashboard) {
+      return Container(
+        color: const Color(0xfff4f6fb),
+        child: _buildMainContent(useExpandedTable: false),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xfff4f6fb),
       body: Row(
@@ -767,212 +998,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
           _buildSidebar(),
 
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.groups, color: Colors.blue, size: 28),
-                      const SizedBox(width: 10),
-                      const Text(
-                        "Kelola Mentor",
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                        ),
-                        onPressed: _showCreateDialog,
-                        icon: const Icon(Icons.add, color: Colors.white),
-                        label: const Text(
-                          "Tambah Mentor",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.search),
-                        hintText: "Cari mentor...",
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Export all mentors button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: _mentors.isEmpty
-                            ? null
-                            : _exportAllMentorExcel,
-                        icon: const Icon(Icons.download),
-                        label: const Text("Unduh Semua Data Mentor (Excel)"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: _isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : _filteredMentors.isEmpty
-                          ? const Center(
-                              child: Text("Belum ada mentor terdaftar"),
-                            )
-                          : SingleChildScrollView(
-                              child: DataTable(
-                                headingRowColor: MaterialStateProperty.all(
-                                  Colors.grey.shade100,
-                                ),
-                                columns: const [
-                                  DataColumn(label: Text("Mentor")),
-                                  DataColumn(label: Text("Email")),
-                                  DataColumn(label: Text("Password")),
-                                  DataColumn(label: Text("Mata Pelajaran")),
-                                  DataColumn(label: Text("Status")),
-                                  DataColumn(label: Text("Aksi")),
-                                ],
-                                rows: _filteredMentors.map((mentor) {
-                                  final visible =
-                                      _showPassword[mentor.mentorId] ?? false;
-
-                                  return DataRow(
-                                    cells: [
-                                      DataCell(Text(mentor.namaMentor)),
-                                      DataCell(Text(mentor.email)),
-                                      DataCell(
-                                        Row(
-                                          children: [
-                                            Text(
-                                              visible
-                                                  ? mentor.password
-                                                  : "••••••••",
-                                            ),
-                                            IconButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  _showPassword[mentor
-                                                          .mentorId] =
-                                                      !visible;
-                                                });
-                                              },
-                                              icon: Icon(
-                                                visible
-                                                    ? Icons.visibility_off
-                                                    : Icons.visibility,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      DataCell(Text(mentor.mataPelajaran)),
-                                      DataCell(
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color:
-                                                mentor.status.toLowerCase() ==
-                                                    'aktif'
-                                                ? Colors.green.shade100
-                                                : Colors.red.shade100,
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            mentor.status,
-                                            style: TextStyle(
-                                              color:
-                                                  mentor.status.toLowerCase() ==
-                                                      'aktif'
-                                                  ? Colors.green.shade700
-                                                  : Colors.red.shade700,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Row(
-                                          children: [
-                                            IconButton(
-                                              onPressed: () =>
-                                                  _showEditDialog(mentor),
-                                              icon: const Icon(
-                                                Icons.edit,
-                                                color: Colors.blue,
-                                              ),
-                                              tooltip: "Edit Mentor",
-                                            ),
-                                            IconButton(
-                                              onPressed: () =>
-                                                  _deactivateMentor(mentor),
-                                              icon: const Icon(
-                                                Icons.block,
-                                                color: Colors.orange,
-                                              ),
-                                              tooltip: "Nonaktifkan Mentor",
-                                            ),
-                                            IconButton(
-                                              onPressed: () =>
-                                                  _hardDeleteMentor(mentor),
-                                              icon: const Icon(
-                                                Icons.delete_forever,
-                                                color: Colors.red,
-                                              ),
-                                              tooltip: "Hapus Permanen",
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            child: _buildMainContent(useExpandedTable: true),
           ),
         ],
       ),

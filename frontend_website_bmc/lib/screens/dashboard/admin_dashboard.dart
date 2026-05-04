@@ -8,9 +8,12 @@ import 'jadwal_pembelajaran_screen.dart';
 import 'verifikasi_pendaftaran_screen.dart';
 import 'pengumuman_screen.dart';
 import 'admin_kelola_absensi_screen.dart';
+import '../mentor_management_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({super.key});
+  const AdminDashboard({super.key, this.initialMenuTitle});
+
+  final String? initialMenuTitle;
 
   @override
   State<AdminDashboard> createState() => _AdminDashboardState();
@@ -32,8 +35,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
+    _applyInitialMenu();
     _loadUser();
     _loadSummary();
+  }
+
+  void _applyInitialMenu() {
+    final initialTitle = widget.initialMenuTitle;
+    if (initialTitle == null || initialTitle.isEmpty) {
+      return;
+    }
+
+    final index = _menuItems.indexWhere((item) => item.title == initialTitle);
+    if (index < 0) {
+      return;
+    }
+
+    _selectedMenuIndex = index;
+    _selectedMenuTitle = initialTitle;
   }
 
   Future<void> _loadUser() async {
@@ -83,14 +102,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       _selectedMenuTitle = item.title;
     });
 
-    if (item.title == 'Kelola Mentor') {
-      Navigator.of(context).pushNamed('/mentor-management');
-    }
-
-    if (item.title == 'Verifikasi Pendaftaran') {
-      Navigator.of(context).pushNamed('/payment-verification');
-    }
-    
     if (item.title == 'Kelola Jadwal') {
       // Just update state, screen will be built in the build method
     }
@@ -195,7 +206,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (_selectedMenuTitle == 'Kelola Jadwal')
+                        if (_selectedMenuTitle == 'Kelola Mentor')
+                          const MentorManagementScreen(
+                            embeddedInDashboard: true,
+                          )
+                        else if (_selectedMenuTitle == 'Kelola Jadwal')
                           const JadwalPembelajaranScreen()
                         else if (_selectedMenuTitle == 'Kelola Paket Les')
                           const PaketLesScreen()

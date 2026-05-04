@@ -885,14 +885,19 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
           builder: (ctx, setDialogState) => Dialog(
             insetPadding: const EdgeInsets.symmetric(
               horizontal: 24,
-              vertical: 24,
+              vertical: 32,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(24),
             ),
             backgroundColor: Colors.white,
-            child: SingleChildScrollView(
-              child: Padding(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 840,
+                maxHeight: MediaQuery.of(ctx).size.height * 0.9,
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
                 padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -913,18 +918,18 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        _primaryPurple,
-                                        Color(0xFF6D28D9),
+                                        Color(0xFF1D4ED8),
+                                        Color(0xFF2563EB),
                                       ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
-                                    Icons.add_rounded,
+                                    Icons.campaign_rounded,
                                     color: Colors.white,
-                                    size: 20,
+                                    size: 22,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -933,8 +938,8 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                                   style: TextStyle(
                                     color: _textDark,
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 17,
-                                    letterSpacing: -0.3,
+                                    fontSize: 18,
+                                    letterSpacing: -0.4,
                                   ),
                                 ),
                               ],
@@ -944,7 +949,7 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                               'Isi form di bawah untuk membuat pengumuman baru',
                               style: TextStyle(
                                 color: _textMedium,
-                                fontSize: 12.5,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -1216,7 +1221,7 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _primaryPurple,
+                            backgroundColor: _primaryBlue,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -1233,6 +1238,7 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                   ],
                 ),
               ),
+            ),
             ),
           ),
         );
@@ -1251,18 +1257,22 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
     await showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: Colors.white,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 840,
+            maxHeight: MediaQuery.of(ctx).size.height * 0.9,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header - NOT in Flexible
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
@@ -1275,16 +1285,19 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                               height: 40,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [_primaryPurple, Color(0xFF6D28D9)],
+                                  colors: [
+                                    Color(0xFF1D4ED8),
+                                    Color(0xFF2563EB),
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(
                                 Icons.campaign_rounded,
                                 color: Colors.white,
-                                size: 20,
+                                size: 22,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -1293,8 +1306,8 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                               style: TextStyle(
                                 color: _textDark,
                                 fontWeight: FontWeight.w800,
-                                fontSize: 17,
-                                letterSpacing: -0.3,
+                                fontSize: 18,
+                                letterSpacing: -0.4,
                               ),
                             ),
                           ],
@@ -1304,7 +1317,7 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                           'Informasi lengkap pengumuman',
                           style: TextStyle(
                             color: _textMedium,
-                            fontSize: 12.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1329,140 +1342,155 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                // Tags
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildDetailTag(kategori, _getCategoryColor(kategori)),
-                    _buildDetailTag(target, Color(0xFFD97706)),
-                    _buildDetailTag(status, _getStatusColor(status)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Title
-                Text(
-                  judul,
-                  style: const TextStyle(
-                    color: _textDark,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Content
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: _bgLight,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: _border, width: 1),
-                  ),
-                  child: Text(
-                    isi,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      color: _textMedium,
-                      height: 1.6,
-                      fontWeight: FontWeight.w500,
+              ),
+              // Content - IN Flexible for scrolling
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 22, 28, 20),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Tags
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _buildDetailTag(kategori, _getCategoryColor(kategori)),
+                            _buildDetailTag(target, Color(0xFFD97706)),
+                            _buildDetailTag(status, _getStatusColor(status)),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Title
+                        Text(
+                          judul,
+                          style: const TextStyle(
+                            color: _textDark,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Content
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: _bgLight,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: _border, width: 1),
+                          ),
+                          child: Text(
+                            isi,
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              color: _textMedium,
+                              height: 1.6,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Info
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: _bgLight,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: _border, width: 1),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Dibuat',
+                                      style: const TextStyle(
+                                        color: _textLight,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _formatDate(createdAt),
+                                      style: const TextStyle(
+                                        color: _textDark,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Diterbitkan',
+                                      style: const TextStyle(
+                                        color: _textLight,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _formatDate(createdAt),
+                                      style: const TextStyle(
+                                        color: _textDark,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Dibuat Oleh',
+                                      style: const TextStyle(
+                                        color: _textLight,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      'Admin',
+                                      style: TextStyle(
+                                        color: _textDark,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                // Info
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: _bgLight,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: _border, width: 1),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Dibuat',
-                              style: const TextStyle(
-                                color: _textLight,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _formatDate(createdAt),
-                              style: const TextStyle(
-                                color: _textDark,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Diterbitkan',
-                              style: const TextStyle(
-                                color: _textLight,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _formatDate(createdAt),
-                              style: const TextStyle(
-                                color: _textDark,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Dibuat Oleh',
-                              style: const TextStyle(
-                                color: _textLight,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Admin',
-                              style: TextStyle(
-                                color: _textDark,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Close Button
-                Align(
+              ),
+              // Close Button - NOT in Flexible
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 20, 28, 24),
+                child: Align(
                   alignment: Alignment.centerRight,
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(ctx),
@@ -1486,8 +1514,8 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1517,14 +1545,19 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
           builder: (ctx, setDialogState) => Dialog(
             insetPadding: const EdgeInsets.symmetric(
               horizontal: 24,
-              vertical: 24,
+              vertical: 32,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(24),
             ),
             backgroundColor: Colors.white,
-            child: SingleChildScrollView(
-              child: Padding(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 840,
+                maxHeight: MediaQuery.of(ctx).size.height * 0.9,
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
                 padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -1545,18 +1578,18 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        _warningOrange,
-                                        Color(0xFFD97706),
+                                        Color(0xFF1D4ED8),
+                                        Color(0xFF2563EB),
                                       ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
                                     Icons.edit_rounded,
                                     color: Colors.white,
-                                    size: 20,
+                                    size: 22,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -1565,8 +1598,8 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                                   style: TextStyle(
                                     color: _textDark,
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 17,
-                                    letterSpacing: -0.3,
+                                    fontSize: 18,
+                                    letterSpacing: -0.4,
                                   ),
                                 ),
                               ],
@@ -1576,7 +1609,7 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                               'Ubah isi atau pengaturan pengumuman',
                               style: TextStyle(
                                 color: _textMedium,
-                                fontSize: 12.5,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -1846,7 +1879,7 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _warningOrange,
+                            backgroundColor: _primaryBlue,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -1864,6 +1897,7 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
                 ),
               ),
             ),
+            ),
           ),
         );
       },
@@ -1877,8 +1911,8 @@ class _PengumumanScreenModernState extends State<PengumumanScreen>
     await showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),

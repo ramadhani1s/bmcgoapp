@@ -39,7 +39,12 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const LoginScreen());
 
       case adminDashboard:
-        return MaterialPageRoute(builder: (_) => const AdminDashboard());
+        final initialMenuTitle = settings.arguments is String
+            ? settings.arguments as String
+            : null;
+        return MaterialPageRoute(
+          builder: (_) => AdminDashboard(initialMenuTitle: initialMenuTitle),
+        );
 
       case adminKelolaAbsensi:
         return MaterialPageRoute(builder: (_) => const AdminKelolaAbsensiScreen());
