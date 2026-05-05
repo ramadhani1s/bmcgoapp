@@ -32,8 +32,10 @@ func PaymentRoutes(r *gin.Engine) {
 	admin.Use(middleware.AuthMiddleware())
 	admin.Use(middleware.RoleMiddleware(1)) // 1 = Admin role
 	{
+		admin.GET("/overview", handlers.GetPaymentVerificationOverview)
 		admin.GET("/pending-verifications", handlers.GetPendingPaymentVerifications)
 		admin.POST("/:transactionId/approve", handlers.ApprovePaymentVerification)
 		admin.POST("/:transactionId/reject", handlers.RejectPaymentVerification)
+		admin.DELETE("/:transactionId", handlers.DeletePaymentVerification)
 	}
 }

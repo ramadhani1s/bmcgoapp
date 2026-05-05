@@ -49,9 +49,9 @@ func normalizeStatus(status string) string {
 	switch s {
 	case "settlement", "capture", "success":
 		return "success"
-	case "pending":
+	case "pending", "cancel", "canceled":
 		return "pending"
-	case "deny", "cancel", "expire", "failure", "failed":
+	case "deny", "expire", "failure", "failed":
 		return "failed"
 	default:
 		return s
@@ -295,40 +295,76 @@ func GetVerificationStatus(c *gin.Context) {
 		return
 	}
 
-	var isVerified bool
+	var userStatus string
+	var hasVerifiedPayment bool
 	var verifiedAt *time.Time
 	err := config.DB.QueryRow(c.Request.Context(), `
-		SELECT COALESCE(is_verified, FALSE), verified_at
-		FROM payment_transactions
-		WHERE user_id = $1 AND LOWER(status) IN ('success', 'settlement', 'capture')
-		ORDER BY created_at DESC
-		LIMIT 1
-	`, userIDInt).Scan(&isVerified, &verifiedAt)
+		SELECT
+			COALESCE((SELECT status FROM users WHERE id = $1), '') AS user_status,
+			EXISTS(
+				SELECT 1
+				FROM payment_transactions
+				WHERE user_id = $1 AND COALESCE(is_verified, FALSE) = TRUE
+			) AS has_verified_payment,
+			(
+				SELECT MAX(verified_at)
+				FROM payment_transactions
+				WHERE user_id = $1 AND COALESCE(is_verified, FALSE) = TRUE
+			) AS latest_verified_at
+	`, userIDInt).Scan(&userStatus, &hasVerifiedPayment, &verifiedAt)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Payment verification status", "is_verified": false, "verified_at": nil, "can_access": false})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Payment verification status", "is_verified": isVerified, "verified_at": verifiedAt, "can_access": isVerified})
+	isUserActive := strings.EqualFold(strings.TrimSpace(userStatus), "aktif")
+	canAccess := isUserActive || hasVerifiedPayment
+
+	// Self-heal: jika pembayaran sudah diverifikasi tapi user belum aktif, aktifkan akun.
+	if hasVerifiedPayment && !isUserActive {
+		_, _ = config.DB.Exec(c.Request.Context(), `
+			UPDATE users
+			SET status = 'aktif'
+			WHERE id = $1
+		`, userIDInt)
+		isUserActive = true
+		canAccess = true
+		userStatus = "aktif"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":         "Payment verification status",
+		"is_verified":     hasVerifiedPayment,
+		"verified_at":     verifiedAt,
+		"can_access":      canAccess,
+		"user_status":     userStatus,
+		"is_user_active":  isUserActive,
+	})
 }
 
 // PendingVerificationItem untuk response list verifikasi pending
 type PendingVerificationItem struct {
-	TransactionID   string     `json:"transaction_id"`
-	UserID          int        `json:"user_id"`
-	StudentName     string     `json:"student_name"`
-	StudentEmail    string     `json:"student_email"`
-	StudentPhone    string     `json:"student_phone"`
-	SchoolName      string     `json:"school_name"`
-	ClassName       string     `json:"class_name"`
-	PackageTitle    string     `json:"package_title"`
-	Amount          int64      `json:"amount"`
-	PaymentType     string     `json:"payment_type"`
-	CreatedAt       time.Time  `json:"created_at"`
-	Status          string     `json:"status"`
-	IsVerified      bool       `json:"is_verified"`
-	VerifiedAt      *time.Time `json:"verified_at,omitempty"`
-	VerifiedByAdmin *int       `json:"verified_by_admin,omitempty"`
+	TransactionID      string     `json:"transaction_id"`
+	UserID             int        `json:"user_id"`
+	StudentName        string     `json:"student_name"`
+	ClassName          string     `json:"class_name"`
+	SchoolName         string     `json:"school_name"`
+	Address            string     `json:"address"`
+	RegisteredWhatsApp string     `json:"registered_whatsapp"`
+	PackageID          string     `json:"package_id"`
+	PackageTitle       string     `json:"package_title"`
+	Amount             int64      `json:"amount"`
+	Status             string     `json:"status"`
+	PaymentType        string     `json:"payment_type"`
+	CustomerName       string     `json:"customer_name"`
+	CustomerEmail      string     `json:"customer_email"`
+	CustomerPhone      string     `json:"customer_phone"`
+	UserStatus         string     `json:"user_status"`
+	IsVerified         bool       `json:"is_verified"`
+	VerifiedAt         *time.Time `json:"verified_at,omitempty"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
+	VerifiedByAdmin    *int       `json:"verified_by_admin,omitempty"`
 }
 
 // GetPendingPaymentVerifications mendapatkan list pembayaran yang belum diverifikasi (untuk admin)
@@ -343,22 +379,25 @@ func GetPendingPaymentVerifications(c *gin.Context) {
 		SELECT DISTINCT ON (pt.user_id)
 			pt.transaction_id,
 			pt.user_id,
-			COALESCE(pt.customer_name, NULLIF(u.nama, ''), '') AS student_name,
-			COALESCE(pt.customer_email, NULLIF(u.email, ''), '') AS student_email,
-			COALESCE(pt.customer_phone, NULLIF(u.phone_number, ''), '') AS student_phone,
-			COALESCE(s.asal_sekolah, '') AS school_name,
-			COALESCE(s.kelas, '') AS class_name,
+			COALESCE(pt.customer_name, '') AS student_name,
+			'' AS class_name,
+			'' AS school_name,
+			'' AS address,
+			COALESCE(pt.customer_phone, '') AS registered_whatsapp,
+			pt.package_id,
 			pt.package_title,
 			pt.amount,
-			COALESCE(pt.payment_type, '') AS payment_type,
-			pt.created_at,
 			pt.status,
+			COALESCE(pt.payment_type, '') AS payment_type,
+			pt.customer_name,
+			pt.customer_email,
+			pt.customer_phone,
+			'' AS user_status,
 			COALESCE(pt.is_verified, FALSE) AS is_verified,
 			pt.verified_at,
-			pt.verified_by_admin
+			pt.created_at,
+			pt.updated_at
 		FROM payment_transactions pt
-		LEFT JOIN users u ON u.id = pt.user_id
-		LEFT JOIN siswa s ON s.user_id = pt.user_id
 		WHERE pt.status = 'success' AND COALESCE(pt.is_verified, FALSE) = FALSE
 		ORDER BY pt.user_id, pt.created_at DESC
 		LIMIT 100
@@ -374,11 +413,12 @@ func GetPendingPaymentVerifications(c *gin.Context) {
 		item := PendingVerificationItem{}
 		if err := rows.Scan(
 			&item.TransactionID, &item.UserID,
-			&item.StudentName, &item.StudentEmail, &item.StudentPhone,
-			&item.SchoolName, &item.ClassName,
-			&item.PackageTitle, &item.Amount, &item.PaymentType,
-			&item.CreatedAt, &item.Status, &item.IsVerified,
-			&item.VerifiedAt, &item.VerifiedByAdmin,
+			&item.StudentName, &item.ClassName, &item.SchoolName,
+			&item.Address, &item.RegisteredWhatsApp, &item.PackageID, &item.PackageTitle,
+			&item.Amount, &item.Status, &item.PaymentType,
+			&item.CustomerName, &item.CustomerEmail, &item.CustomerPhone,
+			&item.UserStatus, &item.IsVerified, &item.VerifiedAt,
+			&item.CreatedAt, &item.UpdatedAt,
 		); err != nil {
 			continue
 		}
@@ -492,6 +532,125 @@ func RejectPaymentVerification(c *gin.Context) {
 		"data": gin.H{
 			"transaction_id": transactionID,
 			"status":         "failed",
+		},
+	})
+}
+
+// DeletePaymentVerification menghapus data verifikasi/pembayaran
+func DeletePaymentVerification(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+
+	transactionID := c.Param("transactionId")
+	if strings.TrimSpace(transactionID) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Transaction ID is required"})
+		return
+	}
+
+	commandTag, err := config.DB.Exec(c.Request.Context(), `
+		DELETE FROM payment_transactions
+		WHERE transaction_id = $1
+	`, transactionID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to delete verification data", "error": err.Error()})
+		return
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Transaction not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Payment verification deleted",
+		"data": gin.H{
+			"transaction_id": transactionID,
+		},
+	})
+}
+
+// GetPaymentVerificationOverview mendapatkan overview verifikasi pembayaran (untuk admin dashboard)
+func GetPaymentVerificationOverview(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+
+	// Get all pending, approved, and rejected payments - simplified query
+	rows, err := config.DB.Query(c.Request.Context(), `
+		SELECT
+			pt.transaction_id,
+			pt.user_id,
+			COALESCE(pt.customer_name, '') AS student_name,
+			'' AS class_name,
+			'' AS school_name,
+			'' AS address,
+			COALESCE(pt.customer_phone, '') AS registered_whatsapp,
+			COALESCE(pt.package_id, '') AS package_id,
+			COALESCE(pt.package_title, '') AS package_title,
+			COALESCE(pt.amount, 0) AS amount,
+			COALESCE(pt.status, '') AS status,
+			COALESCE(pt.payment_type, '') AS payment_type,
+			COALESCE(pt.customer_name, '') AS customer_name,
+			COALESCE(pt.customer_email, '') AS customer_email,
+			COALESCE(pt.customer_phone, '') AS customer_phone,
+			'' AS user_status,
+			COALESCE(pt.is_verified, FALSE) AS is_verified,
+			pt.verified_at,
+			COALESCE(pt.created_at, NOW()) AS created_at,
+			COALESCE(pt.updated_at, NOW()) AS updated_at
+		FROM payment_transactions pt
+		WHERE pt.status IN ('success', 'pending', 'failed', 'cancel', 'deny', 'expire')
+		ORDER BY pt.created_at DESC
+		LIMIT 100
+	`)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to load overview", "error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	items := make([]PendingVerificationItem, 0)
+	waiting := 0
+	approved := 0
+	rejected := 0
+
+	for rows.Next() {
+		item := PendingVerificationItem{}
+		if err := rows.Scan(
+			&item.TransactionID, &item.UserID,
+			&item.StudentName, &item.ClassName, &item.SchoolName,
+			&item.Address, &item.RegisteredWhatsApp, &item.PackageID, &item.PackageTitle,
+			&item.Amount, &item.Status, &item.PaymentType,
+			&item.CustomerName, &item.CustomerEmail, &item.CustomerPhone,
+			&item.UserStatus, &item.IsVerified, &item.VerifiedAt,
+			&item.CreatedAt, &item.UpdatedAt,
+		); err != nil {
+			continue
+		}
+		item.Status = normalizeStatus(item.Status)
+		items = append(items, item)
+
+		if item.IsVerified {
+			approved++
+		} else if item.Status == "success" {
+			waiting++
+		} else {
+			rejected++
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Overview retrieved",
+		"data": gin.H{
+			"waiting":  waiting,
+			"approved": approved,
+			"rejected": rejected,
+			"items":    items,
 		},
 	})
 }

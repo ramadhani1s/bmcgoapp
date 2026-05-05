@@ -31,6 +31,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   String _selectedMenuTitle = 'Dashboard';
   AdminDashboardData? _summary;
   bool _isSummaryLoading = true;
+  List<PaymentVerificationItem>? _quickPendingItems;
+  bool _isQuickPendingLoading = false;
 
   @override
   void initState() {
@@ -84,6 +86,32 @@ class _AdminDashboardState extends State<AdminDashboard> {
       if (mounted) {
         setState(() {
           _isSummaryLoading = false;
+        });
+      }
+      // also refresh quick pending preview
+      _loadQuickPending();
+    }
+  }
+
+  Future<void> _loadQuickPending() async {
+    setState(() {
+      _isQuickPendingLoading = true;
+    });
+    try {
+      final items = await AdminDashboardService.getPendingPaymentVerifications();
+      if (!mounted) return;
+      setState(() {
+        _quickPendingItems = items;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _quickPendingItems = const [];
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isQuickPendingLoading = false;
         });
       }
     }
@@ -279,6 +307,37 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   String _formatIndoDate(DateTime date) {
     return '${_dayName(date)}, ${date.day} ${_monthName(date.month)} ${date.year}';
+  }
+
+  // Helper methods untuk status label di quick pending items
+  String _getStatusLabelDashboard(PaymentVerificationItem item) {
+    if (item.isVerified) {
+      return '✓ Disetujui';
+    }
+    if (item.status == 'success') {
+      return '⏳ Menunggu';
+    }
+    return '✗ Ditolak';
+  }
+
+  Color _getStatusColorDashboard(PaymentVerificationItem item) {
+    if (item.isVerified) {
+      return const Color(0xFF16A34A); // Hijau
+    }
+    if (item.status == 'success') {
+      return const Color(0xFFF97316); // Orange
+    }
+    return const Color(0xFFEF4444); // Merah
+  }
+
+  Color _getStatusBgColorDashboard(PaymentVerificationItem item) {
+    if (item.isVerified) {
+      return const Color(0xFFECFDF3);
+    }
+    if (item.status == 'success') {
+      return const Color(0xFFFFF7ED);
+    }
+    return const Color(0xFFFEF2F2);
   }
 
   Widget _buildSidebar() {
@@ -729,16 +788,110 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                if (_pendingRows.isEmpty)
+                if (_isQuickPendingLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if ((_quickPendingItems == null) || _quickPendingItems!.isEmpty)
                   const _EmptyTableRow(
                     message: 'Belum ada pendaftaran yang menunggu verifikasi.',
                   )
                 else
-                  for (final row in _pendingRows)
-                    _PendingItemRow(
-                      row: row,
-                      onApprove: () {},
-                      onReject: () {},
+                  for (final item in _quickPendingItems!.take(5))
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: const BoxDecoration(
+                        border: Border(bottom: BorderSide(color: Color(0xFFF0E6D8))),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(item.studentName, style: const TextStyle(fontSize: 12))),
+                          Expanded(child: Text(item.schoolName, style: const TextStyle(fontSize: 12))),
+                          Expanded(child: Text(item.className, style: const TextStyle(fontSize: 12))),
+                          Expanded(child: Text('${item.createdAt.day.toString().padLeft(2, '0')} ${_monthName(item.createdAt.month).substring(0,3)} ${item.createdAt.year}', style: const TextStyle(fontSize: 12))),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: _getStatusBgColorDashboard(item),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: _getStatusColorDashboard(item).withOpacity(0.35)),
+                              ),
+                              child: Text(
+                                _getStatusLabelDashboard(item),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: _getStatusColorDashboard(item),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                ElevatedButton(
+                                  onPressed: item.isVerified
+                                      ? null
+                                      : () async {
+                                          try {
+                                            await AdminDashboardService.approvePaymentVerification(item.transactionId);
+                                            if (!mounted) return;
+                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembayaran disetujui')));
+                                            await _loadSummary();
+                                            await _loadQuickPending();
+                                          } catch (e) {
+                                            if (!mounted) return;
+                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal approve: $e')));
+                                          }
+                                        },
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: const Size(52, 26),
+                                    backgroundColor: const Color(0xFF16A34A),
+                                    foregroundColor: Colors.white,
+                                    textStyle: const TextStyle(fontSize: 11),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  child: const Text('Setuju'),
+                                ),
+                                const SizedBox(width: 6),
+                                OutlinedButton(
+                                  onPressed: item.isVerified
+                                      ? null
+                                      : () async {
+                                          try {
+                                            await AdminDashboardService.rejectPaymentVerification(item.transactionId);
+                                            if (!mounted) return;
+                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembayaran ditolak')));
+                                            await _loadSummary();
+                                            await _loadQuickPending();
+                                          } catch (e) {
+                                            if (!mounted) return;
+                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal reject: $e')));
+                                          }
+                                        },
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size(70, 26),
+                                    foregroundColor: const Color(0xFFEF4444),
+                                    side: const BorderSide(color: Color(0xFFEF4444)),
+                                    textStyle: const TextStyle(fontSize: 11),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  child: const Text('Tolak'),
+                                ),
+                                const SizedBox(width: 6),
+                                IconButton(
+                                  onPressed: () => Navigator.of(context).pushNamed('/payment-verification'),
+                                  icon: const Icon(Icons.remove_red_eye_outlined, color: Color(0xFF3B82F6)),
+                                  tooltip: 'Lihat detail',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
               ],
             ),
