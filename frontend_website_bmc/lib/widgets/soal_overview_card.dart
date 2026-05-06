@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 
 class SoalOverviewCard extends StatelessWidget {
@@ -234,6 +236,7 @@ class SoalOverviewCard extends StatelessWidget {
             border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
+                // ignore: deprecated_member_use
                 color: Colors.black.withOpacity(0.03),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
