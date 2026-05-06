@@ -1,1 +1,1 @@
-export 'pengumuman_screen.dart';
+export 'pengumuman_screen_list.dart';

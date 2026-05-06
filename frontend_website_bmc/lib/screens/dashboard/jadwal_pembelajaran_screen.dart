@@ -352,141 +352,141 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                             padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
                             child: SingleChildScrollView(
                               child: Form(
-                              key: formKey,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  DropdownButtonFormField<int>(
-                                    value: selectedPaketId,
-                                    items: paketList
-                                        .map(
-                                          (paket) => DropdownMenuItem<int>(
-                                            value: paket['id'] as int,
-                                            child: Text(_packageLabel(paket)),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (value) => setModalState(
-                                      () => selectedPaketId = value,
-                                    ),
-                                    validator: (value) => value == null
-                                        ? 'Paket wajib dipilih'
-                                        : null,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Paket Les',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  DropdownButtonFormField<int>(
-                                    value: selectedMentorId,
-                                    items: mentorList
-                                        .map(
-                                          (mentor) => DropdownMenuItem<int>(
-                                            value: mentor['id'] as int,
-                                            child: Text(_mentorLabel(mentor)),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (value) => setModalState(
-                                      () => selectedMentorId = value,
-                                    ),
-                                    validator: (value) => value == null
-                                        ? 'Mentor wajib dipilih'
-                                        : null,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Mentor',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  DropdownButtonFormField<String>(
-                                    value: selectedHariValue,
-                                    items: hariList
-                                        .map(
-                                          (hari) => DropdownMenuItem<String>(
-                                            value: hari,
-                                            child: Text(hari),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (value) => setModalState(
-                                      () => selectedHariValue = value,
-                                    ),
-                                    validator: (value) =>
-                                        value == null || value.isEmpty
-                                        ? 'Hari wajib dipilih'
-                                        : null,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Hari',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextFormField(
-                                    controller: jamMulaiController,
-                                    readOnly: true,
-                                    onTap: () =>
-                                        pickAndSetTime(jamMulaiController),
-                                    validator: (value) =>
-                                        value == null || value.isEmpty
-                                        ? 'Jam mulai wajib diisi'
-                                        : null,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Jam Mulai',
-                                      hintText: '08:00',
-                                      border: OutlineInputBorder(),
-                                      suffixIcon: Icon(
-                                        Icons.access_time_rounded,
+                                key: formKey,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    DropdownButtonFormField<int>(
+                                      value: selectedPaketId,
+                                      items: paketList
+                                          .map(
+                                            (paket) => DropdownMenuItem<int>(
+                                              value: paket['id'] as int,
+                                              child: Text(_packageLabel(paket)),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (value) => setModalState(
+                                        () => selectedPaketId = value,
+                                      ),
+                                      validator: (value) => value == null
+                                          ? 'Paket wajib dipilih'
+                                          : null,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Paket Les',
+                                        border: OutlineInputBorder(),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextFormField(
-                                    controller: jamSelesaiController,
-                                    readOnly: true,
-                                    onTap: () =>
-                                        pickAndSetTime(jamSelesaiController),
-                                    validator: (value) =>
-                                        value == null || value.isEmpty
-                                        ? 'Jam selesai wajib diisi'
-                                        : null,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Jam Selesai',
-                                      hintText: '09:30',
-                                      border: OutlineInputBorder(),
-                                      suffixIcon: Icon(
-                                        Icons.access_time_rounded,
+                                    const SizedBox(height: 12),
+                                    DropdownButtonFormField<int>(
+                                      value: selectedMentorId,
+                                      items: mentorList
+                                          .map(
+                                            (mentor) => DropdownMenuItem<int>(
+                                              value: mentor['id'] as int,
+                                              child: Text(_mentorLabel(mentor)),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (value) => setModalState(
+                                        () => selectedMentorId = value,
+                                      ),
+                                      validator: (value) => value == null
+                                          ? 'Mentor wajib dipilih'
+                                          : null,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Mentor',
+                                        border: OutlineInputBorder(),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextFormField(
-                                    controller: mataPelajaranController,
-                                    validator: (value) =>
-                                        value == null || value.isEmpty
-                                        ? 'Mata pelajaran wajib diisi'
-                                        : null,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Mata Pelajaran',
-                                      border: OutlineInputBorder(),
-                                      hintText: 'Matematika',
+                                    const SizedBox(height: 12),
+                                    DropdownButtonFormField<String>(
+                                      value: selectedHariValue,
+                                      items: hariList
+                                          .map(
+                                            (hari) => DropdownMenuItem<String>(
+                                              value: hari,
+                                              child: Text(hari),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (value) => setModalState(
+                                        () => selectedHariValue = value,
+                                      ),
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                          ? 'Hari wajib dipilih'
+                                          : null,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Hari',
+                                        border: OutlineInputBorder(),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextFormField(
-                                    controller: ruangController,
-                                    validator: (value) =>
-                                        value == null || value.isEmpty
-                                        ? 'Ruang wajib diisi'
-                                        : null,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Ruang',
-                                      border: OutlineInputBorder(),
-                                      hintText: 'Ruang A',
+                                    const SizedBox(height: 12),
+                                    TextFormField(
+                                      controller: jamMulaiController,
+                                      readOnly: true,
+                                      onTap: () =>
+                                          pickAndSetTime(jamMulaiController),
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                          ? 'Jam mulai wajib diisi'
+                                          : null,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Jam Mulai',
+                                        hintText: '08:00',
+                                        border: OutlineInputBorder(),
+                                        suffixIcon: Icon(
+                                          Icons.access_time_rounded,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 12),
+                                    TextFormField(
+                                      controller: jamSelesaiController,
+                                      readOnly: true,
+                                      onTap: () =>
+                                          pickAndSetTime(jamSelesaiController),
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                          ? 'Jam selesai wajib diisi'
+                                          : null,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Jam Selesai',
+                                        hintText: '09:30',
+                                        border: OutlineInputBorder(),
+                                        suffixIcon: Icon(
+                                          Icons.access_time_rounded,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextFormField(
+                                      controller: mataPelajaranController,
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                          ? 'Mata pelajaran wajib diisi'
+                                          : null,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Mata Pelajaran',
+                                        border: OutlineInputBorder(),
+                                        hintText: 'Matematika',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextFormField(
+                                      controller: ruangController,
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                          ? 'Ruang wajib diisi'
+                                          : null,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Ruang',
+                                        border: OutlineInputBorder(),
+                                        hintText: 'Ruang A',
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -567,7 +567,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('≡ƒùæ∩╕Å Hapus Jadwal'),
+        title: const Text('Hapus Jadwal'),
         content: const Text('Apakah Anda yakin ingin menghapus jadwal ini?'),
         actions: [
           TextButton(
@@ -576,7 +576,13 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Hapus', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -694,260 +700,242 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadInitialData,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1200),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: _headerBlue,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color.fromRGBO(23, 92, 255, 0.22),
-                        blurRadius: 18,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Row(
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7F9FF), Color(0xFFF3F6FB)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.event_note_rounded,
-                          color: Colors.white,
+                      const Text(
+                        'Kelola Jadwal Pembelajaran',
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
+                          letterSpacing: -0.4,
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Kelola Jadwal Pembelajaran',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Jadwal utama yang berlaku setiap minggu secara berkelanjutan',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () => _createOrUpdateJadwal(),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Tambah Jadwal'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: _headerBlue,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Jadwal utama yang berlaku setiap minggu secara berkelanjutan',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
                         ),
                       ),
                     ],
                   ),
+                  ElevatedButton.icon(
+                    onPressed: () => _createOrUpdateJadwal(),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Tambah Jadwal'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Total Jadwal Mingguan',
+                      value: jadwalList.length.toString(),
+                      subtitle: 'Kelas aktif per minggu',
+                      color: const Color(0xFF2563EB),
+                      backgroundColor: const Color(0xFFDCEBFF),
+                      icon: Icons.calendar_month_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Jadwal Hari Ini',
+                      value: _countJadwalHariIni().toString(),
+                      subtitle: 'Contoh: Hari Senin',
+                      color: const Color(0xFF16A34A),
+                      backgroundColor: const Color(0xFFE0F4E8),
+                      icon: Icons.schedule_rounded,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE6EDF7)),
                 ),
-                const SizedBox(height: 18),
-                Row(
+                child: Row(
                   children: [
                     Expanded(
-                      child: _StatCard(
-                        title: 'Total Jadwal Mingguan',
-                        value: jadwalList.length.toString(),
-                        subtitle: 'Kelas aktif per minggu',
-                        color: const Color(0xFF2563EB),
-                        backgroundColor: const Color(0xFFEAF2FF),
-                        icon: Icons.calendar_month_rounded,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: selectedHari.isEmpty
+                            ? null
+                            : selectedHari,
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: '',
+                            child: Text('Semua Hari'),
+                          ),
+                          ...hariList.map(
+                            (hari) => DropdownMenuItem<String>(
+                              value: hari,
+                              child: Text(hari),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() => selectedHari = value ?? '');
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Filter Hari',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          isDense: true,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: _StatCard(
-                        title: 'Jadwal Hari Ini',
-                        value: _countJadwalHariIni().toString(),
-                        subtitle: 'Contoh: Hari Senin',
-                        color: const Color(0xFF16A34A),
-                        backgroundColor: const Color(0xFFEAF8EF),
-                        icon: Icons.schedule_rounded,
+                      child: DropdownButtonFormField<int?>(
+                        initialValue: selectedMentorFilterId,
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('Semua Mentor'),
+                          ),
+                          ...mentorList.map(
+                            (mentor) => DropdownMenuItem<int?>(
+                              value: mentor['id'] as int,
+                              child: Text(_mentorLabel(mentor)),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() => selectedMentorFilterId = value);
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Filter Mentor',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          isDense: true,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE4EAF3)),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          value: selectedHari.isEmpty ? null : selectedHari,
-                          items: [
-                            const DropdownMenuItem<String>(
-                              value: '',
-                              child: Text('Semua Hari'),
-                            ),
-                            ...hariList.map(
-                              (hari) => DropdownMenuItem<String>(
-                                value: hari,
-                                child: Text(hari),
-                              ),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            setState(() => selectedHari = value ?? '');
-                          },
-                          decoration: InputDecoration(
-                            labelText: 'Filter Hari',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            isDense: true,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: DropdownButtonFormField<int?>(
-                          value: selectedMentorFilterId,
-                          items: [
-                            const DropdownMenuItem<int?>(
-                              value: null,
-                              child: Text('Semua Mentor'),
-                            ),
-                            ...mentorList.map(
-                              (mentor) => DropdownMenuItem<int?>(
-                                value: mentor['id'] as int,
-                                child: Text(_mentorLabel(mentor)),
-                              ),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            setState(() => selectedMentorFilterId = value);
-                          },
-                          decoration: InputDecoration(
-                            labelText: 'Filter Mentor',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            isDense: true,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE6EDF7)),
                 ),
-                const SizedBox(height: 18),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE4EAF3)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        decoration: const BoxDecoration(
-                          color: _headerBlue,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(14),
-                            topRight: Radius.circular(14),
-                          ),
-                        ),
-                        child: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Jadwal Utama (Berlaku Setiap Minggu)',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Jadwal ini digunakan secara berkelanjutan hingga ada perubahan',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 16,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: _headerBlue,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(18),
+                          topRight: Radius.circular(18),
                         ),
                       ),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: DataTable(
-                          columnSpacing: 50,
-                          horizontalMargin: 18,
-                          columns: const [
-                            DataColumn(label: Text('HARI')),
-                            DataColumn(label: Text('WAKTU')),
-                            DataColumn(label: Text('KELAS')),
-                            DataColumn(label: Text('MATA PELAJARAN')),
-                            DataColumn(label: Text('MENTOR')),
-                            DataColumn(label: Text('RUANG')),
-                            DataColumn(label: Text('SISWA')),
-                            DataColumn(label: Text('AKSI')),
-                          ],
-                          rows: _filteredRows
-                              .asMap()
-                              .entries
-                              .map((entry) => _buildRow(entry.value, entry.key))
-                              .toList(),
-                        ),
-                      ),
-                      if (_filteredRows.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Center(
-                            child: Text(
-                              'Belum ada jadwal yang sesuai filter.',
-                              style: TextStyle(color: Colors.grey.shade600),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Jadwal Utama (Berlaku Setiap Minggu)',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Jadwal ini digunakan secara berkelanjutan hingga ada perubahan',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        columnSpacing: 45,
+                        horizontalMargin: 19,
+                        columns: const [
+                          DataColumn(label: Text('HARI')),
+                          DataColumn(label: Text('WAKTU')),
+                          DataColumn(label: Text('KELAS')),
+                          DataColumn(label: Text('MATA PELAJARAN')),
+                          DataColumn(label: Text('MENTOR')),
+                          DataColumn(label: Text('RUANG')),
+                          DataColumn(label: Text('SISWA')),
+                          DataColumn(label: Text('AKSI')),
+                        ],
+                        rows: _filteredRows
+                            .asMap()
+                            .entries
+                            .map((entry) => _buildRow(entry.value, entry.key))
+                            .toList(),
+                      ),
+                    ),
+                    if (_filteredRows.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: Text(
+                            'Belum ada jadwal yang sesuai filter.',
+                            style: TextStyle(color: Colors.grey.shade600),
+                          ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -975,13 +963,14 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Column(
@@ -989,33 +978,41 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
                   value,
                   style: TextStyle(
                     color: color,
-                    fontSize: 30,
+                    fontSize: 32,
                     fontWeight: FontWeight.w800,
+                    height: 1,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Text(
                   subtitle,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 11.5,
+                  ),
                 ),
               ],
             ),
           ),
           Container(
-            width: 44,
-            height: 44,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(12),
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: Colors.white),
+            child: Icon(icon, color: color, size: 24),
           ),
         ],
       ),

@@ -56,8 +56,8 @@ class PaymentVerificationItem {
 }
 
 class AdminDashboardService {
-  // Updated base URL to port 8081
-  static const String baseUrl = 'http://localhost:8081';
+  // Backend server
+  static const String baseUrl = 'http://localhost:8080';
 
   static Future<String> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
