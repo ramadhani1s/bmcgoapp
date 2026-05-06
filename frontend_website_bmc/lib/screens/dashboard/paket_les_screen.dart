@@ -422,93 +422,93 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                         padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
                         child: SingleChildScrollView(
                           child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: _buildTextField(
-                                    'Nama Paket *',
-                                    namaController,
-                                    hint: 'Nama paket les...',
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: _buildDialogStatusDropdown(
-                                    setStateDialog,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    'Harga Awal *',
-                                    hargaController,
-                                    hint: '0',
-                                    isNumber: true,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: _buildTextField(
-                                    'Diskon (%)',
-                                    diskonController,
-                                    hint: '0',
-                                    isNumber: true,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: _buildTextField(
-                                    'Durasi (menit)',
-                                    durasiController,
-                                    hint: '90',
-                                    isNumber: true,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            _buildTextField(
-                              'Deskripsi',
-                              deskripsiController,
-                              hint: 'Deskripsi paket les...',
-                              maxLines: 4,
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: _buildDialogDateField(
-                                    'Tanggal Mulai Promo',
-                                    tanggalMulaiPromo,
-                                    (date) => setStateDialog(
-                                      () => tanggalMulaiPromo = date,
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: _buildTextField(
+                                      'Nama Paket *',
+                                      namaController,
+                                      hint: 'Nama paket les...',
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: _buildDialogDateField(
-                                    'Tanggal Selesai Promo',
-                                    tanggalSelesaiPromo,
-                                    (date) => setStateDialog(
-                                      () => tanggalSelesaiPromo = date,
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: _buildDialogStatusDropdown(
+                                      setStateDialog,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      'Harga Awal *',
+                                      hargaController,
+                                      hint: '0',
+                                      isNumber: true,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      'Diskon (%)',
+                                      diskonController,
+                                      hint: '0',
+                                      isNumber: true,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      'Durasi (menit)',
+                                      durasiController,
+                                      hint: '90',
+                                      isNumber: true,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              _buildTextField(
+                                'Deskripsi',
+                                deskripsiController,
+                                hint: 'Deskripsi paket les...',
+                                maxLines: 4,
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: _buildDialogDateField(
+                                      'Tanggal Mulai Promo',
+                                      tanggalMulaiPromo,
+                                      (date) => setStateDialog(
+                                        () => tanggalMulaiPromo = date,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: _buildDialogDateField(
+                                      'Tanggal Selesai Promo',
+                                      tanggalSelesaiPromo,
+                                      (date) => setStateDialog(
+                                        () => tanggalSelesaiPromo = date,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -777,93 +777,93 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                         padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
                         child: SingleChildScrollView(
                           child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: _buildTextField(
-                                    'Nama Paket *',
-                                    namaController,
-                                    hint: 'Nama paket les...',
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: _buildDialogStatusDropdown(
-                                    setStateDialog,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    'Harga Awal *',
-                                    hargaController,
-                                    hint: '0',
-                                    isNumber: true,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: _buildTextField(
-                                    'Diskon (%)',
-                                    diskonController,
-                                    hint: '0',
-                                    isNumber: true,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: _buildTextField(
-                                    'Durasi (menit)',
-                                    durasiController,
-                                    hint: '90',
-                                    isNumber: true,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            _buildTextField(
-                              'Deskripsi',
-                              deskripsiController,
-                              hint: 'Deskripsi paket les...',
-                              maxLines: 4,
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: _buildDialogDateField(
-                                    'Tanggal Mulai Promo',
-                                    tanggalMulaiPromo,
-                                    (date) => setStateDialog(
-                                      () => tanggalMulaiPromo = date,
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: _buildTextField(
+                                      'Nama Paket *',
+                                      namaController,
+                                      hint: 'Nama paket les...',
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: _buildDialogDateField(
-                                    'Tanggal Selesai Promo',
-                                    tanggalSelesaiPromo,
-                                    (date) => setStateDialog(
-                                      () => tanggalSelesaiPromo = date,
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: _buildDialogStatusDropdown(
+                                      setStateDialog,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      'Harga Awal *',
+                                      hargaController,
+                                      hint: '0',
+                                      isNumber: true,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      'Diskon (%)',
+                                      diskonController,
+                                      hint: '0',
+                                      isNumber: true,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      'Durasi (menit)',
+                                      durasiController,
+                                      hint: '90',
+                                      isNumber: true,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              _buildTextField(
+                                'Deskripsi',
+                                deskripsiController,
+                                hint: 'Deskripsi paket les...',
+                                maxLines: 4,
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: _buildDialogDateField(
+                                      'Tanggal Mulai Promo',
+                                      tanggalMulaiPromo,
+                                      (date) => setStateDialog(
+                                        () => tanggalMulaiPromo = date,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: _buildDialogDateField(
+                                      'Tanggal Selesai Promo',
+                                      tanggalSelesaiPromo,
+                                      (date) => setStateDialog(
+                                        () => tanggalSelesaiPromo = date,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -927,50 +927,173 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(paket['nama_paket'] ?? 'Detail Paket'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDetailRow(
-                "Status",
-                "${paket['status'] ?? 'N/A'} ${paket['status'] == 'aktif' ? 'Γ£à' : 'Γ¥î'}",
-              ),
-              _buildDetailRow(
-                "Harga Normal",
-                PaketLesService.formatRupiah(paket['harga_awal'] ?? 0),
-              ),
-              if ((paket['diskon'] ?? 0) > 0) ...[
-                _buildDetailRow("Diskon", "${paket['diskon']}% ≡ƒö┤"),
-                _buildDetailRow(
-                  "Harga Promo",
-                  PaketLesService.formatRupiah(hargaPromo),
+      builder: (ctx) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 640,
+            maxHeight: MediaQuery.of(ctx).size.height * 0.82,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(24, 20, 18, 20),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.visibility_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Detail Paket Les',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Informasi lengkap paket les',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 22, 24, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          (paket['nama_paket'] ?? 'Detail Paket').toString(),
+                          style: const TextStyle(
+                            color: Color(0xFF1F2937),
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE6EDF7)),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildDetailRow(
+                                'Status',
+                                '${paket['status'] ?? 'N/A'}',
+                              ),
+                              _buildDetailRow(
+                                'Harga Normal',
+                                PaketLesService.formatRupiah(
+                                  paket['harga_awal'] ?? 0,
+                                ),
+                              ),
+                              if ((paket['diskon'] ?? 0) > 0) ...[
+                                _buildDetailRow(
+                                  'Diskon',
+                                  '${paket['diskon']}%',
+                                ),
+                                _buildDetailRow(
+                                  'Harga Promo',
+                                  PaketLesService.formatRupiah(hargaPromo),
+                                ),
+                              ],
+                              _buildDetailRow(
+                                'Durasi',
+                                '${paket['durasi'] ?? '-'} menit',
+                              ),
+                              _buildDetailRow(
+                                'Deskripsi',
+                                (paket['deskripsi'] ?? '-').toString(),
+                              ),
+                              if (paket['tanggal_mulai_promo'] != null)
+                                _buildDetailRow(
+                                  'Promo Dari',
+                                  (paket['tanggal_mulai_promo'] ?? '-').toString(),
+                                ),
+                              if (paket['tanggal_selesai_promo'] != null)
+                                _buildDetailRow(
+                                  'Promo Sampai',
+                                  (paket['tanggal_selesai_promo'] ?? '-').toString(),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF475569),
+                        side: const BorderSide(color: Color(0xFFD6DEEA)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Tutup'),
+                    ),
+                  ),
                 ),
               ],
-              const Divider(),
-              _buildDetailRow("Durasi", "${paket['durasi'] ?? '-'} menit"),
-              _buildDetailRow("Deskripsi", paket['deskripsi'] ?? '-'),
-              if (paket['tanggal_mulai_promo'] != null)
-                _buildDetailRow(
-                  "Promo Dari",
-                  paket['tanggal_mulai_promo'] ?? '-',
-                ),
-              if (paket['tanggal_selesai_promo'] != null)
-                _buildDetailRow(
-                  "Promo Sampai",
-                  paket['tanggal_selesai_promo'] ?? '-',
-                ),
-            ],
+            ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Tutup"),
-          ),
-        ],
       ),
     );
   }
@@ -979,7 +1102,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("ΓÜá∩╕Å Hapus Paket"),
+        title: const Text("Hapus Paket"),
         content: Text("Yakin ingin menghapus paket '${paket['nama_paket']}'?"),
         actions: [
           TextButton(

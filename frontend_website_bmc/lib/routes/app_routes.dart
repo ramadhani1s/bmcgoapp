@@ -15,7 +15,6 @@ import '../screens/payment_verification_screen.dart';
 import '../services/auth_service.dart';
 import '../screens/dashboard/admin_kelola_absensi_screen.dart';
 
-
 class AppRoutes {
   static const String login = '/login';
   static const String adminDashboard = '/admin-dashboard';
@@ -47,7 +46,9 @@ class AppRoutes {
         );
 
       case adminKelolaAbsensi:
-        return MaterialPageRoute(builder: (_) => const AdminKelolaAbsensiScreen());
+        return MaterialPageRoute(
+          builder: (_) => const AdminKelolaAbsensiScreen(),
+        );
 
       case paymentVerification:
         return MaterialPageRoute(
