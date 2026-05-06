@@ -72,6 +72,16 @@ func ProtectedRoutes(r *gin.Engine) {
 	admin.POST("/mappings/sync", handlers.SyncAdminMappings)
 	admin.PUT("/mappings/:adminId", handlers.UpdateAdminMapping)
 
+	// Alumni Routes
+	admin.GET("/alumni", handlers.GetAlumniHandler)
+	admin.GET("/alumni/:id", handlers.GetAlumniByIdHandler)
+	admin.POST("/alumni", handlers.CreateAlumniHandler)
+	admin.PUT("/alumni/:id", handlers.UpdateAlumniHandler)
+	admin.DELETE("/alumni/:id", handlers.DeleteAlumniHandler)
+
+	// Upload route for admin (image uploads)
+	admin.POST("/upload", handlers.UploadFileHandler)
+
 	// ================= MENTOR ONLY =================
 	mentor := auth.Group("/mentor")
 	mentor.Use(middleware.RoleMiddleware(2)) // 2 = mentor

@@ -1,17 +1,22 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:frontend_mobile_bmc/models/payment_model.dart';
-import 'package:frontend_mobile_bmc/core/session/app_session.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PaymentService {
   // GANTI DENGAN BASE URL BACKEND KAMU
   // Jika kamu menjalankan Flutter di Android emulator, gunakan 10.0.2.2
   static const String baseUrl =
-      'http://10.0.2.2:8080'; // Android emulator -> PC localhost (backend server)
+      'http://10.0.2.2:8081'; // Android emulator -> PC localhost (payment server)
   // Untuk production: 'https://api.yourdomain.com'
 
   static Future<String> _getAuthToken() async {
-    return AppSession.getAuthToken();
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token') ?? '';
+    if (token.isEmpty) {
+      throw Exception('Sesi login tidak ditemukan. Silakan login ulang.');
+    }
+    return token;
   }
 
   static String? _extractMessageFromBody(String body) {
@@ -154,11 +159,6 @@ class PaymentService {
       final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final canAccess = data['can_access'] as bool?;
-        if (canAccess != null) {
-          return canAccess;
-        }
-
         final ok = data['is_verified'] as bool?;
         return ok == true;
       }

@@ -4,6 +4,7 @@ import '../screens/admin/admin_dashboard.dart';
 import '../screens/mentor/mentor_dashboard.dart';
 import '../screens/dashboard/mentor_attendance_screen.dart';
 import '../screens/dashboard/mentor_olimpiade_screen.dart';
+import '../screens/dashboard/mentor_profile_screen.dart';
 import '../screens/dashboard/mentor_tryout_screen.dart';
 import '../screens/dashboard/paket_les_screen.dart';
 import '../screens/dashboard/soal_latihan_management_screen.dart';
@@ -15,6 +16,8 @@ import '../screens/admin/payment_verification_screen.dart';
 import '../services/auth_service.dart';
 import '../screens/admin/admin_kelola_absensi_screen.dart';
 
+import '../screens/dashboard/admin_kelola_absensi_screen.dart';
+import '../screens/dashboard/admin_kelola_alumni_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -22,6 +25,7 @@ class AppRoutes {
   static const String paymentVerification = '/payment-verification';
   static const String mentorDashboard = '/mentor-dashboard';
   static const String mentorAttendance = '/mentor-attendance';
+  static const String mentorProfile = '/mentor-profile';
   static const String mentorManagement = '/mentor-management';
   static const String mentorExercise = '/mentor-exercise';
   static const String mentorTryout = '/mentor-tryout';
@@ -33,6 +37,7 @@ class AppRoutes {
   static const String paketLes = '/paket-les';
   static const String soalLatihanManagement = '/soal-latihan-management';
   static const String adminKelolaAbsensi = '/admin-kelola-absensi';
+  static const String adminKelolaAlumni = '/admin-kelola-alumni';
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case login:
@@ -47,7 +52,14 @@ class AppRoutes {
         );
 
       case adminKelolaAbsensi:
-        return MaterialPageRoute(builder: (_) => const AdminKelolaAbsensiScreen());
+        return MaterialPageRoute(
+          builder: (_) => const AdminKelolaAbsensiScreen(),
+        );
+
+      case adminKelolaAlumni:
+        return MaterialPageRoute(
+          builder: (_) => const AdminKelolaAlumniScreen(),
+        );
 
       case paymentVerification:
         return MaterialPageRoute(
@@ -61,6 +73,9 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (_) => const MentorAttendanceScreen(),
         );
+
+      case mentorProfile:
+        return MaterialPageRoute(builder: (_) => const MentorProfileScreen());
 
       case mentorManagement:
         return MaterialPageRoute(

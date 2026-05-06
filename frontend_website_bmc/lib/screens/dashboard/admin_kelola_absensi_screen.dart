@@ -14,6 +14,9 @@ class _AdminKelolaAbsensiScreenState
 
   late Future<List<Absensi>> futureData;
 
+  String selectedKelas = "Semua Kelas";
+  String selectedStatus = "Semua Status";
+
   @override
   void initState() {
     super.initState();
@@ -22,24 +25,48 @@ class _AdminKelolaAbsensiScreenState
 
  @override
 Widget build(BuildContext context) {
-  return Material(
-    color: Colors.transparent,
+  return Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          Color(0xFFF7F9FF),
+          Color(0xFFF3F6FB),
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+    ),
     child: SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          28,
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ================= TITLE =================
           const Text(
             "Kelola Absensi",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+              letterSpacing: -0.4,
+            ),
           ),
           const SizedBox(height: 4),
           const Text(
             "Lihat, kelola, dan perbarui data kehadiran siswa berdasarkan kelas atau jadwal",
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF6B7280),
+            ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
           // ================= STATS =================
           Row(
@@ -61,42 +88,122 @@ Widget build(BuildContext context) {
                   decoration: InputDecoration(
                     hintText:
                         "Cari berdasarkan kelas, mata pelajaran, mentor, atau tanggal...",
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 24,
+                      color: Color(0xFF64748B),
+                    ),
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: Colors.white,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFE5E7EB),
+                      ),
+                    ),
+
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFE5E7EB),
+                      ),
+                    ),
+
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 18,
+                    ),
+                    hintStyle: const TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                      focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF2563EB),
+                        width: 1.4,
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              _dropdown("Semua Kelas"),
-              const SizedBox(width: 10),
-              _dropdown("Semua Status"),
-            ],
+             _dropdown(
+              value: selectedKelas,
+              items: const [
+                "Semua Kelas",
+                "Kelas 10",
+                "Kelas 11",
+                "Kelas 12",
+              ],
+              onChanged: (value) {
+                setState(() {
+                  selectedKelas = value!;
+                });
+              },
+            ),
+
+            const SizedBox(width: 10),
+
+            _dropdown(
+              value: selectedStatus,
+              items: const [
+                "Semua Status",
+                "Hadir",
+                "Terlambat",
+                "Tidak Hadir",
+              ],
+              onChanged: (value) {
+                setState(() {
+                  selectedStatus = value!;
+                });
+              },
+            ),
+                        ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 22),
 
           // ================= TABLE =================
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(18),
+
+              border: Border.all(
+                color: const Color(0xFFE6EDF7),
+              ),
+
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromRGBO(15, 23, 42, 0.05),
+                  blurRadius: 18,
+                  offset: Offset(0, 8),
+                ),
+              ],
             ),
             child: Column(
               children: [
                 // HEADER
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.fromLTRB(
+                    20,
+                    18,
+                    20,
+                    18,
+                  ),
                   decoration: const BoxDecoration(
-                    color: Color(0xFF2A58F2),
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(12)),
+                    gradient: LinearGradient(
+                      colors: [
+                        Color(0xFF2563EB),
+                        Color(0xFF1D4ED8),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(18),
+                      topRight: Radius.circular(18),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,30 +211,106 @@ Widget build(BuildContext context) {
                       Text(
                         "Data Absensi per Sesi",
                         style:
-                            TextStyle(color: Colors.white, fontSize: 16),
+                            TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700,),
                       ),
                       SizedBox(height: 4),
                       Text(
                         "Data ditampilkan secara dinamis",
                         style: TextStyle(
-                            color: Colors.white70, fontSize: 12),
+                            color: Color(0xFFDBEAFE), fontSize: 13),
+                            
                       ),
                     ],
                   ),
                 ),
 
+                
                 // HEADER TABLE
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: const [
-                      Expanded(flex: 2, child: Text("TANGGAL & JADWAL")),
-                      Expanded(child: Text("KELAS")),
-                      Expanded(flex: 2, child: Text("MATA PELAJARAN")),
-                      Expanded(flex: 2, child: Text("MENTOR")),
-                      Expanded(child: Text("STATUS")),
-                      Expanded(child: Text("AKSI")),
-                    ],
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF8FAFC),
+                  ),
+
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: const [
+
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            "TANGGAL & JADWAL",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+
+                        Expanded(
+                          child: Text(
+                            "KELAS",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            "MATA PELAJARAN",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            "MENTOR",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+
+                        Expanded(
+                          child: Text(
+                            "STATUS",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+
+                        Expanded(
+                          child: Text(
+                            "AKSI",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
 
@@ -173,7 +356,7 @@ Widget build(BuildContext context) {
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                              horizontal: 20, vertical: 16),
                           child: Row(
                             children: [
                               // TANGGAL
@@ -235,18 +418,17 @@ Widget build(BuildContext context) {
                                           vertical: 4,
                                           horizontal: 8),
                                   decoration: BoxDecoration(
-                                    color: item.status ==
-                                            "Selesai"
-                                        ? Colors.green
-                                            .withOpacity(0.2)
-                                        : Colors.grey
-                                            .withOpacity(0.2),
-                                    borderRadius:
-                                        BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    item.status,
-                                    textAlign: TextAlign.center,
+                                    color: item.status == "Selesai"
+                                        ? Colors.green.withOpacity(0.2)
+                                        : Colors.grey.withOpacity(0.2),
+
+                                    borderRadius: BorderRadius.circular(20),
+
+                                    border: Border.all(
+                                      color: item.status == "Selesai"
+                                          ? Colors.green.withOpacity(0.2)
+                                          : Colors.grey.withOpacity(0.2),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -271,6 +453,7 @@ Widget build(BuildContext context) {
         ],
       ),
     ),
+    ),
   );
 }
 
@@ -281,50 +464,104 @@ Widget build(BuildContext context) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 22,
+        ),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: color.withOpacity(0.18),
         ),
+      ),
         child: Row(
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Text(
                     value,
                     style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
                         color: color),
                   ),
                 ],
               ),
             ),
-            Icon(icon, color: color),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 28,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _dropdown(String text) {
+  Widget _dropdown({
+    required String value,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 10,
       ),
-      child: DropdownButton(
-        value: text,
+
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+        ),
+      ),
+
+      child: DropdownButton<String>(
+        value: value,
         underline: const SizedBox(),
-        items: [text]
-            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-            .toList(),
-        onChanged: (_) {},
+
+        icon: const Icon(
+          Icons.keyboard_arrow_down,
+          color: Color(0xFF6B7280),
+        ),
+
+        style: const TextStyle(
+          fontSize: 14,
+          color: Color(0xFF374151),
+          fontWeight: FontWeight.w500,
+        ),
+
+        items: items.map((item) {
+          return DropdownMenuItem<String>(
+            value: item,
+            child: Text(item),
+          );
+        }).toList(),
+
+        onChanged: onChanged,
       ),
     );
   }

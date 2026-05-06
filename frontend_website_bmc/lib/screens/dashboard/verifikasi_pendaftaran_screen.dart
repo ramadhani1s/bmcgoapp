@@ -15,6 +15,8 @@ class _VerifikasiPendaftaranScreenState
     extends State<VerifikasiPendaftaranScreen> {
   List<PaymentVerificationItem> _items = [];
   bool _isLoading = true;
+  List<Map<String, dynamic>> pendaftaranList = [];
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -63,6 +65,77 @@ class _VerifikasiPendaftaranScreenState
       'Des'
     ];
     return months[month - 1];
+  Future<void> _loadPendaftaran() async {
+    setState(() => isLoading = true);
+    // TODO: Load from service
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _verifyPendaftaran(int id) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("✅ Terima Pendaftaran"),
+        content: const Text(
+          "Apakah Anda yakin ingin menerima pendaftaran ini?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("✅ Pendaftaran diterima"),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              _loadPendaftaran();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            child: const Text("Terima", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _rejectPendaftaran(int id) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("❌ Tolak Pendaftaran"),
+        content: const Text("Apakah Anda yakin ingin menolak pendaftaran ini?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("❌ Pendaftaran ditolak"),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              _loadPendaftaran();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Tolak", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -192,6 +265,12 @@ class _VerifikasiPendaftaranScreenState
                   ],
                 ),
               ],
+          // Header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D47A1),
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
 
@@ -333,6 +412,30 @@ class _VerifikasiPendaftaranScreenState
                     ),
                     child: const Icon(Icons.remove_red_eye,
                         size: 16, color: Color(0xFF3B82F6)),
+                const Icon(
+                  Icons.fact_check_outlined,
+                  color: Colors.white,
+                  size: 32,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        "Verifikasi Pendaftaran",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        "Verifikasi data siswa yang telah mendaftar",
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -341,5 +444,12 @@ class _VerifikasiPendaftaranScreenState
         ],
       ),
     );
+  }
+}
+
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }

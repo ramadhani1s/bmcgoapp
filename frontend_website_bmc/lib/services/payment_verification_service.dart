@@ -43,6 +43,9 @@ class PaymentVerificationService {
   static const String baseUrl = 'http://localhost:8080';
   static final ApiClient _client = ApiClient(baseUrl: baseUrl);
 
+  static const String baseUrl =
+      'http://localhost:8080';
+
   static Map<String, dynamic> _decodeObject(String body) {
     try {
       final decoded = jsonDecode(body);

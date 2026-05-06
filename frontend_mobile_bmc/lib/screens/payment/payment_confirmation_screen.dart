@@ -49,7 +49,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       _midtransSDK = await MidtransSDK.init(
         config: MidtransConfig(
           clientKey: "Mid-client-oGUyoloFZJXYlklg",
-          merchantBaseUrl: "http://10.0.2.2:8080",
+          merchantBaseUrl: "http://10.0.2.2:8081",
           colorTheme: ColorTheme(
             colorPrimary: _blueHeader,
             colorPrimaryDark: _blueHeader,
@@ -178,46 +178,6 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       _isLoading = false;
     });
 
-    if (status == 'cancel' || status == 'canceled') {
-      await PaymentService.finishTransaction(transactionId, 'pending');
-      if (!mounted) return;
-      setState(() {
-        _statusMessage = 'Pembayaran dibatalkan. Status: Menunggu (Pending)';
-      });
-      return;
-    }
-
-    if (status == 'pending') {
-      await _startStatusPolling(transactionId);
-      return;
-    }
-
-    if (status == 'success' || status == 'settlement' || status == 'capture') {
-      await PaymentService.finishTransaction(transactionId, 'success');
-      if (!mounted) return;
-      setState(() {
-        _statusMessage = 'Pembayaran berhasil. Status: Berhasil (Menunggu Verifikasi Admin)';
-      });
-      if (!_finalDialogShown) {
-        _finalDialogShown = true;
-        _showSuccessDialog();
-      }
-      return;
-    }
-
-    if (status == 'deny' || status == 'failed' || status == 'expire' || status == 'failure') {
-      await PaymentService.finishTransaction(transactionId, 'failed');
-      if (!mounted) return;
-      setState(() {
-        _statusMessage = 'Pembayaran gagal. Status: Gagal';
-      });
-      if (!_finalDialogShown) {
-        _finalDialogShown = true;
-        _showFailureDialog();
-      }
-      return;
-    }
-
     await _startStatusPolling(transactionId);
   }
 
@@ -250,6 +210,8 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
 
         if (status == 'failed' ||
             status == 'deny' ||
+            status == 'cancel' ||
+            status == 'canceled' ||
             status == 'expire') {
           await PaymentService.finishTransaction(transactionId, 'failed');
           if (!mounted) return;
@@ -289,18 +251,14 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         title: const Text('Pembayaran Berhasil! 🎉'),
-        content: const Text('Paket berhasil dibeli. Tunggu verifikasi admin untuk aktivasi akun.'),
+        content: const Text('Paket berhasil dibeli.'),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              if (mounted) {
-                setState(() {
-                  _statusMessage = 'Pembayaran berhasil. Menunggu verifikasi admin.';
-                });
-              }
+              Navigator.pop(context);
             },
-            child: const Text('OK'),
+            child: const Text('Kembali'),
           ),
         ],
       ),
@@ -311,19 +269,12 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Pembayaran Gagal ❌'),
-        content: const Text('Pembayaran gagal atau dibatalkan. Silakan coba lagi.'),
+        title: const Text('Gagal ❌'),
+        content: const Text('Pembayaran gagal.'),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              if (mounted) {
-                setState(() {
-                  _statusMessage = 'Pembayaran gagal. Silakan coba lagi.';
-                });
-              }
-            },
-            child: const Text('Kembali'),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Coba Lagi'),
           ),
         ],
       ),

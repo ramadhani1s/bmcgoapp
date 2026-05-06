@@ -5,7 +5,12 @@ import 'package:frontend_mobile_bmc/screens/auth/register_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/dashboard_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/attendance_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/package_screen.dart';
-
+import 'package:frontend_mobile_bmc/screens/mentor/add_latihan_soal_screen.dart';
+import 'package:frontend_mobile_bmc/screens/mentor/add_olimpiade_screen.dart';
+import 'package:frontend_mobile_bmc/screens/mentor/latihan_soal_management_screen.dart';
+import 'package:frontend_mobile_bmc/screens/mentor/olimpiade_management_screen.dart';
+import 'package:frontend_mobile_bmc/screens/mentor/add_tryout_screen.dart';
+import 'package:frontend_mobile_bmc/screens/mentor/tryout_management_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/profile_detail_form_screen.dart';
 import 'package:frontend_mobile_bmc/screens/onboarding_screen.dart';
 import 'package:frontend_mobile_bmc/screens/splash_screen.dart';
@@ -43,7 +48,12 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/attendance': (context) => const AttendanceScreen(),
-        
+        '/mentor-soal': (context) => const LatihanSoalManagementScreen(),
+        '/mentor-add-soal': (context) => const AddLatihanSoalScreen(),
+        '/mentor-olimpiade': (context) => const OlimpiadeManagementScreen(),
+        '/mentor-add-olimpiade': (context) => const AddOlimpiadeScreen(),
+        '/mentor-tryout': (context) => const TryoutManagementScreen(),
+        '/mentor-add-tryout': (context) => const AddTryoutScreen(),
         '/profile-detail': (context) => const ProfileDetailFormScreen(),
         '/package': (context) => const PackageScreen(),
         '/payment-history': (context) => const PaymentHistoryScreen(),
