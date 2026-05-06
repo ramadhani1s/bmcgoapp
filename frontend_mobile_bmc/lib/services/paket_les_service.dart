@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../core/session/app_session.dart';
 
 class PaketLesService {
   static const String _defaultBaseUrl = "http://10.0.2.2:8080/api";
@@ -46,8 +47,7 @@ class PaketLesService {
   // Get token from SharedPreferences
   static Future<String?> _getToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('token') ?? prefs.getString('auth_token');
+      return AppSession.getAuthToken();
     } catch (e) {
       debugPrint("Error getting token: $e");
       return null;

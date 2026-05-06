@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"bmcgoapp-backend/repositories"
+
 	"github.com/gin-gonic/gin"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/coreapi"
@@ -295,23 +297,7 @@ func GetVerificationStatus(c *gin.Context) {
 		return
 	}
 
-	var userStatus string
-	var hasVerifiedPayment bool
-	var verifiedAt *time.Time
-	err := config.DB.QueryRow(c.Request.Context(), `
-		SELECT
-			COALESCE((SELECT status FROM users WHERE id = $1), '') AS user_status,
-			EXISTS(
-				SELECT 1
-				FROM payment_transactions
-				WHERE user_id = $1 AND COALESCE(is_verified, FALSE) = TRUE
-			) AS has_verified_payment,
-			(
-				SELECT MAX(verified_at)
-				FROM payment_transactions
-				WHERE user_id = $1 AND COALESCE(is_verified, FALSE) = TRUE
-			) AS latest_verified_at
-	`, userIDInt).Scan(&userStatus, &hasVerifiedPayment, &verifiedAt)
+	userStatus, hasVerifiedPayment, verifiedAt, err := repositories.GetVerificationStatus(c.Request.Context(), userIDInt)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Payment verification status", "is_verified": false, "verified_at": nil, "can_access": false})
 		return
@@ -333,39 +319,16 @@ func GetVerificationStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":         "Payment verification status",
-		"is_verified":     hasVerifiedPayment,
-		"verified_at":     verifiedAt,
-		"can_access":      canAccess,
-		"user_status":     userStatus,
-		"is_user_active":  isUserActive,
+		"message":        "Payment verification status",
+		"is_verified":    hasVerifiedPayment,
+		"verified_at":    verifiedAt,
+		"can_access":     canAccess,
+		"user_status":    userStatus,
+		"is_user_active": isUserActive,
 	})
 }
 
-// PendingVerificationItem untuk response list verifikasi pending
-type PendingVerificationItem struct {
-	TransactionID      string     `json:"transaction_id"`
-	UserID             int        `json:"user_id"`
-	StudentName        string     `json:"student_name"`
-	ClassName          string     `json:"class_name"`
-	SchoolName         string     `json:"school_name"`
-	Address            string     `json:"address"`
-	RegisteredWhatsApp string     `json:"registered_whatsapp"`
-	PackageID          string     `json:"package_id"`
-	PackageTitle       string     `json:"package_title"`
-	Amount             int64      `json:"amount"`
-	Status             string     `json:"status"`
-	PaymentType        string     `json:"payment_type"`
-	CustomerName       string     `json:"customer_name"`
-	CustomerEmail      string     `json:"customer_email"`
-	CustomerPhone      string     `json:"customer_phone"`
-	UserStatus         string     `json:"user_status"`
-	IsVerified         bool       `json:"is_verified"`
-	VerifiedAt         *time.Time `json:"verified_at,omitempty"`
-	CreatedAt          time.Time  `json:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at"`
-	VerifiedByAdmin    *int       `json:"verified_by_admin,omitempty"`
-}
+type PendingVerificationItem = repositories.PaymentVerificationItem
 
 // GetPendingPaymentVerifications mendapatkan list pembayaran yang belum diverifikasi (untuk admin)
 func GetPendingPaymentVerifications(c *gin.Context) {
@@ -375,55 +338,13 @@ func GetPendingPaymentVerifications(c *gin.Context) {
 		return
 	}
 
-	rows, err := config.DB.Query(c.Request.Context(), `
-		SELECT DISTINCT ON (pt.user_id)
-			pt.transaction_id,
-			pt.user_id,
-			COALESCE(pt.customer_name, '') AS student_name,
-			'' AS class_name,
-			'' AS school_name,
-			'' AS address,
-			COALESCE(pt.customer_phone, '') AS registered_whatsapp,
-			pt.package_id,
-			pt.package_title,
-			pt.amount,
-			pt.status,
-			COALESCE(pt.payment_type, '') AS payment_type,
-			pt.customer_name,
-			pt.customer_email,
-			pt.customer_phone,
-			'' AS user_status,
-			COALESCE(pt.is_verified, FALSE) AS is_verified,
-			pt.verified_at,
-			pt.created_at,
-			pt.updated_at
-		FROM payment_transactions pt
-		WHERE pt.status = 'success' AND COALESCE(pt.is_verified, FALSE) = FALSE
-		ORDER BY pt.user_id, pt.created_at DESC
-		LIMIT 100
-	`)
+	items, err := repositories.GetPendingPaymentVerifications(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to load pending verifications", "error": err.Error()})
 		return
 	}
-	defer rows.Close()
-
-	items := make([]PendingVerificationItem, 0)
-	for rows.Next() {
-		item := PendingVerificationItem{}
-		if err := rows.Scan(
-			&item.TransactionID, &item.UserID,
-			&item.StudentName, &item.ClassName, &item.SchoolName,
-			&item.Address, &item.RegisteredWhatsApp, &item.PackageID, &item.PackageTitle,
-			&item.Amount, &item.Status, &item.PaymentType,
-			&item.CustomerName, &item.CustomerEmail, &item.CustomerPhone,
-			&item.UserStatus, &item.IsVerified, &item.VerifiedAt,
-			&item.CreatedAt, &item.UpdatedAt,
-		); err != nil {
-			continue
-		}
-		item.Status = normalizeStatus(item.Status)
-		items = append(items, item)
+	for i := range items {
+		items[i].Status = normalizeStatus(items[i].Status)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Pending verifications retrieved", "data": items})
@@ -448,38 +369,9 @@ func ApprovePaymentVerification(c *gin.Context) {
 		return
 	}
 
-	// Get user_id dari transaction
-	var userID int
-	err := config.DB.QueryRow(c.Request.Context(), `
-		SELECT user_id FROM payment_transactions WHERE transaction_id = $1
-	`, transactionID).Scan(&userID)
+	userID, err := repositories.ApprovePaymentVerification(c.Request.Context(), transactionID, adminID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Transaction not found"})
-		return
-	}
-
-	// Update payment_transactions: set is_verified=TRUE
-	_, err = config.DB.Exec(c.Request.Context(), `
-		UPDATE payment_transactions
-		SET is_verified = TRUE,
-			verified_at = NOW(),
-			verified_by_admin = $1,
-			updated_at = NOW()
-		WHERE transaction_id = $2
-	`, adminID, transactionID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to approve verification", "error": err.Error()})
-		return
-	}
-
-	// Update users: set status='aktif'
-	_, err = config.DB.Exec(c.Request.Context(), `
-		UPDATE users
-		SET status = 'aktif'
-		WHERE id = $1
-	`, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to activate user account", "error": err.Error()})
 		return
 	}
 
@@ -512,16 +404,7 @@ func RejectPaymentVerification(c *gin.Context) {
 		return
 	}
 
-	// Update payment_transactions: set is_verified=FALSE (marked as rejected)
-	_, err := config.DB.Exec(c.Request.Context(), `
-		UPDATE payment_transactions
-		SET is_verified = FALSE,
-			verified_at = NOW(),
-			verified_by_admin = $1,
-			status = 'failed',
-			updated_at = NOW()
-		WHERE transaction_id = $2
-	`, adminID, transactionID)
+	err := repositories.RejectPaymentVerification(c.Request.Context(), transactionID, adminID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to reject verification", "error": err.Error()})
 		return
@@ -580,69 +463,15 @@ func GetPaymentVerificationOverview(c *gin.Context) {
 		return
 	}
 
-	// Get all pending, approved, and rejected payments - simplified query
-	rows, err := config.DB.Query(c.Request.Context(), `
-		SELECT
-			pt.transaction_id,
-			pt.user_id,
-			COALESCE(pt.customer_name, '') AS student_name,
-			'' AS class_name,
-			'' AS school_name,
-			'' AS address,
-			COALESCE(pt.customer_phone, '') AS registered_whatsapp,
-			COALESCE(pt.package_id, '') AS package_id,
-			COALESCE(pt.package_title, '') AS package_title,
-			COALESCE(pt.amount, 0) AS amount,
-			COALESCE(pt.status, '') AS status,
-			COALESCE(pt.payment_type, '') AS payment_type,
-			COALESCE(pt.customer_name, '') AS customer_name,
-			COALESCE(pt.customer_email, '') AS customer_email,
-			COALESCE(pt.customer_phone, '') AS customer_phone,
-			'' AS user_status,
-			COALESCE(pt.is_verified, FALSE) AS is_verified,
-			pt.verified_at,
-			COALESCE(pt.created_at, NOW()) AS created_at,
-			COALESCE(pt.updated_at, NOW()) AS updated_at
-		FROM payment_transactions pt
-		WHERE pt.status IN ('success', 'pending', 'failed', 'cancel', 'deny', 'expire')
-		ORDER BY pt.created_at DESC
-		LIMIT 100
-	`)
+	overview, err := repositories.GetPaymentVerificationOverview(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to load overview", "error": err.Error()})
 		return
 	}
-	defer rows.Close()
-
-	items := make([]PendingVerificationItem, 0)
-	waiting := 0
-	approved := 0
-	rejected := 0
-
-	for rows.Next() {
-		item := PendingVerificationItem{}
-		if err := rows.Scan(
-			&item.TransactionID, &item.UserID,
-			&item.StudentName, &item.ClassName, &item.SchoolName,
-			&item.Address, &item.RegisteredWhatsApp, &item.PackageID, &item.PackageTitle,
-			&item.Amount, &item.Status, &item.PaymentType,
-			&item.CustomerName, &item.CustomerEmail, &item.CustomerPhone,
-			&item.UserStatus, &item.IsVerified, &item.VerifiedAt,
-			&item.CreatedAt, &item.UpdatedAt,
-		); err != nil {
-			continue
-		}
-		item.Status = normalizeStatus(item.Status)
-		items = append(items, item)
-
-		if item.IsVerified {
-			approved++
-		} else if item.Status == "success" {
-			waiting++
-		} else {
-			rejected++
-		}
-	}
+	items := overview.Items
+	waiting := overview.Waiting
+	approved := overview.Approved
+	rejected := overview.Rejected
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Overview retrieved",

@@ -2,8 +2,8 @@
 
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:frontend_website_bmc/core/session/app_session.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class JadwalService {
   static const String _defaultAdminBaseUrl = "http://localhost:8080/api/admin";
@@ -13,18 +13,7 @@ class JadwalService {
 
   // Get token
   static Future<String> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token =
-        (prefs.getString('token') ?? prefs.getString('auth_token') ?? '')
-            .trim();
-
-    print(
-      '🔐 Token dari SharedPreferences: ${token.isEmpty ? 'KOSONG' : 'ADA (${token.length} chars)'}',
-    );
-    if (token.isEmpty) {
-      throw Exception('❌ Token login tidak ditemukan di SharedPreferences');
-    }
-    return token;
+    return AppSession.getToken();
   }
 
   // Get headers

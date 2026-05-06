@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:frontend_mobile_bmc/models/payment_model.dart';
+import 'package:frontend_mobile_bmc/core/session/app_session.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class PaymentConfirmationScreen extends StatefulWidget {
   final int packageId;
@@ -68,8 +68,6 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
   }
 
   Future<Map<String, String>> _getUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-
     String pickNonEmpty(List<String?> values, String fallback) {
       for (final value in values) {
         final text = value?.trim() ?? '';
@@ -82,17 +80,13 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
 
     return {
       'name': pickNonEmpty([
-        prefs.getString('user_name'),
-        prefs.getString('name'),
+        await AppSession.getUserName(),
       ], 'User'),
       'email': pickNonEmpty([
-        prefs.getString('user_email'),
-        prefs.getString('email'),
+        await AppSession.getUserEmail(),
       ], 'user@example.com'),
       'phone': pickNonEmpty([
-        prefs.getString('user_phone'),
-        prefs.getString('phone_number'),
-        prefs.getString('whatsapp'),
+        await AppSession.getUserPhone(),
       ], '08123456789'),
     };
   }

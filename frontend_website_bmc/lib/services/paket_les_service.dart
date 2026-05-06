@@ -1,9 +1,9 @@
 // ignore_for_file: avoid_print, duplicate_ignore
 
 import 'dart:convert';
+import 'package:frontend_website_bmc/core/session/app_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class PaketLesService {
   static const String _defaultBaseUrl = "http://localhost:8080/api/admin";
@@ -61,15 +61,7 @@ class PaketLesService {
 
   // Get token from SharedPreferences
   static Future<String> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token =
-        (prefs.getString('token') ?? prefs.getString('auth_token') ?? '')
-            .trim();
-
-    if (token.isEmpty) {
-      throw Exception('Token login tidak ditemukan. Silakan login ulang.');
-    }
-    return token;
+    return AppSession.getToken();
   }
 
   // Get request headers with auth

@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../core/session/app_session.dart';
 
 class ProfileDetailFormScreen extends StatefulWidget {
   const ProfileDetailFormScreen({super.key});
@@ -80,7 +81,9 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
     final argumentMap = args is Map<String, dynamic> ? args : const <String, dynamic>{};
     final user = argumentMap['user'] as Map<String, dynamic>? ?? const <String, dynamic>{};
 
-    final prefs = await SharedPreferences.getInstance();
+    final userName = await AppSession.getUserName();
+    final userEmail = await AppSession.getUserEmail();
+    final userPhone = await AppSession.getUserPhone();
     final savedProfileRaw = prefs.getString('student_profile_detail');
 
     Map<String, dynamic> savedProfile = const <String, dynamic>{};
@@ -96,7 +99,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
     }
 
     _namaController.text = _readString(savedProfile, 'nama').ifEmpty(
-      _readString(user, 'nama').ifEmpty(prefs.getString('user_name') ?? ''),
+      _readString(user, 'nama').ifEmpty(userName),
     );
     _kelasController.text = _readString(savedProfile, 'kelas').ifEmpty(
       _readString(user, 'kelas'),
@@ -105,13 +108,13 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
       _readString(user, 'asal_sekolah'),
     );
     _whatsappController.text = _readString(savedProfile, 'whatsapp').ifEmpty(
-      _readString(user, 'whatsapp').ifEmpty(prefs.getString('user_phone') ?? ''),
+      _readString(user, 'whatsapp').ifEmpty(userPhone),
     );
     _alamatController.text = _readString(savedProfile, 'alamat').ifEmpty(
       _readString(user, 'alamat'),
     );
     _emailController.text = _readString(savedProfile, 'email').ifEmpty(
-      _readString(user, 'email').ifEmpty(prefs.getString('user_email') ?? ''),
+      _readString(user, 'email').ifEmpty(userEmail),
     );
 
     _fatherNameController.text = _readString(savedProfile, 'father_name');

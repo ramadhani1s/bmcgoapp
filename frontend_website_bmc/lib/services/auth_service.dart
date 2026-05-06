@@ -2,8 +2,8 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:frontend_website_bmc/core/session/app_session.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend_website_bmc/models/mentor.dart';
 import '../models/user.dart';
 
@@ -51,10 +51,10 @@ class AuthService {
       if (response.statusCode == 200) {
         final user = User.fromJson(data['user']);
 
-        final prefs = await SharedPreferences.getInstance();
-
-        await prefs.setString('token', data['token'].toString());
-        await prefs.setString('user', jsonEncode(user.toJson()));
+        await AppSession.save(
+          token: data['token'].toString(),
+          userJson: jsonEncode(user.toJson()),
+        );
 
         return {
           'success': true,
@@ -76,19 +76,14 @@ class AuthService {
   // LOGOUT
   // =====================================================
   static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.remove('token');
-    await prefs.remove('user');
+    await AppSession.clear();
   }
 
   // =====================================================
   // GET CURRENT USER
   // =====================================================
   static Future<User?> getCurrentUser() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final userJson = prefs.getString('user');
+    final userJson = await AppSession.getUserJson();
 
     if (userJson == null) {
       return null;
@@ -101,9 +96,11 @@ class AuthService {
   // TOKEN
   // =====================================================
   static Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    return prefs.getString('token');
+    try {
+      return await AppSession.getToken();
+    } catch (_) {
+      return null;
+    }
   }
 
   static Future<bool> isLoggedIn() async {

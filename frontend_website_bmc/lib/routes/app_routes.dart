@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/auth/login_screen.dart';
-import '../screens/dashboard/admin_dashboard.dart';
-import '../screens/dashboard/mentor_dashboard.dart';
+import '../screens/admin/admin_dashboard.dart';
+import '../screens/mentor/mentor_dashboard.dart';
 import '../screens/dashboard/mentor_attendance_screen.dart';
 import '../screens/dashboard/mentor_olimpiade_screen.dart';
 import '../screens/dashboard/mentor_tryout_screen.dart';
@@ -10,10 +10,10 @@ import '../screens/dashboard/soal_latihan_management_screen.dart';
 import '../screens/mentor/evaluasi_siswa_screen.dart';
 import '../screens/mentor/latihan_soal_screen.dart';
 import '../screens/mentor/materi_pembelajaran_screen.dart';
-import '../screens/mentor_management_screen.dart';
-import '../screens/payment_verification_screen.dart';
+import '../screens/admin/mentor_management_screen.dart';
+import '../screens/admin/payment_verification_screen.dart';
 import '../services/auth_service.dart';
-import '../screens/dashboard/admin_kelola_absensi_screen.dart';
+import '../screens/admin/admin_kelola_absensi_screen.dart';
 
 
 class AppRoutes {
