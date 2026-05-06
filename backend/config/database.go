@@ -112,6 +112,49 @@ func ConnectDB() {
 	}
 
 	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS alumni (
+			id SERIAL PRIMARY KEY,
+			nama VARCHAR(255) NOT NULL,
+			universitas VARCHAR(255),
+			jurusan VARCHAR(255),
+			angkatan INTEGER NOT NULL DEFAULT 2024,
+			status VARCHAR(50) NOT NULL DEFAULT 'Aktif',
+			email VARCHAR(255),
+			no_telepon VARCHAR(20),
+			alamat TEXT,
+			sekolah VARCHAR(255),
+			tahun_lulus INTEGER,
+			prestasi TEXT,
+			foto VARCHAR(1024),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	if err != nil {
+		log.Fatal("Gagal membuat table alumni:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
+		ALTER TABLE alumni
+		ADD COLUMN IF NOT EXISTS universitas VARCHAR(255),
+		ADD COLUMN IF NOT EXISTS jurusan VARCHAR(255),
+		ADD COLUMN IF NOT EXISTS angkatan INTEGER NOT NULL DEFAULT 2024,
+		ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'Aktif',
+		ADD COLUMN IF NOT EXISTS email VARCHAR(255),
+		ADD COLUMN IF NOT EXISTS no_telepon VARCHAR(20),
+		ADD COLUMN IF NOT EXISTS alamat TEXT,
+		ADD COLUMN IF NOT EXISTS sekolah VARCHAR(255),
+		ADD COLUMN IF NOT EXISTS tahun_lulus INTEGER,
+		ADD COLUMN IF NOT EXISTS prestasi TEXT,
+		ADD COLUMN IF NOT EXISTS foto VARCHAR(1024),
+		ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	`)
+	if err != nil {
+		log.Fatal("Gagal sinkronisasi kolom alumni:", err)
+	}
+
+	_, err = DB.Exec(context.Background(), `
 		CREATE TABLE IF NOT EXISTS payment_transactions (
 			transaction_id VARCHAR(255) PRIMARY KEY,
 			user_id INT NOT NULL,

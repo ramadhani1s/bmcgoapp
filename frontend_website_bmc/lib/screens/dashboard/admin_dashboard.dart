@@ -8,6 +8,7 @@ import 'jadwal_pembelajaran_screen.dart';
 import 'verifikasi_pendaftaran_screen.dart';
 import 'pengumuman_screen.dart';
 import 'admin_kelola_absensi_screen.dart';
+import 'admin_kelola_alumni_screen.dart';
 import '../mentor_management_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -121,7 +122,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _SideMenuItem('Kelola Mentor', Icons.groups_2_outlined),
     _SideMenuItem('Kelola Jadwal', Icons.event_note_outlined),
     _SideMenuItem(
-      'Kelola Absensi', 
+      'Kelola Absensi',
       Icons.assignment_turned_in_outlined,
       route: '/admin-kelola-absensi',
     ),
@@ -218,8 +219,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           PengumumanScreen()
                         else if (_selectedMenuTitle == 'Verifikasi Pendaftaran')
                           const VerifikasiPendaftaranScreen()
-                        else if (_selectedMenuTitle == 'Kelola Absensi') 
+                        else if (_selectedMenuTitle == 'Kelola Absensi')
                           const AdminKelolaAbsensiScreen()
+                        else if (_selectedMenuTitle == 'Kelola Profil Alumni')
+                          const AdminKelolaAlumniScreen(
+                            embeddedInDashboard: true,
+                          )
                         else ...[
                           _buildTopBar(),
                           const SizedBox(height: 14),

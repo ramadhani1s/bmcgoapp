@@ -3,9 +3,14 @@ import '../../models/user.dart';
 import '../../routes/app_routes.dart';
 import '../../routes/route_observer.dart';
 import '../../services/auth_service.dart';
+import '../../services/attendance_service.dart';
+import '../../services/jadwal_pembelajaran_service.dart';
 import '../../services/mentor_competition_service.dart';
 import '../../services/latihan_management_service.dart';
 import '../../services/latihan_soal_service.dart';
+import '../../services/materi_service.dart';
+import '../../models/mentor_competition_item.dart';
+import '../../models/materi_pembelajaran.dart';
 import 'jadwal_pembelajaran_screen.dart';
 import 'mentor_attendance_screen.dart';
 import 'mentor_olimpiade_screen.dart';
@@ -22,7 +27,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   String _activeMenuTitle = 'Dashboard';
   final TextEditingController _dashboardSearchController =
       TextEditingController();
-  bool _showInlineSearch = false;
   String _searchKeyword = '';
   // dashboard stats
   int _totalLatihan = 0;
@@ -32,6 +36,12 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   double _progressValue = 0;
   int _progressPercent = 0;
   bool _loadingStats = true;
+  bool _loadingDashboardCards = true;
+  List<Map<String, dynamic>> _recentSchedules = [];
+  Map<String, dynamic>? _activeAttendanceSession;
+  List<MentorCompetitionItem> _recentTryouts = [];
+  List<MentorCompetitionItem> _recentOlimpiades = [];
+  List<MateriPembelajaran> _recentMateri = [];
 
   static const Color _sidebarBg = Color(0xFFF8FAFD);
   static const Color _sidebarBorder = Color(0xFFDDE4F0);
@@ -81,6 +91,102 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   void didPopNext() {
     // Called when the top route has been popped and this route shows again.
     _loadStats();
+    _loadDashboardCards();
+  }
+
+  Future<T> _safeLoad<T>(Future<T> future, T fallback) async {
+    try {
+      return await future;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  Future<void> _loadDashboardCards() async {
+    final mentorId = _currentUser?.id;
+    if (mentorId == null) return;
+
+    setState(() => _loadingDashboardCards = true);
+    final schedules = await _safeLoad(
+      JadwalService.getJadwalList(mentorId: mentorId),
+      <Map<String, dynamic>>[],
+    );
+    final attendance = await _safeLoad(
+      AttendanceService.getActiveSession(),
+      <String, dynamic>{},
+    );
+    final tryouts = await _safeLoad(
+      MentorCompetitionService.getByType('tryout'),
+      <MentorCompetitionItem>[],
+    );
+    final olimpiades = await _safeLoad(
+      MentorCompetitionService.getByType('olimpiade'),
+      <MentorCompetitionItem>[],
+    );
+    final materi = await _safeLoad(
+      MateriService.getMateri(mentorId),
+      <MateriPembelajaran>[],
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _recentSchedules = schedules.take(3).toList();
+      _activeAttendanceSession = attendance;
+      _recentTryouts = tryouts.take(3).toList();
+      _recentOlimpiades = olimpiades.take(3).toList();
+      _recentMateri = materi.take(3).toList();
+      _loadingDashboardCards = false;
+    });
+  }
+
+  String _pickValue(
+    Map<String, dynamic> data,
+    List<String> keys, {
+    String fallback = '-',
+  }) {
+    for (final key in keys) {
+      final value = data[key];
+      if (value != null) {
+        final text = value.toString().trim();
+        if (text.isNotEmpty) return text;
+      }
+    }
+    return fallback;
+  }
+
+  String _formatScheduleTime(Map<String, dynamic> item) {
+    final start = _pickValue(item, [
+      'jam_mulai',
+      'start_time',
+      'jamAwal',
+      'time_start',
+    ]);
+    final end = _pickValue(item, [
+      'jam_selesai',
+      'end_time',
+      'jamAkhir',
+      'time_end',
+    ]);
+    if (start == '-' && end == '-')
+      return _pickValue(item, ['jam', 'waktu'], fallback: 'Jadwal tersedia');
+    return '$start${end == '-' ? '' : ' - $end'}';
+  }
+
+  String _formatAttendanceCount(Map<String, dynamic>? session) {
+    if (session == null) return '-';
+    final hadir = _pickValue(session, [
+      'present_count',
+      'hadir',
+      'present',
+      'total_hadir',
+    ], fallback: '0');
+    final total = _pickValue(session, [
+      'total_students',
+      'total',
+      'jumlah_siswa',
+      'students_count',
+    ], fallback: '0');
+    return '$hadir/$total';
   }
 
   Future<void> _loadStats() async {
@@ -171,16 +277,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     return trimmed.substring(1, closeIdx).trim();
   }
 
-  void _toggleInlineSearch() {
-    setState(() {
-      _showInlineSearch = !_showInlineSearch;
-      if (!_showInlineSearch) {
-        _dashboardSearchController.clear();
-        _searchKeyword = '';
-      }
-    });
-  }
-
   void _applySearch(String value) {
     setState(() {
       _searchKeyword = value.trim();
@@ -210,45 +306,17 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     );
   }
 
-  void _showProfileDialog() {
-    final user = _currentUser;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Profil'),
-        content: user == null
-            ? const Text('Tidak ada data pengguna')
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Nama: ${user.nama}'),
-                  const SizedBox(height: 6),
-                  Text('Email: ${user.email}'),
-                  const SizedBox(height: 6),
-                  Text('Peran: ${user.roleName}'),
-                ],
-              ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tutup'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _logout();
-            },
-            child: const Text('Keluar'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _openProfilePage() async {
+    await Navigator.of(context).pushNamed(AppRoutes.mentorProfile);
   }
 
   Future<void> _loadUser() async {
     final user = await AuthService.getCurrentUser();
-    if (mounted) setState(() => _currentUser = user);
+    if (!mounted) return;
+    setState(() => _currentUser = user);
+    if (user != null) {
+      _loadDashboardCards();
+    }
   }
 
   Future<void> _logout() async {
@@ -365,41 +433,14 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDashboardHeader(isMobile),
-              if (_showInlineSearch) ...[
-                const SizedBox(height: 10),
-                _buildInlineSearchSection(),
-              ],
+              const SizedBox(height: 10),
+              _buildInlineSearchSection(),
               const SizedBox(height: 12),
               _buildHeroCard(),
               const SizedBox(height: 18),
               _buildStatsGrid(),
               const SizedBox(height: 18),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final stacked = constraints.maxWidth < 920;
-                  final leftPanel = _buildQuickActionsCard();
-                  final rightPanel = _buildProgressCard();
-
-                  if (stacked) {
-                    return Column(
-                      children: [
-                        leftPanel,
-                        const SizedBox(height: 16),
-                        rightPanel,
-                      ],
-                    );
-                  }
-
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: leftPanel),
-                      const SizedBox(width: 16),
-                      Expanded(child: rightPanel),
-                    ],
-                  );
-                },
-              ),
+              _buildDashboardPanels(),
             ],
           ),
         ),
@@ -486,15 +527,10 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
           ),
         ),
         const SizedBox(width: 12),
-        _buildTopActionButton(
-          Icons.search_outlined,
-          onTap: _toggleInlineSearch,
-        ),
-        const SizedBox(width: 10),
         _buildNotificationButton(),
         const SizedBox(width: 10),
         GestureDetector(
-          onTap: _showProfileDialog,
+          onTap: _openProfilePage,
           child: _buildProfileButton(displayName),
         ),
       ],
@@ -547,6 +583,15 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             ),
           ),
           const SizedBox(height: 10),
+          const Text(
+            'Cari latihan, mapel, atau soal langsung dari sini tanpa membuka panel lain.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Color(0xFF64748B),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -589,16 +634,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                       ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              OutlinedButton.icon(
-                onPressed: _toggleInlineSearch,
-                icon: const Icon(Icons.keyboard_arrow_up, size: 18),
-                label: const Text('Tutup'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF475569),
-                  side: const BorderSide(color: Color(0xFFD1D5DB)),
                 ),
               ),
             ],
@@ -925,6 +960,625 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     );
   }
 
+  Widget _buildDashboardPanels() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stacked = constraints.maxWidth < 960;
+
+        if (stacked) {
+          return Column(
+            children: [
+              _buildQuickActionsCard(),
+              const SizedBox(height: 16),
+              _buildAttendanceCard(),
+              const SizedBox(height: 16),
+              _buildScheduleCard(),
+              const SizedBox(height: 16),
+              _buildTryoutMateriGrid(stacked: true),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildQuickActionsCard()),
+                const SizedBox(width: 18),
+                Expanded(child: _buildAttendanceCard()),
+              ],
+            ),
+            const SizedBox(height: 18),
+            _buildScheduleCard(),
+            const SizedBox(height: 18),
+            _buildTryoutMateriGrid(stacked: false),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAttendanceCard() {
+    final session = _activeAttendanceSession;
+    final className = session == null
+        ? 'Belum ada sesi aktif'
+        : _pickValue(session, [
+            'class_name',
+            'kelas',
+            'class',
+            'nama_kelas',
+          ], fallback: 'Sesi aktif');
+    final subject = session == null
+        ? 'Silakan mulai absensi dari halaman absensi'
+        : _pickValue(session, [
+            'subject',
+            'mata_pelajaran',
+            'mapel',
+          ], fallback: 'Absensi berjalan');
+    final countLabel = _formatAttendanceCount(session);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Absensi Hari Ini',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const MentorAttendanceScreen(),
+                    ),
+                  );
+                  await _loadDashboardCards();
+                },
+                child: const Text('Lihat semua'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAFAF4),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  className,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subject,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.people_alt_outlined,
+                      size: 18,
+                      color: Color(0xFF7C3AED),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      countLabel,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF7C3AED),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'hadir',
+                      style: TextStyle(color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const MentorAttendanceScreen(),
+                  ),
+                );
+                await _loadDashboardCards();
+              },
+              icon: const Icon(Icons.fact_check_outlined, size: 18),
+              label: const Text('Kelola Absensi'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleCard() {
+    final items = _recentSchedules;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Jadwal Mengajar',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const JadwalPembelajaranScreen(),
+                    ),
+                  );
+                  await _loadDashboardCards();
+                },
+                child: const Text('Lihat semua'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_loadingDashboardCards)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (items.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Text(
+                'Belum ada jadwal mengajar.',
+                style: TextStyle(color: Color(0xFF6B7280)),
+              ),
+            )
+          else
+            Column(
+              children: items.map((item) => _buildScheduleRow(item)).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTryoutMateriGrid({required bool stacked}) {
+    final tryoutCard = _buildTryoutCard();
+    final materiCard = _buildMateriCard();
+
+    if (stacked) {
+      return Column(
+        children: [tryoutCard, const SizedBox(height: 16), materiCard],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: tryoutCard),
+        const SizedBox(width: 18),
+        Expanded(child: materiCard),
+      ],
+    );
+  }
+
+  Widget _buildTryoutCard() {
+    return _buildCompetitionCard(
+      title: 'Try Out Terbaru',
+      actionLabel: 'Kelola',
+      onActionTap: () async {
+        await Navigator.of(context).pushNamed(AppRoutes.mentorTryout);
+        await _loadDashboardCards();
+      },
+      items: _recentTryouts,
+      emptyLabel: 'Belum ada try out terbaru.',
+      itemBuilder: (item) => _buildCompetitionRow(item),
+    );
+  }
+
+  Widget _buildMateriCard() {
+    return _buildCompetitionCard(
+      title: 'Materi Terbaru',
+      actionLabel: 'Semua',
+      onActionTap: () async {
+        await Navigator.of(context).pushNamed(AppRoutes.mentorMateri);
+        await _loadDashboardCards();
+      },
+      items: _recentMateri,
+      emptyLabel: 'Belum ada materi terbaru.',
+      itemBuilder: (item) => _buildMaterialRow(item),
+    );
+  }
+
+  Widget _buildCompetitionCard<T>({
+    required String title,
+    required String actionLabel,
+    required VoidCallback onActionTap,
+    required List<T> items,
+    required String emptyLabel,
+    required Widget Function(T item) itemBuilder,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+              TextButton(onPressed: onActionTap, child: Text(actionLabel)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (_loadingDashboardCards)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 22),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                emptyLabel,
+                style: const TextStyle(color: Color(0xFF6B7280)),
+              ),
+            )
+          else
+            Column(children: items.map(itemBuilder).toList()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleRow(Map<String, dynamic> item) {
+    final title = _pickValue(item, [
+      'mata_pelajaran',
+      'mapel',
+      'subject',
+      'judul',
+      'nama',
+    ], fallback: 'Jadwal');
+    final kelas = _pickValue(item, [
+      'kelas',
+      'class_level',
+      'class_name',
+    ], fallback: 'Kelas');
+    final ruang = _pickValue(item, ['ruang', 'room'], fallback: 'Ruang');
+    final time = _formatScheduleTime(item);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2563EB),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$title — $kelas',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$time · $ruang',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE0F2FE),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: const Text(
+              'Jadwal',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0369A1),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Tindakan Cepat',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await Navigator.of(
+                    context,
+                  ).pushNamed(AppRoutes.mentorExercise);
+                  await _loadDashboardCards();
+                },
+                icon: const Icon(Icons.menu_book_outlined),
+                label: const Text('Buat Latihan'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEFF6FF),
+                  foregroundColor: const Color(0xFF1D4ED8),
+                  elevation: 0,
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await Navigator.of(context).pushNamed(AppRoutes.mentorMateri);
+                  await _loadDashboardCards();
+                },
+                icon: const Icon(Icons.video_library_outlined),
+                label: const Text('Upload Materi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF0FDF4),
+                  foregroundColor: const Color(0xFF166534),
+                  elevation: 0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
+          Text(
+            'Progress Publikasi',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _loadingStats
+                          ? 'Memuat progress...'
+                          : '$_progressPercent% konten sudah dipublikasikan',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF111827),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: _loadingStats ? 0 : _progressValue,
+                        minHeight: 8,
+                        backgroundColor: const Color(0xFFE5E7EB),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Color(0xFF2563EB),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                _loadingStats ? '—' : '$_publishedLatihan/$_totalLatihan',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1D4ED8),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompetitionRow(MentorCompetitionItem item) {
+    final badgeColor = item.isPublished
+        ? const Color(0xFFE3F5D9)
+        : const Color(0xFFF3F0E7);
+    final badgeTextColor = item.isPublished
+        ? const Color(0xFF2E7D32)
+        : const Color(0xFF7C6A2A);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${item.totalQuestions} soal · ${item.classLevel}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: badgeColor,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              item.isPublished ? 'Aktif' : 'Draf',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: badgeTextColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMaterialRow(MateriPembelajaran item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.description.isNotEmpty
+                      ? item.description
+                      : item.fileType.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE3F5D9),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              item.fileType.isNotEmpty ? item.fileType.toUpperCase() : 'PUBLIK',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2E7D32),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _statCard(_DashboardStatData s) {
     return Container(
       width: 160,
@@ -958,61 +1612,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
           Text(
             s.label,
             style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionsCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Tindakan Cepat',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await Navigator.of(
-                    context,
-                  ).pushNamed(AppRoutes.mentorExercise);
-                  await _loadStats();
-                },
-                icon: const Icon(Icons.menu_book_outlined),
-                label: const Text('Buat Latihan'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEFF6FF),
-                  foregroundColor: const Color(0xFF1D4ED8),
-                  elevation: 0,
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () =>
-                    Navigator.of(context).pushNamed(AppRoutes.mentorMateri),
-                icon: const Icon(Icons.video_library_outlined),
-                label: const Text('Upload Materi'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF0FDF4),
-                  foregroundColor: const Color(0xFF166534),
-                  elevation: 0,
-                ),
-              ),
-            ],
           ),
         ],
       ),

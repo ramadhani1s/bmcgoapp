@@ -6,14 +6,12 @@ import 'package:http/http.dart' as http;
 import '../models/mentor.dart';
 import '../routes/app_routes.dart';
 import '../services/auth_service.dart';
-import '../../models/admin_kelola_absensi.dart';
-import '../../services/admin_kelola_absensi_service.dart';
+import '../models/admin_kelola_absensi.dart';
+import '../services/admin_kelola_absensi_service.dart';
+import 'dashboard/admin_kelola_alumni_screen.dart';
 
 class MentorManagementScreen extends StatefulWidget {
-  const MentorManagementScreen({
-    super.key,
-    this.embeddedInDashboard = false,
-  });
+  const MentorManagementScreen({super.key, this.embeddedInDashboard = false});
 
   final bool embeddedInDashboard;
 
@@ -661,9 +659,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
       width: 232,
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFD),
-        border: Border(
-          right: BorderSide(color: Color(0xFFDDE4F0)),
-        ),
+        border: Border(right: BorderSide(color: Color(0xFFDDE4F0))),
       ),
       child: Column(
         children: [
@@ -772,7 +768,11 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
             "Kelola Profil Alumni",
             Icons.badge_outlined,
             onTap: () {
-              navigateToAdminMenu('Kelola Profil Alumni');
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AdminKelolaAlumniScreen(),
+                ),
+              );
             },
           ),
 
@@ -997,9 +997,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
         children: [
           _buildSidebar(),
 
-          Expanded(
-            child: _buildMainContent(useExpandedTable: true),
-          ),
+          Expanded(child: _buildMainContent(useExpandedTable: true)),
         ],
       ),
     );
