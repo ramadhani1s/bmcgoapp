@@ -3,14 +3,11 @@ import '../../models/user.dart';
 import '../../routes/app_routes.dart';
 import '../../routes/route_observer.dart';
 import '../../services/auth_service.dart';
-import '../../services/attendance_service.dart';
 import '../../services/jadwal_pembelajaran_service.dart';
 import '../../services/mentor_competition_service.dart';
 import '../../services/latihan_management_service.dart';
 import '../../services/latihan_soal_service.dart';
-import '../../services/materi_service.dart';
 import '../../models/mentor_competition_item.dart';
-import '../../models/materi_pembelajaran.dart';
 import 'jadwal_pembelajaran_screen.dart';
 import 'mentor_attendance_screen.dart';
 import 'mentor_olimpiade_screen.dart';
@@ -28,20 +25,10 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   final TextEditingController _dashboardSearchController =
       TextEditingController();
   String _searchKeyword = '';
-  // dashboard stats
-  int _totalLatihan = 0;
-  int _publishedLatihan = 0;
-  int _totalSoal = 0;
-  int _mapelCount = 0;
-  double _progressValue = 0;
-  int _progressPercent = 0;
-  bool _loadingStats = true;
   bool _loadingDashboardCards = true;
   List<Map<String, dynamic>> _recentSchedules = [];
-  Map<String, dynamic>? _activeAttendanceSession;
   List<MentorCompetitionItem> _recentTryouts = [];
   List<MentorCompetitionItem> _recentOlimpiades = [];
-  List<MateriPembelajaran> _recentMateri = [];
 
   static const Color _sidebarBg = Color(0xFFF8FAFD);
   static const Color _sidebarBorder = Color(0xFFDDE4F0);
@@ -111,10 +98,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       JadwalService.getJadwalList(mentorId: mentorId),
       <Map<String, dynamic>>[],
     );
-    final attendance = await _safeLoad(
-      AttendanceService.getActiveSession(),
-      <String, dynamic>{},
-    );
     final tryouts = await _safeLoad(
       MentorCompetitionService.getByType('tryout'),
       <MentorCompetitionItem>[],
@@ -123,20 +106,27 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       MentorCompetitionService.getByType('olimpiade'),
       <MentorCompetitionItem>[],
     );
-    final materi = await _safeLoad(
-      MateriService.getMateri(mentorId),
-      <MateriPembelajaran>[],
-    );
 
     if (!mounted) return;
     setState(() {
       _recentSchedules = schedules.take(3).toList();
-      _activeAttendanceSession = attendance;
       _recentTryouts = tryouts.take(3).toList();
-      _recentOlimpiades = olimpiades.take(3).toList();
-      _recentMateri = materi.take(3).toList();
+      _recentOlimpiades = olimpiades.take(2).toList();
       _loadingDashboardCards = false;
     });
+  }
+
+  Future<void> _loadStats() async {
+    // Stats are no longer displayed on the dashboard; keep method for
+    // compatibility but avoid storing unused fields.
+    try {
+      await LatihanManagementService.getLatihan();
+      await LatihanSoalService.getSoalLatihan();
+      await MentorCompetitionService.getByType('tryout');
+      await MentorCompetitionService.getByType('olimpiade');
+    } catch (_) {
+      // ignore
+    }
   }
 
   String _pickValue(
@@ -167,114 +157,10 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       'jamAkhir',
       'time_end',
     ]);
-    if (start == '-' && end == '-')
+    if (start == '-' && end == '-') {
       return _pickValue(item, ['jam', 'waktu'], fallback: 'Jadwal tersedia');
-    return '$start${end == '-' ? '' : ' - $end'}';
-  }
-
-  String _formatAttendanceCount(Map<String, dynamic>? session) {
-    if (session == null) return '-';
-    final hadir = _pickValue(session, [
-      'present_count',
-      'hadir',
-      'present',
-      'total_hadir',
-    ], fallback: '0');
-    final total = _pickValue(session, [
-      'total_students',
-      'total',
-      'jumlah_siswa',
-      'students_count',
-    ], fallback: '0');
-    return '$hadir/$total';
-  }
-
-  Future<void> _loadStats() async {
-    setState(() => _loadingStats = true);
-    try {
-      final latihanList = await LatihanManagementService.getLatihan();
-      final soalList = await LatihanSoalService.getSoalLatihan();
-      final tryoutList = await MentorCompetitionService.getByType('tryout');
-      final olimpiadeList = await MentorCompetitionService.getByType(
-        'olimpiade',
-      );
-
-      final mapels = <String>{};
-      for (final l in latihanList) {
-        if (l.mapel.trim().isNotEmpty) mapels.add(l.mapel.trim());
-      }
-      for (final soal in soalList) {
-        final extracted = _extractMapelFromQuestion(soal.pertanyaan);
-        if (extracted.isNotEmpty) mapels.add(extracted);
-      }
-
-      for (final item in [...tryoutList, ...olimpiadeList]) {
-        if (item.subject.trim().isNotEmpty && item.subject.trim() != '-') {
-          mapels.add(item.subject.trim());
-        }
-      }
-
-      final totalLatihanOnly = latihanList.isNotEmpty
-          ? latihanList.length
-          : soalList.length;
-
-      final publishedLatihanOnly = latihanList.isNotEmpty
-          ? latihanList.where((l) => l.isPublished).length
-          : soalList.length;
-
-      final totalCompetitions = tryoutList.length + olimpiadeList.length;
-      final publishedCompetitions =
-          tryoutList.where((t) => t.isPublished).length +
-          olimpiadeList.where((o) => o.isPublished).length;
-
-      final totalContent = totalLatihanOnly + totalCompetitions;
-      final publishedContent = publishedLatihanOnly + publishedCompetitions;
-
-      final totalSoalFromLatihan = latihanList.fold<int>(
-        0,
-        (sum, l) => sum + l.totalSoal,
-      );
-      final totalSoalLatihan = totalSoalFromLatihan > soalList.length
-          ? totalSoalFromLatihan
-          : soalList.length;
-
-      final totalSoalTryout = tryoutList.fold<int>(
-        0,
-        (sum, item) => sum + item.totalQuestions,
-      );
-      final totalSoalOlimpiade = olimpiadeList.fold<int>(
-        0,
-        (sum, item) => sum + item.totalQuestions,
-      );
-      final totalSoal = totalSoalLatihan + totalSoalTryout + totalSoalOlimpiade;
-
-      final progressValue = totalContent == 0
-          ? 0.0
-          : (publishedContent / totalContent).clamp(0.0, 1.0);
-      final progressPercent = (progressValue * 100).round();
-
-      if (mounted) {
-        setState(() {
-          _totalLatihan = totalContent;
-          _publishedLatihan = publishedContent;
-          _totalSoal = totalSoal;
-          _mapelCount = mapels.length;
-          _progressValue = progressValue;
-          _progressPercent = progressPercent;
-          _loadingStats = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _loadingStats = false);
     }
-  }
-
-  String _extractMapelFromQuestion(String text) {
-    final trimmed = text.trim();
-    if (!trimmed.startsWith('[')) return '';
-    final closeIdx = trimmed.indexOf(']');
-    if (closeIdx <= 1) return '';
-    return trimmed.substring(1, closeIdx).trim();
+    return '$start${end == '-' ? '' : ' - $end'}';
   }
 
   void _applySearch(String value) {
@@ -359,44 +245,51 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   Future<void> _onMenuTap(String title) async {
     setState(() => _activeMenuTitle = title);
     if (title == 'Dashboard') return;
+
+    final navigator = Navigator.of(context);
+
     if (title == 'Jadwal Mengajar') {
-      await Navigator.of(context).push(
+      await navigator.push(
         MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
       );
       await _loadStats();
       return;
     }
     if (title == 'Absensi Kelas') {
-      await Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()));
+      await navigator.push(
+        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
+      );
       await _loadStats();
       return;
     }
     if (title == 'Soal Latihan') {
-      await Navigator.of(context).pushNamed(AppRoutes.mentorExercise);
+      await navigator.pushNamed(AppRoutes.mentorExercise);
       await _loadStats();
+      return;
     }
     if (title == 'Try Out') {
-      await Navigator.of(context).pushNamed(AppRoutes.mentorTryout);
+      await navigator.pushNamed(AppRoutes.mentorTryout);
       await _loadStats();
+      return;
     }
     if (title == 'Materi Pembelajaran') {
-      await Navigator.of(context).pushNamed(AppRoutes.mentorMateri);
+      await navigator.pushNamed(AppRoutes.mentorMateri);
       await _loadStats();
+      return;
     }
     if (title == 'Olimpiade Akademik') {
-      await Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()));
+      await navigator.push(
+        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+      );
       await _loadStats();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_currentUser == null)
+    if (_currentUser == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     final isMobile = MediaQuery.of(context).size.width < 820;
 
@@ -437,10 +330,10 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               _buildInlineSearchSection(),
               const SizedBox(height: 12),
               _buildHeroCard(),
-              const SizedBox(height: 18),
-              _buildStatsGrid(),
-              const SizedBox(height: 18),
-              _buildDashboardPanels(),
+              const SizedBox(height: 8),
+              _buildTopPanels(),
+              const SizedBox(height: 16),
+              _buildOlimpiadeCard(),
             ],
           ),
         ),
@@ -584,7 +477,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
           ),
           const SizedBox(height: 10),
           const Text(
-            'Cari latihan, mapel, atau soal langsung dari sini tanpa membuka panel lain.',
+            'Cari jadwal, try out, latihan, atau mapel langsung dari sini tanpa membuka panel lain.',
             style: TextStyle(
               fontSize: 12,
               color: Color(0xFF64748B),
@@ -600,7 +493,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   onChanged: _applySearch,
                   onSubmitted: _applySearch,
                   decoration: InputDecoration(
-                    hintText: 'Cari latihan, mapel, atau soal...',
+                    hintText: 'Cari jadwal, try out, latihan, atau soal...',
                     prefixIcon: const Icon(
                       Icons.search,
                       size: 20,
@@ -640,20 +533,29 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
           ),
           if (_searchKeyword.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                'Kata kunci: "$_searchKeyword"',
-                style: const TextStyle(
-                  color: Color(0xFF1D4ED8),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'Kata kunci: "$_searchKeyword"',
+                    style: const TextStyle(
+                      color: Color(0xFF1D4ED8),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ],
@@ -918,223 +820,67 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     );
   }
 
-  Widget _buildStatsGrid() {
-    final stats = [
-      _DashboardStatData(
-        'Total Konten',
-        _loadingStats ? '—' : '$_totalLatihan',
-        Icons.assignment,
-        Colors.blue,
-      ),
-      _DashboardStatData(
-        'Dipublikasikan',
-        _loadingStats ? '—' : '$_publishedLatihan',
-        Icons.check_circle,
-        Colors.green,
-      ),
-      _DashboardStatData(
-        'Total Soal',
-        _loadingStats ? '—' : '$_totalSoal',
-        Icons.help,
-        Colors.orange,
-      ),
-      _DashboardStatData(
-        'Mapel',
-        _loadingStats ? '—' : '$_mapelCount',
-        Icons.category,
-        Colors.purple,
-      ),
-    ];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: stats
-            .map(
-              (s) => Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: _statCard(s),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-
-  Widget _buildDashboardPanels() {
+  Widget _buildTopPanels() {
     return LayoutBuilder(
       builder: (context, constraints) {
         final stacked = constraints.maxWidth < 960;
+        final scheduleCard = _buildScheduleCard();
+        final tryoutCard = _buildTryoutCard();
 
         if (stacked) {
           return Column(
-            children: [
-              _buildQuickActionsCard(),
-              const SizedBox(height: 16),
-              _buildAttendanceCard(),
-              const SizedBox(height: 16),
-              _buildScheduleCard(),
-              const SizedBox(height: 16),
-              _buildTryoutMateriGrid(stacked: true),
-            ],
+            children: [scheduleCard, const SizedBox(height: 16), tryoutCard],
           );
         }
 
-        return Column(
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: _buildQuickActionsCard()),
-                const SizedBox(width: 18),
-                Expanded(child: _buildAttendanceCard()),
-              ],
-            ),
-            const SizedBox(height: 18),
-            _buildScheduleCard(),
-            const SizedBox(height: 18),
-            _buildTryoutMateriGrid(stacked: false),
+            Expanded(child: scheduleCard),
+            const SizedBox(width: 18),
+            Expanded(child: tryoutCard),
           ],
         );
       },
     );
   }
 
-  Widget _buildAttendanceCard() {
-    final session = _activeAttendanceSession;
-    final className = session == null
-        ? 'Belum ada sesi aktif'
-        : _pickValue(session, [
-            'class_name',
-            'kelas',
-            'class',
-            'nama_kelas',
-          ], fallback: 'Sesi aktif');
-    final subject = session == null
-        ? 'Silakan mulai absensi dari halaman absensi'
-        : _pickValue(session, [
-            'subject',
-            'mata_pelajaran',
-            'mapel',
-          ], fallback: 'Absensi berjalan');
-    final countLabel = _formatAttendanceCount(session);
+  Widget _buildScheduleCard() {
+    final keyword = _searchKeyword.toLowerCase();
+    final filtered = keyword.isEmpty
+        ? _recentSchedules
+        : _recentSchedules.where((item) {
+            final title = _pickValue(item, [
+              'mata_pelajaran',
+              'mapel',
+              'subject',
+              'judul',
+              'nama',
+            ]).toLowerCase();
+            final kelas = _pickValue(item, [
+              'kelas',
+              'class_level',
+              'class_name',
+            ]).toLowerCase();
+            final time = _formatScheduleTime(item).toLowerCase();
+            return title.contains(keyword) ||
+                kelas.contains(keyword) ||
+                time.contains(keyword);
+          }).toList();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Absensi Hari Ini',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const MentorAttendanceScreen(),
-                    ),
-                  );
-                  await _loadDashboardCards();
-                },
-                child: const Text('Lihat semua'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFAFAF4),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  className,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subject,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF4B5563),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.people_alt_outlined,
-                      size: 18,
-                      color: Color(0xFF7C3AED),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      countLabel,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF7C3AED),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Text(
-                      'hadir',
-                      style: TextStyle(color: Color(0xFF6B7280)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const MentorAttendanceScreen(),
-                  ),
-                );
-                await _loadDashboardCards();
-              },
-              icon: const Icon(Icons.fact_check_outlined, size: 18),
-              label: const Text('Kelola Absensi'),
-            ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A0F172A),
+            blurRadius: 18,
+            offset: Offset(0, 8),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildScheduleCard() {
-    final items = _recentSchedules;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1145,6 +891,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                 child: Text(
                   'Jadwal Mengajar',
                   style: TextStyle(
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF111827),
                   ),
@@ -1163,50 +910,85 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           if (_loadingDashboardCards)
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
+              padding: EdgeInsets.symmetric(vertical: 28),
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (items.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
-              child: Text(
-                'Belum ada jadwal mengajar.',
-                style: TextStyle(color: Color(0xFF6B7280)),
+          else if (_recentSchedules.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 22),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(
+                      Icons.event_busy_outlined,
+                      size: 46,
+                      color: Color(0xFFD1D5DB),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Belum ada jadwal mengajar.',
+                      style: TextStyle(
+                        color: Color(0xFF8B909A),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (filtered.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 22),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(
+                      Icons.search_off_outlined,
+                      size: 46,
+                      color: Color(0xFFD1D5DB),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Tidak ada jadwal yang cocok dengan pencarian.',
+                      style: TextStyle(
+                        color: Color(0xFF8B909A),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             )
           else
             Column(
-              children: items.map((item) => _buildScheduleRow(item)).toList(),
+              children: filtered
+                  .map((item) => _buildScheduleRow(item))
+                  .toList(),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildTryoutMateriGrid({required bool stacked}) {
-    final tryoutCard = _buildTryoutCard();
-    final materiCard = _buildMateriCard();
-
-    if (stacked) {
-      return Column(
-        children: [tryoutCard, const SizedBox(height: 16), materiCard],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: tryoutCard),
-        const SizedBox(width: 18),
-        Expanded(child: materiCard),
-      ],
-    );
-  }
-
   Widget _buildTryoutCard() {
+    final keyword = _searchKeyword.toLowerCase();
+    final filtered = keyword.isEmpty
+        ? _recentTryouts
+        : _recentTryouts
+              .where(
+                (t) => ('${t.title} ${t.subject} ${t.classLevel}')
+                    .toLowerCase()
+                    .contains(keyword),
+              )
+              .toList();
+
     return _buildCompetitionCard(
       title: 'Try Out Terbaru',
       actionLabel: 'Kelola',
@@ -1214,76 +996,37 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
         await Navigator.of(context).pushNamed(AppRoutes.mentorTryout);
         await _loadDashboardCards();
       },
-      items: _recentTryouts,
+      items: filtered,
       emptyLabel: 'Belum ada try out terbaru.',
       itemBuilder: (item) => _buildCompetitionRow(item),
     );
   }
 
-  Widget _buildMateriCard() {
+  Widget _buildOlimpiadeCard() {
+    final keyword = _searchKeyword.toLowerCase();
+    final filtered = keyword.isEmpty
+        ? _recentOlimpiades
+        : _recentOlimpiades.where((item) {
+            final text =
+                '${item.title} ${item.subject} ${item.classLevel} '
+                        '${item.durationLabel} ${item.scheduleLabel} '
+                        '${item.totalQuestions}'
+                    .toLowerCase();
+            return text.contains(keyword);
+          }).toList();
+
     return _buildCompetitionCard(
-      title: 'Materi Terbaru',
-      actionLabel: 'Semua',
+      title: 'Olimpiade Akademik',
+      actionLabel: 'Lihat semua',
       onActionTap: () async {
-        await Navigator.of(context).pushNamed(AppRoutes.mentorMateri);
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+        );
         await _loadDashboardCards();
       },
-      items: _recentMateri,
-      emptyLabel: 'Belum ada materi terbaru.',
-      itemBuilder: (item) => _buildMaterialRow(item),
-    );
-  }
-
-  Widget _buildCompetitionCard<T>({
-    required String title,
-    required String actionLabel,
-    required VoidCallback onActionTap,
-    required List<T> items,
-    required String emptyLabel,
-    required Widget Function(T item) itemBuilder,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-              ),
-              TextButton(onPressed: onActionTap, child: Text(actionLabel)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (_loadingDashboardCards)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 22),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (items.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                emptyLabel,
-                style: const TextStyle(color: Color(0xFF6B7280)),
-              ),
-            )
-          else
-            Column(children: items.map(itemBuilder).toList()),
-        ],
-      ),
+      items: filtered,
+      emptyLabel: 'Belum ada olimpiade akademik.',
+      itemBuilder: (item) => _buildOlimpiadeRow(item),
     );
   }
 
@@ -1309,14 +1052,19 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       decoration: BoxDecoration(
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Row(
         children: [
           Container(
-            width: 8,
-            height: 44,
+            width: 6,
+            height: 46,
             decoration: BoxDecoration(
-              color: const Color(0xFF2563EB),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1D4ED8), Color(0xFF10B981)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -1329,6 +1077,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   '$title — $kelas',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
+                    fontSize: 14.5,
                     color: Color(0xFF111827),
                   ),
                 ),
@@ -1364,152 +1113,150 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     );
   }
 
-  Widget _buildQuickActionsCard() {
+  Widget _buildCompetitionCard<T>({
+    required String title,
+    required String actionLabel,
+    required VoidCallback onActionTap,
+    required List<T> items,
+    required String emptyLabel,
+    required Widget Function(T item) itemBuilder,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A0F172A),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Tindakan Cepat',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await Navigator.of(
-                    context,
-                  ).pushNamed(AppRoutes.mentorExercise);
-                  await _loadDashboardCards();
-                },
-                icon: const Icon(Icons.menu_book_outlined),
-                label: const Text('Buat Latihan'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEFF6FF),
-                  foregroundColor: const Color(0xFF1D4ED8),
-                  elevation: 0,
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await Navigator.of(context).pushNamed(AppRoutes.mentorMateri);
-                  await _loadDashboardCards();
-                },
-                icon: const Icon(Icons.video_library_outlined),
-                label: const Text('Upload Materi'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF0FDF4),
-                  foregroundColor: const Color(0xFF166534),
-                  elevation: 0,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Divider(height: 1),
-          const SizedBox(height: 14),
-          Text(
-            'Progress Publikasi',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-              letterSpacing: 0.2,
-            ),
-          ),
-          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+              TextButton(onPressed: onActionTap, child: Text(actionLabel)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_loadingDashboardCards)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 28),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 22),
+              child: Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      _loadingStats
-                          ? 'Memuat progress...'
-                          : '$_progressPercent% konten sudah dipublikasikan',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF111827),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    const Icon(
+                      Icons.inbox_outlined,
+                      size: 46,
+                      color: Color(0xFFD1D5DB),
                     ),
                     const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        value: _loadingStats ? 0 : _progressValue,
-                        minHeight: 8,
-                        backgroundColor: const Color(0xFFE5E7EB),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF2563EB),
-                        ),
+                    Text(
+                      emptyLabel,
+                      style: const TextStyle(
+                        color: Color(0xFF8B909A),
+                        fontWeight: FontWeight.w600,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Text(
-                _loadingStats ? '—' : '$_publishedLatihan/$_totalLatihan',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1D4ED8),
-                ),
-              ),
-            ],
-          ),
+            )
+          else
+            Column(children: items.map(itemBuilder).toList()),
         ],
       ),
     );
   }
 
   Widget _buildCompetitionRow(MentorCompetitionItem item) {
+    final statusLabel = item.isPublished ? 'Publik' : 'Draft';
     final badgeColor = item.isPublished
         ? const Color(0xFFE3F5D9)
         : const Color(0xFFF3F0E7);
     final badgeTextColor = item.isPublished
         ? const Color(0xFF2E7D32)
         : const Color(0xFF7C6A2A);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Row(
         children: [
+          Container(
+            width: 6,
+            height: 46,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0EA5E9), Color(0xFF22C55E)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.title,
+                  item.title.isNotEmpty ? item.title : 'Try out',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14.5,
                     color: Color(0xFF111827),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${item.totalQuestions} soal · ${item.classLevel}',
+                  '${item.subject} · ${item.classLevel} · ${item.totalQuestions} soal',
                   style: const TextStyle(
                     fontSize: 12,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.scheduleLabel.isNotEmpty
+                      ? item.scheduleLabel
+                      : item.durationLabel,
+                  style: const TextStyle(
+                    fontSize: 11,
                     color: Color(0xFF6B7280),
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -1517,7 +1264,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
-              item.isPublished ? 'Aktif' : 'Draf',
+              statusLabel,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -1530,134 +1277,110 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     );
   }
 
-  Widget _buildMaterialRow(MateriPembelajaran item) {
+  Widget _buildOlimpiadeRow(MentorCompetitionItem item) {
+    final statusLabel = item.isPublished ? 'Aktif' : 'Draft';
+    final badgeColor = item.isPublished
+        ? const Color(0xFFE6F6EF)
+        : const Color(0xFFF3F0E7);
+    final badgeTextColor = item.isPublished
+        ? const Color(0xFF047857)
+        : const Color(0xFF7C6A2A);
+    final accentColor = item.subject.toLowerCase().contains('matematika')
+        ? const Color(0xFF0F766E)
+        : const Color(0xFFD97706);
+    final icon = item.subject.toLowerCase().contains('matematika')
+        ? Icons.calculate_outlined
+        : Icons.science_outlined;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Row(
         children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: accentColor, size: 22),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.title,
+                  item.title.isNotEmpty ? item.title : 'Olimpiade Akademik',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14.5,
                     color: Color(0xFF111827),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  item.description.isNotEmpty
-                      ? item.description
-                      : item.fileType.toUpperCase(),
+                  '${item.classLevel} · ${item.subject}',
                   style: const TextStyle(
                     fontSize: 12,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.scheduleLabel.isNotEmpty
+                      ? item.scheduleLabel
+                      : item.durationLabel,
+                  style: const TextStyle(
+                    fontSize: 11,
                     color: Color(0xFF6B7280),
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE3F5D9),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              item.fileType.isNotEmpty ? item.fileType.toUpperCase() : 'PUBLIK',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF2E7D32),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: badgeColor,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: badgeTextColor,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statCard(_DashboardStatData s) {
-    return Container(
-      width: 160,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: s.color.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: s.color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(s.icon, color: s.color, size: 20),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            s.value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: s.color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            s.label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Progress',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: _loadingStats ? 0 : _progressValue,
-              minHeight: 8,
-              backgroundColor: const Color(0xFFE5E7EB),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF2563EB),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 84,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: item.isPublished ? 0.62 : 0.26,
+                    minHeight: 4,
+                    backgroundColor: const Color(0xFFE5E7EB),
+                    valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _loadingStats
-                ? 'Memuat progress...'
-                : '$_progressPercent% konten sudah dipublikasikan',
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-              fontWeight: FontWeight.w600,
-            ),
+            ],
           ),
         ],
       ),
@@ -1669,12 +1392,4 @@ class _SidebarMenuItem {
   final String title;
   final IconData icon;
   const _SidebarMenuItem({required this.title, required this.icon});
-}
-
-class _DashboardStatData {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  const _DashboardStatData(this.label, this.value, this.icon, this.color);
 }

@@ -51,7 +51,7 @@ class PaymentVerificationOverview {
 
 class PaymentVerificationService {
   static const String baseUrl =
-      'http://localhost:8081';
+      'http://localhost:8080';
 
   // ==================================================
   // TOKEN
@@ -359,6 +359,31 @@ class PaymentVerificationService {
     final response = await http.post(
       Uri.parse(
         '$baseUrl/admin/payment/$transactionId/reject',
+      ),
+      headers: {
+        'Authorization':
+            'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        _extractErrorMessage(response),
+      );
+    }
+  }
+
+  // ==================================================
+  // DELETE PAYMENT VERIFICATION
+  // ==================================================
+  static Future<void> deletePayment(
+    String transactionId,
+  ) async {
+    final token = await _getToken();
+
+    final response = await http.delete(
+      Uri.parse(
+        '$baseUrl/admin/payment/$transactionId',
       ),
       headers: {
         'Authorization':
