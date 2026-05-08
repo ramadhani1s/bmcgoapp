@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../core/session/app_session.dart';
 
 class OlimpiadeScreen extends StatefulWidget {
   const OlimpiadeScreen({super.key});
@@ -36,8 +37,7 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
   }
 
   Future<String> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token') ?? '';
+    return AppSession.getAuthToken();
   }
 
   Future<void> _fetchOlimpiade({String? status}) async {
@@ -419,8 +419,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
   }
 
   Future<String> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token') ?? '';
+    return AppSession.getAuthToken();
   }
 
   Future<void> _fetchSoal() async {

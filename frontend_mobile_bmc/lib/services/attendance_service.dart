@@ -1,29 +1,15 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend_mobile_bmc/core/network/api_client.dart';
 
 class AttendanceService {
-  static const String _baseUrl = 'http://10.0.2.2:8080/api';
-
-  static Future<String> _getAuthToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token') ?? '';
-    if (token.isEmpty) {
-      throw Exception('Sesi login tidak ditemukan. Silakan login ulang.');
-    }
-    return token;
-  }
+  static final ApiClient _client = ApiClient(baseUrl: 'http://10.0.2.2:8080/api');
 
   static Future<Map<String, dynamic>> submitToken(String tokenValue) async {
     try {
-      final token = await _getAuthToken();
-      final response = await http.post(
-        Uri.parse('$_baseUrl/siswa/attendance/submit'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({'token': tokenValue.trim()}),
+      final response = await _client.post(
+        '/siswa/attendance/submit',
+        auth: true,
+        body: {'token': tokenValue.trim()},
       );
 
       final body = response.body.isNotEmpty
@@ -48,8 +34,6 @@ class AttendanceService {
     DateTime? date,
   }) async {
     try {
-      final token = await _getAuthToken();
-
       final query = <String, String>{};
       if (className != null && className.trim().isNotEmpty) {
         query['class_name'] = className.trim();
@@ -61,13 +45,10 @@ class AttendanceService {
         query['date'] = '$year-$month-$day';
       }
 
-      final uri = Uri.parse('$_baseUrl/siswa/attendance/history').replace(
+      final response = await _client.get(
+        '/siswa/attendance/history',
+        auth: true,
         queryParameters: query.isEmpty ? null : query,
-      );
-
-      final response = await http.get(
-        uri,
-        headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode != 200 || response.body.isEmpty) {

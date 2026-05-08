@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../core/session/app_session.dart';
 
 class PengumumanScreen extends StatefulWidget {
   const PengumumanScreen({super.key});
@@ -38,8 +39,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
   }
 
   Future<String> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token') ?? '';
+    return AppSession.getAuthToken();
   }
 
   Future<void> _fetchPengumuman({String? kategori}) async {

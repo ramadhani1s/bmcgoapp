@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+
 import '../../models/user.dart';
 import '../../models/admin_dashboard_data.dart';
+import '../../models/payment_verification_item.dart'; // ✅ FIX PENTING
+
 import '../../services/admin_dashboard_service.dart';
 import '../../services/auth_service.dart';
+
 import 'paket_les_screen.dart';
 import 'jadwal_pembelajaran_screen.dart';
 import 'verifikasi_pendaftaran_screen.dart';
-import 'pengumuman_screen_list.dart';
+import 'pengumuman_screen.dart';
 import 'admin_kelola_absensi_screen.dart';
-import 'admin_kelola_alumni_screen.dart';
 import '../mentor_management_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -888,7 +891,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 ),
                                 const SizedBox(width: 6),
                                 IconButton(
-                                  onPressed: () => Navigator.of(context).pushNamed('/payment-verification'),
+                                  onPressed: () {
+                                    final index = _menuItems.indexWhere(
+                                      (item) => item.title == 'Verifikasi Pendaftaran',
+                                    );
+
+                                    if (index != -1) {
+                                      setState(() {
+                                        _selectedMenuIndex = index;
+                                        _selectedMenuTitle = 'Verifikasi Pendaftaran';
+                                      });
+                                    }
+                                  },
                                   icon: const Icon(Icons.remove_red_eye_outlined, color: Color(0xFF3B82F6)),
                                   tooltip: 'Lihat detail',
                                 ),
@@ -906,9 +920,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 0, 12),
               child: TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed('/payment-verification');
-                },
+              onPressed: () {
+                final index = _menuItems.indexWhere(
+                  (item) => item.title == 'Verifikasi Pendaftaran',
+                );
+
+                if (index != -1) {
+                  setState(() {
+                    _selectedMenuIndex = index;
+                    _selectedMenuTitle = 'Verifikasi Pendaftaran';
+                  });
+                }
+              },
                 child: const Text(
                   'Lihat Detail',
                   style: TextStyle(

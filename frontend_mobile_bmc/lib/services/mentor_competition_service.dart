@@ -1,20 +1,10 @@
 import 'dart:convert';
 
+import 'package:frontend_mobile_bmc/core/network/api_client.dart';
 import 'package:frontend_mobile_bmc/models/mentor_competition_item.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class MentorCompetitionService {
-  static const String _baseUrl = 'http://10.0.2.2:8080/api/mentor';
-
-  static Future<String> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token') ?? '';
-    if (token.isEmpty) {
-      throw Exception('Sesi login tidak ditemukan. Silakan login ulang.');
-    }
-    return token;
-  }
+  static final ApiClient _client = ApiClient(baseUrl: 'http://10.0.2.2:8080/api/mentor');
 
   static String _normalizeDateForApi(String value) {
     final raw = value.trim();
@@ -42,23 +32,12 @@ class MentorCompetitionService {
     return int.tryParse(digits ?? '') ?? 0;
   }
 
-  static Map<String, String> _headers(String token) {
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
-
   static Future<List<MentorCompetitionItem>> getByType(
     String type, {
     String? classLevel,
   }) async {
-    final token = await _getToken();
     final endpoint = type == 'olimpiade' ? 'olimpiade' : 'tryout';
-    final response = await http.get(
-      Uri.parse('$_baseUrl/$endpoint'),
-      headers: _headers(token),
-    );
+    final response = await _client.get('/$endpoint', auth: true);
 
     if (response.statusCode != 200) {
       throw Exception('Gagal memuat data $type (${response.statusCode})');
@@ -120,8 +99,6 @@ class MentorCompetitionService {
   }
 
   static Future<void> createOrUpdate(MentorCompetitionItem item) async {
-    final token = await _getToken();
-
     if (item.type == 'olimpiade') {
       final body = {
         'class_level': item.classLevel,
@@ -131,20 +108,9 @@ class MentorCompetitionService {
       };
 
       final isUpdate = int.tryParse(item.id) != null;
-      final uri = isUpdate
-          ? Uri.parse('$_baseUrl/olimpiade/${item.id}')
-          : Uri.parse('$_baseUrl/olimpiade');
       final response = isUpdate
-          ? await http.put(
-              uri,
-              headers: _headers(token),
-              body: jsonEncode(body),
-            )
-          : await http.post(
-              uri,
-              headers: _headers(token),
-              body: jsonEncode(body),
-            );
+          ? await _client.put('/olimpiade/${item.id}', auth: true, body: body)
+          : await _client.post('/olimpiade', auth: true, body: body);
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw Exception('Gagal menyimpan olimpiade (${response.statusCode})');
@@ -161,16 +127,9 @@ class MentorCompetitionService {
     };
 
     final isUpdate = int.tryParse(item.id) != null;
-    final uri = isUpdate
-        ? Uri.parse('$_baseUrl/tryout/${item.id}')
-        : Uri.parse('$_baseUrl/tryout');
     final response = isUpdate
-        ? await http.put(uri, headers: _headers(token), body: jsonEncode(body))
-        : await http.post(
-            uri,
-            headers: _headers(token),
-            body: jsonEncode(body),
-          );
+      ? await _client.put('/tryout/${item.id}', auth: true, body: body)
+      : await _client.post('/tryout', auth: true, body: body);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Gagal menyimpan tryout (${response.statusCode})');
@@ -178,12 +137,8 @@ class MentorCompetitionService {
   }
 
   static Future<void> deleteById(String id, {String type = 'tryout'}) async {
-    final token = await _getToken();
     final endpoint = type == 'olimpiade' ? 'olimpiade' : 'tryout';
-    final response = await http.delete(
-      Uri.parse('$_baseUrl/$endpoint/$id'),
-      headers: _headers(token),
-    );
+    final response = await _client.delete('/$endpoint/$id', auth: true);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Gagal menghapus data (${response.statusCode})');
     }

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"bmcgoapp-backend/repositories"
+
 	"github.com/gin-gonic/gin"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/coreapi"
@@ -295,6 +297,8 @@ func GetVerificationStatus(c *gin.Context) {
 		return
 	}
 
+	userStatus, hasVerifiedPayment, verifiedAt, err := repositories.GetVerificationStatus(c.Request.Context(), userIDInt)
+
 	var isVerified bool
 	var verifiedAt *time.Time
 	err := config.DB.QueryRow(c.Request.Context(), `
@@ -309,6 +313,32 @@ func GetVerificationStatus(c *gin.Context) {
 		return
 	}
 
+	isUserActive := strings.EqualFold(strings.TrimSpace(userStatus), "aktif")
+	canAccess := isUserActive || hasVerifiedPayment
+
+	// Self-heal: jika pembayaran sudah diverifikasi tapi user belum aktif, aktifkan akun.
+	if hasVerifiedPayment && !isUserActive {
+		_, _ = config.DB.Exec(c.Request.Context(), `
+			UPDATE users
+			SET status = 'aktif'
+			WHERE id = $1
+		`, userIDInt)
+		isUserActive = true
+		canAccess = true
+		userStatus = "aktif"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":        "Payment verification status",
+		"is_verified":    hasVerifiedPayment,
+		"verified_at":    verifiedAt,
+		"can_access":     canAccess,
+		"user_status":    userStatus,
+		"is_user_active": isUserActive,
+	})
+}
+
+type PendingVerificationItem = repositories.PaymentVerificationItem
 	c.JSON(http.StatusOK, gin.H{"message": "Payment verification status", "is_verified": isVerified, "verified_at": verifiedAt, "can_access": isVerified})
 }
 
@@ -339,6 +369,7 @@ func GetPendingPaymentVerifications(c *gin.Context) {
 		return
 	}
 
+	items, err := repositories.GetPendingPaymentVerifications(c.Request.Context())
 	rows, err := config.DB.Query(c.Request.Context(), `
 		SELECT DISTINCT ON (pt.user_id)
 			pt.transaction_id,
@@ -367,6 +398,9 @@ func GetPendingPaymentVerifications(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to load pending verifications", "error": err.Error()})
 		return
 	}
+	for i := range items {
+		items[i].Status = normalizeStatus(items[i].Status)
+
 	defer rows.Close()
 
 	items := make([]PendingVerificationItem, 0)
@@ -408,38 +442,9 @@ func ApprovePaymentVerification(c *gin.Context) {
 		return
 	}
 
-	// Get user_id dari transaction
-	var userID int
-	err := config.DB.QueryRow(c.Request.Context(), `
-		SELECT user_id FROM payment_transactions WHERE transaction_id = $1
-	`, transactionID).Scan(&userID)
+	userID, err := repositories.ApprovePaymentVerification(c.Request.Context(), transactionID, adminID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Transaction not found"})
-		return
-	}
-
-	// Update payment_transactions: set is_verified=TRUE
-	_, err = config.DB.Exec(c.Request.Context(), `
-		UPDATE payment_transactions
-		SET is_verified = TRUE,
-			verified_at = NOW(),
-			verified_by_admin = $1,
-			updated_at = NOW()
-		WHERE transaction_id = $2
-	`, adminID, transactionID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to approve verification", "error": err.Error()})
-		return
-	}
-
-	// Update users: set status='aktif'
-	_, err = config.DB.Exec(c.Request.Context(), `
-		UPDATE users
-		SET status = 'aktif'
-		WHERE id = $1
-	`, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to activate user account", "error": err.Error()})
 		return
 	}
 
@@ -472,16 +477,7 @@ func RejectPaymentVerification(c *gin.Context) {
 		return
 	}
 
-	// Update payment_transactions: set is_verified=FALSE (marked as rejected)
-	_, err := config.DB.Exec(c.Request.Context(), `
-		UPDATE payment_transactions
-		SET is_verified = FALSE,
-			verified_at = NOW(),
-			verified_by_admin = $1,
-			status = 'failed',
-			updated_at = NOW()
-		WHERE transaction_id = $2
-	`, adminID, transactionID)
+	err := repositories.RejectPaymentVerification(c.Request.Context(), transactionID, adminID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to reject verification", "error": err.Error()})
 		return
@@ -492,6 +488,72 @@ func RejectPaymentVerification(c *gin.Context) {
 		"data": gin.H{
 			"transaction_id": transactionID,
 			"status":         "failed",
+		},
+	})
+}
+
+
+// DeletePaymentVerification menghapus data verifikasi/pembayaran
+func DeletePaymentVerification(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+
+	transactionID := c.Param("transactionId")
+	if strings.TrimSpace(transactionID) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Transaction ID is required"})
+		return
+	}
+
+	commandTag, err := config.DB.Exec(c.Request.Context(), `
+		DELETE FROM payment_transactions
+		WHERE transaction_id = $1
+	`, transactionID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to delete verification data", "error": err.Error()})
+		return
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Transaction not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Payment verification deleted",
+		"data": gin.H{
+			"transaction_id": transactionID,
+		},
+	})
+}
+
+// GetPaymentVerificationOverview mendapatkan overview verifikasi pembayaran (untuk admin dashboard)
+func GetPaymentVerificationOverview(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+
+	overview, err := repositories.GetPaymentVerificationOverview(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to load overview", "error": err.Error()})
+		return
+	}
+	items := overview.Items
+	waiting := overview.Waiting
+	approved := overview.Approved
+	rejected := overview.Rejected
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Overview retrieved",
+		"data": gin.H{
+			"waiting":  waiting,
+			"approved": approved,
+			"rejected": rejected,
+			"items":    items,
 		},
 	})
 }

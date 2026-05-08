@@ -44,13 +44,27 @@ class _MentorCompetitionManagementState
   }
 
   Future<void> _load() async {
-    setState(() => _isLoading = true);
-    final items = await MentorCompetitionService.getByType(widget.type);
-    if (!mounted) return;
-    setState(() {
-      _items = items;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
+
+    try {
+      final items = await MentorCompetitionService.getByType(widget.type);
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memuat data: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _refresh() {
@@ -68,9 +82,6 @@ class _MentorCompetitionManagementState
   }
 
   String get _pageTag => widget.type == 'tryout' ? 'Try Out' : 'Olimpiade';
-
-  List<MentorCompetitionItem> get _publishedItems =>
-      _items.where((item) => item.isPublished).toList();
 
   Widget _buildTryoutCard(MentorCompetitionItem item) {
     final categories = item.categoryQuestions;
@@ -398,7 +409,7 @@ class _MentorCompetitionManagementState
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => _openOlimpiadseSoalManagement(item),
+                  onPressed: () => _openOlimpiadeSoalManagement(item),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(40),
                     backgroundColor: widget.accentColor,
@@ -479,7 +490,7 @@ class _MentorCompetitionManagementState
     );
   }
 
-  Future<void> _openOlimpiadseSoalManagement(
+  Future<void> _openOlimpiadeSoalManagement(
     MentorCompetitionItem olimpiade,
   ) async {
     await Navigator.of(context).push(
@@ -574,8 +585,6 @@ class _MentorCompetitionManagementState
   Widget build(BuildContext context) {
     final visibleItems = _visibleItems;
     final isTryout = widget.type == 'tryout';
-    final totalItems = _items.length;
-    final publishedCount = _publishedItems.length;
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(

@@ -1,6 +1,6 @@
 import 'dart:convert';
+import 'package:frontend_website_bmc/core/session/app_session.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 
 class PengumumanService {
@@ -11,14 +11,7 @@ class PengumumanService {
   ];
 
   static Future<String> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token =
-        (prefs.getString('token') ?? prefs.getString('auth_token') ?? '')
-            .trim();
-    if (token.isEmpty) {
-      throw Exception('Token login tidak ditemukan');
-    }
-    return token;
+    return AppSession.getToken();
   }
 
   static Map<String, dynamic> _decodeResponse(http.Response res) {

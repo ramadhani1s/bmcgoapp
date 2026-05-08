@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../../core/session/app_session.dart';
 
 class MateriScreen extends StatefulWidget {
   const MateriScreen({super.key});
@@ -51,8 +52,7 @@ class _MateriScreenState extends State<MateriScreen> {
   }
 
   Future<String> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token') ?? '';
+    return AppSession.getAuthToken();
   }
 
   Future<void> _fetchMateri({String? subject}) async {
