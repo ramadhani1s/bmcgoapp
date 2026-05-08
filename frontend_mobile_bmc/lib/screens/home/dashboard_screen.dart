@@ -5,6 +5,7 @@ import 'package:frontend_mobile_bmc/screens/home/latihan_siswa_screen.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
 import 'package:frontend_mobile_bmc/services/jadwal_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,7 +14,8 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+  with WidgetsBindingObserver {
   static const Color _accent = Color(0xFFFF7070);
   static const Color _background = Color(0xFFF7EEEF);
   static const Color _textPrimary = Color(0xFF25273D);
@@ -28,6 +30,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoadingPackageInfo = true;
   int _openedMateriCount = 0;
   int _openedTryoutCount = 0;
+  Timer? _verificationRefreshTimer;
 
   // Jadwal variables
   List<Map<String, dynamic>> _jadwalList = [];
@@ -49,9 +52,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadLearningProgress();
     _loadDashboardStatus();
     _loadJadwalHariIni();
+    _verificationRefreshTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) {
+        if (mounted) {
+          _loadDashboardStatus(silent: true);
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _verificationRefreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadDashboardStatus();
+    }
   }
 
   String _progressKey(String suffix) {
@@ -98,7 +124,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await _saveLearningProgress();
   }
 
-  Future<void> _loadDashboardStatus() async {
+  Future<void> _loadDashboardStatus({bool silent = false}) async {
+    if (!mounted) {
+      return;
+    }
+
+    if (!silent) {
+      setState(() {
+        _isCheckingVerification = true;
+      });
+    }
+
     final canAccess = await PaymentService.getVerificationStatus();
 
     String packageTitle = 'Paket belum dipilih';
