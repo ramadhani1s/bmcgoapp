@@ -113,7 +113,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       _isQuickPendingLoading = true;
     });
     try {
-      final items = await AdminDashboardService.getPendingPaymentVerifications();
+      final items =
+          await AdminDashboardService.getPendingPaymentVerifications();
       if (!mounted) return;
       setState(() {
         _quickPendingItems = items;
@@ -229,7 +230,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         _todayScheduleRows = mappedRows;
         _todayScheduleCount = mappedRows.length;
       });
-      } catch (e) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _todayScheduleRows = [];
@@ -250,7 +251,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Konfirmasi Keluar'),
-        content: const Text('Apakah Anda yakin ingin keluar dari halaman admin?'),
+        content: const Text(
+          'Apakah Anda yakin ingin keluar dari halaman admin?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -704,7 +707,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         });
                       },
                       decoration: const InputDecoration(
-                        hintText: 'Cari siswa, sekolah, kelas, mapel, mentor...',
+                        hintText:
+                            'Cari siswa, sekolah, kelas, mapel, mentor...',
                         hintStyle: TextStyle(
                           color: Color(0xFFA0A9B7),
                           fontSize: 12,
@@ -992,7 +996,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if ((_quickPendingItems == null) || _quickPendingItems!.isEmpty)
+                else if ((_quickPendingItems == null) ||
+                    _quickPendingItems!.isEmpty)
                   const _EmptyTableRow(
                     message: 'Belum ada pendaftaran yang menunggu verifikasi.',
                   )
@@ -1001,21 +1006,50 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Color(0xFFF0E6D8))),
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFFF0E6D8)),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Expanded(child: Text(item.studentName, style: const TextStyle(fontSize: 12))),
-                          Expanded(child: Text(item.schoolName, style: const TextStyle(fontSize: 12))),
-                          Expanded(child: Text(item.className, style: const TextStyle(fontSize: 12))),
-                          Expanded(child: Text('${item.createdAt.day.toString().padLeft(2, '0')} ${_monthName(item.createdAt.month).substring(0,3)} ${item.createdAt.year}', style: const TextStyle(fontSize: 12))),
+                          Expanded(
+                            child: Text(
+                              item.studentName,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              item.schoolName,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              item.className,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              '${item.createdAt.day.toString().padLeft(2, '0')} ${_monthName(item.createdAt.month).substring(0, 3)} ${item.createdAt.year}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
                           Expanded(
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: _getStatusBgColorDashboard(item),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: _getStatusColorDashboard(item).withOpacity(0.35)),
+                                border: Border.all(
+                                  color: _getStatusColorDashboard(
+                                    item,
+                                  ).withOpacity(0.35),
+                                ),
                               ),
                               child: Text(
                                 _getStatusLabelDashboard(item),
@@ -1036,14 +1070,32 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       ? null
                                       : () async {
                                           try {
-                                            await AdminDashboardService.approvePaymentVerification(item.transactionId);
+                                            await AdminDashboardService.approvePaymentVerification(
+                                              item.transactionId,
+                                            );
                                             if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembayaran disetujui')));
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Pembayaran disetujui',
+                                                ),
+                                              ),
+                                            );
                                             await _loadSummary();
                                             await _loadQuickPending();
                                           } catch (e) {
                                             if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal approve: $e')));
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Gagal approve: $e',
+                                                ),
+                                              ),
+                                            );
                                           }
                                         },
                                   style: ElevatedButton.styleFrom(
@@ -1061,20 +1113,40 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       ? null
                                       : () async {
                                           try {
-                                            await AdminDashboardService.rejectPaymentVerification(item.transactionId);
+                                            await AdminDashboardService.rejectPaymentVerification(
+                                              item.transactionId,
+                                            );
                                             if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembayaran ditolak')));
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Pembayaran ditolak',
+                                                ),
+                                              ),
+                                            );
                                             await _loadSummary();
                                             await _loadQuickPending();
                                           } catch (e) {
                                             if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal reject: $e')));
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Gagal reject: $e',
+                                                ),
+                                              ),
+                                            );
                                           }
                                         },
                                   style: OutlinedButton.styleFrom(
                                     minimumSize: const Size(70, 26),
                                     foregroundColor: const Color(0xFFEF4444),
-                                    side: const BorderSide(color: Color(0xFFEF4444)),
+                                    side: const BorderSide(
+                                      color: Color(0xFFEF4444),
+                                    ),
                                     textStyle: const TextStyle(fontSize: 11),
                                     padding: EdgeInsets.zero,
                                   ),
@@ -1084,17 +1156,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 IconButton(
                                   onPressed: () {
                                     final index = _menuItems.indexWhere(
-                                      (item) => item.title == 'Verifikasi Pendaftaran',
+                                      (item) =>
+                                          item.title ==
+                                          'Verifikasi Pendaftaran',
                                     );
 
                                     if (index != -1) {
                                       setState(() {
                                         _selectedMenuIndex = index;
-                                        _selectedMenuTitle = 'Verifikasi Pendaftaran';
+                                        _selectedMenuTitle =
+                                            'Verifikasi Pendaftaran';
                                       });
                                     }
                                   },
-                                  icon: const Icon(Icons.remove_red_eye_outlined, color: Color(0xFF3B82F6)),
+                                  icon: const Icon(
+                                    Icons.remove_red_eye_outlined,
+                                    color: Color(0xFF3B82F6),
+                                  ),
                                   tooltip: 'Lihat detail',
                                 ),
                               ],
@@ -1111,18 +1189,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 0, 12),
               child: TextButton(
-              onPressed: () {
-                final index = _menuItems.indexWhere(
-                  (item) => item.title == 'Verifikasi Pendaftaran',
-                );
+                onPressed: () {
+                  final index = _menuItems.indexWhere(
+                    (item) => item.title == 'Verifikasi Pendaftaran',
+                  );
 
-                if (index != -1) {
-                  setState(() {
-                    _selectedMenuIndex = index;
-                    _selectedMenuTitle = 'Verifikasi Pendaftaran';
-                  });
-                }
-              },
+                  if (index != -1) {
+                    setState(() {
+                      _selectedMenuIndex = index;
+                      _selectedMenuTitle = 'Verifikasi Pendaftaran';
+                    });
+                  }
+                },
                 child: const Text(
                   'Lihat Detail',
                   style: TextStyle(

@@ -22,14 +22,17 @@ bool _isSuccessResponseDynamic(dynamic result) {
   }
   if (result is String) {
     final text = result.toLowerCase();
-    return text == 'ok' || text.contains('berhasil') || text.contains('success');
+    return text == 'ok' ||
+        text.contains('berhasil') ||
+        text.contains('success');
   }
   return false;
 }
 
 String _extractResultMessageDynamic(dynamic result) {
   if (result is Map<String, dynamic>) {
-    return (result['message'] ?? result['detail'] ?? result['error'] ?? '').toString();
+    return (result['message'] ?? result['detail'] ?? result['error'] ?? '')
+        .toString();
   }
   return result?.toString() ?? '';
 }
@@ -183,7 +186,9 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
 
     if (result is String) {
       final text = result.toLowerCase();
-      return text == 'ok' || text.contains('berhasil') || text.contains('success');
+      return text == 'ok' ||
+          text.contains('berhasil') ||
+          text.contains('success');
     }
 
     return false;
@@ -222,7 +227,9 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         await _loadInitialData();
         if (!mounted) return;
         _showSnackBar(
-          existing == null ? 'Jadwal berhasil dibuat' : 'Jadwal berhasil diupdate',
+          existing == null
+              ? 'Jadwal berhasil dibuat'
+              : 'Jadwal berhasil diupdate',
           backgroundColor: Colors.green,
         );
       });
@@ -727,13 +734,17 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
         : int.tryParse(existingMentorIdRaw?.toString() ?? '');
     _selectedHariValue = existing?['hari']?.toString();
     _mataPelajaranController = TextEditingController(
-        text: existing?['mata_pelajaran']?.toString() ?? '');
+      text: existing?['mata_pelajaran']?.toString() ?? '',
+    );
     _jamMulaiController = TextEditingController(
-        text: existing == null ? '' : _timeToString(existing['jam_mulai']));
+      text: existing == null ? '' : _timeToString(existing['jam_mulai']),
+    );
     _jamSelesaiController = TextEditingController(
-        text: existing == null ? '' : _timeToString(existing['jam_selesai']));
-    _ruangController =
-        TextEditingController(text: existing?['ruang']?.toString() ?? '');
+      text: existing == null ? '' : _timeToString(existing['jam_selesai']),
+    );
+    _ruangController = TextEditingController(
+      text: existing?['ruang']?.toString() ?? '',
+    );
   }
 
   @override
@@ -767,9 +778,12 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
       context: context,
       initialTime: TimeOfDay(
         hour: int.tryParse(controller.text.split(':').first) ?? 8,
-        minute: int.tryParse(controller.text.split(':').length > 1
-                ? controller.text.split(':')[1]
-                : '0') ??
+        minute:
+            int.tryParse(
+              controller.text.split(':').length > 1
+                  ? controller.text.split(':')[1]
+                  : '0',
+            ) ??
             0,
       ),
     );
@@ -824,16 +838,18 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
       } else {
         final msg = _extractResultMessageDynamic(result);
         ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-          SnackBar(content: Text(msg.isNotEmpty ? msg : 'Gagal menyimpan jadwal')),
+          SnackBar(
+            content: Text(msg.isNotEmpty ? msg : 'Gagal menyimpan jadwal'),
+          ),
         );
         setState(() => _isSubmitting = false);
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        widget.parentContext,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -844,12 +860,21 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       backgroundColor: Colors.transparent,
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: 840, maxHeight: MediaQuery.of(context).size.height * 0.9),
+        constraints: BoxConstraints(
+          maxWidth: 840,
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: const [BoxShadow(color: Color.fromRGBO(15, 23, 42, 0.18), blurRadius: 30, offset: Offset(0, 18))],
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(15, 23, 42, 0.18),
+                blurRadius: 30,
+                offset: Offset(0, 18),
+              ),
+            ],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
@@ -859,28 +884,59 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                 Container(
                   padding: const EdgeInsets.fromLTRB(24, 20, 18, 20),
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
                   child: Row(
                     children: [
                       Container(
                         width: 42,
                         height: 42,
-                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)),
-                        child: Icon(existing == null ? Icons.add : Icons.edit_rounded, color: Colors.white, size: 22),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          existing == null ? Icons.add : Icons.edit_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(existing == null ? 'Tambah Jadwal' : 'Edit Jadwal', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+                            Text(
+                              existing == null
+                                  ? 'Tambah Jadwal'
+                                  : 'Edit Jadwal',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text(existing == null ? 'Buat jadwal baru yang akan muncul pada jadwal mingguan.' : 'Perbarui jadwal yang sudah tersimpan.', style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
+                            Text(
+                              existing == null
+                                  ? 'Buat jadwal baru yang akan muncul pada jadwal mingguan.'
+                                  : 'Perbarui jadwal yang sudah tersimpan.',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12.5,
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white)),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close, color: Colors.white),
+                      ),
                     ],
                   ),
                 ),
@@ -888,52 +944,193 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
                     child: SingleChildScrollView(
-                        child: Form(
+                      child: Form(
                         key: _formKey,
-                        child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          DropdownButtonFormField<int>(
-                            value: _selectedPaketId,
-                            items: widget.paketList.map((paket) => DropdownMenuItem<int>(value: paket['id'] as int, child: Text((paket['nama_paket'] ?? paket['nama'] ?? 'Paket').toString()))).toList(),
-                            onChanged: (v) => setState(() => _selectedPaketId = v),
-                            validator: (v) => v == null ? 'Paket wajib dipilih' : null,
-                            decoration: const InputDecoration(labelText: 'Paket Les', border: OutlineInputBorder()),
-                          ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<int>(
-                            value: _selectedMentorId,
-                            items: widget.mentorList.map((mentor) => DropdownMenuItem<int>(value: mentor['id'] as int, child: Text((mentor['nama_mentor'] ?? mentor['nama'] ?? 'Mentor').toString()))).toList(),
-                            onChanged: (v) => setState(() => _selectedMentorId = v),
-                            validator: (v) => v == null ? 'Mentor wajib dipilih' : null,
-                            decoration: const InputDecoration(labelText: 'Mentor', border: OutlineInputBorder()),
-                          ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            value: _selectedHariValue,
-                            items: _dialogHariList.map((hari) => DropdownMenuItem<String>(value: hari, child: Text(hari))).toList(),
-                            onChanged: (v) => setState(() => _selectedHariValue = v),
-                            validator: (v) => v == null || v.isEmpty ? 'Hari wajib dipilih' : null,
-                            decoration: const InputDecoration(labelText: 'Hari', border: OutlineInputBorder()),
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(controller: _jamMulaiController, readOnly: true, onTap: () => _pickAndSetTime(_jamMulaiController), validator: (v) => v == null || v.isEmpty ? 'Jam mulai wajib diisi' : null, decoration: const InputDecoration(labelText: 'Jam Mulai', hintText: '08:00', border: OutlineInputBorder(), suffixIcon: Icon(Icons.access_time_rounded))),
-                          const SizedBox(height: 12),
-                          TextFormField(controller: _jamSelesaiController, readOnly: true, onTap: () => _pickAndSetTime(_jamSelesaiController), validator: (v) => v == null || v.isEmpty ? 'Jam selesai wajib diisi' : null, decoration: const InputDecoration(labelText: 'Jam Selesai', hintText: '09:30', border: OutlineInputBorder(), suffixIcon: Icon(Icons.access_time_rounded))),
-                          const SizedBox(height: 12),
-                          TextFormField(controller: _mataPelajaranController, validator: (v) => v == null || v.isEmpty ? 'Mata pelajaran wajib diisi' : null, decoration: const InputDecoration(labelText: 'Mata Pelajaran', border: OutlineInputBorder(), hintText: 'Matematika')),
-                          const SizedBox(height: 12),
-                          TextFormField(controller: _ruangController, validator: (v) => v == null || v.isEmpty ? 'Ruang wajib diisi' : null, decoration: const InputDecoration(labelText: 'Ruang', border: OutlineInputBorder(), hintText: 'Ruang A')),
-                        ]),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            DropdownButtonFormField<int>(
+                              value: _selectedPaketId,
+                              items: widget.paketList
+                                  .map(
+                                    (paket) => DropdownMenuItem<int>(
+                                      value: paket['id'] as int,
+                                      child: Text(
+                                        (paket['nama_paket'] ??
+                                                paket['nama'] ??
+                                                'Paket')
+                                            .toString(),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) =>
+                                  setState(() => _selectedPaketId = v),
+                              validator: (v) =>
+                                  v == null ? 'Paket wajib dipilih' : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Paket Les',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<int>(
+                              value: _selectedMentorId,
+                              items: widget.mentorList
+                                  .map(
+                                    (mentor) => DropdownMenuItem<int>(
+                                      value: mentor['id'] as int,
+                                      child: Text(
+                                        (mentor['nama_mentor'] ??
+                                                mentor['nama'] ??
+                                                'Mentor')
+                                            .toString(),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) =>
+                                  setState(() => _selectedMentorId = v),
+                              validator: (v) =>
+                                  v == null ? 'Mentor wajib dipilih' : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Mentor',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              value: _selectedHariValue,
+                              items: _dialogHariList
+                                  .map(
+                                    (hari) => DropdownMenuItem<String>(
+                                      value: hari,
+                                      child: Text(hari),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) =>
+                                  setState(() => _selectedHariValue = v),
+                              validator: (v) => v == null || v.isEmpty
+                                  ? 'Hari wajib dipilih'
+                                  : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Hari',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _jamMulaiController,
+                              readOnly: true,
+                              onTap: () => _pickAndSetTime(_jamMulaiController),
+                              validator: (v) => v == null || v.isEmpty
+                                  ? 'Jam mulai wajib diisi'
+                                  : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Jam Mulai',
+                                hintText: '08:00',
+                                border: OutlineInputBorder(),
+                                suffixIcon: Icon(Icons.access_time_rounded),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _jamSelesaiController,
+                              readOnly: true,
+                              onTap: () =>
+                                  _pickAndSetTime(_jamSelesaiController),
+                              validator: (v) => v == null || v.isEmpty
+                                  ? 'Jam selesai wajib diisi'
+                                  : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Jam Selesai',
+                                hintText: '09:30',
+                                border: OutlineInputBorder(),
+                                suffixIcon: Icon(Icons.access_time_rounded),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _mataPelajaranController,
+                              validator: (v) => v == null || v.isEmpty
+                                  ? 'Mata pelajaran wajib diisi'
+                                  : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Mata Pelajaran',
+                                border: OutlineInputBorder(),
+                                hintText: 'Matematika',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _ruangController,
+                              validator: (v) => v == null || v.isEmpty
+                                  ? 'Ruang wajib diisi'
+                                  : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Ruang',
+                                border: OutlineInputBorder(),
+                                hintText: 'Ruang A',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                    OutlinedButton(onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(), style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF475569), side: const BorderSide(color: Color(0xFFD6DEEA)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Batal')),
-                    const SizedBox(width: 12),
-                    ElevatedButton(onPressed: _isSubmitting ? null : _submit, style: ElevatedButton.styleFrom(backgroundColor: _dialogHeaderBlue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: _isSubmitting ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(widget.existing == null ? 'Simpan' : 'Update')),
-                  ]),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton(
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF475569),
+                          side: const BorderSide(color: Color(0xFFD6DEEA)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Batal'),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _dialogHeaderBlue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                widget.existing == null ? 'Simpan' : 'Update',
+                              ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

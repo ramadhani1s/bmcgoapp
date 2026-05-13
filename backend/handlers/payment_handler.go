@@ -437,7 +437,6 @@ func RejectPaymentVerification(c *gin.Context) {
 	})
 }
 
-
 // DeletePaymentVerification menghapus data verifikasi/pembayaran
 func DeletePaymentVerification(c *gin.Context) {
 	_, exists := c.Get("user_id")
