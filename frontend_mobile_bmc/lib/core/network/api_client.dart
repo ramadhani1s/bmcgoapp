@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:frontend_mobile_bmc/core/session/app_session.dart';
 import 'package:http/http.dart' as http;
 

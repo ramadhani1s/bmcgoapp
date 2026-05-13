@@ -298,18 +298,8 @@ func GetVerificationStatus(c *gin.Context) {
 	}
 
 	userStatus, hasVerifiedPayment, verifiedAt, err := repositories.GetVerificationStatus(c.Request.Context(), userIDInt)
-
-	var isVerified bool
-	var verifiedAt *time.Time
-	err := config.DB.QueryRow(c.Request.Context(), `
-		SELECT COALESCE(is_verified, FALSE), verified_at
-		FROM payment_transactions
-		WHERE user_id = $1 AND LOWER(status) IN ('success', 'settlement', 'capture')
-		ORDER BY created_at DESC
-		LIMIT 1
-	`, userIDInt).Scan(&isVerified, &verifiedAt)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"message": "Payment verification status", "is_verified": false, "verified_at": nil, "can_access": false})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Payment verification status error", "error": err.Error()})
 		return
 	}
 
@@ -336,10 +326,6 @@ func GetVerificationStatus(c *gin.Context) {
 		"user_status":    userStatus,
 		"is_user_active": isUserActive,
 	})
-}
-
-type PendingVerificationItem = repositories.PaymentVerificationItem
-	c.JSON(http.StatusOK, gin.H{"message": "Payment verification status", "is_verified": isVerified, "verified_at": verifiedAt, "can_access": isVerified})
 }
 
 // PendingVerificationItem untuk response list verifikasi pending
@@ -370,54 +356,13 @@ func GetPendingPaymentVerifications(c *gin.Context) {
 	}
 
 	items, err := repositories.GetPendingPaymentVerifications(c.Request.Context())
-	rows, err := config.DB.Query(c.Request.Context(), `
-		SELECT DISTINCT ON (pt.user_id)
-			pt.transaction_id,
-			pt.user_id,
-			COALESCE(pt.customer_name, NULLIF(u.nama, ''), '') AS student_name,
-			COALESCE(pt.customer_email, NULLIF(u.email, ''), '') AS student_email,
-			COALESCE(pt.customer_phone, NULLIF(u.phone_number, ''), '') AS student_phone,
-			COALESCE(s.asal_sekolah, '') AS school_name,
-			COALESCE(s.kelas, '') AS class_name,
-			pt.package_title,
-			pt.amount,
-			COALESCE(pt.payment_type, '') AS payment_type,
-			pt.created_at,
-			pt.status,
-			COALESCE(pt.is_verified, FALSE) AS is_verified,
-			pt.verified_at,
-			pt.verified_by_admin
-		FROM payment_transactions pt
-		LEFT JOIN users u ON u.id = pt.user_id
-		LEFT JOIN siswa s ON s.user_id = pt.user_id
-		WHERE pt.status = 'success' AND COALESCE(pt.is_verified, FALSE) = FALSE
-		ORDER BY pt.user_id, pt.created_at DESC
-		LIMIT 100
-	`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to load pending verifications", "error": err.Error()})
 		return
 	}
+
 	for i := range items {
 		items[i].Status = normalizeStatus(items[i].Status)
-
-	defer rows.Close()
-
-	items := make([]PendingVerificationItem, 0)
-	for rows.Next() {
-		item := PendingVerificationItem{}
-		if err := rows.Scan(
-			&item.TransactionID, &item.UserID,
-			&item.StudentName, &item.StudentEmail, &item.StudentPhone,
-			&item.SchoolName, &item.ClassName,
-			&item.PackageTitle, &item.Amount, &item.PaymentType,
-			&item.CreatedAt, &item.Status, &item.IsVerified,
-			&item.VerifiedAt, &item.VerifiedByAdmin,
-		); err != nil {
-			continue
-		}
-		item.Status = normalizeStatus(item.Status)
-		items = append(items, item)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Pending verifications retrieved", "data": items})

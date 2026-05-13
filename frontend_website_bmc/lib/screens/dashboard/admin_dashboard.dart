@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../models/user.dart';
 import '../../models/admin_dashboard_data.dart';
-import '../../models/payment_verification_item.dart'; // ✅ FIX PENTING
-
 import '../../services/admin_dashboard_service.dart';
 import '../../services/auth_service.dart';
-
+import '../../services/jadwal_pembelajaran_service.dart';
 import 'paket_les_screen.dart';
 import 'jadwal_pembelajaran_screen.dart';
 import 'verifikasi_pendaftaran_screen.dart';
 import 'pengumuman_screen.dart';
 import 'admin_kelola_absensi_screen.dart';
+import 'admin_kelola_alumni_screen.dart';
 import '../mentor_management_screen.dart';
+import '../../models/payment_verification_item.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key, this.initialMenuTitle});
@@ -37,6 +37,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
   bool _isSummaryLoading = true;
   List<PaymentVerificationItem>? _quickPendingItems;
   bool _isQuickPendingLoading = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  List<_ScheduleRow> _todayScheduleRows = [];
+  int _todayScheduleCount = 0;
 
   @override
   void initState() {
@@ -44,6 +48,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _applyInitialMenu();
     _loadUser();
     _loadSummary();
+    _loadTodaySchedules();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _applyInitialMenu() {
@@ -121,10 +132,144 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
+  Future<void> _loadTodaySchedules() async {
+    try {
+      final todayName = _dayName(DateTime.now());
+      final results = await Future.wait([
+        JadwalService.getJadwalList(hari: todayName),
+        JadwalService.getPaketList(),
+        JadwalService.getMentorList(),
+      ]);
+
+      if (!mounted) return;
+
+      final jadwalList = results[0];
+      final paketList = results[1];
+      final mentorList = results[2];
+
+      String paketName(dynamic paketId) {
+        for (final paket in paketList) {
+          if (paket['id'] == paketId) {
+            return (paket['nama_paket'] ?? paket['nama'] ?? '-').toString();
+          }
+        }
+        return 'Kelas ${paketId ?? '-'}';
+      }
+
+      String mentorName(dynamic mentorId) {
+        for (final mentor in mentorList) {
+          if (mentor['id'] == mentorId) {
+            return (mentor['nama_mentor'] ?? mentor['nama'] ?? '-').toString();
+          }
+        }
+        return 'Mentor ${mentorId ?? '-'}';
+      }
+
+      int toMinutes(String? hhmm) {
+        if (hhmm == null || hhmm.isEmpty) return -1;
+        final clean = hhmm.contains('T')
+            ? (DateTime.tryParse(hhmm) != null
+                  ? '${DateTime.parse(hhmm).hour.toString().padLeft(2, '0')}:${DateTime.parse(hhmm).minute.toString().padLeft(2, '0')}'
+                  : hhmm)
+            : hhmm;
+        final parts = clean.split(':');
+        if (parts.length < 2) return -1;
+        final h = int.tryParse(parts[0]) ?? -1;
+        final m = int.tryParse(parts[1]) ?? -1;
+        if (h < 0 || m < 0) return -1;
+        return (h * 60) + m;
+      }
+
+      String hhmm(dynamic value) {
+        if (value == null) return '-';
+        final text = value.toString();
+        if (text.isEmpty) return '-';
+        if (text.contains('T')) {
+          final parsed = DateTime.tryParse(text);
+          if (parsed != null) {
+            return '${parsed.hour.toString().padLeft(2, '0')}:${parsed.minute.toString().padLeft(2, '0')}';
+          }
+        }
+        final parts = text.split(':');
+        if (parts.length >= 2) {
+          return '${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}';
+        }
+        return text;
+      }
+
+      final now = DateTime.now();
+      final nowMinutes = (now.hour * 60) + now.minute;
+
+      final mappedRows = jadwalList.map((jadwal) {
+        final start = hhmm(jadwal['jam_mulai']);
+        final end = hhmm(jadwal['jam_selesai']);
+        final startMinutes = toMinutes(start);
+        final endMinutes = toMinutes(end);
+
+        String status = 'Akan Datang';
+        if (startMinutes >= 0 && endMinutes >= 0) {
+          if (nowMinutes >= startMinutes && nowMinutes <= endMinutes) {
+            status = 'Berlangsung';
+          } else if (nowMinutes > endMinutes) {
+            status = 'Selesai';
+          }
+        }
+
+        return _ScheduleRow(
+          time: '$start - $end',
+          className: paketName(jadwal['paket_id']),
+          subject: (jadwal['mata_pelajaran'] ?? '-').toString(),
+          mentor: mentorName(jadwal['mentor_id']),
+          room: (jadwal['ruang'] ?? '-').toString(),
+          status: status,
+        );
+      }).toList();
+
+      setState(() {
+        _todayScheduleRows = mappedRows;
+        _todayScheduleCount = mappedRows.length;
+      });
+      } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _todayScheduleRows = [];
+        _todayScheduleCount = 0;
+      });
+    }
+  }
+
   Future<void> _logout() async {
     await AuthService.logout();
     if (mounted) {
       Navigator.of(context).pushReplacementNamed('/login');
+    }
+  }
+
+  Future<void> _confirmAndLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Konfirmasi Keluar'),
+        content: const Text('Apakah Anda yakin ingin keluar dari halaman admin?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Ya'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true) {
+      await _logout();
     }
   }
 
@@ -134,12 +279,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
       _selectedMenuTitle = item.title;
     });
 
-    if (item.title == 'Kelola Jadwal') {
-      // Just update state, screen will be built in the build method
-    }
-
-    if (item.title == 'Kelola Paket Les') {
-      // Just update state, screen will be built in the build method
+    if (item.title == 'Dashboard') {
+      _loadSummary();
+      _loadTodaySchedules();
     }
   }
 
@@ -177,7 +319,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     ),
     _StatCardData(
       title: 'Jadwal Hari Ini',
-      value: (_summary?.todaySchedules ?? 0).toString(),
+      value: _todayScheduleCount.toString(),
       subtitle: 'Kelas Aktif',
       color: const Color(0xFF2E7BEF),
       backgroundColor: const Color(0xFFF0F5FF),
@@ -199,7 +341,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       return const [];
     }
 
-    return items
+    final rows = items
         .map(
           (item) => _PendingVerificationRow(
             transactionId: '',
@@ -212,9 +354,41 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
         )
         .toList();
+
+    if (_searchQuery.trim().isEmpty) {
+      return rows;
+    }
+
+    final q = _searchQuery.toLowerCase();
+    return rows
+        .where(
+          (row) =>
+              row.name.toLowerCase().contains(q) ||
+              row.school.toLowerCase().contains(q) ||
+              row.className.toLowerCase().contains(q) ||
+              row.status.toLowerCase().contains(q),
+        )
+        .toList();
   }
 
-  List<_ScheduleRow> get _scheduleRows => const [];
+  List<_ScheduleRow> get _scheduleRows {
+    if (_searchQuery.trim().isEmpty) {
+      return _todayScheduleRows;
+    }
+
+    final q = _searchQuery.toLowerCase();
+    return _todayScheduleRows
+        .where(
+          (row) =>
+              row.className.toLowerCase().contains(q) ||
+              row.subject.toLowerCase().contains(q) ||
+              row.mentor.toLowerCase().contains(q) ||
+              row.room.toLowerCase().contains(q) ||
+              row.status.toLowerCase().contains(q) ||
+              row.time.toLowerCase().contains(q),
+        )
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -471,7 +645,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 6, 12, 16),
             child: InkWell(
-              onTap: _logout,
+              onTap: _confirmAndLogout,
               borderRadius: BorderRadius.circular(8),
               child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -517,16 +691,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: _softBorderCream),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.search, size: 16, color: Color(0xFF9AA3B2)),
-                  SizedBox(width: 8),
-                  Text(
-                    'Cari...',
-                    style: TextStyle(
-                      color: Color(0xFFA0A9B7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                  const Icon(Icons.search, size: 16, color: Color(0xFF9AA3B2)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        hintText: 'Cari siswa, sekolah, kelas, mapel, mentor...',
+                        hintStyle: TextStyle(
+                          color: Color(0xFFA0A9B7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                      ),
+                      style: const TextStyle(
+                        color: Color(0xFF27344B),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -587,14 +778,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Text(
-                'Administrator',
-                style: TextStyle(color: Color(0xFF99A4B5), fontSize: 10),
+              Text(
+                _currentUser?.roleName == 'Unknown'
+                    ? 'Administrator'
+                    : _currentUser!.roleName,
+                style: const TextStyle(color: Color(0xFF99A4B5), fontSize: 10),
               ),
             ],
           ),
-          const SizedBox(width: 4),
-          const Icon(Icons.expand_more_rounded, size: 18),
         ],
       ),
     );
@@ -982,7 +1173,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${_formatIndoDate(DateTime.now())} - total ${_summary?.todaySchedules ?? _scheduleRows.length} sesi',
+                        '${_formatIndoDate(DateTime.now())} - total $_todayScheduleCount sesi',
                         style: const TextStyle(
                           color: Color(0xFFC9D7FF),
                           fontSize: 10.5,
@@ -992,7 +1183,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    final index = _menuItems.indexWhere(
+                      (item) => item.title == 'Kelola Jadwal',
+                    );
+                    if (index >= 0) {
+                      _onMenuTap(index, _menuItems[index]);
+                    }
+                  },
                   style: TextButton.styleFrom(
                     backgroundColor: Colors.white.withAlpha(
                       (0.2 * 255).round(),
@@ -1000,19 +1198,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
-                  child: const Text('+ Tambah Jadwal'),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withAlpha(
-                      (0.2 * 255).round(),
-                    ),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                  ),
-                  child: const Text('Lihat semua >'),
+                  child: const Text('Lihat semua'),
                 ),
               ],
             ),

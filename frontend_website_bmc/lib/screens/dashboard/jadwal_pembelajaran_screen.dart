@@ -1,6 +1,39 @@
 ﻿import 'package:flutter/material.dart';
 import '../../services/jadwal_pembelajaran_service.dart';
 
+// Helpers used by dialog widget (kept local to avoid referencing state methods)
+const Color _dialogHeaderBlue = Color(0xFF2563EB);
+const List<String> _dialogHariList = [
+  'Senin',
+  'Selasa',
+  'Rabu',
+  'Kamis',
+  'Jumat',
+  'Sabtu',
+  'Minggu',
+];
+
+bool _isSuccessResponseDynamic(dynamic result) {
+  if (result is Map<String, dynamic>) {
+    final status = (result['status'] ?? '').toString().toLowerCase();
+    if (status == 'success' || status == 'ok') return true;
+    final message = (result['message'] ?? '').toString().toLowerCase();
+    return message.contains('berhasil') || message.contains('success');
+  }
+  if (result is String) {
+    final text = result.toLowerCase();
+    return text == 'ok' || text.contains('berhasil') || text.contains('success');
+  }
+  return false;
+}
+
+String _extractResultMessageDynamic(dynamic result) {
+  if (result is Map<String, dynamic>) {
+    return (result['message'] ?? result['detail'] ?? result['error'] ?? '').toString();
+  }
+  return result?.toString() ?? '';
+}
+
 class JadwalPembelajaranScreen extends StatefulWidget {
   const JadwalPembelajaranScreen({super.key});
 
@@ -63,7 +96,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Γ¥î Gagal memuat data jadwal: $e'),
+          content: Text('Gagal memuat data jadwal: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -139,428 +172,61 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     return title;
   }
 
+  bool _isSuccessResponse(dynamic result) {
+    if (result is Map<String, dynamic>) {
+      final status = (result['status'] ?? '').toString().toLowerCase();
+      if (status == 'success' || status == 'ok') return true;
+
+      final message = (result['message'] ?? '').toString().toLowerCase();
+      return message.contains('berhasil') || message.contains('success');
+    }
+
+    if (result is String) {
+      final text = result.toLowerCase();
+      return text == 'ok' || text.contains('berhasil') || text.contains('success');
+    }
+
+    return false;
+  }
+
+  String _extractResultMessage(dynamic result) {
+    if (result is Map<String, dynamic>) {
+      return (result['message'] ?? result['detail'] ?? result['error'] ?? '')
+          .toString();
+    }
+    return result?.toString() ?? '';
+  }
+
+  void _showSnackBar(String message, {Color backgroundColor = Colors.red}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: backgroundColor),
+    );
+  }
+
   Future<void> _createOrUpdateJadwal({Map<String, dynamic>? existing}) async {
-    final formKey = GlobalKey<FormState>();
-
-    int? selectedPaketId = existing == null
-        ? null
-        : existing['paket_id'] as int?;
-    int? selectedMentorId = existing == null
-        ? null
-        : existing['mentor_id'] as int?;
-    String? selectedHariValue = existing == null
-        ? null
-        : existing['hari']?.toString();
-    final mataPelajaranController = TextEditingController(
-      text: existing?['mata_pelajaran']?.toString() ?? '',
-    );
-    final jamMulaiController = TextEditingController(
-      text: existing == null ? '' : _timeToString(existing['jam_mulai']),
-    );
-    final jamSelesaiController = TextEditingController(
-      text: existing == null ? '' : _timeToString(existing['jam_selesai']),
-    );
-    final ruangController = TextEditingController(
-      text: existing?['ruang']?.toString() ?? '',
-    );
-    bool isSubmitting = false;
-
-    await showDialog<void>(
+    final didSave = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            Future<void> pickAndSetTime(
-              TextEditingController controller,
-            ) async {
-              final picked = await showTimePicker(
-                context: dialogContext,
-                initialTime: TimeOfDay(
-                  hour: int.tryParse(controller.text.split(':').first) ?? 8,
-                  minute:
-                      int.tryParse(
-                        controller.text.split(':').length > 1
-                            ? controller.text.split(':')[1]
-                            : '0',
-                      ) ??
-                      0,
-                ),
-              );
-              if (picked != null) {
-                setModalState(() {
-                  controller.text =
-                      '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-                });
-              }
-            }
-
-            Future<void> submit() async {
-              if (!(formKey.currentState?.validate() ?? false)) return;
-              if (selectedPaketId == null || selectedMentorId == null) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  const SnackBar(
-                    content: Text('Γ¥î Paket dan mentor wajib dipilih'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
-
-              setModalState(() => isSubmitting = true);
-
-              final payload = <String, dynamic>{
-                'paket_id': selectedPaketId,
-                'mentor_id': selectedMentorId,
-                'hari': selectedHariValue ?? '',
-                'jam_mulai': jamMulaiController.text.trim(),
-                'jam_selesai': jamSelesaiController.text.trim(),
-                'mata_pelajaran': mataPelajaranController.text.trim(),
-                'ruang': ruangController.text.trim(),
-              };
-
-              final result = existing == null
-                  ? await JadwalService.createJadwal(payload)
-                  : await JadwalService.updateJadwal(
-                      existing['id'] as int,
-                      payload,
-                    );
-
-              if (!mounted) return;
-
-              setModalState(() => isSubmitting = false);
-
-              if (result['status'] == 'success') {
-                Navigator.of(dialogContext).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      existing == null
-                          ? 'Γ£à Jadwal berhasil dibuat'
-                          : 'Γ£à Jadwal berhasil diupdate',
-                    ),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                _loadInitialData();
-              } else {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Γ¥î ${result['message'] ?? 'Gagal menyimpan jadwal'}',
-                    ),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            }
-
-            return Dialog(
-              insetPadding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 24,
-              ),
-              backgroundColor: Colors.transparent,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 840,
-                  maxHeight: MediaQuery.of(dialogContext).size.height * 0.9,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color.fromRGBO(15, 23, 42, 0.18),
-                        blurRadius: 30,
-                        offset: Offset(0, 18),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(24, 20, 18, 20),
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 42,
-                                height: 42,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.16),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  existing == null
-                                      ? Icons.add
-                                      : Icons.edit_rounded,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      existing == null
-                                          ? 'Tambah Jadwal'
-                                          : 'Edit Jadwal',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      existing == null
-                                          ? 'Buat jadwal baru yang akan muncul pada jadwal mingguan.'
-                                          : 'Perbarui jadwal yang sudah tersimpan.',
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 12.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () => Navigator.pop(dialogContext),
-                                icon: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Flexible(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
-                            child: SingleChildScrollView(
-                              child: Form(
-                                key: formKey,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    DropdownButtonFormField<int>(
-                                      value: selectedPaketId,
-                                      items: paketList
-                                          .map(
-                                            (paket) => DropdownMenuItem<int>(
-                                              value: paket['id'] as int,
-                                              child: Text(_packageLabel(paket)),
-                                            ),
-                                          )
-                                          .toList(),
-                                      onChanged: (value) => setModalState(
-                                        () => selectedPaketId = value,
-                                      ),
-                                      validator: (value) => value == null
-                                          ? 'Paket wajib dipilih'
-                                          : null,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Paket Les',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    DropdownButtonFormField<int>(
-                                      value: selectedMentorId,
-                                      items: mentorList
-                                          .map(
-                                            (mentor) => DropdownMenuItem<int>(
-                                              value: mentor['id'] as int,
-                                              child: Text(_mentorLabel(mentor)),
-                                            ),
-                                          )
-                                          .toList(),
-                                      onChanged: (value) => setModalState(
-                                        () => selectedMentorId = value,
-                                      ),
-                                      validator: (value) => value == null
-                                          ? 'Mentor wajib dipilih'
-                                          : null,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Mentor',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    DropdownButtonFormField<String>(
-                                      value: selectedHariValue,
-                                      items: hariList
-                                          .map(
-                                            (hari) => DropdownMenuItem<String>(
-                                              value: hari,
-                                              child: Text(hari),
-                                            ),
-                                          )
-                                          .toList(),
-                                      onChanged: (value) => setModalState(
-                                        () => selectedHariValue = value,
-                                      ),
-                                      validator: (value) =>
-                                          value == null || value.isEmpty
-                                          ? 'Hari wajib dipilih'
-                                          : null,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Hari',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    TextFormField(
-                                      controller: jamMulaiController,
-                                      readOnly: true,
-                                      onTap: () =>
-                                          pickAndSetTime(jamMulaiController),
-                                      validator: (value) =>
-                                          value == null || value.isEmpty
-                                          ? 'Jam mulai wajib diisi'
-                                          : null,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Jam Mulai',
-                                        hintText: '08:00',
-                                        border: OutlineInputBorder(),
-                                        suffixIcon: Icon(
-                                          Icons.access_time_rounded,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    TextFormField(
-                                      controller: jamSelesaiController,
-                                      readOnly: true,
-                                      onTap: () =>
-                                          pickAndSetTime(jamSelesaiController),
-                                      validator: (value) =>
-                                          value == null || value.isEmpty
-                                          ? 'Jam selesai wajib diisi'
-                                          : null,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Jam Selesai',
-                                        hintText: '09:30',
-                                        border: OutlineInputBorder(),
-                                        suffixIcon: Icon(
-                                          Icons.access_time_rounded,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    TextFormField(
-                                      controller: mataPelajaranController,
-                                      validator: (value) =>
-                                          value == null || value.isEmpty
-                                          ? 'Mata pelajaran wajib diisi'
-                                          : null,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Mata Pelajaran',
-                                        border: OutlineInputBorder(),
-                                        hintText: 'Matematika',
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    TextFormField(
-                                      controller: ruangController,
-                                      validator: (value) =>
-                                          value == null || value.isEmpty
-                                          ? 'Ruang wajib diisi'
-                                          : null,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Ruang',
-                                        border: OutlineInputBorder(),
-                                        hintText: 'Ruang A',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              OutlinedButton(
-                                onPressed: isSubmitting
-                                    ? null
-                                    : () => Navigator.of(dialogContext).pop(),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF475569),
-                                  side: const BorderSide(
-                                    color: Color(0xFFD6DEEA),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 18,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: const Text('Batal'),
-                              ),
-                              const SizedBox(width: 12),
-                              ElevatedButton(
-                                onPressed: isSubmitting ? null : submit,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _headerBlue,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: isSubmitting
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(
-                                        existing == null ? 'Simpan' : 'Update',
-                                      ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+      builder: (ctx) => _JadwalFormDialog(
+        parentContext: context,
+        existing: existing,
+        paketList: paketList,
+        mentorList: mentorList,
+      ),
     );
 
-    mataPelajaranController.dispose();
-    jamMulaiController.dispose();
-    jamSelesaiController.dispose();
-    ruangController.dispose();
+    if (didSave == true && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await _loadInitialData();
+        if (!mounted) return;
+        _showSnackBar(
+          existing == null ? 'Jadwal berhasil dibuat' : 'Jadwal berhasil diupdate',
+          backgroundColor: Colors.green,
+        );
+      });
+    }
   }
 
   Future<void> _showDeleteDialog(int id) async {
@@ -592,18 +258,19 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     if (confirmed == true) {
       final result = await JadwalService.deleteJadwal(id);
       if (!mounted) return;
-      if (result['status'] == 'success') {
+      if (_isSuccessResponse(result)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Γ£à Jadwal berhasil dihapus'),
+            content: Text('Jadwal berhasil dihapus'),
             backgroundColor: Colors.green,
           ),
         );
         _loadInitialData();
       } else {
+        final msg = _extractResultMessage(result);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Γ¥î ${result['message'] ?? 'Gagal hapus jadwal'}'),
+            content: Text(msg.isNotEmpty ? msg : 'Gagal hapus jadwal'),
             backgroundColor: Colors.red,
           ),
         );
@@ -670,7 +337,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         DataCell(Text((jadwal['mata_pelajaran'] ?? '-').toString())),
         DataCell(Text(_resolveMentorName(mentorId ?? 0))),
         DataCell(Text((jadwal['ruang'] ?? '-').toString())),
-        const DataCell(Text('0')),
         DataCell(
           Row(
             children: [
@@ -912,7 +578,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                           DataColumn(label: Text('MATA PELAJARAN')),
                           DataColumn(label: Text('MENTOR')),
                           DataColumn(label: Text('RUANG')),
-                          DataColumn(label: Text('SISWA')),
                           DataColumn(label: Text('AKSI')),
                         ],
                         rows: _filteredRows
@@ -1015,6 +680,265 @@ class _StatCard extends StatelessWidget {
             child: Icon(icon, color: color, size: 24),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _JadwalFormDialog extends StatefulWidget {
+  final BuildContext parentContext;
+  final Map<String, dynamic>? existing;
+  final List<Map<String, dynamic>> paketList;
+  final List<Map<String, dynamic>> mentorList;
+
+  const _JadwalFormDialog({
+    required this.parentContext,
+    this.existing,
+    required this.paketList,
+    required this.mentorList,
+  });
+
+  @override
+  State<_JadwalFormDialog> createState() => _JadwalFormDialogState();
+}
+
+class _JadwalFormDialogState extends State<_JadwalFormDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late int? _selectedPaketId;
+  late int? _selectedMentorId;
+  late String? _selectedHariValue;
+  late TextEditingController _mataPelajaranController;
+  late TextEditingController _jamMulaiController;
+  late TextEditingController _jamSelesaiController;
+  late TextEditingController _ruangController;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.existing;
+    final existingPaketIdRaw = existing?['paket_id'];
+    final existingMentorIdRaw = existing?['mentor_id'];
+    _selectedPaketId = existingPaketIdRaw is int
+        ? existingPaketIdRaw
+        : int.tryParse(existingPaketIdRaw?.toString() ?? '');
+    _selectedMentorId = existingMentorIdRaw is int
+        ? existingMentorIdRaw
+        : int.tryParse(existingMentorIdRaw?.toString() ?? '');
+    _selectedHariValue = existing?['hari']?.toString();
+    _mataPelajaranController = TextEditingController(
+        text: existing?['mata_pelajaran']?.toString() ?? '');
+    _jamMulaiController = TextEditingController(
+        text: existing == null ? '' : _timeToString(existing['jam_mulai']));
+    _jamSelesaiController = TextEditingController(
+        text: existing == null ? '' : _timeToString(existing['jam_selesai']));
+    _ruangController =
+        TextEditingController(text: existing?['ruang']?.toString() ?? '');
+  }
+
+  @override
+  void dispose() {
+    _mataPelajaranController.dispose();
+    _jamMulaiController.dispose();
+    _jamSelesaiController.dispose();
+    _ruangController.dispose();
+    super.dispose();
+  }
+
+  String _timeToString(dynamic value) {
+    if (value == null) return '';
+    final text = value.toString();
+    if (text.isEmpty) return '';
+    if (text.contains('T')) {
+      final parsed = DateTime.tryParse(text);
+      if (parsed != null) {
+        return '${parsed.hour.toString().padLeft(2, '0')}:${parsed.minute.toString().padLeft(2, '0')}';
+      }
+    }
+    final parts = text.split(':');
+    if (parts.length >= 2) {
+      return '${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}';
+    }
+    return text;
+  }
+
+  Future<void> _pickAndSetTime(TextEditingController controller) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: int.tryParse(controller.text.split(':').first) ?? 8,
+        minute: int.tryParse(controller.text.split(':').length > 1
+                ? controller.text.split(':')[1]
+                : '0') ??
+            0,
+      ),
+    );
+
+    if (picked != null && mounted) {
+      setState(() {
+        controller.text =
+            '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      });
+    }
+  }
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_selectedPaketId == null || _selectedMentorId == null) {
+      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+        const SnackBar(content: Text('Paket dan mentor wajib dipilih')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final payload = <String, dynamic>{
+        'paket_id': _selectedPaketId,
+        'mentor_id': _selectedMentorId,
+        'hari': _selectedHariValue ?? '',
+        'jam_mulai': _jamMulaiController.text.trim(),
+        'jam_selesai': _jamSelesaiController.text.trim(),
+        'mata_pelajaran': _mataPelajaranController.text.trim(),
+        'ruang': _ruangController.text.trim(),
+      };
+
+      final existingIdRaw = widget.existing?['id'];
+      final existingId = existingIdRaw is int
+          ? existingIdRaw
+          : int.tryParse(existingIdRaw?.toString() ?? '');
+
+      if (widget.existing != null && existingId == null) {
+        throw Exception('ID jadwal tidak valid');
+      }
+
+      final result = widget.existing == null
+          ? await JadwalService.createJadwal(payload)
+          : await JadwalService.updateJadwal(existingId!, payload);
+
+      if (!mounted) return;
+
+      if (_isSuccessResponseDynamic(result)) {
+        Navigator.of(context).pop(true);
+      } else {
+        final msg = _extractResultMessageDynamic(result);
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+          SnackBar(content: Text(msg.isNotEmpty ? msg : 'Gagal menyimpan jadwal')),
+        );
+        setState(() => _isSubmitting = false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final existing = widget.existing;
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 840, maxHeight: MediaQuery.of(context).size.height * 0.9),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [BoxShadow(color: Color.fromRGBO(15, 23, 42, 0.18), blurRadius: 30, offset: Offset(0, 18))],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 18, 20),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)),
+                        child: Icon(existing == null ? Icons.add : Icons.edit_rounded, color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(existing == null ? 'Tambah Jadwal' : 'Edit Jadwal', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 4),
+                            Text(existing == null ? 'Buat jadwal baru yang akan muncul pada jadwal mingguan.' : 'Perbarui jadwal yang sudah tersimpan.', style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
+                          ],
+                        ),
+                      ),
+                      IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white)),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
+                    child: SingleChildScrollView(
+                        child: Form(
+                        key: _formKey,
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          DropdownButtonFormField<int>(
+                            value: _selectedPaketId,
+                            items: widget.paketList.map((paket) => DropdownMenuItem<int>(value: paket['id'] as int, child: Text((paket['nama_paket'] ?? paket['nama'] ?? 'Paket').toString()))).toList(),
+                            onChanged: (v) => setState(() => _selectedPaketId = v),
+                            validator: (v) => v == null ? 'Paket wajib dipilih' : null,
+                            decoration: const InputDecoration(labelText: 'Paket Les', border: OutlineInputBorder()),
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<int>(
+                            value: _selectedMentorId,
+                            items: widget.mentorList.map((mentor) => DropdownMenuItem<int>(value: mentor['id'] as int, child: Text((mentor['nama_mentor'] ?? mentor['nama'] ?? 'Mentor').toString()))).toList(),
+                            onChanged: (v) => setState(() => _selectedMentorId = v),
+                            validator: (v) => v == null ? 'Mentor wajib dipilih' : null,
+                            decoration: const InputDecoration(labelText: 'Mentor', border: OutlineInputBorder()),
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<String>(
+                            value: _selectedHariValue,
+                            items: _dialogHariList.map((hari) => DropdownMenuItem<String>(value: hari, child: Text(hari))).toList(),
+                            onChanged: (v) => setState(() => _selectedHariValue = v),
+                            validator: (v) => v == null || v.isEmpty ? 'Hari wajib dipilih' : null,
+                            decoration: const InputDecoration(labelText: 'Hari', border: OutlineInputBorder()),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(controller: _jamMulaiController, readOnly: true, onTap: () => _pickAndSetTime(_jamMulaiController), validator: (v) => v == null || v.isEmpty ? 'Jam mulai wajib diisi' : null, decoration: const InputDecoration(labelText: 'Jam Mulai', hintText: '08:00', border: OutlineInputBorder(), suffixIcon: Icon(Icons.access_time_rounded))),
+                          const SizedBox(height: 12),
+                          TextFormField(controller: _jamSelesaiController, readOnly: true, onTap: () => _pickAndSetTime(_jamSelesaiController), validator: (v) => v == null || v.isEmpty ? 'Jam selesai wajib diisi' : null, decoration: const InputDecoration(labelText: 'Jam Selesai', hintText: '09:30', border: OutlineInputBorder(), suffixIcon: Icon(Icons.access_time_rounded))),
+                          const SizedBox(height: 12),
+                          TextFormField(controller: _mataPelajaranController, validator: (v) => v == null || v.isEmpty ? 'Mata pelajaran wajib diisi' : null, decoration: const InputDecoration(labelText: 'Mata Pelajaran', border: OutlineInputBorder(), hintText: 'Matematika')),
+                          const SizedBox(height: 12),
+                          TextFormField(controller: _ruangController, validator: (v) => v == null || v.isEmpty ? 'Ruang wajib diisi' : null, decoration: const InputDecoration(labelText: 'Ruang', border: OutlineInputBorder(), hintText: 'Ruang A')),
+                        ]),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                    OutlinedButton(onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(), style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF475569), side: const BorderSide(color: Color(0xFFD6DEEA)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Batal')),
+                    const SizedBox(width: 12),
+                    ElevatedButton(onPressed: _isSubmitting ? null : _submit, style: ElevatedButton.styleFrom(backgroundColor: _dialogHeaderBlue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: _isSubmitting ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(widget.existing == null ? 'Simpan' : 'Update')),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
