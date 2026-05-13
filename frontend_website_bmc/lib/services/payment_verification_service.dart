@@ -168,4 +168,29 @@ class PaymentVerificationService {
       throw Exception(_extractErrorMessage(response));
     }
   }
+
+  // ==================================================
+  // DELETE PAYMENT VERIFICATION
+  // ==================================================
+  static Future<void> deletePayment(
+    String transactionId,
+  ) async {
+    final token = await _getToken();
+
+    final response = await http.delete(
+      Uri.parse(
+        '$baseUrl/admin/payment/$transactionId',
+      ),
+      headers: {
+        'Authorization':
+            'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        _extractErrorMessage(response),
+      );
+    }
+  }
 }

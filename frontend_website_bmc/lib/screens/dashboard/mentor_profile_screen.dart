@@ -166,18 +166,18 @@ class _MentorProfileScreenState extends State<MentorProfileScreen> {
                             final stacked = constraints.maxWidth < 720;
                             final cards = [
                               _buildInfoCard(
-                                title: 'Data Akun',
+                                title: 'Data Login',
                                 items: [
                                   _ProfileItem(
-                                    label: 'Nama Lengkap',
+                                    label: 'Nama Login',
                                     value: user?.nama ?? '-',
                                   ),
                                   _ProfileItem(
-                                    label: 'Email',
+                                    label: 'Email Login',
                                     value: user?.email ?? '-',
                                   ),
                                   _ProfileItem(
-                                    label: 'Role',
+                                    label: 'Role Login',
                                     value: user?.roleName ?? '-',
                                   ),
                                 ],
@@ -251,7 +251,7 @@ class _MentorProfileScreenState extends State<MentorProfileScreen> {
                             border: Border.all(color: const Color(0xFFE2E8F0)),
                           ),
                           child: const Text(
-                            'Halaman ini dibuat untuk menampilkan data mentor secara lebih lengkap. Jika Anda ingin, saya bisa tambahkan edit profil, foto profil, atau riwayat aktivitas berikutnya.',
+                            'Data di halaman ini diambil dari sesi login yang tersimpan, jadi nama, email, dan role akan mengikuti akun yang dipakai masuk ke portal.',
                             style: TextStyle(
                               fontSize: 13,
                               color: Color(0xFF475569),
