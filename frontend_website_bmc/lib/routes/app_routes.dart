@@ -12,6 +12,8 @@ import '../screens/mentor/evaluasi_siswa_screen.dart';
 import '../screens/mentor/latihan_soal_screen.dart';
 import '../screens/mentor/materi_pembelajaran_screen.dart';
 import '../screens/dashboard/verifikasi_pendaftaran_screen.dart';
+import '../screens/mentor_management_screen.dart';
+import '../screens/payment_verification_screen.dart';
 import '../services/auth_service.dart';
 import '../screens/dashboard/admin_kelola_absensi_screen.dart';
 import '../screens/dashboard/admin_kelola_alumni_screen.dart';

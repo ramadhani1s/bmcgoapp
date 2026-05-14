@@ -155,7 +155,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Γ£à Paket les berhasil dibuat"),
+              content: Text("Paket les berhasil dibuat"),
               backgroundColor: Colors.green,
             ),
           );
@@ -1055,12 +1055,14 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                               if (paket['tanggal_mulai_promo'] != null)
                                 _buildDetailRow(
                                   'Promo Dari',
-                                  (paket['tanggal_mulai_promo'] ?? '-').toString(),
+                                  (paket['tanggal_mulai_promo'] ?? '-')
+                                      .toString(),
                                 ),
                               if (paket['tanggal_selesai_promo'] != null)
                                 _buildDetailRow(
                                   'Promo Sampai',
-                                  (paket['tanggal_selesai_promo'] ?? '-').toString(),
+                                  (paket['tanggal_selesai_promo'] ?? '-')
+                                      .toString(),
                                 ),
                             ],
                           ),

@@ -43,9 +43,6 @@ class PaymentVerificationService {
   static const String baseUrl = 'http://localhost:8080';
   static final ApiClient _client = ApiClient(baseUrl: baseUrl);
 
-  static const String baseUrl =
-      'http://localhost:8080';
-
   static Map<String, dynamic> _decodeObject(String body) {
     try {
       final decoded = jsonDecode(body);
@@ -104,11 +101,16 @@ class PaymentVerificationService {
           .map(PaymentVerificationItem.fromJson)
           .toList();
 
-      final waiting = items.where((item) => item.status == 'success' && !item.isVerified).length;
+      final waiting = items
+          .where((item) => item.status == 'success' && !item.isVerified)
+          .length;
       final approved = items.where((item) => item.isVerified).length;
       final rejected = items.where((item) {
         final status = item.status;
-        return status == 'failed' || status == 'cancel' || status == 'deny' || status == 'expire';
+        return status == 'failed' ||
+            status == 'cancel' ||
+            status == 'deny' ||
+            status == 'expire';
       }).length;
 
       return PaymentVerificationOverview(
@@ -119,13 +121,16 @@ class PaymentVerificationService {
       );
     }
 
-    if (fallbackResponse.statusCode == 401 || fallbackResponse.statusCode == 403) {
+    if (fallbackResponse.statusCode == 401 ||
+        fallbackResponse.statusCode == 403) {
       throw Exception('Sesi admin tidak valid. Silakan login ulang.');
     }
 
     final fallbackError = _extractErrorMessage(fallbackResponse);
     if (firstError.isNotEmpty || fallbackError.isNotEmpty) {
-      throw Exception('Gagal memuat overview verifikasi pembayaran. $firstError $fallbackError');
+      throw Exception(
+        'Gagal memuat overview verifikasi pembayaran. $firstError $fallbackError',
+      );
     }
 
     return const PaymentVerificationOverview(
@@ -138,11 +143,18 @@ class PaymentVerificationService {
 
   static Future<List<PaymentVerificationItem>> getPendingVerifications() async {
     final overview = await getOverview();
-    return overview.items.where((item) => item.status == 'success' && !item.isVerified).toList();
+    return overview.items
+        .where((item) => item.status == 'success' && !item.isVerified)
+        .toList();
   }
 
-  static Future<Map<String, dynamic>> verifyPayment(String transactionId) async {
-    final response = await _client.post('/admin/payment/$transactionId/approve', auth: true);
+  static Future<Map<String, dynamic>> verifyPayment(
+    String transactionId,
+  ) async {
+    final response = await _client.post(
+      '/admin/payment/$transactionId/approve',
+      auth: true,
+    );
 
     if (response.statusCode == 200) {
       final decoded = _decodeObject(response.body);
@@ -157,7 +169,10 @@ class PaymentVerificationService {
   }
 
   static Future<void> rejectPayment(String transactionId) async {
-    final response = await _client.post('/admin/payment/$transactionId/reject', auth: true);
+    final response = await _client.post(
+      '/admin/payment/$transactionId/reject',
+      auth: true,
+    );
 
     if (response.statusCode != 200) {
       throw Exception(_extractErrorMessage(response));
@@ -165,7 +180,10 @@ class PaymentVerificationService {
   }
 
   static Future<void> deletePayment(String transactionId) async {
-    final response = await _client.delete('/admin/payment/$transactionId', auth: true);
+    final response = await _client.delete(
+      '/admin/payment/$transactionId',
+      auth: true,
+    );
 
     if (response.statusCode != 200) {
       throw Exception(_extractErrorMessage(response));
@@ -175,25 +193,16 @@ class PaymentVerificationService {
   // ==================================================
   // DELETE PAYMENT VERIFICATION
   // ==================================================
-  static Future<void> deletePayment(
-    String transactionId,
-  ) async {
+  static Future<void> deletePayment(String transactionId) async {
     final token = await _getToken();
 
     final response = await http.delete(
-      Uri.parse(
-        '$baseUrl/admin/payment/$transactionId',
-      ),
-      headers: {
-        'Authorization':
-            'Bearer $token',
-      },
+      Uri.parse('$baseUrl/admin/payment/$transactionId'),
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
-        _extractErrorMessage(response),
-      );
+      throw Exception(_extractErrorMessage(response));
     }
   }
 }
