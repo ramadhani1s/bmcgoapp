@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../models/mentor_competition_item.dart';
 import '../../services/mentor_competition_service.dart';
 import '../mentor/tryout_soal_management_screen.dart';
@@ -143,7 +144,7 @@ class _MentorCompetitionManagementState
                 decoration: BoxDecoration(
                   color: item.isPublished
                       ? const Color(0xFFDCFCE7)
-                      : const Color(0xFFFEF3C7),
+                      : AppColors.blueLightBg,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -163,15 +164,15 @@ class _MentorCompetitionManagementState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3E8FF),
+                  color: AppColors.blueLightBg,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFE9D5FF)),
+                  border: Border.all(color: AppColors.softBorder),
                 ),
                 child: Text(
                   item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel,
                   style: const TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF7C3AED),
+                    color: AppColors.accentBlue,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -180,15 +181,15 @@ class _MentorCompetitionManagementState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: AppColors.blueLightBg,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFFFEDD5)),
+                  border: Border.all(color: AppColors.softBorder),
                 ),
                 child: Text(
                   '${item.durationLabel} menit',
                   style: const TextStyle(
                     fontSize: 10,
-                    color: Color(0xFFF59E0B),
+                    color: AppColors.accentBlue,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -354,7 +355,7 @@ class _MentorCompetitionManagementState
                 decoration: BoxDecoration(
                   color: item.isPublished
                       ? const Color(0xFFDCFCE7)
-                      : const Color(0xFFFEF3C7),
+                      : AppColors.blueLightBg,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -379,15 +380,15 @@ class _MentorCompetitionManagementState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3E8FF),
+                  color: AppColors.blueLightBg,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFE9D5FF)),
+                  border: Border.all(color: AppColors.softBorder),
                 ),
                 child: Text(
                   item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel,
                   style: const TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF7C3AED),
+                    color: AppColors.accentBlue,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -601,31 +602,55 @@ class _MentorCompetitionManagementState
               padding: const EdgeInsets.all(20),
               children: [
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    color: widget.accentColor,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.accentColor.withAlpha(
+                          (0.15 * 255).round(),
+                        ),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        widget.subtitle,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF111827),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.subtitle,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Kelola data ${widget.type == 'tryout' ? 'try out' : 'olimpiade'} dengan tampilan yang sederhana dan jelas.',
+                              style: TextStyle(
+                                color: Colors.white.withAlpha(
+                                  (0.9 * 255).round(),
+                                ),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Kelola data ${widget.type == 'tryout' ? 'try out' : 'olimpiade'} dengan tampilan yang sederhana dan jelas.',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          height: 1.5,
-                          color: Color(0xFF6B7280),
-                        ),
+                      const SizedBox(width: 24),
+                      Icon(
+                        widget.type == 'tryout'
+                            ? Icons.rocket_launch
+                            : Icons.emoji_events,
+                        color: Colors.white,
+                        size: 64,
                       ),
                     ],
                   ),

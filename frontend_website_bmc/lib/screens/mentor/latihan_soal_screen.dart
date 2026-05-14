@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../models/soal_latihan.dart';
 import '../../services/latihan_soal_service.dart';
-import '../../widgets/soal_overview_card.dart';
+// removed unused import
 import 'create_latihan_screen.dart';
 import 'mengelola_soal_screen.dart';
 
@@ -39,8 +40,10 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   ];
 
   String _selectedMapel = 'Matematika';
-  String _selectedStatusFilter = '';
-  String _selectedMapelFilter = '';
+  final String _selectedStatusFilter = '';
+  final String _selectedMapelFilter = '';
+
+  static const Color _primaryBlue = Color(0xFF2563EB);
 
   Future<void> _pickJadwalDate() async {
     final now = DateTime.now();
@@ -254,78 +257,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     }
   }
 
-  Future<void> _deleteItem(SoalLatihan item) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          title: const Text(
-            'Hapus soal latihan?',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
-            ),
-          ),
-          content: const Text(
-            'Data soal ini akan dihapus permanen.',
-            style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF6B7280),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Hapus'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true) {
-      return;
-    }
-
-    final response = await LatihanSoalService.deleteSoalLatihan(item.id);
-    if (!mounted) {
-      return;
-    }
-
-    if (response['success'] != true) {
-      _showMessage(
-        response['message'] ?? 'Gagal menghapus soal',
-        isError: true,
-      );
-      return;
-    }
-
-    _showMessage(response['message'] ?? 'Soal berhasil dihapus');
-    await _loadItems();
-  }
+  // _deleteItem removed — unused after refactor
 
   Future<void> _deleteLatihanByMapel(
     String mapel,
@@ -460,44 +392,49 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   }
 
   Widget _buildPageHeader() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Kelola Soal Latihan',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2937),
-                  letterSpacing: -0.6,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Buat dan kelola soal latihan untuk siswa Anda',
-                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-              ),
-            ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: _primaryBlue,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryBlue.withAlpha((0.15 * 255).round()),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        const SizedBox(width: 16),
-        ElevatedButton(
-          onPressed: _openCreateForm,
-          child: const Text('Buat Latihan Baru'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2563EB),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Kelola Soal Latihan',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Buat dan kelola soal latihan untuk siswa Anda',
+                  style: TextStyle(
+                    color: Colors.white.withAlpha((0.9 * 255).round()),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 24),
+          const Icon(Icons.menu_book, color: Colors.white, size: 64),
+        ],
+      ),
     );
   }
 
@@ -601,27 +538,46 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.softBorder),
       ),
-      child: Column(
+      child: Row(
         children: [
-          TextField(
-            controller: _searchController,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              hintText: 'Cari soal latihan...',
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280)),
-              filled: true,
-              fillColor: const Color(0xFFF3F4F6),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'Cari soal latihan...',
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280)),
+                filled: true,
+                fillColor: const Color(0xFFF3F4F6),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            height: 46,
+            child: ElevatedButton.icon(
+              onPressed: _openCreateForm,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Tambah Latihan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accentBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
@@ -965,172 +921,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     );
   }
 
-  Widget _buildBadge(String text, Color background, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMiniInfoCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 18, color: const Color(0xFF9CA3AF)),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuestionCard(SoalLatihan item, int indexNumber) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFEDD5),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Center(
-                  child: Text(
-                    '$indexNumber',
-                    style: const TextStyle(
-                      color: Color(0xFFFB5607),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Soal Latihan',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-              ),
-              Text(
-                'Kunci ${item.jawaban.toUpperCase()}',
-                style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _parseStoredQuestion(item.pertanyaan).questionText,
-            style: const TextStyle(
-              color: Color(0xFF111827),
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 10),
-          _optionTile('A', item.pilihanA, item.jawaban),
-          const SizedBox(height: 6),
-          _optionTile('B', item.pilihanB, item.jawaban),
-          const SizedBox(height: 6),
-          _optionTile('C', item.pilihanC, item.jawaban),
-          const SizedBox(height: 6),
-          _optionTile('D', item.pilihanD, item.jawaban),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              TextButton.icon(
-                onPressed: () => _openEditForm(item),
-                icon: const Icon(Icons.edit_outlined, size: 16),
-                label: const Text('Edit'),
-              ),
-              const SizedBox(width: 8),
-              TextButton.icon(
-                onPressed: () => _deleteItem(item),
-                icon: const Icon(
-                  Icons.delete_outline,
-                  size: 16,
-                  color: Color(0xFFEF4444),
-                ),
-                label: const Text(
-                  'Hapus',
-                  style: TextStyle(color: Color(0xFFEF4444)),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _optionTile(String key, String text, String answer) {
-    final isAnswer = answer.toUpperCase() == key;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: isAnswer ? const Color(0xFFECFDF3) : const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isAnswer ? const Color(0xFF22C55E) : const Color(0xFFE5E7EB),
-        ),
-      ),
-      child: Text(
-        '$key  $text',
-        style: TextStyle(
-          color: isAnswer ? const Color(0xFF166534) : const Color(0xFF374151),
-          fontWeight: isAnswer ? FontWeight.w600 : FontWeight.w400,
-          fontSize: 13,
-        ),
-      ),
-    );
-  }
+  // _optionTile removed — unused after removing question card
 
   Widget _buildFormView() {
     return SingleChildScrollView(
@@ -1467,40 +1258,6 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           },
         ),
       ],
-    );
-  }
-
-  Widget _buildStatChip(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: const Color(0xFF2563EB)),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              Text(
-                label,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 

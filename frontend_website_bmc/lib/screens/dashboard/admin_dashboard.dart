@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/user.dart';
+import '../../core/theme/app_colors.dart';
 import '../../models/admin_dashboard_data.dart';
 import '../../models/payment_verification_item.dart'; // ✅ FIX PENTING
 
@@ -12,6 +13,7 @@ import 'jadwal_pembelajaran_screen.dart';
 import 'verifikasi_pendaftaran_screen.dart';
 import 'pengumuman_screen.dart';
 import 'admin_kelola_absensi_screen.dart';
+import 'admin_kelola_alumni_screen.dart';
 import '../mentor_management_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -24,11 +26,11 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  static const Color _pageCream = Color(0xFFF1F4FA);
-  static const Color _sidebarCream = Color(0xFFF8FAFD);
-  static const Color _surfaceCream = Colors.white;
-  static const Color _borderCream = Color(0xFFDDE4F0);
-  static const Color _softBorderCream = Color(0xFFE9EFF8);
+  static const Color _pageCream = AppColors.pageBg;
+  static const Color _sidebarCream = AppColors.sidebarBg;
+  static const Color _surfaceCream = AppColors.surface;
+  static const Color _borderCream = AppColors.border;
+  static const Color _softBorderCream = AppColors.softBorder;
 
   User? _currentUser;
   int _selectedMenuIndex = 0;
@@ -102,7 +104,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       _isQuickPendingLoading = true;
     });
     try {
-      final items = await AdminDashboardService.getPendingPaymentVerifications();
+      final items =
+          await AdminDashboardService.getPendingPaymentVerifications();
       if (!mounted) return;
       setState(() {
         _quickPendingItems = items;
@@ -243,11 +246,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             embeddedInDashboard: true,
                           )
                         else if (_selectedMenuTitle == 'Kelola Jadwal')
-                          const JadwalPembelajaranScreen()
+                          const Material(
+                            type: MaterialType.transparency,
+                            child: JadwalPembelajaranScreen(),
+                          )
                         else if (_selectedMenuTitle == 'Kelola Paket Les')
-                          const PaketLesScreen()
+                          const Material(
+                            type: MaterialType.transparency,
+                            child: PaketLesScreen(),
+                          )
                         else if (_selectedMenuTitle == 'Kelola Pengumuman')
-                          PengumumanScreen()
+                          const Material(
+                            type: MaterialType.transparency,
+                            child: PengumumanScreen(),
+                          )
                         else if (_selectedMenuTitle == 'Verifikasi Pendaftaran')
                           const VerifikasiPendaftaranScreen()
                         else if (_selectedMenuTitle == 'Kelola Absensi')
@@ -353,11 +365,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       width: 214,
       decoration: BoxDecoration(
         color: _sidebarCream,
-        border: const Border(
+        border: Border(
           right: BorderSide(color: _borderCream),
           top: BorderSide(color: _borderCream),
           bottom: BorderSide(color: _borderCream),
-          left: BorderSide(color: Color(0xFF2A8CF4), width: 2),
+          left: BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
       child: Column(
@@ -607,11 +619,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2B57E4), Color(0xFF2756F0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppColors.primaryGradient,
         borderRadius: BorderRadius.circular(10),
         boxShadow: const [
           BoxShadow(
@@ -801,7 +809,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if ((_quickPendingItems == null) || _quickPendingItems!.isEmpty)
+                else if ((_quickPendingItems == null) ||
+                    _quickPendingItems!.isEmpty)
                   const _EmptyTableRow(
                     message: 'Belum ada pendaftaran yang menunggu verifikasi.',
                   )
@@ -810,21 +819,50 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Color(0xFFF0E6D8))),
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFFF0E6D8)),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Expanded(child: Text(item.studentName, style: const TextStyle(fontSize: 12))),
-                          Expanded(child: Text(item.schoolName, style: const TextStyle(fontSize: 12))),
-                          Expanded(child: Text(item.className, style: const TextStyle(fontSize: 12))),
-                          Expanded(child: Text('${item.createdAt.day.toString().padLeft(2, '0')} ${_monthName(item.createdAt.month).substring(0,3)} ${item.createdAt.year}', style: const TextStyle(fontSize: 12))),
+                          Expanded(
+                            child: Text(
+                              item.studentName,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              item.schoolName,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              item.className,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              '${item.createdAt.day.toString().padLeft(2, '0')} ${_monthName(item.createdAt.month).substring(0, 3)} ${item.createdAt.year}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
                           Expanded(
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: _getStatusBgColorDashboard(item),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: _getStatusColorDashboard(item).withOpacity(0.35)),
+                                border: Border.all(
+                                  color: _getStatusColorDashboard(
+                                    item,
+                                  ).withOpacity(0.35),
+                                ),
                               ),
                               child: Text(
                                 _getStatusLabelDashboard(item),
@@ -845,14 +883,32 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       ? null
                                       : () async {
                                           try {
-                                            await AdminDashboardService.approvePaymentVerification(item.transactionId);
+                                            await AdminDashboardService.approvePaymentVerification(
+                                              item.transactionId,
+                                            );
                                             if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembayaran disetujui')));
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Pembayaran disetujui',
+                                                ),
+                                              ),
+                                            );
                                             await _loadSummary();
                                             await _loadQuickPending();
                                           } catch (e) {
                                             if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal approve: $e')));
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Gagal approve: $e',
+                                                ),
+                                              ),
+                                            );
                                           }
                                         },
                                   style: ElevatedButton.styleFrom(
@@ -870,20 +926,40 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       ? null
                                       : () async {
                                           try {
-                                            await AdminDashboardService.rejectPaymentVerification(item.transactionId);
+                                            await AdminDashboardService.rejectPaymentVerification(
+                                              item.transactionId,
+                                            );
                                             if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembayaran ditolak')));
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Pembayaran ditolak',
+                                                ),
+                                              ),
+                                            );
                                             await _loadSummary();
                                             await _loadQuickPending();
                                           } catch (e) {
                                             if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal reject: $e')));
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Gagal reject: $e',
+                                                ),
+                                              ),
+                                            );
                                           }
                                         },
                                   style: OutlinedButton.styleFrom(
                                     minimumSize: const Size(70, 26),
                                     foregroundColor: const Color(0xFFEF4444),
-                                    side: const BorderSide(color: Color(0xFFEF4444)),
+                                    side: const BorderSide(
+                                      color: Color(0xFFEF4444),
+                                    ),
                                     textStyle: const TextStyle(fontSize: 11),
                                     padding: EdgeInsets.zero,
                                   ),
@@ -893,17 +969,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 IconButton(
                                   onPressed: () {
                                     final index = _menuItems.indexWhere(
-                                      (item) => item.title == 'Verifikasi Pendaftaran',
+                                      (item) =>
+                                          item.title ==
+                                          'Verifikasi Pendaftaran',
                                     );
 
                                     if (index != -1) {
                                       setState(() {
                                         _selectedMenuIndex = index;
-                                        _selectedMenuTitle = 'Verifikasi Pendaftaran';
+                                        _selectedMenuTitle =
+                                            'Verifikasi Pendaftaran';
                                       });
                                     }
                                   },
-                                  icon: const Icon(Icons.remove_red_eye_outlined, color: Color(0xFF3B82F6)),
+                                  icon: const Icon(
+                                    Icons.remove_red_eye_outlined,
+                                    color: Color(0xFF3B82F6),
+                                  ),
                                   tooltip: 'Lihat detail',
                                 ),
                               ],
@@ -920,18 +1002,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 0, 12),
               child: TextButton(
-              onPressed: () {
-                final index = _menuItems.indexWhere(
-                  (item) => item.title == 'Verifikasi Pendaftaran',
-                );
+                onPressed: () {
+                  final index = _menuItems.indexWhere(
+                    (item) => item.title == 'Verifikasi Pendaftaran',
+                  );
 
-                if (index != -1) {
-                  setState(() {
-                    _selectedMenuIndex = index;
-                    _selectedMenuTitle = 'Verifikasi Pendaftaran';
-                  });
-                }
-              },
+                  if (index != -1) {
+                    setState(() {
+                      _selectedMenuIndex = index;
+                      _selectedMenuTitle = 'Verifikasi Pendaftaran';
+                    });
+                  }
+                },
                 child: const Text(
                   'Lihat Detail',
                   style: TextStyle(

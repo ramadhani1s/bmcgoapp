@@ -10,7 +10,10 @@ class AdminDashboardService {
   static final ApiClient _client = ApiClient(baseUrl: baseUrl);
 
   static Future<AdminDashboardData> getSummary() async {
-    final response = await _client.get('/api/admin/dashboard-summary', auth: true, timeout: const Duration(seconds: 20));
+    final response = await _client.get(
+      '/api/admin/dashboard-summary',
+      auth: true,
+    );
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
@@ -28,13 +31,17 @@ class AdminDashboardService {
   }
 
   // Get pending payment verifications
-  static Future<List<PaymentVerificationItem>> getPendingPaymentVerifications() async {
-    final response = await _client.get('/admin/payment/pending-verifications', auth: true, timeout: const Duration(seconds: 20));
+  static Future<List<PaymentVerificationItem>>
+  getPendingPaymentVerifications() async {
+    final response = await _client.get(
+      '/admin/payment/pending-verifications',
+      auth: true,
+    );
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       final data = decoded['data'] as List<dynamic>? ?? [];
-      
+
       return data
           .whereType<Map<String, dynamic>>()
           .map(PaymentVerificationItem.fromJson)
@@ -50,7 +57,11 @@ class AdminDashboardService {
 
   // Approve payment verification
   static Future<void> approvePaymentVerification(String transactionId) async {
-    final response = await _client.post('/admin/payment/$transactionId/approve', auth: true, timeout: const Duration(seconds: 20));
+    final response = await _client.post(
+      '/admin/payment/$transactionId/approve',
+      auth: true,
+      body: '{}',
+    );
 
     if (response.statusCode == 200) {
       return;
@@ -65,7 +76,11 @@ class AdminDashboardService {
 
   // Reject payment verification
   static Future<void> rejectPaymentVerification(String transactionId) async {
-    final response = await _client.post('/admin/payment/$transactionId/reject', auth: true, timeout: const Duration(seconds: 20));
+    final response = await _client.post(
+      '/admin/payment/$transactionId/reject',
+      auth: true,
+      body: '{}',
+    );
 
     if (response.statusCode == 200) {
       return;

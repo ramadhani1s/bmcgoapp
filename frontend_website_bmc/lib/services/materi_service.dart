@@ -11,17 +11,45 @@ class MateriService {
 
   static Future<List<MateriPembelajaran>> getMateri(int mentorId) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl?mentor_id=$mentorId'));
+      final response = await http.get(
+        Uri.parse('$baseUrl?mentor_id=$mentorId'),
+      );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => MateriPembelajaran.fromJson(json)).toList();
+        final decoded = jsonDecode(response.body);
+        final List<dynamic> data = switch (decoded) {
+          List<dynamic> value => value,
+          Map<String, dynamic> value => _extractMaterialList(value),
+          _ => <dynamic>[],
+        };
+
+        return data
+            .whereType<Map<String, dynamic>>()
+            .map(MateriPembelajaran.fromJson)
+            .toList();
       } else {
-        throw Exception('Failed to load materi');
+        throw Exception('Failed to load materi (${response.statusCode})');
       }
     } catch (e) {
       throw Exception('Error: $e');
     }
+  }
+
+  static List<dynamic> _extractMaterialList(Map<String, dynamic> json) {
+    final candidates = [
+      json['data'],
+      json['items'],
+      json['materi'],
+      json['result'],
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate is List<dynamic>) {
+        return candidate;
+      }
+    }
+
+    return const <dynamic>[];
   }
 
   static Future<bool> uploadMateri({
@@ -74,7 +102,7 @@ class MateriService {
   static Future<bool> deleteMateri(int materiId) async {
     try {
       final response = await http.delete(Uri.parse('$baseUrl/$materiId'));
-      
+
       if (response.statusCode == 200) {
         return true;
       } else {

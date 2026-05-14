@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 import '../../models/user.dart';
 import '../../routes/app_routes.dart';
 import '../../routes/route_observer.dart';
@@ -22,9 +23,6 @@ class MentorDashboard extends StatefulWidget {
 class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   User? _currentUser;
   String _activeMenuTitle = 'Dashboard';
-  final TextEditingController _dashboardSearchController =
-      TextEditingController();
-  String _searchKeyword = '';
   bool _loadingDashboardCards = true;
   List<Map<String, dynamic>> _recentSchedules = [];
   List<MentorCompetitionItem> _recentTryouts = [];
@@ -70,13 +68,13 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
-    _dashboardSearchController.dispose();
     super.dispose();
   }
 
   @override
   void didPopNext() {
     // Called when the top route has been popped and this route shows again.
+    setState(() => _activeMenuTitle = 'Dashboard');
     _loadStats();
     _loadDashboardCards();
   }
@@ -161,19 +159,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       return _pickValue(item, ['jam', 'waktu'], fallback: 'Jadwal tersedia');
     }
     return '$start${end == '-' ? '' : ' - $end'}';
-  }
-
-  void _applySearch(String value) {
-    setState(() {
-      _searchKeyword = value.trim();
-    });
-  }
-
-  void _clearSearch() {
-    setState(() {
-      _dashboardSearchController.clear();
-      _searchKeyword = '';
-    });
   }
 
   void _showNotifications() {
@@ -327,8 +312,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             children: [
               _buildDashboardHeader(isMobile),
               const SizedBox(height: 10),
-              _buildInlineSearchSection(),
-              const SizedBox(height: 12),
               _buildHeroCard(),
               const SizedBox(height: 8),
               _buildTopPanels(),
@@ -443,122 +426,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
         child: Icon(icon, size: 18, color: const Color(0xFF475569)),
-      ),
-    );
-  }
-
-  Widget _buildInlineSearchSection() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x110F172A),
-            blurRadius: 14,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Pencarian Dashboard',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF334155),
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Cari jadwal, try out, latihan, atau mapel langsung dari sini tanpa membuka panel lain.',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF64748B),
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _dashboardSearchController,
-                  onChanged: _applySearch,
-                  onSubmitted: _applySearch,
-                  decoration: InputDecoration(
-                    hintText: 'Cari jadwal, try out, latihan, atau soal...',
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 20,
-                      color: Color(0xFF64748B),
-                    ),
-                    suffixIcon: _searchKeyword.isEmpty
-                        ? null
-                        : IconButton(
-                            onPressed: _clearSearch,
-                            icon: const Icon(Icons.close, size: 18),
-                          ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3B82F6),
-                        width: 1.6,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (_searchKeyword.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    'Kata kunci: "$_searchKeyword"',
-                    style: const TextStyle(
-                      color: Color(0xFF1D4ED8),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
       ),
     );
   }
@@ -771,9 +638,15 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: AppColors.primaryGradient,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDDE4F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x332557E4),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -782,12 +655,12 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: const Color(0xFFDBEAFE),
+              color: Colors.white.withAlpha((0.08 * 255).round()),
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
               Icons.space_dashboard_outlined,
-              color: Color(0xFF1D4ED8),
+              color: Colors.white,
             ),
           ),
           const SizedBox(width: 14),
@@ -800,14 +673,14 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF1F2937),
+                    color: Colors.white,
                   ),
                 ),
                 SizedBox(height: 6),
                 Text(
                   'Gunakan halaman ini untuk memantau kelas, mengelola soal, dan membuka materi dengan tampilan yang tetap rapi dan konsisten.',
                   style: TextStyle(
-                    color: Color(0xFF6B7280),
+                    color: Color(0xFFD9E4FF),
                     fontWeight: FontWeight.w500,
                     height: 1.4,
                   ),
@@ -846,34 +719,14 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildScheduleCard() {
-    final keyword = _searchKeyword.toLowerCase();
-    final filtered = keyword.isEmpty
-        ? _recentSchedules
-        : _recentSchedules.where((item) {
-            final title = _pickValue(item, [
-              'mata_pelajaran',
-              'mapel',
-              'subject',
-              'judul',
-              'nama',
-            ]).toLowerCase();
-            final kelas = _pickValue(item, [
-              'kelas',
-              'class_level',
-              'class_name',
-            ]).toLowerCase();
-            final time = _formatScheduleTime(item).toLowerCase();
-            return title.contains(keyword) ||
-                kelas.contains(keyword) ||
-                time.contains(keyword);
-          }).toList();
+    final filtered = _recentSchedules;
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.softBorder),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A0F172A),
@@ -893,7 +746,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
+                    color: AppColors.accentBlue,
                   ),
                 ),
               ),
@@ -949,13 +802,13 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   mainAxisSize: MainAxisSize.min,
                   children: const [
                     Icon(
-                      Icons.search_off_outlined,
+                      Icons.event_busy_outlined,
                       size: 46,
                       color: Color(0xFFD1D5DB),
                     ),
                     SizedBox(height: 10),
                     Text(
-                      'Tidak ada jadwal yang cocok dengan pencarian.',
+                      'Belum ada jadwal mengajar.',
                       style: TextStyle(
                         color: Color(0xFF8B909A),
                         fontWeight: FontWeight.w600,
@@ -978,16 +831,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildTryoutCard() {
-    final keyword = _searchKeyword.toLowerCase();
-    final filtered = keyword.isEmpty
-        ? _recentTryouts
-        : _recentTryouts
-              .where(
-                (t) => ('${t.title} ${t.subject} ${t.classLevel}')
-                    .toLowerCase()
-                    .contains(keyword),
-              )
-              .toList();
+    final filtered = _recentTryouts;
 
     return _buildCompetitionCard(
       title: 'Try Out Terbaru',
@@ -999,21 +843,13 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       items: filtered,
       emptyLabel: 'Belum ada try out terbaru.',
       itemBuilder: (item) => _buildCompetitionRow(item),
+      headerColor: const Color(0xFFFF7A00),
+      backgroundColor: const Color(0xFFF6EFE7),
     );
   }
 
   Widget _buildOlimpiadeCard() {
-    final keyword = _searchKeyword.toLowerCase();
-    final filtered = keyword.isEmpty
-        ? _recentOlimpiades
-        : _recentOlimpiades.where((item) {
-            final text =
-                '${item.title} ${item.subject} ${item.classLevel} '
-                        '${item.durationLabel} ${item.scheduleLabel} '
-                        '${item.totalQuestions}'
-                    .toLowerCase();
-            return text.contains(keyword);
-          }).toList();
+    final filtered = _recentOlimpiades;
 
     return _buildCompetitionCard(
       title: 'Olimpiade Akademik',
@@ -1027,6 +863,8 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       items: filtered,
       emptyLabel: 'Belum ada olimpiade akademik.',
       itemBuilder: (item) => _buildOlimpiadeRow(item),
+      headerColor: const Color(0xFF16A34A),
+      backgroundColor: const Color(0xFFEDF8F0),
     );
   }
 
@@ -1052,7 +890,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       decoration: BoxDecoration(
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.softBorder),
       ),
       child: Row(
         children: [
@@ -1060,11 +898,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             width: 6,
             height: 46,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1D4ED8), Color(0xFF10B981)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              color: const Color(0xFF2E7BEF),
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -1078,7 +912,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 14.5,
-                    color: Color(0xFF111827),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1120,13 +954,15 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     required List<T> items,
     required String emptyLabel,
     required Widget Function(T item) itemBuilder,
+    required Color headerColor,
+    required Color backgroundColor,
   }) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: headerColor.withAlpha((0.2 * 255).round())),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A0F172A),
@@ -1143,14 +979,18 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
+                    color: headerColor,
                   ),
                 ),
               ),
-              TextButton(onPressed: onActionTap, child: Text(actionLabel)),
+              TextButton(
+                onPressed: onActionTap,
+                style: TextButton.styleFrom(foregroundColor: headerColor),
+                child: Text(actionLabel),
+              ),
             ],
           ),
           const SizedBox(height: 12),

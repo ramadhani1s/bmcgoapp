@@ -151,6 +151,56 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header section
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(
+                        0xFF2563EB,
+                      ).withAlpha((0.15 * 255).round()),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Kelola Soal - ${widget.latihanTitle}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Buat dan kelola soal untuk latihan ${widget.mapel}',
+                            style: TextStyle(
+                              color: Colors.white.withAlpha(
+                                (0.9 * 255).round(),
+                              ),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    const Icon(Icons.quiz, color: Colors.white, size: 64),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               // Progress section
               Container(
                 padding: const EdgeInsets.all(16),

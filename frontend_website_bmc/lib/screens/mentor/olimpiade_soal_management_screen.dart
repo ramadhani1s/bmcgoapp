@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+
 import '../../models/mentor_competition_item.dart';
 import '../../models/soal_kompetisi.dart';
 import '../../services/soal_kompetisi_service.dart';
@@ -326,7 +328,7 @@ class _OlimpiadseSoalManagementScreenState
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0EA5E9),
+              backgroundColor: AppColors.accentBlue,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -591,7 +593,7 @@ class _OlimpiadseSoalManagementScreenState
                                           : 'Simpan Perubahan',
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFFB5607),
+                                      backgroundColor: const Color(0xFF2563EB),
                                       foregroundColor: Colors.white,
                                     ),
                                   ),
@@ -739,7 +741,7 @@ class _OlimpiadseSoalManagementScreenState
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
-                      color: Color(0xFFFB5607),
+                      color: const Color(0xFF2563EB),
                     ),
                   ),
                 ),
@@ -793,7 +795,7 @@ class _OlimpiadseSoalManagementScreenState
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: AppColors.blueLightBg,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -804,7 +806,7 @@ class _OlimpiadseSoalManagementScreenState
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF92400E),
+                      color: AppColors.accentBlue,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -814,7 +816,7 @@ class _OlimpiadseSoalManagementScreenState
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF78350F),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],

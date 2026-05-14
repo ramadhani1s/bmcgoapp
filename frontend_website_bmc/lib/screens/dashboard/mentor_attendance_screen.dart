@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../services/attendance_service.dart';
+import '../../core/theme/app_colors.dart';
 
 class MentorAttendanceScreen extends StatefulWidget {
   const MentorAttendanceScreen({super.key});
@@ -21,6 +22,8 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
   Timer? _refreshTimer;
   Duration _hadirRemaining = Duration.zero;
   Duration _terlambatRemaining = Duration.zero;
+
+  // use shared AppColors
 
   @override
   void initState() {
@@ -236,7 +239,7 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
+                backgroundColor: AppColors.accentBlue,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
@@ -310,13 +313,13 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
   Color _statusColor(String status) {
     switch (status) {
       case 'hadir':
-        return const Color(0xFF16A34A);
+        return AppColors.success;
       case 'terlambat':
-        return const Color(0xFFE67E22);
+        return AppColors.warning;
       case 'tidak_hadir':
-        return const Color(0xFFDC2626);
+        return AppColors.danger;
       default:
-        return const Color(0xFF64748B);
+        return AppColors.textMuted;
     }
   }
 
@@ -356,6 +359,53 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     }
 
     return DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+  }
+
+  Widget _buildPageHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.accentBlue,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentBlue.withAlpha((0.15 * 255).round()),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Absensi Kelas Mentor',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Kelola kehadiran dan rekap absensi siswa',
+                  style: TextStyle(
+                    color: Colors.white.withAlpha((0.9 * 255).round()),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 24),
+          const Icon(Icons.assignment_turned_in, color: Colors.white, size: 64),
+        ],
+      ),
+    );
   }
 
   Widget _buildSummaryCard(String label, dynamic value, Color color) {
@@ -411,122 +461,10 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _isStarting ? null : _startAttendance,
-                          icon: const Icon(Icons.play_arrow_rounded),
-                          label: Text(
-                            _isStarting ? 'Memulai...' : 'Mulai Absensi',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildPageHeader(),
+                  const SizedBox(height: 20),
+                  _buildToolbar(),
                   const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color.fromRGBO(15, 23, 42, 0.06),
-                          blurRadius: 16,
-                          offset: Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: _session == null
-                        ? const Text(
-                            'Belum ada sesi absensi aktif. Tekan tombol "Mulai Absensi".',
-                          )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                (_session!['class_name'] ?? '-').toString(),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Mapel: ${(_session!['subject'] ?? '-').toString()}',
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                _showToken
-                                    ? 'Token: ${(_session!['token'] ?? '-').toString()}'
-                                    : 'Token belum dibuat. Klik Mulai Absensi.',
-                                style: TextStyle(
-                                  fontSize: _showToken ? 28 : 14,
-                                  fontWeight: _showToken
-                                      ? FontWeight.w800
-                                      : FontWeight.w600,
-                                  letterSpacing: _showToken ? 2 : 0,
-                                  color: _showToken
-                                      ? const Color(0xFF111827)
-                                      : const Color(0xFF64748B),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Mulai: ${_formatDate(_session!['started_at'])}',
-                              ),
-                              Text(
-                                'Batas hadir: ${_formatDate(_session!['hadir_deadline'])}',
-                              ),
-                              Text(
-                                'Batas terlambat: ${_formatDate(_session!['terlambat_deadline'])}',
-                              ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      'Sisa hadir: ${_formatDuration(_hadirRemaining)}',
-                                      style: const TextStyle(
-                                        color: Color(0xFF166534),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFEDD5),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      'Sisa terlambat: ${_formatDuration(_terlambatRemaining)}',
-                                      style: const TextStyle(
-                                        color: Color(0xFF9A3412),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                  ),
                   if (_summary != null) ...[
                     const SizedBox(height: 16),
                     LayoutBuilder(
@@ -588,23 +526,22 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                   const SizedBox(height: 10),
                   Container(
                     width: double.infinity,
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.softBorder),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color.fromRGBO(15, 23, 42, 0.05),
+                          color: Color.fromRGBO(15, 23, 42, 0.04),
                           blurRadius: 12,
                           offset: Offset(0, 6),
                         ),
                       ],
                     ),
                     child: _records.isEmpty
-                        ? const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Text(
-                              'Belum ada siswa yang mengisi token absensi.',
-                            ),
+                        ? const Text(
+                            'Belum ada siswa yang mengisi token absensi.',
                           )
                         : SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -661,6 +598,66 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildToolbar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.softBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(15, 23, 42, 0.04),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mulai Absensi',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Klik tombol di kanan untuk memulai sesi absensi baru.',
+                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            height: 46,
+            width: 180,
+            child: ElevatedButton.icon(
+              onPressed: _isStarting ? null : _startAttendance,
+              icon: const Icon(Icons.play_arrow_rounded, size: 18),
+              label: Text(_isStarting ? 'Memulai...' : 'Mulai Absensi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accentBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

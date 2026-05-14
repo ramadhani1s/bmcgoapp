@@ -5,8 +5,7 @@ import '../../models/alumni.dart';
 import '../../services/alumni_service.dart';
 import '../../services/auth_service.dart';
 import 'alumni_profile_screen.dart';
-import '../../utils/upload_helper.dart'
-    if (dart.library.html) '../../utils/upload_helper.dart';
+import '../../utils/upload_helper.dart';
 
 class AdminKelolaAlumniScreen extends StatefulWidget {
   const AdminKelolaAlumniScreen({super.key, this.embeddedInDashboard = false});

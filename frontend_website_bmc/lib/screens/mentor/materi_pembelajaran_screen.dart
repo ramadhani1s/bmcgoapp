@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../core/theme/app_colors.dart';
 import '../../models/user.dart';
 import '../../models/materi_pembelajaran.dart';
 import '../../services/auth_service.dart';
@@ -22,10 +23,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
   bool _isLoading = true;
   List<MateriPembelajaran> _materiList = [];
 
-  static const Color _primaryBlue = Color(0xFF2563EB);
-  static const Color _bgGray = Color(0xFFF3F4F6);
-  static const Color _textPrimary = Color(0xFF1F2937);
-  static const Color _textSecondary = Color(0xFF6B7280);
+  // Use AppColors directly in widgets for consistency with Admin
 
   @override
   void initState() {
@@ -203,14 +201,17 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgGray,
+      backgroundColor: AppColors.pageBg,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Materi Pembelajaran',
-          style: TextStyle(fontWeight: FontWeight.bold, color: _textPrimary),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
         ),
         backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: _textPrimary),
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
         elevation: 0.5,
       ),
       body: _isLoading && _materiList.isEmpty
@@ -222,6 +223,8 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                 children: [
                   _buildHeader(),
                   const SizedBox(height: 24),
+                  _buildToolbar(),
+                  const SizedBox(height: 16),
                   if (_materiList.isEmpty)
                     _buildEmptyState()
                   else
@@ -229,14 +232,57 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                 ],
               ),
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openUploadDialog,
-        backgroundColor: _primaryBlue,
-        icon: const Icon(Icons.cloud_upload, color: Colors.white),
-        label: const Text(
-          'Upload Materi',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+    );
+  }
+
+  Widget _buildToolbar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.softBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Kelola Upload Materi',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Tambahkan file materi baru dengan tampilan tombol yang seragam seperti halaman lain.',
+                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            height: 46,
+            child: ElevatedButton.icon(
+              onPressed: _openUploadDialog,
+              icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+              label: const Text('Upload Materi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accentBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -246,15 +292,11 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.accentBlue,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withAlpha((0.3 * 255).round()),
+            color: AppColors.accentBlue.withAlpha((0.15 * 255).round()),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -297,27 +339,27 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 60),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.folder_open, size: 80, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Belum Ada Materi',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: _textPrimary,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Materi yang Anda upload akan tampil di sini.',
-            style: TextStyle(color: _textSecondary),
+            style: TextStyle(color: AppColors.textMuted),
           ),
         ],
       ),
@@ -345,9 +387,9 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
   Widget _buildMateriCard(MateriPembelajaran materi) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha((0.03 * 255).round()),
@@ -394,10 +436,10 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                         materi.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: _textPrimary,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       if (materi.description.isNotEmpty) ...[
@@ -406,9 +448,9 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                           materi.description,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: _textSecondary,
+                            color: AppColors.textMuted,
                           ),
                         ),
                       ],
@@ -436,9 +478,9 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                           const SizedBox(width: 8),
                           Text(
                             _formatFileSize(materi.fileSize),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: _textSecondary,
+                              color: AppColors.textMuted,
                             ),
                           ),
                         ],
@@ -605,12 +647,12 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
+                    color: AppColors.pageBg,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _selectedFile != null
-                          ? const Color(0xFF2563EB)
-                          : Colors.grey.shade300,
+                          ? AppColors.accentBlue
+                          : AppColors.border,
                       width: 2,
                       style: BorderStyle.solid,
                     ),
@@ -623,7 +665,7 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                             : Icons.upload_file,
                         size: 48,
                         color: _selectedFile != null
-                            ? const Color(0xFF2563EB)
+                            ? AppColors.accentBlue
                             : Colors.grey.shade400,
                       ),
                       const SizedBox(height: 12),
@@ -634,8 +676,8 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: _selectedFile != null
-                              ? const Color(0xFF2563EB)
-                              : const Color(0xFF6B7280),
+                              ? AppColors.accentBlue
+                              : AppColors.textMuted,
                           fontWeight: _selectedFile != null
                               ? FontWeight.bold
                               : FontWeight.normal,
@@ -687,7 +729,7 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                 child: ElevatedButton(
                   onPressed: _isUploading ? null : _handleUpload,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
+                    backgroundColor: AppColors.accentBlue,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

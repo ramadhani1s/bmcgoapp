@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import '../core/theme/app_colors.dart';
 
 class SoalOverviewCard extends StatelessWidget {
   final String title;
@@ -27,7 +28,7 @@ class SoalOverviewCard extends StatelessWidget {
     required this.onKelolaSoal,
     this.onEdit,
     this.onDelete,
-    this.primaryColor = const Color(0xFF2563EB),
+    this.primaryColor = AppColors.accentBlue,
   }) : super(key: key);
 
   @override
@@ -87,7 +88,7 @@ class SoalOverviewCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isPublished
                         ? const Color(0xFFDCFCE7)
-                        : const Color(0xFFFEF3C7),
+                        : AppColors.blueLightBg,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -97,7 +98,7 @@ class SoalOverviewCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: isPublished
                           ? const Color(0xFF065F46)
-                          : const Color(0xFF92400E),
+                          : AppColors.accentBlue,
                     ),
                   ),
                 ),
@@ -157,8 +158,8 @@ class SoalOverviewCard extends StatelessWidget {
                     value: totalSoal > 0 ? soalTerbuat / totalSoal : 0,
                     minHeight: 8,
                     backgroundColor: const Color(0xFFE5E7EB),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF2563EB),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.accentBlue,
                     ),
                   ),
                 ),
