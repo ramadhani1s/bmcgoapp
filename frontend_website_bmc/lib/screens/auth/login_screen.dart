@@ -247,24 +247,6 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: compact ? 18 : 22),
             _buildLoginButton(),
             const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
-              ),
-              child: const Text(
-                'Gunakan akun admin atau akun mentor yang sudah dibuat dari menu manajemen mentor.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF1E3A8A),
-                  fontWeight: FontWeight.w500,
-                  height: 1.4,
-                ),
-              ),
-            ),
           ],
         ),
       ),

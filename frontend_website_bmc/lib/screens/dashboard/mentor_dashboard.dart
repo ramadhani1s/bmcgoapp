@@ -196,6 +196,36 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     Navigator.of(context).pushReplacementNamed('/login');
   }
 
+  Future<void> _confirmAndLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Konfirmasi Keluar'),
+        content: const Text(
+          'Apakah Anda yakin ingin keluar dari halaman mentor?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Ya'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true) {
+      await _logout();
+    }
+  }
+
   String _buildFormattedDate() {
     final now = DateTime.now();
     const dayNames = [
@@ -298,24 +328,24 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   Widget _buildDashboardContent({required bool isMobile}) {
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 18,
+        isMobile ? 16 : 16,
         isMobile ? 6 : 0,
         isMobile ? 16 : 18,
         20,
       ),
       child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1340),
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          width: double.infinity,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDashboardHeader(isMobile),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _buildHeroCard(),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               _buildTopPanels(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               _buildOlimpiadeCard(),
             ],
           ),
@@ -354,50 +384,21 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                 ),
               ),
               const SizedBox(height: 6),
-              Wrap(
-                spacing: 10,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDBEAFE),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.calendar_today_outlined,
-                          size: 14,
-                          color: Color(0xFF1D4ED8),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          dateLabel,
-                          style: const TextStyle(
-                            color: Color(0xFF1D4ED8),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    'Selamat datang kembali, $displayName',
-                    style: const TextStyle(
-                      color: Color(0xFF0F766E),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
+              const Text(
+                'Ringkasan aktivitas mengajar hari ini.',
+                style: TextStyle(
+                  color: Color(0xFF4B5563),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildHeaderChip(
+                icon: Icons.calendar_today_outlined,
+                label: dateLabel,
+                backgroundColor: const Color(0xFFDBEAFE),
+                foregroundColor: const Color(0xFF1D4ED8),
               ),
             ],
           ),
@@ -455,9 +456,12 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildProfileButton(String displayName) {
-    final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'M';
+    final displayNameSafe = displayName.isNotEmpty ? displayName : 'Mentor';
+    final roleName = _currentUser?.roleName ?? 'Mentor';
+    final initial = displayNameSafe[0].toUpperCase();
+
     return InkWell(
-      onTap: () {},
+      onTap: _openProfilePage,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         height: 38,
@@ -489,13 +493,27 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
-              'Profil',
-              style: TextStyle(
-                color: Color(0xFF334155),
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayNameSafe,
+                  style: const TextStyle(
+                    color: Color(0xFF334155),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  roleName,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -504,8 +522,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildSidebar({required bool forDrawer}) {
-    final userName = (_currentUser?.nama ?? 'Mentor').trim();
-
     return Container(
       width: forDrawer ? double.infinity : 232,
       decoration: const BoxDecoration(
@@ -524,28 +540,14 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   child: Image.asset('assets/images/BMC .png'),
                 ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'BMC Mentor',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                          height: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        userName,
-                        style: const TextStyle(
-                          color: Color(0xFF6B7280),
-                          fontSize: 11,
-                          height: 1.0,
-                        ),
-                      ),
-                    ],
+                const Expanded(
+                  child: Text(
+                    'BMC Mentor',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      height: 1.0,
+                    ),
                   ),
                 ),
               ],
@@ -626,7 +628,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
           ListTile(
             leading: const Icon(Icons.logout_rounded, size: 16),
             title: const Text('Keluar', style: TextStyle(fontSize: 12.5)),
-            onTap: _logout,
+            onTap: _confirmAndLogout,
           ),
           const SizedBox(height: 10),
         ],
@@ -664,25 +666,25 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             ),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Selamat datang kembali di Dashboard Mentor',
+                const Text(
+                  'Fokus pada aktivitas mengajar hari ini',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 6),
-                Text(
-                  'Gunakan halaman ini untuk memantau kelas, mengelola soal, dan membuka materi dengan tampilan yang tetap rapi dan konsisten.',
+                const SizedBox(height: 6),
+                const Text(
+                  'Lihat jadwal, pantau latihan, dan buka kompetisi terbaru dari satu tempat.',
                   style: TextStyle(
                     color: Color(0xFFD9E4FF),
                     fontWeight: FontWeight.w500,
-                    height: 1.4,
+                    height: 1.35,
                   ),
                 ),
               ],
@@ -722,7 +724,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     final filtered = _recentSchedules;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
@@ -738,30 +740,61 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Jadwal Mengajar',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.accentBlue,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            decoration: const BoxDecoration(
+              color: AppColors.accentBlue,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Jadwal Mengajar',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Jadwal kelas yang aktif hari ini',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFFD9E4FF),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const JadwalPembelajaranScreen(),
+                TextButton(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const JadwalPembelajaranScreen(),
+                      ),
+                    );
+                    await _loadDashboardCards();
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                  );
-                  await _loadDashboardCards();
-                },
-                child: const Text('Lihat semua'),
-              ),
-            ],
+                  ),
+                  child: const Text('Lihat semua'),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           if (_loadingDashboardCards)
@@ -843,8 +876,9 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       items: filtered,
       emptyLabel: 'Belum ada try out terbaru.',
       itemBuilder: (item) => _buildCompetitionRow(item),
-      headerColor: const Color(0xFFFF7A00),
-      backgroundColor: const Color(0xFFF6EFE7),
+      headerColor: AppColors.warning,
+      backgroundColor: AppColors.surface,
+      subtitle: 'Try out yang baru dipublikasikan',
     );
   }
 
@@ -863,8 +897,9 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       items: filtered,
       emptyLabel: 'Belum ada olimpiade akademik.',
       itemBuilder: (item) => _buildOlimpiadeRow(item),
-      headerColor: const Color(0xFF16A34A),
-      backgroundColor: const Color(0xFFEDF8F0),
+      headerColor: AppColors.primary,
+      backgroundColor: AppColors.surface,
+      subtitle: 'Kompetisi akademik terbaru',
     );
   }
 
@@ -888,7 +923,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.softBorder),
       ),
@@ -898,7 +933,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             width: 6,
             height: 46,
             decoration: BoxDecoration(
-              color: const Color(0xFF2E7BEF),
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -930,7 +965,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFE0F2FE),
+              color: AppColors.blueLightBg,
               borderRadius: BorderRadius.circular(999),
             ),
             child: const Text(
@@ -938,7 +973,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0369A1),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -956,13 +991,14 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     required Widget Function(T item) itemBuilder,
     required Color headerColor,
     required Color backgroundColor,
+    required String subtitle,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: headerColor.withAlpha((0.2 * 255).round())),
+        border: Border.all(color: AppColors.softBorder),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A0F172A),
@@ -974,24 +1010,54 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: headerColor,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            decoration: BoxDecoration(
+              color: headerColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFFD9E4FF),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              TextButton(
-                onPressed: onActionTap,
-                style: TextButton.styleFrom(foregroundColor: headerColor),
-                child: Text(actionLabel),
-              ),
-            ],
+                TextButton(
+                  onPressed: onActionTap,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  child: Text(actionLabel),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           if (_loadingDashboardCards)
@@ -1026,6 +1092,36 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             )
           else
             Column(children: items.map(itemBuilder).toList()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderChip({
+    required IconData icon,
+    required String label,
+    required Color backgroundColor,
+    required Color foregroundColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: foregroundColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: foregroundColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );

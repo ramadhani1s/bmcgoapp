@@ -153,6 +153,7 @@ class PaymentVerificationService {
   ) async {
     final response = await _client.post(
       '/admin/payment/$transactionId/approve',
+      body: {},
       auth: true,
     );
 
@@ -171,6 +172,7 @@ class PaymentVerificationService {
   static Future<void> rejectPayment(String transactionId) async {
     final response = await _client.post(
       '/admin/payment/$transactionId/reject',
+      body: {},
       auth: true,
     );
 
@@ -193,16 +195,5 @@ class PaymentVerificationService {
   // ==================================================
   // DELETE PAYMENT VERIFICATION
   // ==================================================
-  static Future<void> deletePayment(String transactionId) async {
-    final token = await _getToken();
-
-    final response = await http.delete(
-      Uri.parse('$baseUrl/admin/payment/$transactionId'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception(_extractErrorMessage(response));
-    }
-  }
+  // Uses ApiClient.delete above to perform deletion with auth
 }
