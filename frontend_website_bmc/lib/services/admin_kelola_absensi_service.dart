@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'auth_service.dart';
 import '../models/admin_kelola_absensi.dart';
 
 class AbsensiService {
-  static const String baseUrl = 'http://localhost:8080';
+  static String get baseUrl => AuthService.baseUrl;
 
   static Future<List<Absensi>> getAbsensi() async {
     final res = await http.get(Uri.parse('$baseUrl/api/absensi'));

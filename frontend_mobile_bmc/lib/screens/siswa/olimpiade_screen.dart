@@ -130,7 +130,7 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
                 child: Container(
                   width: 40, height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.22),
+                    color: Colors.white.withOpacity(0.22),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -165,7 +165,7 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.white : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5)),
+                      border: Border.all(color: isSelected ? Colors.white : Colors.white.withOpacity(0.5)),
                     ),
                     child: Text(
                       tab['label']!,
@@ -227,7 +227,7 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
               children: [
                 Container(
                   width: 44, height: 44,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.25), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.25), borderRadius: BorderRadius.circular(12)),
                   child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 26),
                 ),
                 const SizedBox(width: 12),
@@ -638,7 +638,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
                 onTap: () => Navigator.pop(context),
                 child: Container(
                   width: 36, height: 36,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.22), borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
                 ),
               ),
@@ -654,7 +654,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(20)),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.22), borderRadius: BorderRadius.circular(20)),
                 child: Row(
                   children: [
                     const Icon(Icons.timer_rounded, color: Colors.white, size: 14),
@@ -671,7 +671,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 4,
-              backgroundColor: Colors.white.withValues(alpha: 0.3),
+              backgroundColor: Colors.white.withOpacity(0.3),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ),
@@ -757,7 +757,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
     return GestureDetector(
       onTap: () => setState(() => _showNavigasi = false),
       child: Container(
-        color: Colors.black.withValues(alpha: 0.3),
+        color: Colors.black.withOpacity(0.3),
         child: Align(
           alignment: Alignment.bottomCenter,
           child: GestureDetector(
@@ -860,7 +860,7 @@ class OlimpiadeHasilScreen extends StatelessWidget {
                     onTap: () => Navigator.of(context).popUntil((route) => route.isFirst),
                     child: Container(
                       width: 36, height: 36,
-                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(10)),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.22), borderRadius: BorderRadius.circular(10)),
                       child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
                     ),
                   ),
@@ -955,7 +955,7 @@ class OlimpiadeHasilScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0xFFE3FBF4),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFF12B892).withValues(alpha: 0.3)),
+                        border: Border.all(color: const Color(0xFF12B892).withOpacity(0.3)),
                       ),
                       child: const Row(
                         children: [

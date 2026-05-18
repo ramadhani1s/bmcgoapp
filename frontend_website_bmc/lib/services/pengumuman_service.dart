@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'package:frontend_website_bmc/core/session/app_session.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'auth_service.dart';
 
 class PengumumanService {
-  static const _baseCandidates = [
+  static List<String> get _baseCandidates => [
+    AuthService.baseUrl,
     'http://127.0.0.1:8080',
     'http://localhost:8080',
     'http://172.27.66.99:8080',

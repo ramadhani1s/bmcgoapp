@@ -51,6 +51,21 @@ class AppSession {
     return token;
   }
 
+  static Future<String> getUserName() async {
+    final prefs = await _prefs();
+    return prefs.getString(_userNameKey) ?? 'User';
+  }
+
+  static Future<String> getUserEmail() async {
+    final prefs = await _prefs();
+    return prefs.getString(_userEmailKey) ?? 'user@example.com';
+  }
+
+  static Future<String> getUserPhone() async {
+    final prefs = await _prefs();
+    return prefs.getString(_userPhoneKey) ?? '08xxxxxxxxxx';
+  }
+
   static Future<void> clear() async {
     final prefs = await _prefs();
     await prefs.remove(_authTokenKey);

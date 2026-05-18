@@ -26,18 +26,23 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    int asInt(dynamic value, {int fallback = 0}) {
+      if (value is int) return value;
+      return int.tryParse(value?.toString() ?? '') ?? fallback;
+    }
+
     return User(
-      id: json['id'] ?? 0,
-      nama: json['nama'] ?? '',
-      email: json['email'] ?? '',
-      roleId: json['role_id'] ?? 3,
-      phoneNumber: json['phone_number'],
-      status: json['status'],
-      kelas: json['kelas'],
-      asalSekolah: json['asal_sekolah'],
-      whatsapp: json['whatsapp'],
-      alamat: json['alamat'],
-      siswaId: json['siswa_id'],
+      id: asInt(json['id']),
+      nama: json['nama']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      roleId: asInt(json['role_id'], fallback: 3),
+      phoneNumber: json['phone_number']?.toString(),
+      status: json['status']?.toString(),
+      kelas: json['kelas']?.toString(),
+      asalSekolah: json['asal_sekolah']?.toString(),
+      whatsapp: json['whatsapp']?.toString(),
+      alamat: json['alamat']?.toString(),
+      siswaId: json['siswa_id'] == null ? null : asInt(json['siswa_id']),
     );
   }
 

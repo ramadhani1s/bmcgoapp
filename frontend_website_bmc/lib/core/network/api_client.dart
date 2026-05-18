@@ -1,6 +1,6 @@
 
 import 'package:http/http.dart' as http;
-import '../../services/auth_service.dart';
+import '../session/app_session.dart';
 
 class ApiClient {
   final String baseUrl;
@@ -150,10 +150,7 @@ class ApiClient {
 
   Future<String?> _getAuthToken() async {
     try {
-      final user = await AuthService.getCurrentUser();
-      // Token typically stored in user object or local storage
-      // Return null for now; adjust based on your actual token storage
-      return null;
+      return await AppSession.getToken();
     } catch (_) {
       return null;
     }

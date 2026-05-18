@@ -6,7 +6,7 @@ import '../models/latihan.dart';
 import 'auth_service.dart';
 
 class LatihanManagementService {
-  static const String _baseUrl = AuthService.baseUrl;
+  static String get _baseUrl => AuthService.baseUrl;
 
   static Future<List<Latihan>> getLatihan() async {
     try {

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:frontend_mobile_bmc/models/payment_model.dart';
@@ -456,9 +457,9 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.08),
+                              color: statusColor.withOpacity(0.08),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: statusColor.withValues(alpha: 0.25)),
+                              border: Border.all(color: statusColor.withOpacity(0.25)),
                             ),
                             child: Text(
                               _statusMessage,

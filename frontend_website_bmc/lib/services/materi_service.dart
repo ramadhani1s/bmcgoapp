@@ -4,10 +4,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
 import '../models/materi_pembelajaran.dart';
+import 'auth_service.dart';
 
 class MateriService {
-  // Ganti dengan base URL API Anda jika berbeda
-  static const String baseUrl = 'http://localhost:8080/mentor/materi';
+  static String get baseUrl => '${AuthService.baseUrl}/mentor/materi';
 
   static Future<List<MateriPembelajaran>> getMateri(int mentorId) async {
     try {

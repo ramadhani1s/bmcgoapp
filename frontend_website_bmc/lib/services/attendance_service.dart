@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'auth_service.dart';
 
 class AttendanceService {
-  static const String _baseUrl = '${AuthService.baseUrl}/api';
+  static String get _baseUrl => '${AuthService.baseUrl}/api';
 
   static Future<Map<String, dynamic>> startSession({
     required String className,

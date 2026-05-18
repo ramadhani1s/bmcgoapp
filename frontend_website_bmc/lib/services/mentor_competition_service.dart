@@ -6,7 +6,7 @@ import '../models/mentor_competition_item.dart';
 import 'auth_service.dart';
 
 class MentorCompetitionService {
-  static const String _baseUrl = AuthService.baseUrl;
+  static String get _baseUrl => AuthService.baseUrl;
 
   static int _extractDurationMinutes(String raw, {int fallback = 60}) {
     final onlyDigits = raw.replaceAll(RegExp(r'[^0-9]'), '');

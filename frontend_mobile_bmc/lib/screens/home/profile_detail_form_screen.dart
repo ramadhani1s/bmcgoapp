@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/session/app_session.dart';
 
@@ -80,6 +81,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
     final args = ModalRoute.of(context)?.settings.arguments;
     final argumentMap = args is Map<String, dynamic> ? args : const <String, dynamic>{};
     final user = argumentMap['user'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+    final prefs = await SharedPreferences.getInstance();
 
     final userName = await AppSession.getUserName();
     final userEmail = await AppSession.getUserEmail();
@@ -420,7 +422,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
             margin: EdgeInsets.only(right: index == _totalSteps - 1 ? 0 : 8),
             height: 4,
             decoration: BoxDecoration(
-              color: active ? Colors.white : Colors.white.withValues(alpha: 0.45),
+              color: active ? Colors.white : Colors.white.withOpacity(0.45),
               borderRadius: BorderRadius.circular(10),
             ),
           ),
@@ -854,9 +856,9 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
+        color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.45)),
+        border: Border.all(color: Colors.white.withOpacity(0.45)),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
@@ -893,7 +895,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.arrow_back_rounded, color: Colors.white),

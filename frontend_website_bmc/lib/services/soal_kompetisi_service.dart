@@ -7,7 +7,7 @@ import '../models/soal_kompetisi.dart';
 import 'auth_service.dart';
 
 class SoalKompetisiService {
-  static const String _baseUrl = AuthService.baseUrl;
+  static String get _baseUrl => AuthService.baseUrl;
 
   static Future<List<SoalKompetisi>> getSoalByKompetisi(
     int kompetisiId,

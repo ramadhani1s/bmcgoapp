@@ -4,7 +4,7 @@ import '../models/alumni.dart';
 import 'auth_service.dart';
 
 class AlumniService {
-  static const String baseUrl = AuthService.baseUrl;
+  static String get baseUrl => AuthService.baseUrl;
 
   static Future<List<Alumni>> getAllAlumni() async {
     try {

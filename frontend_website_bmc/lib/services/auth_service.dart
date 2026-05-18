@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:frontend_website_bmc/core/session/app_session.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend_website_bmc/models/mentor.dart';
@@ -11,7 +12,35 @@ class AuthService {
   // =====================================================
   // BASE URL
   // =====================================================
-  static const String baseUrl = 'http://localhost:8080';
+  static const String _defaultBaseUrl = 'http://localhost:8080';
+
+  static String get baseUrl {
+    final fromEnv = const String.fromEnvironment('API_BASE_URL').trim();
+    if (fromEnv.isNotEmpty) {
+      return _sanitizeBaseUrl(fromEnv);
+    }
+
+    if (kIsWeb) {
+      final host = Uri.base.host.trim();
+      if (host.isNotEmpty) {
+        final scheme = Uri.base.scheme == 'https' ? 'https' : 'http';
+        return '$scheme://$host:8080';
+      }
+    }
+
+    return _defaultBaseUrl;
+  }
+
+  static String _sanitizeBaseUrl(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) {
+      return _defaultBaseUrl;
+    }
+    if (value.endsWith('/')) {
+      return value.substring(0, value.length - 1);
+    }
+    return value;
+  }
 
   // =====================================================
   // LOGIN
@@ -49,22 +78,41 @@ class AuthService {
       }
 
       if (response.statusCode == 200) {
-        final user = User.fromJson(data['user']);
+        final payload = data is Map<String, dynamic>
+            ? data
+            : const <String, dynamic>{};
+        final userMap = payload['user'];
+        final token = payload['token']?.toString() ?? '';
+
+        if (userMap is! Map<String, dynamic> || token.isEmpty) {
+          return {
+            'success': false,
+            'message': 'Respons login tidak lengkap dari server.',
+          };
+        }
+
+        final user = User.fromJson(userMap);
 
         await AppSession.save(
-          token: data['token'].toString(),
+          token: token,
           userJson: jsonEncode(user.toJson()),
         );
 
         return {
           'success': true,
           'user': user,
-          'token': data['token'],
-          'message': data['message'] ?? 'Login berhasil',
+          'token': token,
+          'message': payload['message'] ?? 'Login berhasil',
         };
       }
 
-      return {'success': false, 'message': data['error'] ?? 'Login gagal'};
+      final payload = data is Map<String, dynamic>
+          ? data
+          : const <String, dynamic>{};
+      return {
+        'success': false,
+        'message': payload['error'] ?? payload['message'] ?? 'Login gagal',
+      };
     } on TimeoutException {
       return {'success': false, 'message': 'Server timeout'};
     } catch (e) {
@@ -89,7 +137,16 @@ class AuthService {
       return null;
     }
 
-    return User.fromJson(jsonDecode(userJson));
+    try {
+      final decoded = jsonDecode(userJson);
+      if (decoded is Map<String, dynamic>) {
+        return User.fromJson(decoded);
+      }
+    } catch (_) {
+      return null;
+    }
+
+    return null;
   }
 
   // =====================================================

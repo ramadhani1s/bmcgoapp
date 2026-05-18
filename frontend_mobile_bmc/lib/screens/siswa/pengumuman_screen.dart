@@ -129,7 +129,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
             child: Container(
               width: 40, height: 40,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.22),
+                color: Colors.white.withOpacity(0.22),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.arrow_back_rounded, color: Colors.white),

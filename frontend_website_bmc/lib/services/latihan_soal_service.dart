@@ -6,7 +6,7 @@ import '../models/soal_latihan.dart';
 import 'auth_service.dart';
 
 class LatihanSoalService {
-  static const String _baseUrl = AuthService.baseUrl;
+  static String get _baseUrl => AuthService.baseUrl;
 
   static Future<List<SoalLatihan>> getSoalLatihan() async {
     try {
