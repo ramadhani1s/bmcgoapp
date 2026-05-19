@@ -23,7 +23,9 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
   static const Color _red = Color(0xFFEF4444);
   static const Color _blue = Color(0xFF2563EB);
 
-  late Future<PaymentVerificationOverview> _future;
+  late Future<PaymentVerificationOverview> _overviewFuture;
+  late Future<List<PaymentVerificationItem>> _itemsFuture;
+  String _selectedFilter = 'pending';
   int _selectedMenuIndex = 1;
 
   List<_SideMenuItem> get _menuItems => const [
@@ -52,12 +54,31 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
   @override
   void initState() {
     super.initState();
-    _future = PaymentVerificationService.getOverview();
+    _overviewFuture = PaymentVerificationService.getOverview();
+    _itemsFuture = PaymentVerificationService.getVerifications(
+      filter: _selectedFilter,
+    );
   }
 
   Future<void> _refresh() async {
     setState(() {
-      _future = PaymentVerificationService.getOverview();
+      _overviewFuture = PaymentVerificationService.getOverview();
+      _itemsFuture = PaymentVerificationService.getVerifications(
+        filter: _selectedFilter,
+      );
+    });
+  }
+
+  void _setFilter(String filter) {
+    if (_selectedFilter == filter) {
+      return;
+    }
+
+    setState(() {
+      _selectedFilter = filter;
+      _itemsFuture = PaymentVerificationService.getVerifications(
+        filter: _selectedFilter,
+      );
     });
   }
 
@@ -108,6 +129,28 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
       return 'Ditolak';
     }
     return 'Menunggu';
+  }
+
+  String _filterTitle(String filter) {
+    switch (filter) {
+      case 'approved':
+        return 'Disetujui';
+      case 'all':
+        return 'Riwayat Verifikasi';
+      default:
+        return 'Menunggu Verifikasi';
+    }
+  }
+
+  String _filterEmptyMessage(String filter) {
+    switch (filter) {
+      case 'approved':
+        return 'Belum ada pendaftaran yang disetujui.';
+      case 'all':
+        return 'Belum ada riwayat verifikasi.';
+      default:
+        return 'Belum ada pendaftaran yang menunggu verifikasi.';
+    }
   }
 
   Color _getStatusColor(String label) {
@@ -264,6 +307,8 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                         const SizedBox(height: 20),
                         _buildStatsRow(),
                         const SizedBox(height: 20),
+                        _buildFilterTabs(),
+                        const SizedBox(height: 16),
                         _buildSearchBar(),
                         const SizedBox(height: 20),
                         _buildTableSection(),
@@ -543,7 +588,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
 
   Widget _buildStatsRow() {
     return FutureBuilder<PaymentVerificationOverview>(
-      future: _future,
+      future: _overviewFuture,
       builder: (context, snapshot) {
         final overview = snapshot.data;
         return Row(
@@ -624,6 +669,37 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
     );
   }
 
+  Widget _buildFilterTabs() {
+    final filters = const [
+      MapEntry('pending', 'Pending'),
+      MapEntry('approved', 'Disetujui'),
+      MapEntry('all', 'History'),
+    ];
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: filters.map((entry) {
+        final filter = entry.key;
+        final label = entry.value;
+        final selected = _selectedFilter == filter;
+
+        return ChoiceChip(
+          label: Text(label),
+          selected: selected,
+          onSelected: (_) => _setFilter(filter),
+          selectedColor: _primary,
+          labelStyle: TextStyle(
+            color: selected ? Colors.white : const Color(0xFF42526E),
+            fontWeight: FontWeight.w700,
+          ),
+          backgroundColor: Colors.white,
+          side: BorderSide(color: selected ? _primary : _border),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _buildTableSection() {
     return Container(
       decoration: BoxDecoration(
@@ -643,8 +719,8 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                 topRight: Radius.circular(10),
               ),
             ),
-            child: const Text(
-              'Daftar Pendaftaran',
+            child: Text(
+              _filterTitle(_selectedFilter),
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 15,
@@ -654,8 +730,8 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
           ),
           Padding(
             padding: const EdgeInsets.all(14),
-            child: FutureBuilder<PaymentVerificationOverview>(
-              future: _future,
+            child: FutureBuilder<List<PaymentVerificationItem>>(
+              future: _itemsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -672,15 +748,15 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                   );
                 }
 
-                final items = snapshot.data?.items ?? [];
+                final items = snapshot.data ?? [];
 
                 if (items.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     child: Text(
-                      'Belum ada data pendaftaran',
+                      _filterEmptyMessage(_selectedFilter),
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Color(0xFF94A0B4)),
+                      style: const TextStyle(color: Color(0xFF94A0B4)),
                     ),
                   );
                 }
@@ -735,6 +811,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
     final statusLabel = _getStatusLabel(item);
     final statusColor = _getStatusColor(statusLabel);
     final statusBgColor = _getStatusBgColor(statusLabel);
+    final showActions = _selectedFilter == 'pending' && !item.isVerified;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -883,22 +960,24 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: SizedBox(
-                width: 102,
+                width: showActions ? 102 : 34,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _actionChip(
-                      icon: Icons.check,
-                      color: _green,
-                      onTap: () => _approve(item),
-                      tooltip: 'Setujui',
-                    ),
-                    _actionChip(
-                      icon: Icons.close,
-                      color: _red,
-                      onTap: () => _reject(item),
-                      tooltip: 'Tolak',
-                    ),
+                    if (showActions) ...[
+                      _actionChip(
+                        icon: Icons.check,
+                        color: _green,
+                        onTap: () => _approve(item),
+                        tooltip: 'Setujui',
+                      ),
+                      _actionChip(
+                        icon: Icons.close,
+                        color: _red,
+                        onTap: () => _reject(item),
+                        tooltip: 'Tolak',
+                      ),
+                    ],
                     _actionChip(
                       icon: Icons.visibility_outlined,
                       color: _blue,

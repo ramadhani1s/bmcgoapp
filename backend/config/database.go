@@ -40,7 +40,8 @@ func ConnectDB() {
 		ADD COLUMN IF NOT EXISTS nama VARCHAR(255),
 		ADD COLUMN IF NOT EXISTS username VARCHAR(255),
 		ADD COLUMN IF NOT EXISTS email VARCHAR(255),
-		ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20)
+		ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20),
+		ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending'
 	`)
 	if err != nil {
 		log.Fatal("Gagal sinkronisasi kolom users:", err)

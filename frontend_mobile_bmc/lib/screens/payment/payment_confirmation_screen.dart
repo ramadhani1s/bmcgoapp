@@ -50,7 +50,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       _midtransSDK = await MidtransSDK.init(
         config: MidtransConfig(
           clientKey: "Mid-client-oGUyoloFZJXYlklg",
-          merchantBaseUrl: "http://10.0.2.2:8081",
+          merchantBaseUrl: PaymentService.baseUrl,
           colorTheme: ColorTheme(
             colorPrimary: _blueHeader,
             colorPrimaryDark: _blueHeader,
@@ -172,6 +172,17 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
     }
 
     final status = result.status.toLowerCase();
+
+    if (status == 'success' ||
+        status == 'settlement' ||
+        status == 'capture' ||
+        status == 'pending') {
+      try {
+        await PaymentService.finishTransaction(transactionId, status);
+      } catch (e) {
+        debugPrint('ERROR finishTransaction from callback: $e');
+      }
+    }
 
     if (!mounted) return;
     setState(() {

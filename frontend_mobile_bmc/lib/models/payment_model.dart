@@ -121,3 +121,31 @@ class PaymentHistoryItem {
     );
   }
 }
+
+class VerificationStatus {
+  final bool isVerified;
+  final DateTime? verifiedAt;
+  final bool canAccess;
+  final String userStatus;
+  final bool isUserActive;
+
+  VerificationStatus({
+    required this.isVerified,
+    this.verifiedAt,
+    required this.canAccess,
+    required this.userStatus,
+    required this.isUserActive,
+  });
+
+  factory VerificationStatus.fromJson(Map<String, dynamic> json) {
+    return VerificationStatus(
+      isVerified: json['is_verified'] as bool? ?? false,
+      verifiedAt: json['verified_at'] != null
+          ? DateTime.tryParse(json['verified_at'].toString())
+          : null,
+      canAccess: json['can_access'] as bool? ?? false,
+      userStatus: json['user_status'] as String? ?? '',
+      isUserActive: json['is_user_active'] as bool? ?? false,
+    );
+  }
+}

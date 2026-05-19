@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"bmcgoapp-backend/config"
+	"bmcgoapp-backend/repositories"
+	"bmcgoapp-backend/utils"
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"bmcgoapp-backend/repositories"
 
 	"github.com/gin-gonic/gin"
 	"github.com/midtrans/midtrans-go"
@@ -64,9 +65,21 @@ func InitMidtrans() {
 	midtrans.ServerKey = "Mid-server-QRDtut5gyc07B9FjYtz4-fIQ"
 	midtrans.ClientKey = "Mid-client-oGUyoloFZJXYlklg"
 	midtrans.Environment = midtrans.Sandbox
-	if notifyURL := strings.TrimSpace(os.Getenv("MIDTRANS_NOTIFICATION_URL")); notifyURL != "" {
+	if notifyURL := resolveMidtransNotificationURL(); notifyURL != "" {
 		midtrans.SetPaymentAppendNotification(notifyURL)
 	}
+}
+
+func resolveMidtransNotificationURL() string {
+	if notifyURL := strings.TrimSpace(os.Getenv("MIDTRANS_NOTIFICATION_URL")); notifyURL != "" {
+		return notifyURL
+	}
+
+	if baseURL := strings.TrimSpace(os.Getenv("BACKEND_PUBLIC_BASE_URL")); baseURL != "" {
+		return strings.TrimRight(baseURL, "/") + "/payment/notification"
+	}
+
+	return "http://localhost:8080/payment/notification"
 }
 
 func getCurrentPhone(ctx *gin.Context, userID int) string {
@@ -274,6 +287,9 @@ func GetPaymentHistory(c *gin.Context) {
 		return
 	}
 
+	// Auto-sync status dari Midtrans khusus untuk simulasi localhost
+	autoSyncPendingTransactions(c.Request.Context())
+
 	status := normalizeStatus(c.Query("status"))
 	history, err := loadPaymentHistory(c, userIDInt, status)
 	if err != nil {
@@ -347,6 +363,36 @@ type PendingVerificationItem struct {
 	VerifiedByAdmin *int       `json:"verified_by_admin,omitempty"`
 }
 
+func autoSyncPendingTransactions(ctx context.Context) {
+	rows, err := config.DB.Query(ctx, `SELECT transaction_id FROM payment_transactions WHERE status = 'pending' AND COALESCE(is_verified, FALSE) = FALSE`)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	var tIDs []string
+	for rows.Next() {
+		var tid string
+		if err := rows.Scan(&tid); err == nil {
+			tIDs = append(tIDs, tid)
+		}
+	}
+
+	for _, tid := range tIDs {
+		resp, checkErr := coreapi.CheckTransaction(tid)
+		if checkErr == nil && resp.TransactionStatus != "" {
+			newStatus := normalizeStatus(resp.TransactionStatus)
+			if newStatus != "pending" {
+				_, _ = config.DB.Exec(ctx, `
+					UPDATE payment_transactions
+					SET status = $1, payment_type = COALESCE(NULLIF($2, ''), payment_type), updated_at = NOW()
+					WHERE transaction_id = $3
+				`, newStatus, resp.PaymentType, tid)
+			}
+		}
+	}
+}
+
 // GetPendingPaymentVerifications mendapatkan list pembayaran yang belum diverifikasi (untuk admin)
 func GetPendingPaymentVerifications(c *gin.Context) {
 	_, exists := c.Get("user_id")
@@ -355,9 +401,15 @@ func GetPendingPaymentVerifications(c *gin.Context) {
 		return
 	}
 
-	items, err := repositories.GetPendingPaymentVerifications(c.Request.Context())
+	// Get filter parameter from query: pending, approved, or all
+	filter := c.DefaultQuery("filter", "pending")
+
+	// Auto-sync pending transactions dengan Midtrans (Sangat berguna untuk testing di Localhost)
+	autoSyncPendingTransactions(c.Request.Context())
+
+	items, err := repositories.GetPaymentVerificationsWithFilter(c.Request.Context(), filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to load pending verifications", "error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to load verifications", "error": err.Error()})
 		return
 	}
 
@@ -365,7 +417,11 @@ func GetPendingPaymentVerifications(c *gin.Context) {
 		items[i].Status = normalizeStatus(items[i].Status)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Pending verifications retrieved", "data": items})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Verifications retrieved",
+		"filter":  filter,
+		"data":    items,
+	})
 }
 
 // ApprovePaymentVerification menyetujui pembayaran dan mengaktifkan akun siswa
@@ -389,16 +445,42 @@ func ApprovePaymentVerification(c *gin.Context) {
 
 	userID, err := repositories.ApprovePaymentVerification(c.Request.Context(), transactionID, adminID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Transaction not found"})
+		// Log error untuk debugging
+		fmt.Printf("ApprovePaymentVerification error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Gagal melakukan approval pembayaran dan aktivasi akun siswa",
+			"error":   err.Error(),
+		})
 		return
 	}
 
+	// Log current DB state for this transaction/user to aid debugging
+	var dbUserStatus string
+	var dbIsVerified bool
+	var dbVerifiedByAdmin *int
+	var dbVerifiedAt *time.Time
+
+	_ = config.DB.QueryRow(c.Request.Context(), `
+		SELECT COALESCE(status, '') FROM users WHERE id = $1
+	`, userID).Scan(&dbUserStatus)
+
+	_ = config.DB.QueryRow(c.Request.Context(), `
+		SELECT COALESCE(is_verified, FALSE), verified_by_admin, verified_at
+		FROM payment_transactions WHERE transaction_id = $1
+	`, transactionID).Scan(&dbIsVerified, &dbVerifiedByAdmin, &dbVerifiedAt)
+
+	logMsg := fmt.Sprintf("ApprovePaymentVerification: transaction=%s user_id=%d db_user_status=%s is_verified=%v verified_by_admin=%v verified_at=%v",
+		transactionID, userID, dbUserStatus, dbIsVerified, dbVerifiedByAdmin, dbVerifiedAt)
+	fmt.Println(logMsg)
+	_ = utils.LogApproval(logMsg)
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Payment verification approved and user account activated",
+		"message": "Approval pembayaran berhasil dan akun siswa telah diaktifkan",
 		"data": gin.H{
 			"transaction_id": transactionID,
 			"user_id":        userID,
-			"is_verified":    true,
+			"is_verified":    dbIsVerified,
+			"status":         dbUserStatus,
 		},
 	})
 }
@@ -480,6 +562,9 @@ func GetPaymentVerificationOverview(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
 		return
 	}
+
+	// Auto-sync pending transactions dengan Midtrans
+	autoSyncPendingTransactions(c.Request.Context())
 
 	overview, err := repositories.GetPaymentVerificationOverview(c.Request.Context())
 	if err != nil {

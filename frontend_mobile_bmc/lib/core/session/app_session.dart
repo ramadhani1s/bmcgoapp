@@ -5,6 +5,7 @@ class AppSession {
   static const String _userNameKey = 'user_name';
   static const String _userEmailKey = 'user_email';
   static const String _userPhoneKey = 'user_phone';
+  static const String _userStatusKey = 'user_status';
 
   static Future<SharedPreferences> _prefs() async {
     return SharedPreferences.getInstance();
@@ -40,6 +41,20 @@ class AppSession {
           ? user['whatsapp'].toString()
           : '08xxxxxxxxxx',
     );
+    await prefs.setString(
+      _userStatusKey,
+      user['status']?.toString().trim().isNotEmpty == true
+          ? user['status'].toString()
+          : 'inactive',
+    );
+  }
+
+  static Future<void> saveUserStatus(String status) async {
+    final prefs = await _prefs();
+    await prefs.setString(
+      _userStatusKey,
+      status.trim().isNotEmpty ? status.trim() : 'inactive',
+    );
   }
 
   static Future<String> getAuthToken() async {
@@ -66,11 +81,17 @@ class AppSession {
     return prefs.getString(_userPhoneKey) ?? '08xxxxxxxxxx';
   }
 
+  static Future<String> getUserStatus() async {
+    final prefs = await _prefs();
+    return prefs.getString(_userStatusKey) ?? 'inactive';
+  }
+
   static Future<void> clear() async {
     final prefs = await _prefs();
     await prefs.remove(_authTokenKey);
     await prefs.remove(_userNameKey);
     await prefs.remove(_userEmailKey);
     await prefs.remove(_userPhoneKey);
+    await prefs.remove(_userStatusKey);
   }
 }

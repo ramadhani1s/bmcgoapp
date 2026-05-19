@@ -141,11 +141,32 @@ class PaymentVerificationService {
     );
   }
 
+  static Future<List<PaymentVerificationItem>> getVerifications({
+    String filter = 'pending',
+  }) async {
+    final response = await _client.get(
+      '/admin/payment/pending-verifications?filter=$filter',
+      auth: true,
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = _decodeObject(response.body);
+      final rawItems = decoded['data'] as List<dynamic>? ?? const [];
+      return rawItems
+          .whereType<Map<String, dynamic>>()
+          .map(PaymentVerificationItem.fromJson)
+          .toList();
+    }
+
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      throw Exception('Sesi admin tidak valid. Silakan login ulang.');
+    }
+
+    throw Exception(_extractErrorMessage(response));
+  }
+
   static Future<List<PaymentVerificationItem>> getPendingVerifications() async {
-    final overview = await getOverview();
-    return overview.items
-        .where((item) => item.status == 'success' && !item.isVerified)
-        .toList();
+    return getVerifications(filter: 'pending');
   }
 
   static Future<Map<String, dynamic>> verifyPayment(

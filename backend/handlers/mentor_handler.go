@@ -17,7 +17,7 @@ func GetMentors(c *gin.Context) {
 	rows, err := config.DB.Query(context.Background(), `
 		SELECT 
 			id,
-			nama_mentor,
+			nama,
 			COALESCE(email, ''),
 			COALESCE(password, ''),
 			COALESCE(mata_pelajaran, ''),
@@ -173,7 +173,7 @@ func CreateMentor(c *gin.Context) {
 		INSERT INTO mentor
 		(
 			user_id,
-			nama_mentor,
+			nama,
 			email,
 			password,
 			mata_pelajaran,
@@ -269,7 +269,7 @@ func UpdateMentor(c *gin.Context) {
 
 		_, err := config.DB.Exec(context.Background(), `
 			UPDATE mentor
-			SET nama_mentor=$1,
+			SET nama=$1,
 				email=$2,
 				password=$3,
 				mata_pelajaran=$4,
@@ -316,7 +316,7 @@ func UpdateMentor(c *gin.Context) {
 
 		_, err := config.DB.Exec(context.Background(), `
 			UPDATE mentor
-			SET nama_mentor=$1,
+			SET nama=$1,
 				email=$2,
 				mata_pelajaran=$3,
 				status=$4
@@ -493,7 +493,7 @@ func ExportMentorExcel(c *gin.Context) {
 	rows, err := config.DB.Query(context.Background(), `
 		SELECT 
 			id,
-			nama_mentor,
+			nama,
 			COALESCE(email, ''),
 			COALESCE(mata_pelajaran, ''),
 			COALESCE(status, 'Aktif')

@@ -100,10 +100,6 @@ func Login(email string, password string) (*models.User, error) {
 		return nil, errors.New("password salah")
 	}
 
-	// Check if user account is active
-	if user.Status != "aktif" {
-		return nil, errors.New("akun anda telah dinonaktifkan")
-	}
 
 	if user.RoleID == 0 {
 		user.RoleID = 3
@@ -126,8 +122,8 @@ func Register(user models.User) error {
 
 	query := `
 		INSERT INTO users
-		(nama,email,password,role_id)
-		VALUES ($1,$2,$3,$4)
+		(nama,email,password,role_id,status)
+		VALUES ($1,$2,$3,$4,'nonaktif')
 	`
 
 	_, err = config.DB.Exec(

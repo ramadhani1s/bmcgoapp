@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_observer.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(const MyApp());
+  final initialRoute = await AppRoutes.getInitialRoute();
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.initialRoute});
+
+  final String initialRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +48,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: AppRoutes.login,
+      initialRoute: initialRoute,
       onGenerateRoute: AppRoutes.generateRoute,
       navigatorObservers: [routeObserver],
     );

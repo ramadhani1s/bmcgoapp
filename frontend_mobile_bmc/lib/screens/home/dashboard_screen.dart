@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
+import 'package:frontend_mobile_bmc/models/payment_model.dart';
 import 'package:frontend_mobile_bmc/screens/home/latihan_siswa_screen.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
 import 'package:frontend_mobile_bmc/services/jadwal_service.dart';
@@ -24,6 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   int _selectedIndex = 0;
   int _previousIndex = 0;
   bool _canAccessPaidFeatures = false;
+  VerificationStatus? _verificationStatus;
   bool _hasAutoNavigatedToProfile = false;
   bool _isCheckingVerification = true;
   String _activePackageTitle = 'Paket belum dipilih';
@@ -135,7 +137,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       });
     }
 
-    final canAccess = await PaymentService.getVerificationStatus();
+    final verificationStatus = await PaymentService.getVerificationStatus();
 
     String packageTitle = 'Paket belum dipilih';
     try {
@@ -158,12 +160,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
 
     setState(() {
-      if (canAccess && !_hasAutoNavigatedToProfile) {
+      if (verificationStatus.isUserActive && !_hasAutoNavigatedToProfile) {
         _previousIndex = _selectedIndex;
         _selectedIndex = 3;
         _hasAutoNavigatedToProfile = true;
       }
-      _canAccessPaidFeatures = canAccess;
+      _verificationStatus = verificationStatus;
+      _canAccessPaidFeatures = verificationStatus.isUserActive;
       _isCheckingVerification = false;
       _activePackageTitle = packageTitle;
       _isLoadingPackageInfo = false;
@@ -171,6 +174,47 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   bool get _isActive => _canAccessPaidFeatures;
+
+  String get _statusDisplayText {
+    if (_isCheckingVerification) return 'Mengecek...';
+    if (_verificationStatus == null) return '• Non-Aktif';
+    
+    if (_verificationStatus!.isUserActive) {
+      return '• Aktif';
+    } else if (_verificationStatus!.isVerified) {
+      return '• Proses Aktivasi';
+    } else {
+      return '• Menunggu Verifikasi';
+    }
+  }
+
+  String get _inactiveStatusMessage {
+    if (_verificationStatus == null) {
+      return 'Lengkapi profil dan pilih paket agar akses belajar bisa dibuka.';
+    }
+    
+    if (_verificationStatus!.isVerified && !_verificationStatus!.isUserActive) {
+      return 'Akun kamu sudah diverifikasi dan sedang diaktifkan oleh admin. Tunggu beberapa saat...';
+    } else if (!_verificationStatus!.isVerified) {
+      return 'Pembayaran kamu sedang menunggu verifikasi dari admin. Kami akan segera mengaktifkan akun kamu.';
+    } else {
+      return 'Lengkapi profil dan pilih paket agar akses belajar bisa dibuka.';
+    }
+  }
+
+  String get _inactiveStatusTitle {
+    if (_verificationStatus == null) {
+      return 'Akun kamu masih non-aktif';
+    }
+    
+    if (_verificationStatus!.isVerified && !_verificationStatus!.isUserActive) {
+      return 'Akun sedang diaktifkan';
+    } else if (!_verificationStatus!.isVerified) {
+      return 'Menunggu verifikasi pembayaran';
+    } else {
+      return 'Akun kamu masih non-aktif';
+    }
+  }
 
   String get _studentName {
     final args =
@@ -615,22 +659,26 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 decoration: BoxDecoration(
                                   color: _isActive
                                       ? const Color(0xFFFFF4E2)
-                                      : const Color(0xFFFFEFEF),
+                                      : (_verificationStatus?.isVerified == true
+                                          ? const Color(0xFFEFF6FF)
+                                          : const Color(0xFFFFEFEF)),
                                   borderRadius: BorderRadius.circular(999),
                                   border: Border.all(
                                     color: _isActive
                                         ? const Color(0xFFF7D4A4)
-                                        : const Color(0xFFFFCFD1),
+                                        : (_verificationStatus?.isVerified == true
+                                            ? const Color(0xFFBFDBFE)
+                                            : const Color(0xFFFFCFD1)),
                                   ),
                                 ),
                                 child: Text(
-                                  _isCheckingVerification
-                                      ? 'Mengecek...'
-                                      : (_isActive ? '• Aktif' : '• Non-Aktif'),
+                                  _statusDisplayText,
                                   style: TextStyle(
                                     color: _isActive
                                         ? const Color(0xFFB2771E)
-                                        : const Color(0xFFD45767),
+                                        : (_verificationStatus?.isVerified == true
+                                            ? const Color(0xFF2563EB)
+                                            : const Color(0xFFD45767)),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -1004,7 +1052,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
+                         Row(
                           children: [
                             Icon(
                               Icons.info_outline_rounded,
@@ -1014,7 +1062,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Akun kamu masih non-aktif',
+                                _inactiveStatusTitle,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: _textPrimary,
@@ -1025,9 +1073,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                           ],
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Lengkapi profil dan pilih paket agar akses belajar bisa dibuka.',
-                          style: TextStyle(
+                        Text(
+                          _inactiveStatusMessage,
+                          style: const TextStyle(
                             fontSize: 12.5,
                             color: _textMuted,
                             height: 1.45,

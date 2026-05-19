@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:frontend_mobile_bmc/models/payment_model.dart';
+import 'package:frontend_mobile_bmc/core/session/app_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PaymentService {
   // GANTI DENGAN BASE URL BACKEND KAMU
   // Jika kamu menjalankan Flutter di Android emulator, gunakan 10.0.2.2
-  static const String baseUrl =
-      'http://10.0.2.2:8081'; // Android emulator -> PC localhost (payment server)
+    static const String baseUrl =
+      'http://10.0.2.2:8080'; // Android emulator -> PC localhost (payment server)
   // Untuk production: 'https://api.yourdomain.com'
 
   static Future<String> _getAuthToken() async {
@@ -152,19 +153,36 @@ class PaymentService {
   }
 
   // Cek apakah user bisa mengakses fitur berbayar (verifikasi)
-  static Future<bool> getVerificationStatus() async {
+  static Future<VerificationStatus> getVerificationStatus() async {
     try {
       final token = await _getAuthToken();
       final uri = Uri.parse('$baseUrl/payment/verification-status');
       final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final ok = data['is_verified'] as bool?;
-        return ok == true;
+        final status = VerificationStatus.fromJson(data);
+        await AppSession.saveUserStatus(status.userStatus.isNotEmpty
+            ? status.userStatus
+            : (status.isUserActive ? 'aktif' : 'inactive'));
+        return status;
       }
-      return false;
+      // Return default inactive status if error
+      return VerificationStatus(
+        isVerified: false,
+        verifiedAt: null,
+        canAccess: false,
+        userStatus: 'inactive',
+        isUserActive: false,
+      );
     } catch (_) {
-      return false;
+      // Return default inactive status on exception
+      return VerificationStatus(
+        isVerified: false,
+        verifiedAt: null,
+        canAccess: false,
+        userStatus: 'inactive',
+        isUserActive: false,
+      );
     }
   }
 }
