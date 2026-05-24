@@ -17,7 +17,6 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
   static const Color _accent = Color(0xFFFF7070);
   static const Color _background = Color(0xFFF7EEEF);
   static const Color _textPrimary = Color(0xFF25273D);
-  static const Color _textMuted = Color(0xFF8D90A3);
   static const Color _gold = Color(0xFFF5A623);
 
   List<Map<String, dynamic>> _olimpiadeList = [];
