@@ -8,6 +8,7 @@ import (
 )
 
 func AuthRoutes(r *gin.Engine) {
+	r.POST("/save-fcm-token", handlers.SaveFCMToken)
 	// register under /auth
 	auth := r.Group("/auth")
 	{

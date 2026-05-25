@@ -12,6 +12,7 @@ import (
 
 func main() {
 	config.ConnectDB()
+	config.InitFirebase()
 
 	r := gin.Default()
 	if err := r.SetTrustedProxies([]string{"127.0.0.1", "::1"}); err != nil {
