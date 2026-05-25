@@ -3,6 +3,7 @@ package main
 import (
 	"bmcgoapp-backend/config"
 	"bmcgoapp-backend/routes"
+	"bmcgoapp-backend/services"
 	"log"
 	"net/http"
 	"os"
@@ -51,6 +52,8 @@ func main() {
 	routes.ProtectedRoutes(r)
 	routes.PaymentRoutes(r)
 	routes.MentorRoutes(r)
+
+	services.StartDailyNotification()
 
 	port := os.Getenv("PORT")
 	if port == "" {
