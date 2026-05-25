@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:frontend_website_bmc/core/network/api_client.dart';
-import 'package:frontend_website_bmc/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/payment_verification_item.dart';
@@ -41,7 +40,8 @@ class PaymentVerificationOverview {
 }
 
 class PaymentVerificationService {
-  static ApiClient get _client => ApiClient(baseUrl: AuthService.baseUrl);
+  static const String baseUrl = 'http://localhost:8080';
+  static final ApiClient _client = ApiClient(baseUrl: baseUrl);
 
   static Map<String, dynamic> _decodeObject(String body) {
     try {
@@ -49,124 +49,88 @@ class PaymentVerificationService {
       if (decoded is Map<String, dynamic>) {
         return decoded;
       }
-      return {};
     } catch (_) {
-      return {};
+      // ignore
     }
+    return {};
   }
 
   static String _extractErrorMessage(http.Response response) {
     final decoded = _decodeObject(response.body);
     final message = decoded['message']?.toString().trim() ?? '';
     final error = decoded['error']?.toString().trim() ?? '';
-
     if (message.isNotEmpty) return message;
     if (error.isNotEmpty) return error;
     return 'HTTP ${response.statusCode}';
   }
 
   static Future<PaymentVerificationOverview> getOverview() async {
-    String firstError = '';
-
     try {
-      final response = await _client.get('/admin/payment/overview', auth: true);
+      final response = await _client.get(
+        '/admin/payment/pending-verifications',
+        auth: true,
+      );
 
       if (response.statusCode == 200) {
         final decoded = _decodeObject(response.body);
-        final data = decoded['data'];
-        if (data is Map<String, dynamic>) {
-          return PaymentVerificationOverview.fromJson(data);
-        }
+        final rawItems = decoded['data'] as List<dynamic>? ?? const [];
+        final items = rawItems
+            .whereType<Map<String, dynamic>>()
+            .map(PaymentVerificationItem.fromJson)
+            .toList();
+
+        final waiting = items
+            .where((item) => item.status == 'success' && !item.isVerified)
+            .length;
+        final approved = items.where((item) => item.isVerified).length;
+        final rejected = items.where((item) {
+          final status = item.status;
+          return status == 'failed' ||
+              status == 'cancel' ||
+              status == 'deny' ||
+              status == 'expire';
+        }).length;
+
+        return PaymentVerificationOverview(
+          waiting: waiting,
+          approved: approved,
+          rejected: rejected,
+          items: items,
+        );
       }
 
       if (response.statusCode == 401 || response.statusCode == 403) {
         throw Exception('Sesi admin tidak valid. Silakan login ulang.');
       }
 
-      firstError = _extractErrorMessage(response);
-    } catch (_) {
-      // fallback below
-    }
-
-    final fallbackResponse = await _client.get(
-      '/admin/payment/pending-verifications',
-      auth: true,
-    );
-
-    if (fallbackResponse.statusCode == 200) {
-      final decoded = _decodeObject(fallbackResponse.body);
-      final rawItems = decoded['data'] as List<dynamic>? ?? const [];
-      final items = rawItems
-          .whereType<Map<String, dynamic>>()
-          .map(PaymentVerificationItem.fromJson)
-          .toList();
-
-      final waiting = items
-          .where((item) => item.status == 'success' && !item.isVerified)
-          .length;
-      final approved = items.where((item) => item.isVerified).length;
-      final rejected = items.where((item) {
-        final status = item.status;
-        return status == 'failed' ||
-            status == 'cancel' ||
-            status == 'deny' ||
-            status == 'expire';
-      }).length;
-
-      return PaymentVerificationOverview(
-        waiting: waiting,
-        approved: approved,
-        rejected: rejected,
-        items: items,
-      );
-    }
-
-    if (fallbackResponse.statusCode == 401 ||
-        fallbackResponse.statusCode == 403) {
-      throw Exception('Sesi admin tidak valid. Silakan login ulang.');
-    }
-
-    final fallbackError = _extractErrorMessage(fallbackResponse);
-    if (firstError.isNotEmpty || fallbackError.isNotEmpty) {
       throw Exception(
-        'Gagal memuat overview verifikasi pembayaran. $firstError $fallbackError',
+        'Gagal memuat data verifikasi: ${response.statusCode} - ${_extractErrorMessage(response)}',
       );
+    } catch (e) {
+      rethrow;
     }
-
-    return const PaymentVerificationOverview(
-      waiting: 0,
-      approved: 0,
-      rejected: 0,
-      items: [],
-    );
-  }
-
-  static Future<List<PaymentVerificationItem>> getVerifications({
-    String filter = 'pending',
-  }) async {
-    final response = await _client.get(
-      '/admin/payment/pending-verifications?filter=$filter',
-      auth: true,
-    );
-
-    if (response.statusCode == 200) {
-      final decoded = _decodeObject(response.body);
-      final rawItems = decoded['data'] as List<dynamic>? ?? const [];
-      return rawItems
-          .whereType<Map<String, dynamic>>()
-          .map(PaymentVerificationItem.fromJson)
-          .toList();
-    }
-
-    if (response.statusCode == 401 || response.statusCode == 403) {
-      throw Exception('Sesi admin tidak valid. Silakan login ulang.');
-    }
-
-    throw Exception(_extractErrorMessage(response));
   }
 
   static Future<List<PaymentVerificationItem>> getPendingVerifications() async {
-    return getVerifications(filter: 'pending');
+    final overview = await getOverview();
+    return overview.items
+        .where((item) => item.status == 'success' && !item.isVerified)
+        .toList();
+  }
+
+  static Future<List<PaymentVerificationItem>> getVerifications({
+    required String filter,
+  }) async {
+    if (filter == 'pending') {
+      return getPendingVerifications();
+    }
+
+    final overview = await getOverview();
+    if (filter == 'approved') {
+      return overview.items.where((item) => item.isVerified).toList();
+    }
+
+    return overview.items;
   }
 
   static Future<Map<String, dynamic>> verifyPayment(
@@ -174,8 +138,8 @@ class PaymentVerificationService {
   ) async {
     final response = await _client.post(
       '/admin/payment/$transactionId/approve',
-      body: {},
       auth: true,
+      body: {},
     );
 
     if (response.statusCode == 200) {
@@ -193,8 +157,8 @@ class PaymentVerificationService {
   static Future<void> rejectPayment(String transactionId) async {
     final response = await _client.post(
       '/admin/payment/$transactionId/reject',
-      body: {},
       auth: true,
+      body: {},
     );
 
     if (response.statusCode != 200) {
@@ -212,9 +176,4 @@ class PaymentVerificationService {
       throw Exception(_extractErrorMessage(response));
     }
   }
-
-  // ==================================================
-  // DELETE PAYMENT VERIFICATION
-  // ==================================================
-  // Uses ApiClient.delete above to perform deletion with auth
 }

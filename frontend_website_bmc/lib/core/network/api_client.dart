@@ -1,6 +1,5 @@
-
 import 'package:http/http.dart' as http;
-import '../session/app_session.dart';
+import '../../services/auth_service.dart';
 
 class ApiClient {
   final String baseUrl;
@@ -47,11 +46,7 @@ class ApiClient {
 
     try {
       final bodyString = body is String ? body : _encodeBody(body);
-      return await http.post(
-        url,
-        headers: requestHeaders,
-        body: bodyString,
-      );
+      return await http.post(url, headers: requestHeaders, body: bodyString);
     } catch (e) {
       return http.Response('{"error": "$e"}', 500);
     }
@@ -75,11 +70,7 @@ class ApiClient {
 
     try {
       final bodyString = body is String ? body : _encodeBody(body);
-      return await http.put(
-        url,
-        headers: requestHeaders,
-        body: bodyString,
-      );
+      return await http.put(url, headers: requestHeaders, body: bodyString);
     } catch (e) {
       return http.Response('{"error": "$e"}', 500);
     }
@@ -150,7 +141,8 @@ class ApiClient {
 
   Future<String?> _getAuthToken() async {
     try {
-      return await AppSession.getToken();
+      final token = await AuthService.getToken();
+      return token;
     } catch (_) {
       return null;
     }
