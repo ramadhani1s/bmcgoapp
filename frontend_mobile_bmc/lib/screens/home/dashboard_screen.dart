@@ -6,6 +6,7 @@ import 'package:frontend_mobile_bmc/screens/home/latihan_siswa_screen.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
 import 'package:frontend_mobile_bmc/services/jadwal_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend_mobile_bmc/widgets/navigation/main_bottom_nav.dart';
 import 'dart:async';
 
 class DashboardScreen extends StatefulWidget {
@@ -1581,39 +1582,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         bottom: false,
         child: IndexedStack(index: _selectedIndex, children: tabs),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: MainBottomNav(
         currentIndex: _selectedIndex,
         onTap: _onBottomNavTap,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: _accent,
-        unselectedItemColor: const Color(0xFF8F91A0),
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 11.5,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: 11.5,
-        ),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Beranda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_rounded),
-            label: 'Materi',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined),
-            label: 'Try Out',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
-            label: 'Profil',
-          ),
-        ],
+        accentColor: _accent,
       ),
     );
   }

@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/session/app_session.dart';
+import '../../widgets/olimpiade/olimpiade_header.dart';
+import '../../widgets/olimpiade/olimpiade_empty.dart';
+import '../../widgets/olimpiade/olimpiade_card.dart';
 
 class OlimpiadeScreen extends StatefulWidget {
   const OlimpiadeScreen({super.key});
@@ -68,16 +71,7 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
     }
   }
 
-  String _formatDate(String? raw) {
-    if (raw == null || raw.isEmpty) return '-';
-    try {
-      final dt = DateTime.parse(raw);
-      final months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-      return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
-    } catch (_) {
-      return raw;
-    }
-  }
+  // date formatting moved into OlimpiadeCard
 
   @override
   Widget build(BuildContext context) {
@@ -86,12 +80,20 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(),
+            OlimpiadeHeader(
+              tabs: _tabs,
+              selected: _selectedStatus,
+              onTabSelected: (value) {
+                setState(() => _selectedStatus = value);
+                _fetchOlimpiade(status: value);
+              },
+              accentColor: _accent,
+            ),
             const SizedBox(height: 8),
             Expanded(child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: _accent))
+                      ? const Center(child: CircularProgressIndicator(color: _accent))
               : _olimpiadeList.isEmpty
-                ? _buildEmpty()
+                ? const OlimpiadeEmpty(accentColor: _accent)
                 : RefreshIndicator(
                     color: _accent,
                     onRefresh: () => _fetchOlimpiade(),
@@ -99,7 +101,27 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       itemCount: _olimpiadeList.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) => _buildCard(_olimpiadeList[index]),
+                      itemBuilder: (context, index) {
+                        final o = _olimpiadeList[index];
+                        return OlimpiadeCard(
+                          olimpiade: o,
+                          onTap: () {
+                            final status = o['status'] as String? ?? 'tersedia';
+                            if (status == 'tersedia') {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => OlimpiadeSoalScreen(olimpiade: o),
+                              ));
+                            } else if (status == 'terjadwal') {
+                              // show details - keep existing behavior placeholder
+                            } else {
+                              // lihat hasil - existing behavior placeholder
+                            }
+                          },
+                          goldColor: _gold,
+                          textPrimary: _textPrimary,
+                          textMuted: const Color(0xFF8D90A3),
+                        );
+                      },
                     ),
                   ),
             ),
@@ -109,255 +131,7 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-      decoration: const BoxDecoration(
-        color: _accent,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.22),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Olimpiade', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
-                    Text('Kompetisi akademik untuk asah kemampuan', style: TextStyle(color: Color(0xFFFFE5E5), fontSize: 12)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: _tabs.map((tab) {
-              final isSelected = _selectedStatus == tab['value'];
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedStatus = tab['value']!);
-                    _fetchOlimpiade(status: tab['value']);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: isSelected ? Colors.white : Colors.white.withOpacity(0.5)),
-                    ),
-                    child: Text(
-                      tab['label']!,
-                      style: TextStyle(
-                        color: isSelected ? _accent : Colors.white,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmpty() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 72, height: 72,
-            decoration: BoxDecoration(color: const Color(0xFFFFE8E8), borderRadius: BorderRadius.circular(20)),
-            child: const Icon(Icons.emoji_events_rounded, color: _accent, size: 36),
-          ),
-          const SizedBox(height: 14),
-          const Text('Belum ada olimpiade', style: TextStyle(color: Color(0xFF25273D), fontSize: 16, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          const Text('Olimpiade akan muncul di sini.', style: TextStyle(color: Color(0xFF8D90A3), fontSize: 13)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCard(Map<String, dynamic> olimpiade) {
-    final status = olimpiade['status'] as String? ?? 'tersedia';
-    final id = olimpiade['id'] as int? ?? 0;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _gold,
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(18), topRight: Radius.circular(18)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.25), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 26),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        olimpiade['nama'] as String? ?? '-',
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
-                      ),
-                      Text(
-                        olimpiade['mata_pelajaran'] as String? ?? '-',
-                        style: const TextStyle(color: Color(0xFFFFE5B0), fontSize: 12.5),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStatusBadge(status),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF8D90A3)),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${_formatDate(olimpiade['tanggal_mulai']?.toString())} - ${_formatDate(olimpiade['tanggal_selesai']?.toString())}',
-                      style: const TextStyle(color: Color(0xFF8D90A3), fontSize: 12.5),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.timer_rounded, size: 14, color: Color(0xFF8D90A3)),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${olimpiade['durasi'] ?? 120} menit • ${olimpiade['total_soal'] ?? 0} soal',
-                      style: const TextStyle(color: Color(0xFF8D90A3), fontSize: 12.5),
-                    ),
-                  ],
-                ),
-                if ((olimpiade['deskripsi'] as String? ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    olimpiade['deskripsi'] as String,
-                    style: const TextStyle(color: Color(0xFF25273D), fontSize: 13, height: 1.4),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () {
-                    if (status == 'tersedia') {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => OlimpiadeSoalScreen(olimpiade: olimpiade),
-                      ));
-                    }
-                  },
-                  child: Row(
-                    children: [
-                      Text(
-                        status == 'tersedia' ? 'Mulai Olimpiade' : status == 'terjadwal' ? 'Lihat Detail' : 'Lihat Hasil',
-                        style: const TextStyle(color: _accent, fontSize: 14, fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right_rounded, color: _accent, size: 18),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(String status) {
-    Color color;
-    Color bg;
-    String label;
-    IconData icon;
-
-    switch (status) {
-      case 'tersedia':
-        color = const Color(0xFF12B892);
-        bg = const Color(0xFFE3FBF4);
-        label = 'Sedang Berlangsung';
-        icon = Icons.circle;
-        break;
-      case 'terjadwal':
-        color = const Color(0xFFF39A44);
-        bg = const Color(0xFFFFF0E0);
-        label = 'Segera Dibuka';
-        icon = Icons.calendar_month_rounded;
-        break;
-      case 'selesai':
-        color = const Color(0xFF8D90A3);
-        bg = const Color(0xFFF0F0F0);
-        label = 'Selesai';
-        icon = Icons.check_circle_rounded;
-        break;
-      default:
-        color = const Color(0xFF8D90A3);
-        bg = const Color(0xFFF0F0F0);
-        label = status;
-        icon = Icons.info_rounded;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 10, color: color),
-          const SizedBox(width: 5),
-          Text(label, style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
-  }
+  // UI moved to widgets: OlimpiadeHeader / OlimpiadeEmpty / OlimpiadeCard
 }
 
 // ===================== SOAL SCREEN =====================
@@ -374,8 +148,8 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
   static const Color _accent = Color(0xFFFF7070);
 
   List<Map<String, dynamic>> _soalList = [];
-  Map<int, String> _jawaban = {};
-  Set<int> _raguRagu = {};
+  final Map<int, String> _jawaban = {};
+  final Set<int> _raguRagu = {};
   int _currentIndex = 0;
   bool _isLoading = true;
   bool _showNavigasi = false;
@@ -435,12 +209,17 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
         final list = (data['data'] as List<dynamic>? ?? [])
             .whereType<Map<String, dynamic>>()
             .toList();
+        if (!mounted) return;
         setState(() {
           _soalList = list;
           _isLoading = false;
         });
+      } else {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
     }
   }
@@ -637,7 +416,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
                 onTap: () => Navigator.pop(context),
                 child: Container(
                   width: 36, height: 36,
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.22), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: Colors.white.withAlpha((0.22 * 255).round()), borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
                 ),
               ),
@@ -653,7 +432,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.22), borderRadius: BorderRadius.circular(20)),
+                decoration: BoxDecoration(color: Colors.white.withAlpha((0.22 * 255).round()), borderRadius: BorderRadius.circular(20)),
                 child: Row(
                   children: [
                     const Icon(Icons.timer_rounded, color: Colors.white, size: 14),
@@ -670,7 +449,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 4,
-              backgroundColor: Colors.white.withOpacity(0.3),
+              backgroundColor: Colors.white.withAlpha((0.3 * 255).round()),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ),
@@ -756,7 +535,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
     return GestureDetector(
       onTap: () => setState(() => _showNavigasi = false),
       child: Container(
-        color: Colors.black.withOpacity(0.3),
+        color: Colors.black.withAlpha((0.3 * 255).round()),
         child: Align(
           alignment: Alignment.bottomCenter,
           child: GestureDetector(

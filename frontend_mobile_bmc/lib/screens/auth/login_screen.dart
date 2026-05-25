@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/services/auth_service.dart';
 import 'package:frontend_mobile_bmc/core/session/app_session.dart';
+import 'package:frontend_mobile_bmc/widgets/auth/bmc_text_field.dart';
+import 'package:frontend_mobile_bmc/widgets/auth/login_intro_card.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,11 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   static const Color _primaryColor = Color(0xFFFF7070);
   static const Color _cardBg = Color(0xFFFFFFFF);
   static const Color _pageBg = Color(0xFFF8F8F8);
-  static const Color _fieldBg = Color(0xFFF4F5FA);
   static const Color _labelColor = Color(0xFF25293B);
-  static const Color _hintColor = Color(0xFF9B9FB0);
-  static const Color _pillBg = Color(0xFFEDEDED);
-  static const Color _pillText = Color(0xFF555555);
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -95,41 +93,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  InputDecoration _inputDecoration({required String hint, Widget? suffixIcon}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(
-        color: _hintColor,
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFD8DBE4), width: 1),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFC6CAD5), width: 1.1),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 1),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 1),
-      ),
-      filled: true,
-      fillColor: _fieldBg,
-      suffixIcon: suffixIcon,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,64 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Center(
-                              child: Container(
-                                width: 92,
-                                height: 92,
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8F0E5),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                                child: Image.asset(
-                                  'assets/images/bmc_logo.png',
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Selamat Datang!',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: _labelColor,
-                                fontSize: 31,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.35,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Silahkan masuk ke akun Anda',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Color(0xFF9AA0AE),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _pillBg,
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: const Text(
-                                  'BINTANG MUDA CENTER',
-                                  style: TextStyle(
-                                    color: _pillText,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
-                              ),
-                            ),
+                            const LoginIntroCard(),
                             const SizedBox(height: 34),
                             Container(
                               padding: const EdgeInsets.fromLTRB(
@@ -244,12 +150,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 10),
-                                  TextFormField(
+                                  BmcTextField(
                                     controller: _emailController,
                                     keyboardType: TextInputType.emailAddress,
-                                    decoration: _inputDecoration(
-                                      hint: 'Masukkan email Anda',
-                                    ),
+                                    hint: 'Masukkan email Anda',
+                                    icon: Icons.email_outlined,
                                     validator: (value) {
                                       if (value?.isEmpty ?? true) {
                                         return 'Email tidak boleh kosong';
@@ -267,26 +172,25 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 10),
-                                  TextFormField(
+                                  BmcTextField(
                                     controller: _passwordController,
                                     obscureText: !_isPasswordVisible,
-                                    decoration: _inputDecoration(
-                                      hint: 'Masukkan email Anda',
-                                      suffixIcon: IconButton(
-                                        icon: Icon(
-                                          _isPasswordVisible
-                                              ? Icons.visibility_outlined
-                                              : Icons.visibility_off_outlined,
-                                          color: const Color(0xFFA0A5B2),
-                                          size: 22,
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            _isPasswordVisible =
-                                                !_isPasswordVisible;
-                                          });
-                                        },
+                                    hint: 'Masukkan password Anda',
+                                    icon: Icons.lock_outline,
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _isPasswordVisible
+                                            ? Icons.visibility_outlined
+                                            : Icons.visibility_off_outlined,
+                                        color: const Color(0xFFA0A5B2),
+                                        size: 22,
                                       ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _isPasswordVisible =
+                                              !_isPasswordVisible;
+                                        });
+                                      },
                                     ),
                                     validator: (value) {
                                       if (value?.isEmpty ?? true) {

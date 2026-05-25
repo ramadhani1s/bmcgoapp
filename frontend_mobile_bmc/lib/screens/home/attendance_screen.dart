@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/services/attendance_service.dart';
+import 'package:frontend_mobile_bmc/widgets/attendance/attendance_filter_card.dart';
+import 'package:frontend_mobile_bmc/widgets/attendance/attendance_history_item.dart';
+import 'package:frontend_mobile_bmc/widgets/attendance/attendance_result_card.dart';
+import 'package:frontend_mobile_bmc/widgets/attendance/attendance_token_card.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -148,18 +152,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'hadir':
-        return const Color(0xFF16A34A);
-      case 'terlambat':
-        return const Color(0xFFE67E22);
-      case 'tidak_hadir':
-        return const Color(0xFFDC2626);
-      default:
-        return const Color(0xFF64748B);
-    }
-  }
+  // status color helper was removed because it's not referenced.
 
   String _formatDate(dynamic value) {
     final parsed = DateTime.tryParse((value ?? '').toString());
@@ -183,23 +176,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return '$day/$month/$year';
   }
 
-  Widget _buildStatusChip(String status) {
-    final color = _statusColor(status);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.14),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(color: color, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final selectedDateLabel = _selectedDate == null
+        ? 'Pilih Tanggal'
+        : _formatFilterDate(_selectedDate!);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Absensi Kelas'),
@@ -216,84 +197,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.08),
-                      blurRadius: 18,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Input Token Absensi',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Masukkan token yang diberikan mentor. 0-15 menit: hadir, >15-30 menit: terlambat, >30 menit: tidak hadir.',
-                      style: TextStyle(color: Color(0xFF64748B), height: 1.45),
-                    ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: _tokenController,
-                      textCapitalization: TextCapitalization.characters,
-                      decoration: InputDecoration(
-                        hintText: 'Contoh: AB12CD',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _isSubmitting ? null : _submitToken,
-                        icon: const Icon(Icons.how_to_reg_outlined),
-                        label: Text(_isSubmitting ? 'Mengirim...' : 'Kirim Token'),
-                      ),
-                    ),
-                  ],
-                ),
+              AttendanceTokenCard(
+                controller: _tokenController,
+                isSubmitting: _isSubmitting,
+                onSubmit: _submitToken,
               ),
               if (_latestResult != null) ...[
                 const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.06),
-                        blurRadius: 14,
-                        offset: Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Hasil Absensi Terakhir',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildStatusChip((_latestResult!['status'] ?? '-').toString()),
-                      const SizedBox(height: 8),
-                      Text('Kelas: ${(_latestResult!['class_name'] ?? '-').toString()}'),
-                      Text('Mapel: ${(_latestResult!['subject'] ?? '-').toString()}'),
-                      Text('Waktu Input: ${_formatDate(_latestResult!['submitted_at'])}'),
-                    ],
-                  ),
+                AttendanceResultCard(
+                  status: (_latestResult!['status'] ?? '-').toString(),
+                  className: (_latestResult!['class_name'] ?? '-').toString(),
+                  subject: (_latestResult!['subject'] ?? '-').toString(),
+                  submittedAt: _formatDate(_latestResult!['submitted_at']),
                 ),
               ],
               const SizedBox(height: 14),
@@ -302,74 +217,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.05),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Filter Riwayat',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      initialValue: _classOptions.contains(_selectedClass)
-                          ? _selectedClass
-                          : 'Semua Kelas',
-                      items: _classOptions
-                          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-                          .toList(),
-                      onChanged: (value) async {
-                        if (value == null) {
-                          return;
-                        }
-                        setState(() {
-                          _selectedClass = value;
-                        });
-                        await _loadHistory();
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Kelas',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _pickDate,
-                            icon: const Icon(Icons.date_range),
-                            label: Text(
-                              _selectedDate == null
-                                  ? 'Pilih Tanggal'
-                                  : _formatFilterDate(_selectedDate!),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: _clearFilters,
-                          child: const Text('Reset'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              AttendanceFilterCard(
+                classOptions: _classOptions,
+                selectedClass: _selectedClass,
+                selectedDateLabel: selectedDateLabel,
+                onClassChanged: (value) async {
+                  setState(() {
+                    _selectedClass = value;
+                  });
+                  await _loadHistory();
+                },
+                onPickDate: _pickDate,
+                onReset: _clearFilters,
               ),
               if (_isLoadingHistory)
                 const Center(child: Padding(
@@ -387,40 +246,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 )
               else
                 ..._history.map((item) {
-                  final status = (item['status'] ?? '-').toString();
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color.fromRGBO(0, 0, 0, 0.05),
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                (item['class_name'] ?? '-').toString(),
-                                style: const TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 4),
-                              Text('Mapel: ${(item['subject'] ?? '-').toString()}'),
-                              Text('Input: ${_formatDate(item['submitted_at'])}'),
-                            ],
-                          ),
-                        ),
-                        _buildStatusChip(status),
-                      ],
-                    ),
+                  return AttendanceHistoryItem(
+                    className: (item['class_name'] ?? '-').toString(),
+                    subject: (item['subject'] ?? '-').toString(),
+                    submittedAt: _formatDate(item['submitted_at']),
+                    status: (item['status'] ?? '-').toString(),
                   );
                 }),
             ],

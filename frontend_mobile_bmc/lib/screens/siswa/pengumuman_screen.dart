@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/session/app_session.dart';
+import '../../widgets/pengumuman/pengumuman_header.dart';
+import '../../widgets/pengumuman/kategori_filter.dart';
+import '../../widgets/pengumuman/pengumuman_card.dart';
+import '../../widgets/pengumuman/pengumuman_empty.dart';
 
 class PengumumanScreen extends StatefulWidget {
   const PengumumanScreen({super.key});
@@ -18,7 +22,6 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
   static const Color _textPrimary = Color(0xFF25273D);
   static const Color _textMuted = Color(0xFF8D90A3);
 
-  List<Map<String, dynamic>> _allPengumuman = [];
   List<Map<String, dynamic>> _filtered = [];
   bool _isLoading = true;
   String _selectedKategori = 'Semua';
@@ -60,7 +63,6 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
             .whereType<Map<String, dynamic>>()
             .toList();
         setState(() {
-          _allPengumuman = list;
           _filtered = list;
           _isLoading = false;
         });
@@ -85,15 +87,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
     };
   }
 
-  String _formatDate(String rawDate) {
-    try {
-      final dt = DateTime.parse(rawDate);
-      final months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-      return '${dt.day} ${months[dt.month - 1]} ${dt.year} • ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
-    } catch (_) {
-      return rawDate;
-    }
-  }
+  // date formatting moved into PengumumanCard
 
   @override
   Widget build(BuildContext context) {
@@ -102,8 +96,8 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(),
-            _buildKategoriFilter(),
+            PengumumanHeader(accentColor: _accent),
+            KategoriFilter(kategori: _kategori, selected: _selectedKategori, onTap: _onKategoriTap, accentColor: _accent, mutedColor: _textMuted),
             const SizedBox(height: 8),
             Expanded(child: _buildList()),
           ],
@@ -112,108 +106,13 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-      decoration: const BoxDecoration(
-        color: _accent,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.22),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Pengumuman', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
-                SizedBox(height: 4),
-                Text('Informasi resmi dari BMC', style: TextStyle(color: Color(0xFFFFE5E5), fontSize: 13)),
-              ],
-            ),
-          ),
-          const Icon(Icons.campaign_rounded, color: Colors.white, size: 48),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKategoriFilter() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 14),
-      child: SizedBox(
-        height: 40,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: _kategori.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (context, index) {
-            final k = _kategori[index];
-            final isSelected = _selectedKategori == k;
-            return GestureDetector(
-              onTap: () => _onKategoriTap(k),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? _accent : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isSelected ? _accent : const Color(0xFFE0E0E0)),
-                ),
-                child: Text(
-                  k,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : _textMuted,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
+  // header and kategori filter moved to widgets
 
   Widget _buildList() {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator(color: _accent));
     }
-
-    if (_filtered.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72, height: 72,
-              decoration: BoxDecoration(color: const Color(0xFFFFE8E8), borderRadius: BorderRadius.circular(20)),
-              child: const Icon(Icons.campaign_rounded, color: _accent, size: 36),
-            ),
-            const SizedBox(height: 14),
-            const Text('Belum ada pengumuman', style: TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 6),
-            const Text('Admin belum membuat pengumuman apapun.', style: TextStyle(color: _textMuted, fontSize: 13)),
-          ],
-        ),
-      );
-    }
+    if (_filtered.isEmpty) return const PengumumanEmpty(accentColor: _accent);
 
     return RefreshIndicator(
       color: _accent,
@@ -222,58 +121,21 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         itemCount: _filtered.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, index) => _buildCard(_filtered[index]),
+        itemBuilder: (context, index) {
+          final item = _filtered[index];
+          return PengumumanCard(
+            item: item,
+            onTap: () {
+              // keep current behavior: could navigate to detail
+            },
+            getKategoriConfig: _getKategoriConfig,
+            textPrimary: _textPrimary,
+            textMuted: _textMuted,
+          );
+        },
       ),
     );
   }
 
-  Widget _buildCard(Map<String, dynamic> item) {
-    final kategori = item['kategori'] as String? ?? 'Umum';
-    final config = _getKategoriConfig(kategori);
-    final createdAt = item['created_at'] as String? ?? '';
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 48, height: 48,
-            decoration: BoxDecoration(color: config['bg'] as Color, borderRadius: BorderRadius.circular(14)),
-            child: Icon(config['icon'] as IconData, color: config['color'] as Color, size: 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['judul'] as String? ?? '-',
-                  style: const TextStyle(color: _textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  item['isi'] as String? ?? '-',
-                  style: const TextStyle(color: _textMuted, fontSize: 12.5, height: 1.4),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _formatDate(createdAt),
-                  style: const TextStyle(color: _textMuted, fontSize: 11.5),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right_rounded, color: Color(0xFFD0D0D0)),
-        ],
-      ),
-    );
-  }
+  // card UI moved to PengumumanCard
 }

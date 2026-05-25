@@ -4,6 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/session/app_session.dart';
+import 'package:frontend_mobile_bmc/widgets/profile/student_form.dart';
+import 'package:frontend_mobile_bmc/widgets/profile/father_form.dart';
+import 'package:frontend_mobile_bmc/widgets/profile/mother_form.dart';
+import 'package:frontend_mobile_bmc/widgets/profile/consent_form.dart';
+import 'package:frontend_mobile_bmc/widgets/profile/confirmation_view.dart';
+import 'package:frontend_mobile_bmc/widgets/profile/readonly_profile_view.dart';
 
 class ProfileDetailFormScreen extends StatefulWidget {
   const ProfileDetailFormScreen({super.key});
@@ -14,8 +20,6 @@ class ProfileDetailFormScreen extends StatefulWidget {
 
 class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
   static const Color _accent = Color(0xFFFF7070);
-  static const Color _textPrimary = Color(0xFF25273D);
-  static const Color _textMuted = Color(0xFF8D90A3);
 
   final _studentFormKey = GlobalKey<FormState>();
   final _fatherFormKey = GlobalKey<FormState>();
@@ -422,7 +426,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
             margin: EdgeInsets.only(right: index == _totalSteps - 1 ? 0 : 8),
             height: 4,
             decoration: BoxDecoration(
-              color: active ? Colors.white : Colors.white.withOpacity(0.45),
+              color: active ? Colors.white : Colors.white.withAlpha((0.45 * 255).round()),
               borderRadius: BorderRadius.circular(10),
             ),
           ),
@@ -432,390 +436,92 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
   }
 
   Widget _buildStudentForm() {
-    return Form(
-      key: _studentFormKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Data Diri Siswa', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
-          const SizedBox(height: 14),
-          TextFormField(
-            controller: _namaController,
-            decoration: _inputDecoration('Nama lengkap siswa', Icons.person_outline),
-            validator: (v) => _required(v, 'Nama lengkap siswa'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _kelasController,
-            decoration: _inputDecoration('Kelas', Icons.class_outlined),
-            validator: (v) => _required(v, 'Kelas'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _sekolahController,
-            decoration: _inputDecoration('Asal sekolah', Icons.school_outlined),
-            validator: (v) => _required(v, 'Asal sekolah'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _whatsappController,
-            keyboardType: TextInputType.phone,
-            decoration: _inputDecoration('No. WhatsApp siswa', Icons.phone_outlined),
-            validator: (v) => _required(v, 'No. WhatsApp siswa'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _alamatController,
-            minLines: 2,
-            maxLines: 3,
-            decoration: _inputDecoration('Alamat lengkap', Icons.location_on_outlined),
-            validator: (v) => _required(v, 'Alamat lengkap'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: _inputDecoration('Email siswa', Icons.email_outlined),
-            validator: (v) {
-              final requiredMessage = _required(v, 'Email siswa');
-              if (requiredMessage != null) {
-                return requiredMessage;
-              }
-              if (!(v?.contains('@') ?? false)) {
-                return 'Format email belum valid';
-              }
-              return null;
-            },
-          ),
-        ],
-      ),
+    return StudentForm(
+      formKey: _studentFormKey,
+      namaController: _namaController,
+      kelasController: _kelasController,
+      sekolahController: _sekolahController,
+      whatsappController: _whatsappController,
+      alamatController: _alamatController,
+      emailController: _emailController,
+      inputDecoration: _inputDecoration,
+      requiredValidator: _required,
     );
   }
 
   Widget _buildFatherForm() {
-    return Form(
-      key: _fatherFormKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Data Ayah', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
-          const SizedBox(height: 14),
-          TextFormField(
-            controller: _fatherNameController,
-            decoration: _inputDecoration('Nama lengkap ayah', Icons.person_outline),
-            validator: (v) => _required(v, 'Nama lengkap ayah'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _fatherJobController,
-            decoration: _inputDecoration('Pekerjaan ayah', Icons.work_outline_rounded),
-            validator: (v) => _required(v, 'Pekerjaan ayah'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _fatherPhoneController,
-            keyboardType: TextInputType.phone,
-            decoration: _inputDecoration('No. WhatsApp ayah', Icons.phone_outlined),
-            validator: (v) => _required(v, 'No. WhatsApp ayah'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _fatherAddressController,
-            minLines: 2,
-            maxLines: 3,
-            decoration: _inputDecoration('Alamat lengkap ayah', Icons.location_on_outlined),
-            validator: (v) => _required(v, 'Alamat lengkap ayah'),
-          ),
-        ],
-      ),
+    return FatherForm(
+      formKey: _fatherFormKey,
+      nameController: _fatherNameController,
+      jobController: _fatherJobController,
+      phoneController: _fatherPhoneController,
+      addressController: _fatherAddressController,
+      inputDecoration: _inputDecoration,
+      requiredValidator: _required,
     );
   }
 
   Widget _buildMotherForm() {
-    return Form(
-      key: _motherFormKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Data Ibu', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
-          const SizedBox(height: 14),
-          TextFormField(
-            controller: _motherNameController,
-            decoration: _inputDecoration('Nama lengkap ibu', Icons.person_outline),
-            validator: (v) => _required(v, 'Nama lengkap ibu'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _motherJobController,
-            decoration: _inputDecoration('Pekerjaan ibu', Icons.work_outline_rounded),
-            validator: (v) => _required(v, 'Pekerjaan ibu'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _motherPhoneController,
-            keyboardType: TextInputType.phone,
-            decoration: _inputDecoration('No. WhatsApp ibu', Icons.phone_outlined),
-            validator: (v) => _required(v, 'No. WhatsApp ibu'),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _motherAddressController,
-            minLines: 2,
-            maxLines: 3,
-            decoration: _inputDecoration('Alamat lengkap ibu', Icons.location_on_outlined),
-            validator: (v) => _required(v, 'Alamat lengkap ibu'),
-          ),
-        ],
-      ),
+    return MotherForm(
+      formKey: _motherFormKey,
+      nameController: _motherNameController,
+      jobController: _motherJobController,
+      phoneController: _motherPhoneController,
+      addressController: _motherAddressController,
+      inputDecoration: _inputDecoration,
+      requiredValidator: _required,
     );
   }
 
   Widget _buildConsentForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Persetujuan Orang Tua', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
-        const SizedBox(height: 14),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE8F2FF),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFF4693FF)),
-          ),
-          child: const Text(
-            'Dengan menandatangani formulir ini, saya sebagai orang tua/wali menyatakan bahwa data yang diberikan adalah benar dan saya menyetujui anak saya untuk mengikuti program bimbingan belajar di Bimbel Bintang Muda Center.',
-            style: TextStyle(color: Color(0xFF2D5A8D), fontSize: 13.2, height: 1.4),
-          ),
-        ),
-        const SizedBox(height: 14),
-        CheckboxListTile(
-          value: _parentAgreementChecked,
-          activeColor: _accent,
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Saya sudah membaca dan menyetujui pernyataan di atas.'),
-          onChanged: (checked) {
-            setState(() {
-              _parentAgreementChecked = checked ?? false;
-            });
-          },
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Tanda Tangan Orang Tua/Wali *',
-          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: _textPrimary),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: _mockPickSignatureFile,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE1E5EE)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.upload_file_outlined, color: Color(0xFF9AA0AE)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _signatureFileName.isEmpty ? 'Choose file' : _signatureFileName,
-                    style: TextStyle(
-                      color: _signatureFileName.isEmpty ? const Color(0xFF9AA0AE) : _textPrimary,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return ConsentForm(
+      parentAgreementChecked: _parentAgreementChecked,
+      onAgreementChanged: (checked) {
+        setState(() {
+          _parentAgreementChecked = checked ?? false;
+        });
+      },
+      signatureFileName: _signatureFileName,
+      onPickSignature: _mockPickSignatureFile,
+      accentColor: _accent,
     );
   }
 
   Widget _buildConfirmationPage() {
-    Widget infoRow(String label, String value) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 138,
-              child: Text(
-                '$label:',
-                style: const TextStyle(color: _textMuted, fontSize: 13.5),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                value.isEmpty ? '-' : value,
-                style: const TextStyle(color: _textPrimary, fontSize: 13.5, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('onfirmasi Data', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary)),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE9EDF5)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Data Siswa', style: TextStyle(fontWeight: FontWeight.w700, color: _textPrimary)),
-              const SizedBox(height: 8),
-              infoRow('Nama', _namaController.text.trim()),
-              infoRow('Kelas', _kelasController.text.trim()),
-              infoRow('Asal sekolah', _sekolahController.text.trim()),
-              infoRow('WhatsApp', _whatsappController.text.trim()),
-              infoRow('Alamat', _alamatController.text.trim()),
-              infoRow('Email', _emailController.text.trim()),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE9EDF5)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Data Orang Tua', style: TextStyle(fontWeight: FontWeight.w700, color: _textPrimary)),
-              const SizedBox(height: 8),
-              infoRow('Ayah', _fatherNameController.text.trim()),
-              infoRow('Pekerjaan ayah', _fatherJobController.text.trim()),
-              infoRow('WhatsApp ayah', _fatherPhoneController.text.trim()),
-              infoRow('Ibu', _motherNameController.text.trim()),
-              infoRow('Pekerjaan ibu', _motherJobController.text.trim()),
-              infoRow('WhatsApp ibu', _motherPhoneController.text.trim()),
-              infoRow('File tanda tangan', _signatureFileName),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Pastikan semua data sudah benar sebelum menekan tombol Simpan.',
-          style: TextStyle(color: _textMuted, fontSize: 12.5),
-        ),
-      ],
+    return ConfirmationView(
+      nama: _namaController.text.trim(),
+      kelas: _kelasController.text.trim(),
+      sekolah: _sekolahController.text.trim(),
+      whatsapp: _whatsappController.text.trim(),
+      alamat: _alamatController.text.trim(),
+      email: _emailController.text.trim(),
+      fatherName: _fatherNameController.text.trim(),
+      fatherJob: _fatherJobController.text.trim(),
+      fatherPhone: _fatherPhoneController.text.trim(),
+      motherName: _motherNameController.text.trim(),
+      motherJob: _motherJobController.text.trim(),
+      motherPhone: _motherPhoneController.text.trim(),
+      signatureFileName: _signatureFileName,
     );
   }
 
   Widget _buildReadOnlyProfileView() {
-    Widget infoRow(String label, String value) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 138,
-              child: Text(
-                '$label:',
-                style: const TextStyle(color: _textMuted, fontSize: 13.5),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                value.isEmpty ? '-' : value,
-                style: const TextStyle(
-                  color: _textPrimary,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Data Profil Siswa',
-          style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700, color: _textPrimary),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE9EDF5)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Data Siswa', style: TextStyle(fontWeight: FontWeight.w700, color: _textPrimary)),
-              const SizedBox(height: 8),
-              infoRow('Nama', _namaController.text.trim()),
-              infoRow('Kelas', _kelasController.text.trim()),
-              infoRow('Asal sekolah', _sekolahController.text.trim()),
-              infoRow('WhatsApp', _whatsappController.text.trim()),
-              infoRow('Alamat', _alamatController.text.trim()),
-              infoRow('Email', _emailController.text.trim()),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE9EDF5)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Data Orang Tua', style: TextStyle(fontWeight: FontWeight.w700, color: _textPrimary)),
-              const SizedBox(height: 8),
-              infoRow('Nama ayah', _fatherNameController.text.trim()),
-              infoRow('Pekerjaan ayah', _fatherJobController.text.trim()),
-              infoRow('WhatsApp ayah', _fatherPhoneController.text.trim()),
-              infoRow('Alamat ayah', _fatherAddressController.text.trim()),
-              const SizedBox(height: 2),
-              infoRow('Nama ibu', _motherNameController.text.trim()),
-              infoRow('Pekerjaan ibu', _motherJobController.text.trim()),
-              infoRow('WhatsApp ibu', _motherPhoneController.text.trim()),
-              infoRow('Alamat ibu', _motherAddressController.text.trim()),
-              infoRow('File tanda tangan', _signatureFileName),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Data sudah tersimpan. Tekan tombol Edit Data kalau ingin mengubah isi profil.',
-          style: TextStyle(color: _textMuted, fontSize: 12.5),
-        ),
-      ],
+    return ReadOnlyProfileView(
+      nama: _namaController.text.trim(),
+      kelas: _kelasController.text.trim(),
+      sekolah: _sekolahController.text.trim(),
+      whatsapp: _whatsappController.text.trim(),
+      alamat: _alamatController.text.trim(),
+      email: _emailController.text.trim(),
+      fatherName: _fatherNameController.text.trim(),
+      fatherJob: _fatherJobController.text.trim(),
+      fatherPhone: _fatherPhoneController.text.trim(),
+      fatherAddress: _fatherAddressController.text.trim(),
+      motherName: _motherNameController.text.trim(),
+      motherJob: _motherJobController.text.trim(),
+      motherPhone: _motherPhoneController.text.trim(),
+      motherAddress: _motherAddressController.text.trim(),
+      signatureFileName: _signatureFileName,
     );
   }
 
@@ -855,11 +561,11 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
   Widget _buildSavedBadge() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withOpacity(0.45)),
-      ),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha((0.2 * 255).round()),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: Colors.white.withAlpha((0.45 * 255).round())),
+            ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -893,9 +599,8 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
                     borderRadius: BorderRadius.circular(10),
                     child: Container(
                       width: 32,
-                      height: 32,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withAlpha((0.2 * 255).round()),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.arrow_back_rounded, color: Colors.white),

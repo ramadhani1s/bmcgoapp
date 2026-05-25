@@ -13,6 +13,7 @@ import 'package:frontend_mobile_bmc/screens/payment/payment_history_screen.dart'
 import 'package:frontend_mobile_bmc/screens/siswa/materi_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/pengumuman_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/olimpiade_screen.dart';
+import 'package:frontend_mobile_bmc/screens/tryout/tryout_list_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +52,7 @@ class MyApp extends StatelessWidget {
         '/materi': (context) => const MateriScreen(),
         '/pengumuman': (context) => const PengumumanScreen(),
         '/olimpiade': (context) => const OlimpiadeScreen(),
+        '/mentor-tryout': (context) => const TryOutListScreen(),
       },
     );
   }

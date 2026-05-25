@@ -4,6 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/session/app_session.dart';
+import '../../widgets/materi/materi_header.dart';
+import '../../widgets/materi/materi_search_bar.dart';
+import '../../widgets/materi/subject_filter.dart';
+import '../../widgets/materi/materi_card.dart';
 
 class MateriScreen extends StatefulWidget {
   const MateriScreen({super.key});
@@ -117,11 +121,7 @@ class _MateriScreenState extends State<MateriScreen> {
     }
   }
 
-  String _formatFileSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
+  // file size formatting moved to MateriCard widget when needed
 
   Map<String, dynamic> _getSubjectConfig(String subject) {
     return _subjectConfig[subject] ?? {
@@ -139,9 +139,9 @@ class _MateriScreenState extends State<MateriScreen> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeader(),
-        _buildSearchBar(),
-        _buildSubjectFilter(),
+        MateriHeader(title: 'Materi Pembelajaran', subtitle: 'Akses materi sesuai paket yang aktif', accentColor: _accent),
+        MateriSearchBar(controller: _searchController, hint: 'Cari materi atau mentor...', mutedColor: _textMuted),
+        SubjectFilter(subjects: _subjects, selected: _selectedSubject, onTap: _onSubjectTap, accentColor: _accent, mutedColor: _textMuted),
         const SizedBox(height: 8),
         Expanded(child: _buildMateriList()),
       ],
@@ -150,115 +150,7 @@ class _MateriScreenState extends State<MateriScreen> {
 );
   }
 
-  Widget _buildHeader() {
-  return Container(
-    padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-    decoration: const BoxDecoration(
-      color: _accent,
-      borderRadius: BorderRadius.only(
-        bottomLeft: Radius.circular(32),
-        bottomRight: Radius.circular(32),
-      ),
-    ),
-    child: Row(
-      children: [
-        GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.22),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'Materi Pembelajaran',
-                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Akses materi sesuai paket yang aktif',
-                style: TextStyle(color: Color(0xFFFFE5E5), fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-        const Icon(Icons.menu_book_rounded, color: Colors.white, size: 48),
-      ],
-    ),
-  );
-}
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [BoxShadow(color: Color(0x12000000), blurRadius: 12, offset: Offset(0, 4))],
-        ),
-        child: TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.search, color: _textMuted),
-            hintText: 'Cari materi atau mentor...',
-            hintStyle: const TextStyle(color: _textMuted, fontSize: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubjectFilter() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 14),
-      child: SizedBox(
-        height: 40,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: _subjects.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (context, index) {
-            final subject = _subjects[index];
-            final isSelected = _selectedSubject == subject;
-            return GestureDetector(
-              onTap: () => _onSubjectTap(subject),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? _accent : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isSelected ? _accent : const Color(0xFFE0E0E0)),
-                ),
-                child: Text(
-                  subject,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : _textMuted,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
+  // UI moved to widgets: MateriHeader, MateriSearchBar, SubjectFilter, MateriCard
 
   Widget _buildMateriList() {
     if (_isLoading) {
@@ -291,67 +183,16 @@ class _MateriScreenState extends State<MateriScreen> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         itemCount: _filteredMateri.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, index) => _buildMateriCard(_filteredMateri[index]),
-      ),
-    );
-  }
-
-  Widget _buildMateriCard(Map<String, dynamic> materi) {
-    final subject = materi['subject'] as String? ?? 'Umum';
-    final config = _getSubjectConfig(subject);
-    final mentorName = materi['mentor_name'] as String? ?? 'Mentor';
-    final fileSize = materi['file_size'] as int? ?? 0;
-    final fileType = (materi['file_type'] as String? ?? '.pdf').toUpperCase().replaceAll('.', '');
-
-    return GestureDetector(
-      onTap: () => _openFile(materi),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2))],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 52, height: 52,
-              decoration: BoxDecoration(color: config['bg'] as Color, borderRadius: BorderRadius.circular(14)),
-              child: Icon(config['icon'] as IconData, color: config['color'] as Color, size: 26),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    materi['title'] as String? ?? '-',
-                    style: const TextStyle(color: _textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  Text('Kak $mentorName · ${_formatFileSize(fileSize)}', style: const TextStyle(color: _textMuted, fontSize: 12.5)),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(color: config['bg'] as Color, borderRadius: BorderRadius.circular(6)),
-                        child: Text(subject, style: TextStyle(color: config['color'] as Color, fontSize: 11, fontWeight: FontWeight.w700)),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.picture_as_pdf_rounded, size: 13, color: _textMuted),
-                      const SizedBox(width: 3),
-                      Text(fileType, style: const TextStyle(color: _textMuted, fontSize: 11, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFFD0D0D0)),
-          ],
-        ),
+        itemBuilder: (context, index) {
+          final m = _filteredMateri[index];
+          return MateriCard(
+            materi: m,
+            onTap: () => _openFile(m),
+            getSubjectConfig: _getSubjectConfig,
+            textPrimary: _textPrimary,
+            textMuted: _textMuted,
+          );
+        },
       ),
     );
   }

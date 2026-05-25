@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/services/auth_service.dart';
+import 'package:frontend_mobile_bmc/widgets/auth/bmc_text_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -90,22 +91,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      filled: true,
-      fillColor: const Color(0xFFF8FAFC),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,7 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           width: 34,
                           height: 34,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
+                            color: Colors.white.withAlpha((0.18 * 255).round()),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -171,9 +156,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      TextFormField(
+                      BmcTextField(
                         controller: _namaController,
-                        decoration: _inputDecoration('Nama Lengkap Siswa *', Icons.person_outline),
+                        hint: 'Nama Lengkap Siswa *',
+                        icon: Icons.person_outline,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
                             return 'Nama lengkap wajib diisi';
@@ -182,9 +168,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      BmcTextField(
                         controller: _kelasController,
-                        decoration: _inputDecoration('Kelas *', Icons.class_outlined),
+                        hint: 'Kelas *',
+                        icon: Icons.class_outlined,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
                             return 'Kelas wajib diisi';
@@ -193,9 +180,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      BmcTextField(
                         controller: _sekolahController,
-                        decoration: _inputDecoration('Asal Sekolah *', Icons.school_outlined),
+                        hint: 'Asal Sekolah *',
+                        icon: Icons.school_outlined,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
                             return 'Asal sekolah wajib diisi';
@@ -204,10 +192,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      BmcTextField(
                         controller: _whatsappController,
                         keyboardType: TextInputType.phone,
-                        decoration: _inputDecoration('No. WhatsApp Siswa *', Icons.phone_android_outlined),
+                        hint: 'No. WhatsApp Siswa *',
+                        icon: Icons.phone_android_outlined,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
                             return 'Nomor WhatsApp wajib diisi';
@@ -216,11 +205,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      BmcTextField(
                         controller: _alamatController,
                         minLines: 2,
                         maxLines: 4,
-                        decoration: _inputDecoration('Alamat Lengkap Siswa *', Icons.location_on_outlined),
+                        hint: 'Alamat Lengkap Siswa *',
+                        icon: Icons.location_on_outlined,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
                             return 'Alamat lengkap wajib diisi';
@@ -229,10 +219,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      BmcTextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: _inputDecoration('Email *', Icons.email_outlined),
+                        hint: 'Email *',
+                        icon: Icons.email_outlined,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
                             return 'Email wajib diisi';
@@ -244,21 +235,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      BmcTextField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
-                        decoration: _inputDecoration('Password *', Icons.lock_outline).copyWith(
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                              color: Colors.grey.shade600,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
+                        hint: 'Password *',
+                        icon: Icons.lock_outline,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                            color: Colors.grey.shade600,
                           ),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
                         ),
                         validator: (value) {
                           if (value?.isEmpty ?? true) {
