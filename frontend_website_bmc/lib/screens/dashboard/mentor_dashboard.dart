@@ -12,6 +12,7 @@ import '../../models/mentor_competition_item.dart';
 import 'jadwal_pembelajaran_screen.dart';
 import 'mentor_attendance_screen.dart';
 import 'mentor_olimpiade_screen.dart';
+import '../mentor/materi_pembelajaran_screen.dart';
 
 class MentorDashboard extends StatefulWidget {
   const MentorDashboard({super.key});
@@ -27,6 +28,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   List<Map<String, dynamic>> _recentSchedules = [];
   List<MentorCompetitionItem> _recentTryouts = [];
   List<MentorCompetitionItem> _recentOlimpiades = [];
+  String _selectedClass = 'Semua Kelas';
 
   static const Color _sidebarBg = Color(0xFFF8FAFD);
   static const Color _sidebarBorder = Color(0xFFDDE4F0);
@@ -288,7 +290,15 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       return;
     }
     if (title == 'Materi Pembelajaran') {
-      await navigator.pushNamed(AppRoutes.mentorMateri);
+      await navigator.push(
+        MaterialPageRoute(
+          builder: (_) => MateriPembelajaranScreen(
+            initialClass: _selectedClass == 'Semua Kelas'
+                ? null
+                : _selectedClass,
+          ),
+        ),
+      );
       await _loadStats();
       return;
     }
@@ -394,11 +404,15 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                 ),
               ),
               const SizedBox(height: 8),
-              _buildHeaderChip(
-                icon: Icons.calendar_today_outlined,
-                label: dateLabel,
-                backgroundColor: const Color(0xFFDBEAFE),
-                foregroundColor: const Color(0xFF1D4ED8),
+              Row(
+                children: [
+                  _buildHeaderChip(
+                    icon: Icons.calendar_today_outlined,
+                    label: dateLabel,
+                    backgroundColor: const Color(0xFFDBEAFE),
+                    foregroundColor: const Color(0xFF1D4ED8),
+                  ),
+                ],
               ),
             ],
           ),
@@ -721,7 +735,16 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildScheduleCard() {
-    final filtered = _recentSchedules;
+    final filtered = _selectedClass == 'Semua Kelas'
+        ? _recentSchedules
+        : _recentSchedules.where((item) {
+            final kelas = _pickValue(item, [
+              'kelas',
+              'class_level',
+              'class_name',
+            ], fallback: 'Kelas');
+            return kelas == _selectedClass;
+          }).toList();
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
@@ -864,7 +887,11 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildTryoutCard() {
-    final filtered = _recentTryouts;
+    final filtered = _selectedClass == 'Semua Kelas'
+        ? _recentTryouts
+        : _recentTryouts
+              .where((item) => item.classLevel == _selectedClass)
+              .toList();
 
     return _buildCompetitionCard(
       title: 'Try Out Terbaru',
@@ -883,7 +910,11 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildOlimpiadeCard() {
-    final filtered = _recentOlimpiades;
+    final filtered = _selectedClass == 'Semua Kelas'
+        ? _recentOlimpiades
+        : _recentOlimpiades
+              .where((item) => item.classLevel == _selectedClass)
+              .toList();
 
     return _buildCompetitionCard(
       title: 'Olimpiade Akademik',
@@ -1095,6 +1126,28 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
         ],
       ),
     );
+  }
+
+  List<String> _availableClasses() {
+    final classes = <String>{'Semua Kelas'};
+    for (final item in _recentSchedules) {
+      final kelas = _pickValue(item, [
+        'kelas',
+        'class_level',
+        'class_name',
+      ], fallback: '');
+      if (kelas.isNotEmpty) classes.add(kelas);
+    }
+    for (final t in _recentTryouts) {
+      if (t.classLevel.isNotEmpty) classes.add(t.classLevel);
+    }
+    for (final o in _recentOlimpiades) {
+      if (o.classLevel.isNotEmpty) classes.add(o.classLevel);
+    }
+    final list = classes.toList()..sort();
+    // Keep 'Semua Kelas' at the top
+    list.remove('Semua Kelas');
+    return ['Semua Kelas', ...list];
   }
 
   Widget _buildHeaderChip({

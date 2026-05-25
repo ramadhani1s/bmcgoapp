@@ -30,6 +30,13 @@ class _MentorCompetitionManagementState
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
   List<MentorCompetitionItem> _items = const [];
+  String _selectedClass = 'Semua Kelas';
+  final List<String> _classOptions = const [
+    'Semua Kelas',
+    'Kelas 10',
+    'Kelas 11',
+    'Kelas 12',
+  ];
 
   @override
   void initState() {
@@ -78,7 +85,9 @@ class _MentorCompetitionManagementState
     return _items.where((e) {
       final keywordMatch =
           keyword.isEmpty || e.title.toLowerCase().contains(keyword);
-      return keywordMatch;
+      final classMatch =
+          _selectedClass == 'Semua Kelas' || e.classLevel == _selectedClass;
+      return keywordMatch && classMatch;
     }).toList();
   }
 
@@ -509,6 +518,7 @@ class _MentorCompetitionManagementState
         type: widget.type,
         accentColor: widget.accentColor,
         initialItem: item,
+        initialClass: item == null ? _selectedClass : null,
         onSaved: _load,
       ),
     );
@@ -702,6 +712,67 @@ class _MentorCompetitionManagementState
                           ),
                           const SizedBox(width: 12),
                           SizedBox(
+                            width: 160,
+                            child: DropdownButtonFormField<String>(
+                              initialValue: _selectedClass,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                              ),
+                              iconEnabledColor: widget.accentColor,
+                              dropdownColor: Colors.white,
+                              style: const TextStyle(
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                              items: _classOptions
+                                  .map(
+                                    (c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(c),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) {
+                                if (v == null) return;
+                                setState(() => _selectedClass = v);
+                              },
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(
+                                  Icons.class_outlined,
+                                  color: widget.accentColor,
+                                  size: 18,
+                                ),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: widget.accentColor,
+                                    width: 1.4,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
                             width: 156,
                             height: 46,
                             child: ElevatedButton.icon(
@@ -857,12 +928,14 @@ class _CompetitionFormDialog extends StatefulWidget {
   final Color accentColor;
   final MentorCompetitionItem? initialItem;
   final VoidCallback onSaved;
+  final String? initialClass;
 
   const _CompetitionFormDialog({
     required this.type,
     required this.accentColor,
     required this.initialItem,
     required this.onSaved,
+    this.initialClass,
   });
 
   @override
@@ -925,6 +998,10 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
         final value = item.categoryQuestions[entry.key] ?? 0;
         entry.value.text = value.toString();
       }
+    }
+    // If creating a new item and an initial class is provided, use it
+    else if (widget.initialClass != null && widget.initialClass!.isNotEmpty) {
+      _classLevel = widget.initialClass!;
     }
   }
 
@@ -1045,12 +1122,46 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: _classLevel,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                dropdownColor: Colors.white,
+                style: const TextStyle(
+                  color: Color(0xFF111827),
+                  fontWeight: FontWeight.w600,
+                ),
                 items: _classOptions
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
                 onChanged: (v) =>
                     setState(() => _classLevel = v ?? _classLevel),
-                decoration: const InputDecoration(labelText: 'Kelas'),
+                decoration: InputDecoration(
+                  labelText: 'Kelas',
+                  prefixIcon: Icon(
+                    Icons.class_outlined,
+                    color: widget.accentColor,
+                    size: 18,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: widget.accentColor,
+                      width: 1.4,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               if (widget.type == 'olimpiade') ...[

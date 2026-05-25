@@ -57,12 +57,14 @@ class MateriService {
     required String title,
     required String description,
     required PlatformFile file,
+    String classLevel = 'Kelas 12',
   }) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
       request.fields['mentor_id'] = mentorId.toString();
       request.fields['title'] = title;
       request.fields['description'] = description;
+      request.fields['class_level'] = classLevel;
 
       if (file.bytes != null) {
         // Untuk Flutter Web, gunakan fromBytes

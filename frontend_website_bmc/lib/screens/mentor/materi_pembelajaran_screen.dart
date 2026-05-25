@@ -11,7 +11,9 @@ import '../../services/materi_service.dart';
 import 'dart:html' as html;
 
 class MateriPembelajaranScreen extends StatefulWidget {
-  const MateriPembelajaranScreen({super.key});
+  final String? initialClass;
+
+  const MateriPembelajaranScreen({super.key, this.initialClass});
 
   @override
   State<MateriPembelajaranScreen> createState() =>
@@ -22,6 +24,13 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
   User? _currentUser;
   bool _isLoading = true;
   List<MateriPembelajaran> _materiList = [];
+  String _selectedClass = 'Semua Kelas';
+  final List<String> _fixedClassOptions = const [
+    'Semua Kelas',
+    'Kelas 10',
+    'Kelas 11',
+    'Kelas 12',
+  ];
 
   // Use AppColors directly in widgets for consistency with Admin
 
@@ -38,6 +47,9 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       if (user != null) {
         _currentUser = user;
         await _fetchMateri();
+        if (widget.initialClass != null && widget.initialClass!.isNotEmpty) {
+          setState(() => _selectedClass = widget.initialClass!);
+        }
       }
     } catch (e) {
       _showErrorSnackBar('Gagal memuat data pengguna');
@@ -228,7 +240,9 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                   if (_materiList.isEmpty)
                     _buildEmptyState()
                   else
-                    _buildMateriGrid(),
+                    (_selectedClass == 'Semua Kelas'
+                        ? _buildMateriGrid()
+                        : _buildMateriGridFiltered()),
                 ],
               ),
             ),
@@ -282,9 +296,24 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 12),
+          DropdownButton<String>(
+            value: _selectedClass,
+            items: _buildClassOptions(),
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _selectedClass = v);
+            },
+          ),
         ],
       ),
     );
+  }
+
+  List<DropdownMenuItem<String>> _buildClassOptions() {
+    return _fixedClassOptions
+        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+        .toList();
   }
 
   Widget _buildHeader() {
@@ -379,6 +408,42 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       itemCount: _materiList.length,
       itemBuilder: (context, index) {
         final materi = _materiList[index];
+        return _buildMateriCard(materi);
+      },
+    );
+  }
+
+  Widget _buildMateriGridFiltered() {
+    final filtered = _materiList
+        .where((m) => m.classLevel == _selectedClass)
+        .toList();
+    if (filtered.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Text(
+          'Tidak ada materi untuk "$_selectedClass"',
+          style: TextStyle(color: AppColors.textMuted),
+        ),
+      );
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 400,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        mainAxisExtent: 140,
+      ),
+      itemCount: filtered.length,
+      itemBuilder: (context, index) {
+        final materi = filtered[index];
         return _buildMateriCard(materi);
       },
     );
@@ -534,6 +599,8 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
 
   PlatformFile? _selectedFile;
   bool _isUploading = false;
+  final List<String> _classOptions = const ['Kelas 10', 'Kelas 11', 'Kelas 12'];
+  String _selectedClass = 'Kelas 12';
 
   Future<void> _pickFile() async {
     try {
@@ -589,6 +656,7 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
       title: _titleController.text,
       description: _descController.text,
       file: _selectedFile!,
+      classLevel: _selectedClass,
     );
 
     setState(() => _isUploading = false);
@@ -721,6 +789,19 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                 ),
                 maxLines: 3,
               ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedClass,
+                items: _classOptions
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _selectedClass = v);
+                },
+                decoration: const InputDecoration(labelText: 'Kelas'),
+              ),
+              const SizedBox(height: 24),
               const SizedBox(height: 24),
 
               SizedBox(

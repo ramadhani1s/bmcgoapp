@@ -42,6 +42,13 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   String _selectedMapel = 'Matematika';
   final String _selectedStatusFilter = '';
   final String _selectedMapelFilter = '';
+  String _selectedClass = 'Semua Kelas';
+  final List<String> _classOptions = const [
+    'Semua Kelas',
+    'Kelas 10',
+    'Kelas 11',
+    'Kelas 12',
+  ];
 
   static const Color _primaryBlue = Color(0xFF2563EB);
 
@@ -560,6 +567,51 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 160,
+            child: DropdownButtonFormField<String>(
+              initialValue: _selectedClass,
+              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+              dropdownColor: Colors.white,
+              style: const TextStyle(
+                color: Color(0xFF111827),
+                fontWeight: FontWeight.w600,
+              ),
+              items: _classOptions
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _selectedClass = v);
+              },
+              decoration: const InputDecoration(
+                prefixIcon: Icon(
+                  Icons.class_outlined,
+                  size: 18,
+                  color: Color(0xFF2563EB),
+                ),
+                filled: true,
+                fillColor: Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(14)),
+                  borderSide: BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(14)),
+                  borderSide: BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(14)),
+                  borderSide: BorderSide(color: Color(0xFF2563EB), width: 1.4),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
                 ),
               ),
             ),
@@ -1287,8 +1339,11 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           (_selectedStatusFilter == 'Dipublikasi' ? true : true);
       final matchesMapel =
           _selectedMapelFilter.isEmpty || parsed.mapel == _selectedMapelFilter;
+      final matchesClass =
+          _selectedClass == 'Semua Kelas' ||
+          item.pertanyaan.contains('[${_selectedClass}]');
 
-      return matchesSearch && matchesStatus && matchesMapel;
+      return matchesSearch && matchesStatus && matchesMapel && matchesClass;
     }).toList();
   }
 
@@ -1310,20 +1365,24 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   }
 
   _ParsedQuestion _parseStoredQuestion(String raw) {
-    final match = RegExp(r'^\[(.+?)\]\s*(.*)$').firstMatch(raw.trim());
-    if (match == null) {
-      return _ParsedQuestion(
-        mapel: _mapelOptions.first,
-        questionText: raw.trim(),
-      );
+    final trimmed = raw.trim();
+    final tagMatches = RegExp(
+      r'\[(.+?)\]',
+    ).allMatches(trimmed).map((m) => m.group(1)?.trim() ?? '').toList();
+    if (tagMatches.isEmpty) {
+      return _ParsedQuestion(mapel: _mapelOptions.first, questionText: trimmed);
     }
 
-    final mapel = match.group(1)?.trim() ?? _mapelOptions.first;
-    final question = match.group(2)?.trim() ?? '';
+    // Last tag treated as mapel, others could be kelas or metadata
+    final mapel = tagMatches.isNotEmpty ? tagMatches.last : _mapelOptions.first;
+    // Remove all leading tags from question text
+    final questionText = trimmed
+        .replaceFirst(RegExp(r'^(?:\s*\[(?:.+?)\])*'), '')
+        .trim();
 
     return _ParsedQuestion(
       mapel: mapel.isEmpty ? _mapelOptions.first : mapel,
-      questionText: question,
+      questionText: questionText,
     );
   }
 }

@@ -496,6 +496,12 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                           initialValue: selectedHari.isEmpty
                               ? null
                               : selectedHari,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                          dropdownColor: Colors.white,
+                          style: const TextStyle(
+                            color: Color(0xFF111827),
+                            fontWeight: FontWeight.w600,
+                          ),
                           items: [
                             const DropdownMenuItem<String>(
                               value: '',
@@ -513,10 +519,36 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                           },
                           decoration: InputDecoration(
                             labelText: 'Filter Hari',
+                            prefixIcon: const Icon(
+                              Icons.event_outlined,
+                              size: 18,
+                              color: Color(0xFF2563EB),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
                             ),
-                            isDense: true,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2563EB),
+                                width: 1.4,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
                           ),
                         ),
                       ),
@@ -524,6 +556,12 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                       Expanded(
                         child: DropdownButtonFormField<int?>(
                           initialValue: selectedMentorFilterId,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                          dropdownColor: Colors.white,
+                          style: const TextStyle(
+                            color: Color(0xFF111827),
+                            fontWeight: FontWeight.w600,
+                          ),
                           items: [
                             const DropdownMenuItem<int?>(
                               value: null,
@@ -541,10 +579,36 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                           },
                           decoration: InputDecoration(
                             labelText: 'Filter Mentor',
+                            prefixIcon: const Icon(
+                              Icons.person_search_outlined,
+                              size: 18,
+                              color: Color(0xFF2563EB),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
                             ),
-                            isDense: true,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2563EB),
+                                width: 1.4,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
                           ),
                         ),
                       ),
@@ -743,6 +807,7 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
   late TextEditingController _jamMulaiController;
   late TextEditingController _jamSelesaiController;
   late TextEditingController _ruangController;
+  String _selectedClass = 'Kelas 12';
   bool _isSubmitting = false;
 
   @override
@@ -770,6 +835,17 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
     _ruangController = TextEditingController(
       text: existing?['ruang']?.toString() ?? '',
     );
+    // Try to infer class from paket if available
+    if (existing != null && existingPaketIdRaw != null) {
+      final paket = widget.paketList.firstWhere(
+        (p) => p['id'] == existingPaketIdRaw,
+        orElse: () => {},
+      );
+      final title = (paket['nama_paket'] ?? paket['nama'] ?? '').toString();
+      if (title.toLowerCase().contains('kelas')) {
+        _selectedClass = title;
+      }
+    }
   }
 
   @override
@@ -836,6 +912,7 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
       final payload = <String, dynamic>{
         'paket_id': _selectedPaketId,
         'mentor_id': _selectedMentorId,
+        'class_level': _selectedClass,
         'hari': _selectedHariValue ?? '',
         'jam_mulai': _jamMulaiController.text.trim(),
         'jam_selesai': _jamSelesaiController.text.trim(),
@@ -976,6 +1053,14 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                           children: [
                             DropdownButtonFormField<int>(
                               initialValue: _selectedPaketId,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                              ),
+                              dropdownColor: Colors.white,
+                              style: const TextStyle(
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.w600,
+                              ),
                               items: widget.paketList
                                   .map(
                                     (paket) => DropdownMenuItem<int>(
@@ -995,12 +1080,27 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                                   v == null ? 'Paket wajib dipilih' : null,
                               decoration: const InputDecoration(
                                 labelText: 'Paket Les',
+                                prefixIcon: Icon(
+                                  Icons.inventory_2_outlined,
+                                  size: 18,
+                                  color: Color(0xFF2563EB),
+                                ),
+                                filled: true,
+                                fillColor: Color(0xFFF8FAFC),
                                 border: OutlineInputBorder(),
                               ),
                             ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<int>(
                               initialValue: _selectedMentorId,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                              ),
+                              dropdownColor: Colors.white,
+                              style: const TextStyle(
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.w600,
+                              ),
                               items: widget.mentorList
                                   .map(
                                     (mentor) => DropdownMenuItem<int>(
@@ -1020,12 +1120,27 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                                   v == null ? 'Mentor wajib dipilih' : null,
                               decoration: const InputDecoration(
                                 labelText: 'Mentor',
+                                prefixIcon: Icon(
+                                  Icons.badge_outlined,
+                                  size: 18,
+                                  color: Color(0xFF2563EB),
+                                ),
+                                filled: true,
+                                fillColor: Color(0xFFF8FAFC),
                                 border: OutlineInputBorder(),
                               ),
                             ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
                               initialValue: _selectedHariValue,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                              ),
+                              dropdownColor: Colors.white,
+                              style: const TextStyle(
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.w600,
+                              ),
                               items: _dialogHariList
                                   .map(
                                     (hari) => DropdownMenuItem<String>(
@@ -1041,6 +1156,13 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                                   : null,
                               decoration: const InputDecoration(
                                 labelText: 'Hari',
+                                prefixIcon: Icon(
+                                  Icons.calendar_month_outlined,
+                                  size: 18,
+                                  color: Color(0xFF2563EB),
+                                ),
+                                filled: true,
+                                fillColor: Color(0xFFF8FAFC),
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -1073,6 +1195,40 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                                 hintText: '09:30',
                                 border: OutlineInputBorder(),
                                 suffixIcon: Icon(Icons.access_time_rounded),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              initialValue: _selectedClass,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                              ),
+                              dropdownColor: Colors.white,
+                              style: const TextStyle(
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              items: const ['Kelas 10', 'Kelas 11', 'Kelas 12']
+                                  .map(
+                                    (c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(c),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) => setState(
+                                () => _selectedClass = v ?? _selectedClass,
+                              ),
+                              decoration: const InputDecoration(
+                                labelText: 'Kelas',
+                                prefixIcon: Icon(
+                                  Icons.class_outlined,
+                                  size: 18,
+                                  color: Color(0xFF2563EB),
+                                ),
+                                filled: true,
+                                fillColor: Color(0xFFF8FAFC),
+                                border: OutlineInputBorder(),
                               ),
                             ),
                             const SizedBox(height: 12),
