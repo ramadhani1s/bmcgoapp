@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, avoid_web_libraries_in_flutter
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';

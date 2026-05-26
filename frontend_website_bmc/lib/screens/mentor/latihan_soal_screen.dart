@@ -756,7 +756,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           BoxShadow(
             color: Color(0x0D000000),
             blurRadius: 18,
-            offset: const Offset(0, 8),
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -1341,7 +1341,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           _selectedMapelFilter.isEmpty || parsed.mapel == _selectedMapelFilter;
       final matchesClass =
           _selectedClass == 'Semua Kelas' ||
-          item.pertanyaan.contains('[${_selectedClass}]');
+          item.pertanyaan.contains('[$_selectedClass]');
 
       return matchesSearch && matchesStatus && matchesMapel && matchesClass;
     }).toList();
