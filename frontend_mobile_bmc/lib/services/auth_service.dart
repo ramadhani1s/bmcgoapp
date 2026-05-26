@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
+import 'package:frontend_mobile_bmc/services/notification_service.dart';
 
 class AuthService {
   // Jika menjalankan Flutter di Android emulator, gunakan 10.0.2.2 untuk mengakses backend di localhost PC.
@@ -31,6 +31,9 @@ class AuthService {
           jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode == 200) {
+        final user = body['user'];
+
+        await NotificationService.saveTokenToBackend(user['id']);
         return body;
       } else if (response.statusCode == 401) {
         throw Exception((body['error'] ?? 'Email atau password salah').toString());
