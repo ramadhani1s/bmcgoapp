@@ -3,6 +3,7 @@ package main
 import (
 	"bmcgoapp-backend/config"
 	"bmcgoapp-backend/routes"
+	"bmcgoapp-backend/services"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 
 func main() {
 	config.ConnectDB()
+	config.InitFirebase()
 
 	r := gin.Default()
 	if err := r.SetTrustedProxies([]string{"127.0.0.1", "::1"}); err != nil {
@@ -50,6 +52,8 @@ func main() {
 	routes.ProtectedRoutes(r)
 	routes.PaymentRoutes(r)
 	routes.MentorRoutes(r)
+
+	services.StartDailyNotification()
 
 	port := os.Getenv("PORT")
 	if port == "" {

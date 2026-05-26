@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../models/mentor_competition_item.dart';
+import '../../models/mentor_competition_item.dart';
 import 'auth_service.dart';
 
 class MentorCompetitionService {
@@ -113,7 +113,6 @@ class MentorCompetitionService {
               'lokasi': subject,
             }
           : {
-              // Biarkan backend me-resolve paket_id default yang valid.
               'paket_id': 0,
               'class_level': classLevel,
               'judul': title,

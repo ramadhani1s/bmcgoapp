@@ -13,4 +13,5 @@ type User struct {
 	WhatsApp    string `json:"whatsapp"`
 	Alamat      string `json:"alamat"`
 	SiswaID     int    `json:"siswa_id,omitempty"`
+	FCMToken 	string `json:"fcm_token"`
 }

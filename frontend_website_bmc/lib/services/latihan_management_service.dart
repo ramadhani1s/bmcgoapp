@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../models/latihan.dart';
+import '../../models/latihan.dart';
 import 'auth_service.dart';
 
 class LatihanManagementService {
