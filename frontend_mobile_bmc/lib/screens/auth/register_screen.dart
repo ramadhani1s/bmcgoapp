@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/services/auth_service.dart';
 import 'package:frontend_mobile_bmc/widgets/auth/bmc_text_field.dart';
+import 'package:frontend_mobile_bmc/screens/home/pilih_lokasi_page.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,6 +29,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     Navigator.of(context).pushReplacementNamed('/entry');
   }
+  
 
   @override
   void dispose() {
@@ -218,7 +220,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+
+                      const SizedBox(height: 8),
+
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () async {
+
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PilihLokasiPage(),
+                              ),
+                            );
+
+                            if (result != null) {
+                              setState(() {
+                                _alamatController.text = result['alamat'];
+                              });
+                            }
+                          },
+
+                          icon: const Icon(Icons.map_outlined),
+                          label: const Text("Pilih Lokasi Rumah"),
+                        ),
+                      ),
                       BmcTextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,

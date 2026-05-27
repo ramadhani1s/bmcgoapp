@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../models/user.dart';
-import '../../core/theme/app_colors.dart';
-import '../../routes/app_routes.dart';
 import '../../models/admin_dashboard_data.dart';
 import '../../services/admin_dashboard_service.dart';
 import '../../services/auth_service.dart';
@@ -26,11 +24,11 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  static const Color _pageCream = AppColors.pageBg;
-  static const Color _sidebarCream = AppColors.sidebarBg;
-  static const Color _surfaceCream = AppColors.surface;
-  static const Color _borderCream = AppColors.border;
-  static const Color _softBorderCream = AppColors.softBorder;
+  static const Color _pageCream = Color(0xFFF1F4FA);
+  static const Color _sidebarCream = Color(0xFFF8FAFD);
+  static const Color _surfaceCream = Colors.white;
+  static const Color _borderCream = Color(0xFFDDE4F0);
+  static const Color _softBorderCream = Color(0xFFE9EFF8);
 
   User? _currentUser;
   int _selectedMenuIndex = 0;
@@ -292,11 +290,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   List<_SideMenuItem> get _menuItems => const [
     _SideMenuItem('Dashboard', Icons.grid_view_rounded),
-    _SideMenuItem(
-      'Verifikasi Pendaftaran',
-      Icons.fact_check_outlined,
-      route: '/payment-verification',
-    ),
+    _SideMenuItem('Verifikasi Pendaftaran', Icons.fact_check_outlined),
     _SideMenuItem('Kelola Mentor', Icons.groups_2_outlined),
     _SideMenuItem('Kelola Jadwal', Icons.event_note_outlined),
     _SideMenuItem(
@@ -318,16 +312,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
       title: 'Menunggu Verifikasi',
       value: (_summary?.waitingVerifications ?? 0).toString(),
       subtitle: 'Pendaftaran Siswa Baru',
-      color: AppColors.warning,
-      backgroundColor: AppColors.warningBg,
+      color: const Color(0xFFFF7A00),
+      backgroundColor: const Color(0xFFF6EFE7),
       icon: Icons.person_add_alt_1,
     ),
     _StatCardData(
       title: 'Jadwal Hari Ini',
       value: _todayScheduleCount.toString(),
       subtitle: 'Kelas Aktif',
-      color: AppColors.primary,
-      backgroundColor: AppColors.blueLightBg,
+      color: const Color(0xFF2E7BEF),
+      backgroundColor: const Color(0xFFF0F5FF),
       icon: Icons.calendar_month,
     ),
     _StatCardData(
@@ -409,11 +403,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
             _buildSidebar(),
             Expanded(
               child: Align(
-                alignment: Alignment.topLeft,
-                child: SizedBox(
-                  width: double.infinity,
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1120),
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 14, 18),
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -422,20 +416,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             embeddedInDashboard: true,
                           )
                         else if (_selectedMenuTitle == 'Kelola Jadwal')
-                          const Material(
-                            type: MaterialType.transparency,
-                            child: JadwalPembelajaranScreen(),
-                          )
+                          const JadwalPembelajaranScreen()
                         else if (_selectedMenuTitle == 'Kelola Paket Les')
-                          const Material(
-                            type: MaterialType.transparency,
-                            child: PaketLesScreen(),
-                          )
+                          const PaketLesScreen()
                         else if (_selectedMenuTitle == 'Kelola Pengumuman')
-                          const Material(
-                            type: MaterialType.transparency,
-                            child: PengumumanScreen(),
-                          )
+                          PengumumanScreen()
                         else if (_selectedMenuTitle == 'Verifikasi Pendaftaran')
                           const VerifikasiPendaftaranScreen()
                         else if (_selectedMenuTitle == 'Kelola Absensi')
@@ -445,15 +430,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             embeddedInDashboard: true,
                           )
                         else ...[
-                          _buildDashboardHeader(),
-                          const SizedBox(height: 12),
+                          _buildTopBar(),
+                          const SizedBox(height: 14),
                           _buildHeroCard(),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
                           if (_isSummaryLoading)
                             const LinearProgressIndicator(minHeight: 2),
                           if (_isSummaryLoading) const SizedBox(height: 8),
                           _buildStatsRow(),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
                           _buildPendingVerificationCard(),
                           const SizedBox(height: 12),
                           _buildScheduleCard(),
@@ -541,11 +526,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       width: 214,
       decoration: BoxDecoration(
         color: _sidebarCream,
-        border: Border(
+        border: const Border(
           right: BorderSide(color: _borderCream),
           top: BorderSide(color: _borderCream),
           bottom: BorderSide(color: _borderCream),
-          left: BorderSide(color: AppColors.primary, width: 2),
+          left: BorderSide(color: Color(0xFF2A8CF4), width: 2),
         ),
       ),
       child: Column(
@@ -555,19 +540,32 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: Row(
               children: [
                 SizedBox(
-                  width: 34,
-                  height: 34,
+                  width: 36,
+                  height: 36,
+                  // Lokasi logo sidebar admin.
                   child: Image.asset('assets/images/BMC .png'),
                 ),
                 const SizedBox(width: 8),
                 const Expanded(
-                  child: Text(
-                    'BMC Admin',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                      height: 1.0,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'BMC',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          color: Color(0xFF1E2A3E),
+                        ),
+                      ),
+                      Text(
+                        'Bintang Muda Center',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF6D7B93),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -672,196 +670,121 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildDashboardHeader() {
-    final todayLabel = _formatIndoDate(DateTime.now());
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Dashboard Admin',
-                style: TextStyle(
-                  color: Color(0xFF1F3C88),
-                  fontWeight: FontWeight.w900,
-                  fontSize: 26,
-                  height: 1.0,
-                ),
+  Widget _buildTopBar() {
+    return Container(
+      height: 66,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: _surfaceCream,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _borderCream),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFF),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _softBorderCream),
               ),
-              const SizedBox(height: 6),
-              const Text(
-                'Ringkasan aktivitas admin hari ini.',
-                style: TextStyle(
-                  color: Color(0xFF4B5563),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  height: 1.25,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 10,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
+              child: Row(
                 children: [
-                  _buildHeaderChip(
-                    icon: Icons.calendar_today_outlined,
-                    label: todayLabel,
-                    backgroundColor: const Color(0xFFDBEAFE),
-                    foregroundColor: const Color(0xFF1D4ED8),
+                  const Icon(Icons.search, size: 16, color: Color(0xFF9AA3B2)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        hintText:
+                            'Cari siswa, sekolah, kelas, mapel, mentor...',
+                        hintStyle: TextStyle(
+                          color: Color(0xFFA0A9B7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                      ),
+                      style: const TextStyle(
+                        color: Color(0xFF27344B),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Stack(
+            children: [
+              const Icon(
+                Icons.notifications_none_rounded,
+                color: Color(0xFF7D8797),
+              ),
+              Positioned(
+                right: 1,
+                top: 2,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFF4057),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
-        const SizedBox(width: 12),
-        _buildNotificationButton(),
-        const SizedBox(width: 10),
-        _buildAdminProfileButton(),
-      ],
-    );
-  }
-
-  Widget _buildNotificationButton() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        _buildTopActionButton(Icons.notifications_none, onTap: () {}),
-        Positioned(
-          right: 7,
-          top: 7,
-          child: Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEF4444),
-              shape: BoxShape.circle,
+          const SizedBox(width: 12),
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: const Color(0xFF6388FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: const Text(
+              'AD',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTopActionButton(IconData icon, {required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Icon(icon, size: 18, color: const Color(0xFF475569)),
-      ),
-    );
-  }
-
-  Future<void> _openProfilePage() async {
-    await Navigator.of(context).pushNamed(AppRoutes.mentorProfile);
-  }
-
-  Widget _buildAdminProfileButton() {
-    final displayName = _currentUser?.nama.isNotEmpty == true
-        ? _currentUser!.nama
-        : 'Admin BMC';
-    final roleName = _currentUser?.roleName == 'Unknown'
-        ? 'Administrator'
-        : _currentUser?.roleName ?? 'Administrator';
-    final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'A';
-
-    return InkWell(
-      onTap: _openProfilePage,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 38,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                color: Color(0xFFDBEAFE),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  initial,
-                  style: const TextStyle(
-                    color: Color(0xFF2563EB),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                  ),
+          const SizedBox(width: 8),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _currentUser?.nama.isNotEmpty == true
+                    ? _currentUser!.nama
+                    : 'Admin BMC',
+                style: const TextStyle(
+                  color: Color(0xFF27344B),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    color: Color(0xFF334155),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  roleName,
-                  style: const TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderChip({
-    required IconData icon,
-    required String label,
-    required Color backgroundColor,
-    required Color foregroundColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: foregroundColor),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: foregroundColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
+              Text(
+                _currentUser?.roleName == 'Unknown'
+                    ? 'Administrator'
+                    : _currentUser!.roleName,
+                style: const TextStyle(color: Color(0xFF99A4B5), fontSize: 10),
+              ),
+            ],
           ),
         ],
       ),
@@ -875,7 +798,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2B57E4), Color(0xFF2756F0)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(10),
         boxShadow: const [
           BoxShadow(
@@ -1016,7 +943,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
             decoration: const BoxDecoration(
-              color: AppColors.warning,
+              color: Color(0xFFFF6400),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(10),
                 topRight: Radius.circular(10),
@@ -1037,7 +964,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 Text(
                   '${_summary?.waitingVerifications ?? 0} pendaftaran belum diverifikasi',
                   style: const TextStyle(
-                    color: Color(0xFFFFE4CC),
+                    color: Color(0xFFFFD5BC),
                     fontSize: 11,
                   ),
                 ),
@@ -1298,7 +1225,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
             decoration: const BoxDecoration(
-              color: AppColors.primary,
+              color: Color(0xFF2A58E8),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(10),
                 topRight: Radius.circular(10),
