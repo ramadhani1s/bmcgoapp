@@ -5,6 +5,8 @@ import 'package:frontend_mobile_bmc/screens/auth/register_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/dashboard_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/attendance_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/package_screen.dart';
+import 'package:frontend_mobile_bmc/screens/home/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 import 'package:frontend_mobile_bmc/screens/home/profile_detail_form_screen.dart';
 import 'package:frontend_mobile_bmc/screens/onboarding_screen.dart';
@@ -14,38 +16,48 @@ import 'package:frontend_mobile_bmc/screens/siswa/materi_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/pengumuman_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/olimpiade_screen.dart';
 import 'package:frontend_mobile_bmc/screens/tryout/tryout_list_screen.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'services/local_notification_service.dart';
 
-
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
 
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp();
+
   await LocalNotificationService.init();
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
 
-  print(message.notification?.title);
-  print(message.notification?.body);
+  FirebaseMessaging.onMessage.listen(
+    (RemoteMessage message) async {
 
-  await LocalNotificationService.showNotification(
-    title: message.notification?.title ?? '',
-    body: message.notification?.body ?? '',
+      print(message.notification?.title);
+      print(message.notification?.body);
+
+      await LocalNotificationService.showNotification(
+        title: message.notification?.title ?? '',
+        body: message.notification?.body ?? '',
+      );
+    },
   );
-
-});
 
   await FirebaseMessaging.instance.requestPermission();
 
-  String? token = await FirebaseMessaging.instance.getToken();
+  String? token =
+      await FirebaseMessaging.instance.getToken();
 
   print("FCM TOKEN: $token");
 
-  runApp(const MyApp());
+  runApp(
+
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -53,34 +65,58 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Bimbel Bintang Muda Center',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF3B82F6),
-          brightness: Brightness.light,
-        ),
-      ),
-      home: const SplashScreen(),
-      routes: {
-        '/splash': (context) => const SplashScreen(),
-        '/onboarding': (context) => const OnboardingScreen(),
-        '/entry': (context) => const AuthEntryScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/dashboard': (context) => const DashboardScreen(),
-        '/attendance': (context) => const AttendanceScreen(),
-        
-        '/profile-detail': (context) => const ProfileDetailFormScreen(),
-        '/package': (context) => const PackageScreen(),
-        '/payment-history': (context) => const PaymentHistoryScreen(),
-        '/payment': (context) => const PaymentHistoryScreen(),
-        '/materi': (context) => const MateriScreen(),
-        '/pengumuman': (context) => const PengumumanScreen(),
-        '/olimpiade': (context) => const OlimpiadeScreen(),
-        '/mentor-tryout': (context) => const TryOutListScreen(),
+
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+
+        return MaterialApp(
+
+          debugShowCheckedModeBanner: false,
+
+          title: 'Bimbel Bintang Muda Center',
+
+          themeMode: themeProvider.themeMode,
+
+          theme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.light,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF3B82F6),
+              brightness: Brightness.light,
+            ),
+          ),
+
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.dark,
+          ),
+
+          home: const SplashScreen(),
+
+          routes: {
+            '/splash': (context) => const SplashScreen(),
+            '/onboarding': (context) => const OnboardingScreen(),
+            '/entry': (context) => const AuthEntryScreen(),
+            '/register': (context) => const RegisterScreen(),
+            '/login': (context) => const LoginScreen(),
+            '/dashboard': (context) => const DashboardScreen(),
+            '/attendance': (context) => const AttendanceScreen(),
+            '/profile-detail': (context) =>
+                const ProfileDetailFormScreen(),
+            '/package': (context) => const PackageScreen(),
+            '/payment-history': (context) =>
+                const PaymentHistoryScreen(),
+            '/payment': (context) =>
+                const PaymentHistoryScreen(),
+            '/materi': (context) => const MateriScreen(),
+            '/pengumuman': (context) =>
+                const PengumumanScreen(),
+            '/olimpiade': (context) =>
+                const OlimpiadeScreen(),
+            '/mentor-tryout': (context) =>
+                const TryOutListScreen(),
+          },
+        );
       },
     );
   }

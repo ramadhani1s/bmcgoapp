@@ -1,20 +1,76 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 class PilihLokasiPage extends StatefulWidget {
   const PilihLokasiPage({super.key});
 
   @override
-  State<PilihLokasiPage> createState() => _PilihLokasiPageState();
+  State<PilihLokasiPage> createState() =>
+      _PilihLokasiPageState();
 }
 
-class _PilihLokasiPageState extends State<PilihLokasiPage> {
+class _PilihLokasiPageState
+    extends State<PilihLokasiPage> {
 
   LatLng selectedLocation =
       const LatLng(3.5952, 98.6722);
 
-  Future<void> _pilihLokasi(LatLng position) async {
+  @override
+  void initState() {
+    super.initState();
+
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled =
+        await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      return;
+    }
+
+    permission =
+        await Geolocator.checkPermission();
+
+    if (permission ==
+        LocationPermission.denied) {
+
+      permission =
+          await Geolocator.requestPermission();
+
+      if (permission ==
+          LocationPermission.denied) {
+        return;
+      }
+    }
+
+    if (permission ==
+        LocationPermission.deniedForever) {
+      return;
+    }
+
+    Position position =
+        await Geolocator.getCurrentPosition();
+
+    setState(() {
+
+      selectedLocation = LatLng(
+        position.latitude,
+        position.longitude,
+      );
+
+    });
+  }
+
+  Future<void> _pilihLokasi(
+      LatLng position) async {
 
     List<Placemark> placemarks =
         await placemarkFromCoordinates(
@@ -39,12 +95,21 @@ class _PilihLokasiPageState extends State<PilihLokasiPage> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+
       appBar: AppBar(
-        title: const Text("Pilih Lokasi Rumah"),
+        title: const Text(
+          "Pilih Lokasi Rumah",
+        ),
       ),
 
       body: GoogleMap(
+
+        myLocationEnabled: true,
+
+        myLocationButtonEnabled: true,
+
         initialCameraPosition: CameraPosition(
           target: selectedLocation,
           zoom: 14,

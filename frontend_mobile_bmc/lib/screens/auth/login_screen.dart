@@ -159,6 +159,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                       if (value?.isEmpty ?? true) {
                                         return 'Email tidak boleh kosong';
                                       }
+
+                                      if (!value!.contains('@')) {
+                                        return 'Email harus mengandung @';
+                                      }
+
                                       return null;
                                     },
                                   ),
@@ -193,9 +198,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                       },
                                     ),
                                     validator: (value) {
-                                      if (value?.isEmpty ?? true) {
+                                      if (value == null || value.isEmpty) {
                                         return 'Password tidak boleh kosong';
                                       }
+
+                                      if (value.length < 8) {
+                                        return 'Password minimal 8 karakter';
+                                      }
+
                                       return null;
                                     },
                                   ),

@@ -547,40 +547,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                             ],
                           ),
                         ),
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withAlpha((0.95 * 255).round()),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Stack(
-                            children: [
-                              Center(
-                                child: Icon(
-                                  Icons.notifications_none_rounded,
-                                  color: _accent,
-                                ),
-                              ),
-                              Positioned(
-                                right: 9,
-                                top: 10,
-                                child: CircleAvatar(
-                                  radius: 7,
-                                  backgroundColor: Color(0xFFFDCF52),
-                                  child: Text(
-                                    '1',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 18),
