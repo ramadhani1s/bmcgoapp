@@ -12,6 +12,7 @@ import '../../models/mentor_competition_item.dart';
 import 'jadwal_pembelajaran_screen.dart';
 import 'mentor_attendance_screen.dart';
 import 'mentor_olimpiade_screen.dart';
+import '../mentor/materi_pembelajaran_screen.dart';
 
 class MentorDashboard extends StatefulWidget {
   const MentorDashboard({super.key});
@@ -27,6 +28,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   List<Map<String, dynamic>> _recentSchedules = [];
   List<MentorCompetitionItem> _recentTryouts = [];
   List<MentorCompetitionItem> _recentOlimpiades = [];
+  String _selectedClass = 'Semua Kelas';
 
   static const Color _sidebarBg = Color(0xFFF8FAFD);
   static const Color _sidebarBorder = Color(0xFFDDE4F0);
@@ -288,7 +290,15 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       return;
     }
     if (title == 'Materi Pembelajaran') {
-      await navigator.pushNamed(AppRoutes.mentorMateri);
+      await navigator.push(
+        MaterialPageRoute(
+          builder: (_) => MateriPembelajaranScreen(
+            initialClass: _selectedClass == 'Semua Kelas'
+                ? null
+                : _selectedClass,
+          ),
+        ),
+      );
       await _loadStats();
       return;
     }
@@ -383,22 +393,17 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   height: 1.0,
                 ),
               ),
-              const SizedBox(height: 6),
-              const Text(
-                'Ringkasan aktivitas mengajar hari ini.',
-                style: TextStyle(
-                  color: Color(0xFF4B5563),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  height: 1.25,
-                ),
-              ),
+
               const SizedBox(height: 8),
-              _buildHeaderChip(
-                icon: Icons.calendar_today_outlined,
-                label: dateLabel,
-                backgroundColor: const Color(0xFFDBEAFE),
-                foregroundColor: const Color(0xFF1D4ED8),
+              Row(
+                children: [
+                  _buildHeaderChip(
+                    icon: Icons.calendar_today_outlined,
+                    label: dateLabel,
+                    backgroundColor: const Color(0xFFDBEAFE),
+                    foregroundColor: const Color(0xFF1D4ED8),
+                  ),
+                ],
               ),
             ],
           ),
@@ -671,7 +676,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Fokus pada aktivitas mengajar hari ini',
+                  'Ringkasan Aktivitas Mengajar Hari Ini',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -680,7 +685,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Lihat jadwal, pantau latihan, dan buka kompetisi terbaru dari satu tempat.',
+                  'Pantau jadwal mengajar, kelola latihan siswa, serta akses informasi try out dan olimpiade akademik.',
                   style: TextStyle(
                     color: Color(0xFFD9E4FF),
                     fontWeight: FontWeight.w500,
@@ -721,7 +726,16 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildScheduleCard() {
-    final filtered = _recentSchedules;
+    final filtered = _selectedClass == 'Semua Kelas'
+        ? _recentSchedules
+        : _recentSchedules.where((item) {
+            final kelas = _pickValue(item, [
+              'kelas',
+              'class_level',
+              'class_name',
+            ], fallback: 'Kelas');
+            return kelas == _selectedClass;
+          }).toList();
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
@@ -864,7 +878,11 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildTryoutCard() {
-    final filtered = _recentTryouts;
+    final filtered = _selectedClass == 'Semua Kelas'
+        ? _recentTryouts
+        : _recentTryouts
+              .where((item) => item.classLevel == _selectedClass)
+              .toList();
 
     return _buildCompetitionCard(
       title: 'Try Out Terbaru',
@@ -883,7 +901,11 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildOlimpiadeCard() {
-    final filtered = _recentOlimpiades;
+    final filtered = _selectedClass == 'Semua Kelas'
+        ? _recentOlimpiades
+        : _recentOlimpiades
+              .where((item) => item.classLevel == _selectedClass)
+              .toList();
 
     return _buildCompetitionCard(
       title: 'Olimpiade Akademik',
@@ -1095,6 +1117,38 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
         ],
       ),
     );
+  }
+
+  // ignore: unused_element
+  List<String> _availableClasses() {
+    // Normalize values: trim and deduplicate to avoid duplicate menu items
+    final normalized = <String>{};
+
+    for (final item in _recentSchedules) {
+      final raw = _pickValue(item, [
+        'kelas',
+        'class_level',
+        'class_name',
+      ], fallback: '');
+      final kelas = raw.trim();
+      if (kelas.isNotEmpty) normalized.add(kelas);
+    }
+
+    for (final t in _recentTryouts) {
+      final kelas = t.classLevel.trim();
+      if (kelas.isNotEmpty) normalized.add(kelas);
+    }
+
+    for (final o in _recentOlimpiades) {
+      final kelas = o.classLevel.trim();
+      if (kelas.isNotEmpty) normalized.add(kelas);
+    }
+
+    // Ensure the default option exists and keep it at top
+    normalized.removeWhere((s) => s.trim().isEmpty);
+    final list = normalized.toList()..sort();
+    list.removeWhere((s) => s == 'Semua Kelas');
+    return ['Semua Kelas', ...list];
   }
 
   Widget _buildHeaderChip({

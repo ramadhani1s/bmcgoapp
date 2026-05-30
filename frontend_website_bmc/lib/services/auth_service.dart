@@ -73,7 +73,10 @@ class AuthService {
           print('AuthService.login: failed to parse JSON response');
           print('Status: ${response.statusCode}');
           print('Body: ${response.body}');
-          return {'success': false, 'message': 'Invalid server response: ${response.body}'};
+          return {
+            'success': false,
+            'message': 'Invalid server response: ${response.body}',
+          };
         }
       }
 
@@ -223,6 +226,10 @@ class AuthService {
           )
           .timeout(const Duration(seconds: 15));
 
+      // Debug logging to help trace why created mentor may not appear.
+      print('AuthService.createMentor -> status: ${response.statusCode}');
+      print('AuthService.createMentor -> body: ${response.body}');
+
       final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -256,6 +263,8 @@ class AuthService {
         print('getMentors error: ${response.statusCode} - ${response.body}');
         return [];
       }
+
+      print('getMentors -> body: ${response.body}');
 
       final body = jsonDecode(response.body);
 

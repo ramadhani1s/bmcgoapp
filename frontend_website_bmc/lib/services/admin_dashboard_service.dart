@@ -2,11 +2,12 @@ import 'dart:convert';
 
 import 'package:frontend_website_bmc/core/network/api_client.dart';
 import 'package:frontend_website_bmc/models/payment_verification_item.dart';
-import 'package:frontend_website_bmc/services/auth_service.dart';
 import '../models/admin_dashboard_data.dart';
 
 class AdminDashboardService {
-  static ApiClient get _client => ApiClient(baseUrl: AuthService.baseUrl);
+  // Backend server
+  static const String baseUrl = 'http://localhost:8080';
+  static final ApiClient _client = ApiClient(baseUrl: baseUrl);
 
   static Future<AdminDashboardData> getSummary() async {
     final response = await _client.get(
@@ -59,7 +60,7 @@ class AdminDashboardService {
     final response = await _client.post(
       '/admin/payment/$transactionId/approve',
       auth: true,
-      body: '{}',
+      body: {},
     );
 
     if (response.statusCode == 200) {
@@ -78,7 +79,7 @@ class AdminDashboardService {
     final response = await _client.post(
       '/admin/payment/$transactionId/reject',
       auth: true,
-      body: '{}',
+      body: {},
     );
 
     if (response.statusCode == 200) {

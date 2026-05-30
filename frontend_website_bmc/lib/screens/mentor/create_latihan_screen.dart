@@ -5,10 +5,7 @@ import 'mengelola_soal_screen.dart';
 class CreateLatihanScreen extends StatefulWidget {
   final String mapel;
 
-  const CreateLatihanScreen({
-    super.key,
-    required this.mapel,
-  });
+  const CreateLatihanScreen({super.key, required this.mapel});
 
   @override
   State<CreateLatihanScreen> createState() => _CreateLatihanScreenState();
@@ -16,7 +13,9 @@ class CreateLatihanScreen extends StatefulWidget {
 
 class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
   final TextEditingController _judulController = TextEditingController();
-  final TextEditingController _jumlahSoalController = TextEditingController(text: '5');
+  final TextEditingController _jumlahSoalController = TextEditingController(
+    text: '5',
+  );
   final TextEditingController _durasiController = TextEditingController();
   final TextEditingController _jadwalController = TextEditingController();
   final List<String> _mapelOptions = const [
@@ -29,12 +28,16 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
   ];
 
   String _selectedMapel = 'Matematika';
+  final List<String> _classOptions = const ['Kelas 10', 'Kelas 11', 'Kelas 12'];
+  String _selectedClass = 'Kelas 12';
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    _selectedMapel = _mapelOptions.contains(widget.mapel) ? widget.mapel : _mapelOptions.first;
+    _selectedMapel = _mapelOptions.contains(widget.mapel)
+        ? widget.mapel
+        : _mapelOptions.first;
     _judulController.text = '';
   }
 
@@ -88,6 +91,7 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
           mapel: _selectedMapel,
           latihanTitle: _judulController.text.trim(),
           targetSoal: jumlah,
+          kelas: _selectedClass,
         ),
       ),
     );
@@ -98,7 +102,9 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+        backgroundColor: isError
+            ? const Color(0xFFEF4444)
+            : const Color(0xFF10B981),
       ),
     );
   }
@@ -139,10 +145,7 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                   const SizedBox(height: 6),
                   Text(
                     'Isi form di bawah untuk membuat soal latihan',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 18),
                   Container(
@@ -174,6 +177,12 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                         const SizedBox(height: 8),
                         DropdownButtonFormField<String>(
                           initialValue: _selectedMapel,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                          dropdownColor: Colors.white,
+                          style: const TextStyle(
+                            color: Color(0xFF111827),
+                            fontWeight: FontWeight.w600,
+                          ),
                           items: _mapelOptions
                               .map(
                                 (mapel) => DropdownMenuItem<String>(
@@ -187,18 +196,37 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                             setState(() => _selectedMapel = value);
                           },
                           decoration: InputDecoration(
+                            labelText: 'Mata Pelajaran',
+                            prefixIcon: const Icon(
+                              Icons.menu_book_outlined,
+                              size: 18,
+                              color: Color(0xFF2563EB),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: const BorderSide(
                                 color: Color(0xFF2563EB),
-                                width: 2,
+                                width: 1.4,
                               ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -208,6 +236,61 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                           controller: _jumlahSoalController,
                           keyboardType: TextInputType.number,
                           hintText: '5',
+                        ),
+                        const SizedBox(height: 16),
+                        _buildFieldLabel('Kelas', required: true),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          initialValue: _selectedClass,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                          dropdownColor: Colors.white,
+                          style: const TextStyle(
+                            color: Color(0xFF111827),
+                            fontWeight: FontWeight.w600,
+                          ),
+                          items: _classOptions
+                              .map(
+                                (c) =>
+                                    DropdownMenuItem(value: c, child: Text(c)),
+                              )
+                              .toList(),
+                          onChanged: (v) {
+                            if (v == null) return;
+                            setState(() => _selectedClass = v);
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Kelas',
+                            prefixIcon: const Icon(
+                              Icons.class_outlined,
+                              size: 18,
+                              color: Color(0xFF2563EB),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2563EB),
+                                width: 1.4,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 16),
                         _buildFieldLabel('Durasi (Menit)', required: true),
@@ -228,7 +311,9 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                             hintText: 'Pilih tanggal jadwal',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -238,7 +323,9 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                               ),
                             ),
                             contentPadding: const EdgeInsets.all(14),
-                            suffixIcon: const Icon(Icons.calendar_today_outlined),
+                            suffixIcon: const Icon(
+                              Icons.calendar_today_outlined,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -253,7 +340,9 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton(
-                            onPressed: _isSubmitting ? null : () => Navigator.pop(context, false),
+                            onPressed: _isSubmitting
+                                ? null
+                                : () => Navigator.pop(context, false),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -325,10 +414,7 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFF2563EB),
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
         ),
         contentPadding: const EdgeInsets.all(14),
       ),

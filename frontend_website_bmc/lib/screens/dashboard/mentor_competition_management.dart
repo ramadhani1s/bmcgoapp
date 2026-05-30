@@ -1,10 +1,16 @@
-﻿import 'package:flutter/material.dart';
-
+import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+
+import '../../routes/app_routes.dart';
 import '../../models/mentor_competition_item.dart';
 import '../../services/mentor_competition_service.dart';
+import '../dashboard/jadwal_pembelajaran_screen.dart';
+import '../dashboard/mentor_attendance_screen.dart';
+import '../dashboard/mentor_olimpiade_screen.dart';
+import '../mentor/materi_pembelajaran_screen.dart';
 import '../mentor/tryout_soal_management_screen.dart';
 import '../mentor/olimpiade_soal_management_screen.dart';
+import '../../widgets/mentor_sidebar_shell.dart';
 
 class MentorCompetitionManagement extends StatefulWidget {
   final String type;
@@ -27,50 +33,27 @@ class MentorCompetitionManagement extends StatefulWidget {
 
 class _MentorCompetitionManagementState
     extends State<MentorCompetitionManagement> {
-  final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
-  List<MentorCompetitionItem> _items = const [];
+  List<MentorCompetitionItem> _items = [];
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedClass = 'Semua Kelas';
 
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_refresh);
     _load();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   Future<void> _load() async {
-    if (mounted) {
-      setState(() => _isLoading = true);
-    }
-
+    setState(() => _isLoading = true);
     try {
-      final items = await MentorCompetitionService.getByType(widget.type);
-      if (!mounted) return;
-      setState(() {
-        _items = items;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal memuat data: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      final data = await MentorCompetitionService.getByType(widget.type);
+      if (mounted) setState(() => _items = data);
+    } catch (_) {
+      if (mounted) setState(() => _items = []);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _refresh() {
-    if (!mounted) return;
-    setState(() {});
   }
 
   List<MentorCompetitionItem> get _visibleItems {
@@ -78,409 +61,56 @@ class _MentorCompetitionManagementState
     return _items.where((e) {
       final keywordMatch =
           keyword.isEmpty || e.title.toLowerCase().contains(keyword);
-      return keywordMatch;
+      final classMatch =
+          _selectedClass == 'Semua Kelas' || e.classLevel == _selectedClass;
+      return keywordMatch && classMatch;
     }).toList();
   }
 
-  String get _pageTag => widget.type == 'tryout' ? 'Try Out' : 'Olimpiade';
-
-  Widget _buildTryoutCard(MentorCompetitionItem item) {
-    final categories = item.categoryQuestions;
-    final total = item.totalQuestions > 0
-        ? item.totalQuestions
-        : categories.values.fold<int>(
-            0,
-            (previousValue, element) => previousValue + element,
-          );
-    final completed = 0;
-    final progress = total <= 0 ? 0.0 : (completed / total).clamp(0.0, 1.0);
-
-    final shortCategories = <MapEntry<String, String>>[
-      const MapEntry('PU', 'Penalaran Umum'),
-      const MapEntry('PPU', 'Pemahaman dan Penulisan Umum'),
-      const MapEntry('PBM', 'Pengetahuan dan Pemahaman Bacaan Matematika'),
-      const MapEntry('PK', 'Pengetahuan Kuantitatif'),
-      const MapEntry('PM', 'Penalaran Matematika'),
-      const MapEntry('Literasi', 'Literasi Bahasa Indonesia'),
-    ];
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2563EB),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  item.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: item.isPublished
-                      ? const Color(0xFFDCFCE7)
-                      : AppColors.blueLightBg,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  item.isPublished ? 'Dipublikasikan' : 'Draft',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF065F46),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.blueLightBg,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: AppColors.softBorder),
-                ),
-                child: Text(
-                  item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.accentBlue,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.blueLightBg,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: AppColors.softBorder),
-                ),
-                child: Text(
-                  '${item.durationLabel} menit',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.accentBlue,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '0/$total soal',
-                style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Progress Soal',
-            style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 6,
-              backgroundColor: const Color(0xFFE5E7EB),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF2563EB),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: shortCategories.map((entry) {
-              final value = categories[entry.value] ?? 0;
-              return IntrinsicWidth(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        entry.key,
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF374151),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '0/$value',
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _openTryoutSoalManagement(item),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40),
-                    backgroundColor: const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  icon: const Icon(Icons.menu_book_outlined, size: 16),
-                  label: const Text(
-                    'Kelola Soal',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildActionIconButton(
-                icon: Icons.edit_outlined,
-                iconColor: const Color(0xFF6B7280),
-                borderColor: const Color(0xFFD1D5DB),
-                backgroundColor: const Color(0xFFF9FAFB),
-                onPressed: () => _openForm(item: item),
-                tooltip: 'Edit',
-              ),
-              const SizedBox(width: 6),
-              _buildActionIconButton(
-                icon: Icons.delete_outline,
-                iconColor: const Color(0xFFEF4444),
-                borderColor: const Color(0xFFD1D5DB),
-                backgroundColor: const Color(0xFFFFF1F2),
-                onPressed: () => _deleteItem(item),
-                tooltip: 'Hapus',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOlimpiadCard(MentorCompetitionItem item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF0EA5E9),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  item.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: item.isPublished
-                      ? const Color(0xFFDCFCE7)
-                      : AppColors.blueLightBg,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  item.isPublished ? 'Dipublikasikan' : 'Draft',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF065F46),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Text(
-                item.classLevel,
-                style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.blueLightBg,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: AppColors.softBorder),
-                ),
-                child: Text(
-                  item.scheduleLabel.isEmpty ? '-' : item.scheduleLabel,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.accentBlue,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              if (item.subject.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                Text(
-                  item.subject,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _openOlimpiadeSoalManagement(item),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40),
-                    backgroundColor: widget.accentColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  icon: const Icon(Icons.menu_book_outlined, size: 16),
-                  label: const Text(
-                    'Kelola Soal',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildActionIconButton(
-                icon: Icons.edit_outlined,
-                iconColor: const Color(0xFF6B7280),
-                borderColor: const Color(0xFFD1D5DB),
-                backgroundColor: Colors.white,
-                onPressed: () => _openForm(item: item),
-                tooltip: 'Edit',
-              ),
-              const SizedBox(width: 6),
-              _buildActionIconButton(
-                icon: Icons.delete_outline,
-                iconColor: const Color(0xFFEF4444),
-                borderColor: const Color(0xFFD1D5DB),
-                backgroundColor: Colors.white,
-                onPressed: () => _deleteItem(item),
-                tooltip: 'Hapus',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionIconButton({
-    required IconData icon,
-    required Color iconColor,
-    required Color borderColor,
-    required Color backgroundColor,
-    required VoidCallback onPressed,
-    required String tooltip,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: SizedBox(
-        width: 40,
-        height: 40,
-        child: OutlinedButton(
-          onPressed: onPressed,
-          style: OutlinedButton.styleFrom(
-            backgroundColor: backgroundColor,
-            side: BorderSide(color: borderColor),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            padding: EdgeInsets.zero,
-            alignment: Alignment.center,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: Icon(icon, size: 16, color: iconColor),
+  void _onSidebarMenuTap(String title) {
+    if (title == 'Dashboard') {
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
+      return;
+    }
+    if (title == 'Jadwal Mengajar') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+      );
+      return;
+    }
+    if (title == 'Absensi Kelas') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
+      );
+      return;
+    }
+    if (title == 'Soal Latihan') {
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
+      return;
+    }
+    if (title == 'Try Out') {
+      if (widget.type == 'tryout') return;
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorTryout);
+      return;
+    }
+    if (title == 'Materi Pembelajaran') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MateriPembelajaranScreen(initialClass: null),
         ),
-      ),
-    );
+      );
+      return;
+    }
+    if (title == 'Olimpiade Akademik') {
+      if (widget.type == 'olimpiade') return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+      );
+    }
   }
 
   Future<void> _openTryoutSoalManagement(MentorCompetitionItem tryout) async {
@@ -503,345 +133,406 @@ class _MentorCompetitionManagementState
   }
 
   Future<void> _openForm({MentorCompetitionItem? item}) async {
-    final result = await showDialog<bool>(
+    final saved = await showDialog<bool>(
       context: context,
-      builder: (context) => _CompetitionFormDialog(
+      barrierDismissible: false,
+      builder: (_) => _CompetitionFormDialog(
+        parentContext: context,
+        existing: item,
         type: widget.type,
         accentColor: widget.accentColor,
-        initialItem: item,
-        onSaved: _load,
       ),
     );
-
-    if (result == true) {
-      await _load();
-    }
+    if (saved == true) await _load();
   }
 
   Future<void> _deleteItem(MentorCompetitionItem item) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
-          'Hapus data?',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
-          ),
-        ),
-        content: Text(
-          'Yakin hapus ${item.title}?',
-          style: const TextStyle(color: Color(0xFF6B7280), height: 1.45),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        title: const Text('Hapus data?'),
+        content: Text('Yakin hapus ${item.title}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF6B7280),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
             child: const Text('Batal'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
             child: const Text('Hapus'),
           ),
         ],
       ),
     );
-
     if (confirmed != true) return;
-
-    final result = await MentorCompetitionService.deleteById(
-      widget.type,
-      item.id,
-    );
+    final res = await MentorCompetitionService.deleteById(widget.type, item.id);
     if (!mounted) return;
-
-    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(result['message']?.toString() ?? 'Proses selesai'),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
+      SnackBar(content: Text(res['message']?.toString() ?? 'Selesai')),
     );
-    if (result['success'] == true) {
-      await _load();
-    }
+    if (res['success'] == true) await _load();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final visibleItems = _visibleItems;
-    final isTryout = widget.type == 'tryout';
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: Text(widget.title),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1F2937),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.white,
+  String _formatScheduleLabel(String value) {
+    final text = value.trim();
+    if (text.isEmpty) return '-';
+    final parsed = DateTime.tryParse(text);
+    if (parsed == null) return text;
+    final yyyy = parsed.year.toString().padLeft(4, '0');
+    final mm = parsed.month.toString().padLeft(2, '0');
+    final dd = parsed.day.toString().padLeft(2, '0');
+    return '$yyyy-$mm-$dd';
+  }
+
+  int _publishedCount() {
+    return _items.where((item) => item.isPublished).length;
+  }
+
+  int _totalQuestionsCount() {
+    return _items.fold<int>(0, (sum, item) => sum + item.totalQuestions);
+  }
+
+  int _classCount() {
+    return _items.map((item) => item.classLevel).toSet().length;
+  }
+
+  Widget _buildBadge(
+    String label, {
+    required Color backgroundColor,
+    required Color foregroundColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(6),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(20),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          color: foregroundColor,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompetitionCard(MentorCompetitionItem item) {
+    final scheduleLabel = _formatScheduleLabel(item.scheduleLabel);
+    final progressValue = item.totalQuestions > 0 ? 1.0 : 0.0;
+    final progressPercent = item.totalQuestions > 0 ? 100 : 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: widget.accentColor,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.accentColor.withAlpha(
-                          (0.15 * 255).round(),
-                        ),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
+                Expanded(
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          color: AppColors.accentBlue,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              widget.subtitle,
+                              item.title,
                               style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1F2937),
+                                height: 1.2,
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Kelola data ${widget.type == 'tryout' ? 'try out' : 'olimpiade'} dengan tampilan yang sederhana dan jelas.',
-                              style: TextStyle(
-                                color: Colors.white.withAlpha(
-                                  (0.9 * 255).round(),
-                                ),
-                                fontSize: 14,
-                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 24),
-                      Icon(
-                        widget.type == 'tryout'
-                            ? Icons.rocket_launch
-                            : Icons.emoji_events,
-                        color: Colors.white,
-                        size: 64,
-                      ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: TextField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.search),
-                                hintText: isTryout
-                                    ? 'Cari try out...'
-                                    : 'Cari data...',
-                                filled: true,
-                                fillColor: const Color(0xFFF9FAFB),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFE5E7EB),
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFE5E7EB),
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: widget.accentColor,
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          SizedBox(
-                            width: 156,
-                            height: 46,
-                            child: ElevatedButton.icon(
-                              onPressed: () => _openForm(),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: widget.accentColor,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text(
-                                'Tambah Baru',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                const SizedBox(width: 10),
+                _buildBadge(
+                  item.isPublished ? 'Dipublikasikan' : 'Draft',
+                  backgroundColor: item.isPublished
+                      ? AppColors.successBg
+                      : AppColors.warningBg,
+                  foregroundColor: item.isPublished
+                      ? AppColors.success
+                      : AppColors.warning,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Daftar ${_pageTag.toLowerCase()}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (visibleItems.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: const Text('Belum ada data'),
-                  )
-                else
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      int columns = 4;
-                      final w = constraints.maxWidth;
-                      if (w < 600) {
-                        columns = 1;
-                      } else if (w < 900) {
-                        columns = 2;
-                      } else if (w < 1200) {
-                        columns = 3;
-                      } else {
-                        columns = 4;
-                      }
-
-                      final itemWidth = (w - (columns - 1) * 12) / columns;
-
-                      return Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: visibleItems.map((item) {
-                          return SizedBox(
-                            width: itemWidth,
-                            child: isTryout
-                                ? _buildTryoutCard(item)
-                                : _buildOlimpiadCard(item),
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
               ],
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  item.subject,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                _buildBadge(
+                  item.classLevel,
+                  backgroundColor: AppColors.blueLightBg,
+                  foregroundColor: AppColors.accentBlue,
+                ),
+                Text(
+                  '${item.durationLabel} menit',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  '${item.totalQuestions} soal',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildSmallInfo(Icons.calendar_today_outlined, scheduleLabel),
+                _buildSmallInfo(Icons.timer_outlined, item.durationLabel),
+                _buildSmallInfo(
+                  Icons.assignment_outlined,
+                  '${item.totalQuestions} soal',
+                ),
+                _buildSmallInfo(Icons.chevron_right_rounded, ''),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Progress Soal',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                    Text(
+                      '$progressPercent%',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progressValue,
+                    minHeight: 8,
+                    backgroundColor: const Color(0xFFE5E7EB),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.accentBlue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      onPressed: () => widget.type == 'tryout'
+                          ? _openTryoutSoalManagement(item)
+                          : _openOlimpiadeSoalManagement(item),
+                      icon: const Icon(Icons.menu_book_outlined, size: 18),
+                      label: const Text('Kelola Soal'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accentBlue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                _buildActionIconButton(
+                  icon: Icons.edit_outlined,
+                  iconColor: const Color(0xFF6B7280),
+                  borderColor: const Color(0xFFE5E7EB),
+                  onPressed: () => _openForm(item: item),
+                  tooltip: 'Edit',
+                ),
+                const SizedBox(width: 8),
+                _buildActionIconButton(
+                  icon: Icons.delete_outline,
+                  iconColor: const Color(0xFFEF4444),
+                  borderColor: const Color(0xFFFECACA),
+                  onPressed: () => _deleteItem(item),
+                  tooltip: 'Hapus',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
-}
 
-class _StatChip extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
+  Widget _buildActionIconButton({
+    required IconData icon,
+    required Color iconColor,
+    required Color borderColor,
+    required VoidCallback? onPressed,
+    required String tooltip,
+    Color backgroundColor = Colors.white,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Center(child: Icon(icon, size: 18, color: iconColor)),
+        ),
+      ),
+    );
+  }
 
-  const _StatChip({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
+  Widget _buildSmallInfo(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF6B7280)),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFF6B7280),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildInfoCard(
+    String value,
+    String label,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 150),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      width: 160,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 18, color: color),
+            child: Icon(icon, color: color, size: 18),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                label.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF6B7280),
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF111827),
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF6B7280),
                 ),
               ),
             ],
@@ -850,19 +541,342 @@ class _StatChip extends StatelessWidget {
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleItems = _visibleItems;
+    final isTryout = widget.type == 'tryout';
+    final pageTitle = isTryout ? 'Kelola Try Out' : 'Kelola Olimpiade Akademik';
+    final pageSubtitle = isTryout
+        ? 'Atur daftar try out, detail soal, dan jadwal publikasi secara konsisten.'
+        : 'Atur daftar olimpiade, lokasi, tanggal, dan pengelolaan soal secara konsisten.';
+
+    return MentorSidebarShell(
+      activeMenuTitle: isTryout ? 'Try Out' : 'Olimpiade Akademik',
+      onMenuTap: _onSidebarMenuTap,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                isTryout
+                                    ? Icons.rocket_launch_outlined
+                                    : Icons.emoji_events_outlined,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    pageTitle,
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    pageSubtitle,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white70,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildInfoCard(
+                              visibleItems.length.toString(),
+                              'Total Data',
+                              Icons.view_list_outlined,
+                              AppColors.accentBlue,
+                            ),
+                            const SizedBox(width: 16),
+                            _buildInfoCard(
+                              _publishedCount().toString(),
+                              'Sudah Publish',
+                              Icons.check_circle_outline,
+                              const Color(0xFF10B981),
+                            ),
+                            const SizedBox(width: 16),
+                            _buildInfoCard(
+                              _totalQuestionsCount().toString(),
+                              'Total Soal',
+                              Icons.help_outline,
+                              const Color(0xFFF59E0B),
+                            ),
+                            const SizedBox(width: 16),
+                            _buildInfoCard(
+                              _classCount().toString(),
+                              'Kelas',
+                              Icons.class_outlined,
+                              const Color(0xFF8B5CF6),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth >= 900;
+
+                          InputDecoration inputDecoration({
+                            String? hintText,
+                            Widget? prefixIcon,
+                          }) {
+                            return InputDecoration(
+                              hintText: hintText,
+                              prefixIcon: prefixIcon,
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 14,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF2563EB),
+                                  width: 1.5,
+                                ),
+                              ),
+                            );
+                          }
+
+                          Widget fieldColumn(List<Widget> children) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: children,
+                            );
+                          }
+
+                          final searchField = fieldColumn([
+                            const Text(
+                              'Cari Data',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF374151),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: _searchController,
+                              onChanged: (_) => setState(() {}),
+                              decoration: inputDecoration(
+                                hintText: isTryout
+                                    ? 'Cari try out...'
+                                    : 'Cari olimpiade...',
+                                prefixIcon: const Icon(Icons.search),
+                              ),
+                            ),
+                          ]);
+
+                          final classField = fieldColumn([
+                            const Text(
+                              'Filter Kelas',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF374151),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            DropdownButtonFormField<String>(
+                              initialValue: _selectedClass,
+                              items:
+                                  const [
+                                        'Semua Kelas',
+                                        'Kelas 10',
+                                        'Kelas 11',
+                                        'Kelas 12',
+                                      ]
+                                      .map(
+                                        (value) => DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        ),
+                                      )
+                                      .toList(),
+                              onChanged: (value) {
+                                setState(
+                                  () => _selectedClass = value ?? 'Semua Kelas',
+                                );
+                              },
+                              decoration: inputDecoration(
+                                prefixIcon: const Icon(
+                                  Icons.filter_alt_outlined,
+                                ),
+                              ),
+                            ),
+                          ]);
+
+                          final addButton = ElevatedButton.icon(
+                            onPressed: () => _openForm(),
+                            icon: const Icon(Icons.add, size: 18),
+                            label: Text(
+                              isTryout ? 'Buat Try Out' : 'Buat Olimpiade',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.accentBlue,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(0, 44),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 22,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                          );
+
+                          final filterRow = isWide
+                              ? Row(
+                                  children: [
+                                    Expanded(child: searchField),
+                                    const SizedBox(width: 16),
+                                    SizedBox(width: 240, child: classField),
+                                    const SizedBox(width: 16),
+                                    addButton,
+                                  ],
+                                )
+                              : Column(
+                                  children: [
+                                    searchField,
+                                    const SizedBox(height: 12),
+                                    classField,
+                                    const SizedBox(height: 12),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: addButton,
+                                    ),
+                                  ],
+                                );
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              filterRow,
+                              const SizedBox(height: 24),
+                              if (visibleItems.isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Center(
+                                    child: Text(
+                                      'Belum ada data yang sesuai filter.',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else
+                                LayoutBuilder(
+                                  builder: (context, listConstraints) {
+                                    final cardWidth =
+                                        listConstraints.maxWidth >= 1100
+                                        ? 520.0
+                                        : listConstraints.maxWidth >= 720
+                                        ? (listConstraints.maxWidth - 20) / 2
+                                        : listConstraints.maxWidth;
+
+                                    return Wrap(
+                                      spacing: 20,
+                                      runSpacing: 20,
+                                      children: visibleItems
+                                          .map(
+                                            (item) => SizedBox(
+                                              width: cardWidth,
+                                              child: _buildCompetitionCard(
+                                                item,
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                    );
+                                  },
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
 }
 
 class _CompetitionFormDialog extends StatefulWidget {
+  final BuildContext parentContext;
+  final MentorCompetitionItem? existing;
   final String type;
   final Color accentColor;
-  final MentorCompetitionItem? initialItem;
-  final VoidCallback onSaved;
 
   const _CompetitionFormDialog({
+    required this.parentContext,
+    this.existing,
     required this.type,
     required this.accentColor,
-    required this.initialItem,
-    required this.onSaved,
   });
 
   @override
@@ -870,333 +884,470 @@ class _CompetitionFormDialog extends StatefulWidget {
 }
 
 class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
-  final _titleController = TextEditingController();
-  final _scheduleController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _durationController = TextEditingController();
-  final _questionsController = TextEditingController(text: '0');
-  final _classOptions = const ['Kelas 10', 'Kelas 11', 'Kelas 12'];
-  final Map<String, TextEditingController> _categoryControllers = {
-    'Penalaran Umum': TextEditingController(text: '0'),
-    'Pemahaman dan Penulisan Umum': TextEditingController(text: '0'),
-    'Pengetahuan dan Pemahaman Bacaan Matematika': TextEditingController(
-      text: '0',
-    ),
-    'Pengetahuan Kuantitatif': TextEditingController(text: '0'),
-    'Penalaran Matematika': TextEditingController(text: '0'),
-    'Literasi Bahasa Indonesia': TextEditingController(text: '0'),
-  };
-  String _classLevel = 'Kelas 12';
-  bool _saving = false;
-
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final initial = DateTime.tryParse(_scheduleController.text.trim()) ?? now;
-    final selected = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
-
-    if (selected == null) {
-      return;
-    }
-
-    final yyyy = selected.year.toString().padLeft(4, '0');
-    final mm = selected.month.toString().padLeft(2, '0');
-    final dd = selected.day.toString().padLeft(2, '0');
-    _scheduleController.text = '$yyyy-$mm-$dd';
-  }
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _titleController;
+  late TextEditingController _subjectController;
+  late TextEditingController _durationController;
+  late TextEditingController _totalQuestionsController;
+  late TextEditingController _scheduleController;
+  String _selectedClass = 'Kelas 12';
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    final item = widget.initialItem;
-    if (item != null) {
-      _titleController.text = item.title;
-      _scheduleController.text = item.scheduleLabel;
-      _durationController.text = item.durationLabel;
-      _questionsController.text = item.totalQuestions.toString();
-      _classLevel = item.classLevel;
-      _locationController.text = item.subject == '-' ? '' : item.subject;
-
-      for (final entry in _categoryControllers.entries) {
-        final value = item.categoryQuestions[entry.key] ?? 0;
-        entry.value.text = value.toString();
-      }
-    }
+    final existing = widget.existing;
+    _titleController = TextEditingController(text: existing?.title ?? '');
+    _subjectController = TextEditingController(text: existing?.subject ?? '');
+    _durationController = TextEditingController(
+      text: existing?.durationLabel ?? '60',
+    );
+    _totalQuestionsController = TextEditingController(
+      text: existing?.totalQuestions.toString() ?? '0',
+    );
+    _scheduleController = TextEditingController(
+      text: existing?.scheduleLabel ?? '',
+    );
+    _selectedClass = existing?.classLevel ?? 'Kelas 12';
   }
 
   @override
   void dispose() {
     _titleController.dispose();
-    _scheduleController.dispose();
-    _locationController.dispose();
+    _subjectController.dispose();
     _durationController.dispose();
-    _questionsController.dispose();
-    for (final c in _categoryControllers.values) {
-      c.dispose();
-    }
+    _totalQuestionsController.dispose();
+    _scheduleController.dispose();
     super.dispose();
   }
 
-  int _sumTryoutQuestions() {
-    var total = 0;
-    for (final controller in _categoryControllers.values) {
-      total += int.tryParse(controller.text.trim()) ?? 0;
-    }
-    return total;
-  }
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _isSubmitting = true);
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(widget.parentContext);
+    try {
+      final res = await MentorCompetitionService.createOrUpdate(
+        type: widget.type,
+        id: widget.existing?.id,
+        classLevel: _selectedClass,
+        title: _titleController.text.trim(),
+        subject: _subjectController.text.trim(),
+        scheduleLabel: _scheduleController.text.trim(),
+        durationLabel: _durationController.text.trim(),
+        totalQuestions: int.tryParse(_totalQuestionsController.text) ?? 0,
+      );
 
-  Map<String, int> _collectCategoryQuestions() {
-    final result = <String, int>{};
-    for (final entry in _categoryControllers.entries) {
-      result[entry.key] = int.tryParse(entry.value.text.trim()) ?? 0;
+      if (!mounted) return;
+      if (res['success'] == true) {
+        navigator.pop(true);
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(res['message']?.toString() ?? 'Gagal menyimpan'),
+          ),
+        );
+        setState(() => _isSubmitting = false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
     }
-    return result;
   }
 
   @override
   Widget build(BuildContext context) {
-    Future<void> submit() async {
-      if (_titleController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Judul/Nama wajib diisi')));
-        return;
-      }
+    final fieldBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+    );
 
-      if (_scheduleController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Tanggal wajib dipilih')));
-        return;
-      }
+    final isOlimpiade = widget.type == 'olimpiade';
 
-      if (widget.type == 'olimpiade' &&
-          _locationController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Lokasi wajib diisi')));
-        return;
-      }
-
-      if (widget.type == 'tryout' && _durationController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Waktu wajib diisi')));
-        return;
-      }
-
-      setState(() => _saving = true);
-      final totalQuestions = widget.type == 'tryout'
-          ? _sumTryoutQuestions()
-          : int.tryParse(_questionsController.text.trim()) ?? 0;
-      final response = await MentorCompetitionService.createOrUpdate(
-        type: widget.type,
-        id: widget.initialItem?.id,
-        classLevel: _classLevel,
-        title: _titleController.text.trim(),
-        subject: _locationController.text.trim(),
-        scheduleLabel: _scheduleController.text.trim(),
-        durationLabel: _durationController.text.trim(),
-        totalQuestions: totalQuestions,
-        categoryQuestions: _collectCategoryQuestions(),
-      );
-      if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(response['message']?.toString() ?? 'Proses selesai'),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 900,
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
         ),
-      );
-      if (response['success'] == true) {
-        widget.onSaved();
-        if (mounted) {
-          Navigator.of(context).pop(true);
-        }
-      }
-    }
-
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      title: Text(
-        widget.initialItem == null ? 'Tambah Data' : 'Edit Data',
-        style: const TextStyle(
-          fontWeight: FontWeight.w800,
-          color: Color(0xFF111827),
-        ),
-      ),
-      content: SizedBox(
-        width: 480,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Judul / Nama'),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(15, 23, 42, 0.18),
+                blurRadius: 30,
+                offset: Offset(0, 18),
               ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: _classLevel,
-                items: _classOptions
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (v) =>
-                    setState(() => _classLevel = v ?? _classLevel),
-                decoration: const InputDecoration(labelText: 'Kelas'),
-              ),
-              const SizedBox(height: 8),
-              if (widget.type == 'olimpiade') ...[
-                TextField(
-                  controller: _locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Lokasi',
-                    hintText: 'Isi lokasi sesuai kebutuhan mentor',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _scheduleController,
-                  readOnly: true,
-                  onTap: _pickDate,
-                  decoration: const InputDecoration(
-                    labelText: 'Tanggal Pelaksanaan',
-                    suffixIcon: Icon(Icons.calendar_today_outlined),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _durationController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Durasi (menit)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _questionsController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Jumlah Soal'),
-                ),
-              ],
-              if (widget.type == 'tryout') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _scheduleController,
-                        readOnly: true,
-                        onTap: _pickDate,
-                        decoration: const InputDecoration(
-                          labelText: 'Tanggal Pelaksanaan',
-                          suffixIcon: Icon(Icons.calendar_today_outlined),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _durationController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Waktu (menit)',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Jumlah Latihan Soal',
-                  ),
-                  child: Text(
-                    '${_sumTryoutQuestions()}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF111827),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Jumlah Soal per Kategori',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF374151),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ..._categoryControllers.entries.map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.key,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF1F2937),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          width: 88,
-                          child: TextField(
-                            controller: entry.value,
-                            keyboardType: TextInputType.number,
-                            onChanged: (_) => setState(() {}),
-                            textAlign: TextAlign.center,
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              hintText: '0',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
-        ),
-      ),
-      actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.of(context).pop(false),
-          style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFF6B7280),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-          child: const Text('Batal'),
-        ),
-        ElevatedButton(
-          onPressed: _saving ? null : submit,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: widget.accentColor,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          widget.existing == null
+                              ? Icons.add
+                              : Icons.edit_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.existing == null
+                                  ? (isOlimpiade
+                                        ? 'Tambah Olimpiade'
+                                        : 'Tambah Try Out')
+                                  : 'Edit',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              isOlimpiade
+                                  ? 'Form Olimpiade Akademik'
+                                  : 'Form Try Out',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12.5,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+                    child: SingleChildScrollView(
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Isi detail kompetisi di bawah',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF374151),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _titleController,
+                              validator: (v) => v == null || v.isEmpty
+                                  ? 'Judul wajib diisi'
+                                  : null,
+                              decoration: InputDecoration(
+                                labelText: isOlimpiade
+                                    ? 'Judul Olimpiade'
+                                    : 'Judul Try Out',
+                                prefixIcon: const Icon(
+                                  Icons.title,
+                                  color: Color(0xFF2563EB),
+                                ),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: fieldBorder,
+                                enabledBorder: fieldBorder,
+                                focusedBorder: fieldBorder.copyWith(
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF2563EB),
+                                    width: 1.4,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 14,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _subjectController,
+                              validator: (v) =>
+                                  isOlimpiade && (v == null || v.isEmpty)
+                                  ? 'Lokasi wajib diisi'
+                                  : null,
+                              decoration: InputDecoration(
+                                labelText: isOlimpiade ? 'Lokasi' : 'Subjek',
+                                prefixIcon: const Icon(
+                                  Icons.place,
+                                  color: Color(0xFF2563EB),
+                                ),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: fieldBorder,
+                                enabledBorder: fieldBorder,
+                                focusedBorder: fieldBorder.copyWith(
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF2563EB),
+                                    width: 1.4,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 14,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            if (isOlimpiade) ...[
+                              TextFormField(
+                                controller: _scheduleController,
+                                readOnly: true,
+                                validator: (v) => v == null || v.isEmpty
+                                    ? 'Tanggal wajib diisi'
+                                    : null,
+                                onTap: () async {
+                                  final now = DateTime.now();
+                                  DateTime initial = now;
+                                  final parsed = DateTime.tryParse(
+                                    _scheduleController.text,
+                                  );
+                                  if (parsed != null) initial = parsed;
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: initial,
+                                    firstDate: DateTime(now.year - 5),
+                                    lastDate: DateTime(now.year + 5),
+                                  );
+                                  if (picked != null) {
+                                    _scheduleController.text = picked
+                                        .toIso8601String();
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  labelText: 'Tanggal Olimpiade',
+                                  prefixIcon: const Icon(
+                                    Icons.event,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: fieldBorder,
+                                  enabledBorder: fieldBorder,
+                                  focusedBorder: fieldBorder.copyWith(
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF2563EB),
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ] else ...[
+                              TextFormField(
+                                controller: _durationController,
+                                keyboardType: TextInputType.number,
+                                validator: (v) => v == null || v.isEmpty
+                                    ? 'Durasi wajib diisi'
+                                    : null,
+                                decoration: InputDecoration(
+                                  labelText: 'Durasi (menit)',
+                                  prefixIcon: const Icon(
+                                    Icons.timer,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: fieldBorder,
+                                  enabledBorder: fieldBorder,
+                                  focusedBorder: fieldBorder.copyWith(
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF2563EB),
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _totalQuestionsController,
+                                keyboardType: TextInputType.number,
+                                validator: (v) => v == null || v.isEmpty
+                                    ? 'Total soal wajib diisi'
+                                    : null,
+                                decoration: InputDecoration(
+                                  labelText: 'Total Soal',
+                                  prefixIcon: const Icon(
+                                    Icons.question_mark,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: fieldBorder,
+                                  enabledBorder: fieldBorder,
+                                  focusedBorder: fieldBorder.copyWith(
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF2563EB),
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            DropdownButtonFormField<String>(
+                              initialValue: _selectedClass,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                              ),
+                              dropdownColor: Colors.white,
+                              style: const TextStyle(
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              items: const ['Kelas 10', 'Kelas 11', 'Kelas 12']
+                                  .map(
+                                    (c) => DropdownMenuItem<String>(
+                                      value: c,
+                                      child: Text(c),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) => setState(
+                                () => _selectedClass = v ?? _selectedClass,
+                              ),
+                              decoration: InputDecoration(
+                                labelText: 'Kelas',
+                                prefixIcon: const Icon(
+                                  Icons.class_outlined,
+                                  color: Color(0xFF2563EB),
+                                ),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: fieldBorder,
+                                enabledBorder: fieldBorder,
+                                focusedBorder: fieldBorder.copyWith(
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF2563EB),
+                                    width: 1.4,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _isSubmitting
+                              ? null
+                              : () => Navigator.of(context).pop(false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF64748B),
+                            side: const BorderSide(color: Color(0xFFD8E1EE)),
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text('Batal'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accentBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Simpan'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Text(widget.initialItem == null ? 'Simpan' : 'Update'),
         ),
-      ],
+      ),
     );
   }
 }

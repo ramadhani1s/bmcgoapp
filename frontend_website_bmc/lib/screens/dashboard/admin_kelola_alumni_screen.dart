@@ -19,16 +19,6 @@ class AdminKelolaAlumniScreen extends StatefulWidget {
 
 class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final List<String> _tahunList = [
-    'Semua Tahun',
-    '2020',
-    '2021',
-    '2022',
-    '2023',
-    '2024',
-    '2025',
-    '2026',
-  ];
 
   List<Alumni> _allAlumni = [];
   List<Alumni> _filteredAlumni = [];
@@ -62,12 +52,12 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
 
   void _applyFilters() {
     final keyword = _searchController.text.trim().toLowerCase();
+    final selectedYear = int.tryParse(_selectedTahun);
     _filteredAlumni = _allAlumni.where((alumni) {
       final nameMatch =
           keyword.isEmpty || alumni.nama.toLowerCase().contains(keyword);
-      final tahunMatch =
-          _selectedTahun == 'Semua Tahun' ||
-          alumni.tahunLulus == int.parse(_selectedTahun);
+      final tahunMatch = _selectedTahun == 'Semua Tahun' ||
+          (selectedYear != null && alumni.tahunLulus == selectedYear);
       return nameMatch && tahunMatch;
     }).toList();
 
@@ -81,6 +71,25 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
     }
   }
 
+  List<String> _buildYearFilterOptions() {
+    final years = <int>{
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025,
+      2026,
+      ..._allAlumni.map((alumni) => alumni.tahunLulus),
+    };
+
+    final sortedYears = years.toList()..sort();
+    return [
+      'Semua Tahun',
+      ...sortedYears.map((year) => year.toString()),
+    ];
+  }
+
   Future<dynamic> _showFormModal({Alumni? alumni}) async {
     final namaController = TextEditingController(text: alumni?.nama ?? '');
     final sekolahController = TextEditingController(
@@ -92,6 +101,10 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
     final tahunOptions = <int>[2020, 2021, 2022, 2023, 2024, 2025, 2026];
     int selectedTahun =
         alumni?.tahunLulus ?? DateTime.now().year.clamp(2020, 2026).toInt();
+    if (!tahunOptions.contains(selectedTahun)) {
+      tahunOptions.add(selectedTahun);
+      tahunOptions.sort();
+    }
     String? selectedFotoUrl = alumni?.foto;
     bool isSaving = false;
 
@@ -314,7 +327,9 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                                   font: bodyFont,
                                   label: 'Tahun Lulus',
                                   child: DropdownButtonFormField<int>(
-                                    initialValue: selectedTahun,
+                                    initialValue: tahunOptions.contains(selectedTahun)
+                                      ? selectedTahun
+                                      : tahunOptions.first,
                                     decoration: inputDecoration,
                                     style: bodyFont.copyWith(
                                       fontSize: 14,
@@ -886,26 +901,29 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
               borderRadius: BorderRadius.circular(12),
               color: Colors.white,
             ),
-            child: DropdownButton<String>(
-              value: _selectedTahun,
-              isExpanded: true,
-              underline: const SizedBox(),
-              icon: const Icon(Icons.expand_more, color: Color(0xFF6B7280)),
-              items: _tahunList
-                  .map(
-                    (tahun) => DropdownMenuItem(
-                      value: tahun,
-                      child: Text(tahun, style: const TextStyle(fontSize: 13)),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _selectedTahun = value);
-                  _applyFilters();
-                }
-              },
-            ),
+            child: Builder(builder: (_) {
+              final items = _buildYearFilterOptions()
+                  .map((tahun) => DropdownMenuItem(
+                        value: tahun,
+                        child: Text(tahun, style: const TextStyle(fontSize: 13)),
+                      ))
+                  .toList();
+              final hasSelected = items.any((it) => it.value == _selectedTahun);
+
+              return DropdownButton<String>(
+                value: hasSelected ? _selectedTahun : null,
+                isExpanded: true,
+                underline: const SizedBox(),
+                icon: const Icon(Icons.expand_more, color: Color(0xFF6B7280)),
+                items: items,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _selectedTahun = value);
+                    _applyFilters();
+                  }
+                },
+              );
+            }),
           ),
         ),
       ],
