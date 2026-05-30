@@ -8,6 +8,7 @@ class AbsensiService {
     baseUrl: 'http://localhost:8080/api',
   );
 
+  // ignore: unused_element
   static Future<String> _getToken() async {
     return AppSession.getToken();
   }

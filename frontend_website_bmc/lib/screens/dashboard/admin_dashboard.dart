@@ -334,6 +334,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     ),
   ];
 
+  // ignore: unused_element
   List<_PendingVerificationRow> get _pendingRows {
     final items = _summary?.pendingItems ?? const <DashboardPendingItem>[];
     if (items.isEmpty) {
@@ -1422,6 +1423,7 @@ class _TableHeaderRow extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _PendingItemRow extends StatelessWidget {
   const _PendingItemRow({
     required this.row,

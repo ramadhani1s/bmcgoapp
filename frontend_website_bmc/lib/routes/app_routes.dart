@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/mentor/mentor_screens.dart';
+import '../screens/mentor_management_screen.dart';
 import '../screens/dashboard/soal_latihan_management_screen.dart';
 import '../screens/dashboard/mentor_attendance_screen.dart';
 import '../screens/dashboard/mentor_olimpiade_screen.dart';
@@ -73,7 +74,7 @@ class AppRoutes {
 
       case mentorManagement:
         return MaterialPageRoute(
-          builder: (_) => const VerifikasiPendaftaranScreen(),
+          builder: (_) => const MentorManagementScreen(),
         );
 
       case mentorExercise:

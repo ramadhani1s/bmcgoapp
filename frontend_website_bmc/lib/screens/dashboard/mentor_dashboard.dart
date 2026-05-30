@@ -393,16 +393,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   height: 1.0,
                 ),
               ),
-              const SizedBox(height: 6),
-              const Text(
-                'Ringkasan aktivitas mengajar hari ini.',
-                style: TextStyle(
-                  color: Color(0xFF4B5563),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  height: 1.25,
-                ),
-              ),
+
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -685,7 +676,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Fokus pada aktivitas mengajar hari ini',
+                  'Ringkasan Aktivitas Mengajar Hari Ini',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -694,7 +685,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Lihat jadwal, pantau latihan, dan buka kompetisi terbaru dari satu tempat.',
+                  'Pantau jadwal mengajar, kelola latihan siswa, serta akses informasi try out dan olimpiade akademik.',
                   style: TextStyle(
                     color: Color(0xFFD9E4FF),
                     fontWeight: FontWeight.w500,
@@ -1128,25 +1119,35 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     );
   }
 
+  // ignore: unused_element
   List<String> _availableClasses() {
-    final classes = <String>{'Semua Kelas'};
+    // Normalize values: trim and deduplicate to avoid duplicate menu items
+    final normalized = <String>{};
+
     for (final item in _recentSchedules) {
-      final kelas = _pickValue(item, [
+      final raw = _pickValue(item, [
         'kelas',
         'class_level',
         'class_name',
       ], fallback: '');
-      if (kelas.isNotEmpty) classes.add(kelas);
+      final kelas = raw.trim();
+      if (kelas.isNotEmpty) normalized.add(kelas);
     }
+
     for (final t in _recentTryouts) {
-      if (t.classLevel.isNotEmpty) classes.add(t.classLevel);
+      final kelas = t.classLevel.trim();
+      if (kelas.isNotEmpty) normalized.add(kelas);
     }
+
     for (final o in _recentOlimpiades) {
-      if (o.classLevel.isNotEmpty) classes.add(o.classLevel);
+      final kelas = o.classLevel.trim();
+      if (kelas.isNotEmpty) normalized.add(kelas);
     }
-    final list = classes.toList()..sort();
-    // Keep 'Semua Kelas' at the top
-    list.remove('Semua Kelas');
+
+    // Ensure the default option exists and keep it at top
+    normalized.removeWhere((s) => s.trim().isEmpty);
+    final list = normalized.toList()..sort();
+    list.removeWhere((s) => s == 'Semua Kelas');
     return ['Semua Kelas', ...list];
   }
 

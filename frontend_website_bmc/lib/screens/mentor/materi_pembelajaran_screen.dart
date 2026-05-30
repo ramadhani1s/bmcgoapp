@@ -3,12 +3,17 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/theme/app_colors.dart';
+import '../../routes/app_routes.dart';
 import '../../models/user.dart';
 import '../../models/materi_pembelajaran.dart';
+import '../dashboard/jadwal_pembelajaran_screen.dart';
+import '../dashboard/mentor_attendance_screen.dart';
+import '../dashboard/mentor_olimpiade_screen.dart';
 import '../../services/auth_service.dart';
 import '../../services/materi_service.dart';
 // ignore: deprecated_member_use
 import 'dart:html' as html;
+import '../../widgets/mentor_sidebar_shell.dart';
 
 class MateriPembelajaranScreen extends StatefulWidget {
   final String? initialClass;
@@ -67,6 +72,44 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       });
     } catch (e) {
       _showErrorSnackBar('Gagal memuat materi: $e');
+    }
+  }
+
+  void _onSidebarMenuTap(String title) {
+    if (title == 'Dashboard') {
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
+      return;
+    }
+    if (title == 'Jadwal Mengajar') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+      );
+      return;
+    }
+    if (title == 'Absensi Kelas') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
+      );
+      return;
+    }
+    if (title == 'Soal Latihan') {
+      Navigator.pushNamed(context, AppRoutes.mentorExercise);
+      return;
+    }
+    if (title == 'Try Out') {
+      Navigator.pushNamed(context, AppRoutes.mentorTryout);
+      return;
+    }
+    if (title == 'Materi Pembelajaran') {
+      return;
+    }
+    if (title == 'Olimpiade Akademik') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+      );
     }
   }
 
@@ -212,40 +255,33 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.pageBg,
-      appBar: AppBar(
-        title: Text(
-          'Materi Pembelajaran',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-        elevation: 0.5,
-      ),
-      body: _isLoading && _materiList.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 24),
-                  _buildToolbar(),
-                  const SizedBox(height: 16),
-                  if (_materiList.isEmpty)
-                    _buildEmptyState()
-                  else
-                    (_selectedClass == 'Semua Kelas'
-                        ? _buildMateriGrid()
-                        : _buildMateriGridFiltered()),
-                ],
+    return MentorSidebarShell(
+      activeMenuTitle: 'Materi Pembelajaran',
+      onMenuTap: _onSidebarMenuTap,
+      child: Scaffold(
+        backgroundColor: AppColors.pageBg,
+       
+        body: _isLoading && _materiList.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 24),
+                    _buildToolbar(),
+                    const SizedBox(height: 16),
+                    if (_materiList.isEmpty)
+                      _buildEmptyState()
+                    else
+                      (_selectedClass == 'Semua Kelas'
+                          ? _buildMateriGrid()
+                          : _buildMateriGridFiltered()),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 
@@ -297,19 +333,53 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          DropdownButton<String>(
-            value: _selectedClass,
-            items: _buildClassOptions(),
-            onChanged: (v) {
-              if (v == null) return;
-              setState(() => _selectedClass = v);
-            },
+          SizedBox(
+            width: 180,
+            child: DropdownButtonFormField<String>(
+              value: _selectedClass,
+              items: _fixedClassOptions
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _selectedClass = v);
+              },
+              decoration: InputDecoration(
+                prefixIcon: const Icon(
+                  Icons.class_outlined,
+                  size: 18,
+                  color: Color(0xFF2563EB),
+                ),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF2563EB),
+                    width: 1.4,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
+  // ignore: unused_element
   List<DropdownMenuItem<String>> _buildClassOptions() {
     return _fixedClassOptions
         .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -768,8 +838,22 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Judul Materi',
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 1.4,
+                    ),
                   ),
                   prefixIcon: const Icon(Icons.title),
                 ),
@@ -782,8 +866,22 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                 controller: _descController,
                 decoration: InputDecoration(
                   labelText: 'Deskripsi (Opsional)',
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 1.4,
+                    ),
                   ),
                   prefixIcon: const Icon(Icons.description),
                 ),
@@ -799,7 +897,26 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                   if (v == null) return;
                   setState(() => _selectedClass = v);
                 },
-                decoration: const InputDecoration(labelText: 'Kelas'),
+                decoration: InputDecoration(
+                  labelText: 'Kelas',
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 1.4,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               const SizedBox(height: 24),

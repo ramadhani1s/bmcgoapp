@@ -273,113 +273,147 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1F2937),
-        elevation: 0.8,
-        title: const Text('Kelola Soal Latihan'),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1180),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextButton.icon(
-                    onPressed: _saving
-                        ? null
-                        : () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.chevron_left),
-                    label: const Text('Kembali ke Daftar Latihan'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF6B7280),
-                      padding: EdgeInsets.zero,
+    final fieldBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+    );
+
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 900,
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(15, 23, 42, 0.18),
+                blurRadius: 30,
+                offset: Offset(0, 18),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Buat Latihan Baru',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF111827),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Isi form di bawah untuk membuat soal latihan bagi siswa',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
-                  ),
-                  const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 14,
-                    runSpacing: 14,
+                  child: Row(
                     children: [
-                      _buildInfoCard(
-                        '5',
-                        'Total Soal',
-                        Icons.description_outlined,
-                        const Color(0xFF3B82F6),
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.menu_book_outlined,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
-                      _buildInfoCard(
-                        'Draft',
-                        'Status Awal',
-                        Icons.check_circle_outline,
-                        const Color(0xFF10B981),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Tambah Latihan',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Form latihan soal dibuat dengan gaya yang sama seperti Try Out.',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12.5,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _saving
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close, color: Colors.white),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
-                  Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x0A000000),
-                          blurRadius: 16,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth >= 900;
-
-                        Widget fieldColumn(List<Widget> children) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: children,
-                          );
-                        }
-
-                        final titleField = fieldColumn([
-                          _buildFieldLabel('Judul Latihan *'),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _judulController,
-                            decoration: _inputDecoration(
-                              hintText: 'Latihan Matematika Bab 1',
+                ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Isi detail latihan di bawah',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF374151),
                             ),
                           ),
-                        ]);
-
-                        final mapelField = fieldColumn([
-                          _buildFieldLabel('Mata Pelajaran *'),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _judulController,
+                            decoration: InputDecoration(
+                              labelText: 'Judul Latihan',
+                              hintText: 'Latihan Matematika Bab 1',
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: fieldBorder,
+                              enabledBorder: fieldBorder,
+                              focusedBorder: fieldBorder.copyWith(
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF2563EB),
+                                  width: 1.4,
+                                ),
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.title,
+                                color: Color(0xFF2563EB),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 14,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           DropdownButtonFormField<String>(
-                            initialValue: _buildMapelOptions().contains(
-                                  _selectedMapel,
-                                )
+                            initialValue:
+                                _buildMapelOptions().contains(_selectedMapel)
                                 ? _selectedMapel
                                 : _buildMapelOptions().first,
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                            dropdownColor: Colors.white,
+                            style: const TextStyle(
+                              color: Color(0xFF111827),
+                              fontWeight: FontWeight.w600,
+                            ),
                             items: _buildMapelOptions()
                                 .map(
                                   (value) => DropdownMenuItem<String>(
@@ -389,174 +423,213 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
                                 )
                                 .toList(),
                             onChanged: (value) {
-                              if (value == null) {
-                                return;
+                              if (value != null) {
+                                setState(() => _selectedMapel = value);
                               }
-                              setState(() => _selectedMapel = value);
                             },
-                            decoration: _inputDecoration(),
+                            decoration: InputDecoration(
+                              labelText: 'Mata Pelajaran',
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: fieldBorder,
+                              enabledBorder: fieldBorder,
+                              focusedBorder: fieldBorder.copyWith(
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF2563EB),
+                                  width: 1.4,
+                                ),
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.menu_book_outlined,
+                                color: Color(0xFF2563EB),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 14,
+                              ),
+                            ),
                           ),
-                        ]);
-
-                        final soalField = fieldColumn([
-                          _buildFieldLabel('Jumlah Soal *'),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _jumlahSoalController,
-                            keyboardType: TextInputType.number,
-                            decoration: _inputDecoration(hintText: '5'),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _jumlahSoalController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    labelText: 'Jumlah Soal',
+                                    hintText: '5',
+                                    filled: true,
+                                    fillColor: const Color(0xFFF8FAFC),
+                                    border: fieldBorder,
+                                    enabledBorder: fieldBorder,
+                                    focusedBorder: fieldBorder.copyWith(
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF2563EB),
+                                        width: 1.4,
+                                      ),
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.description_outlined,
+                                      color: Color(0xFF2563EB),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextField(
+                                  controller: _durasiController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    labelText: 'Durasi (Menit)',
+                                    hintText: '20',
+                                    filled: true,
+                                    fillColor: const Color(0xFFF8FAFC),
+                                    border: fieldBorder,
+                                    enabledBorder: fieldBorder,
+                                    focusedBorder: fieldBorder.copyWith(
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF2563EB),
+                                        width: 1.4,
+                                      ),
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.timer_outlined,
+                                      color: Color(0xFF2563EB),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ]);
-
-                        final durasiField = fieldColumn([
-                          _buildFieldLabel('Durasi (Menit) *'),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _durasiController,
-                            keyboardType: TextInputType.number,
-                            decoration: _inputDecoration(hintText: '20'),
-                          ),
-                        ]);
-
-                        final jadwalField = fieldColumn([
-                          _buildFieldLabel('Jadwal Pelaksanaan'),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 12),
                           TextField(
                             controller: _jadwalController,
                             readOnly: true,
                             onTap: _pickJadwalDate,
-                            decoration: _inputDecoration(
+                            decoration: InputDecoration(
+                              labelText: 'Jadwal Pelaksanaan',
                               hintText: '30 April 2026',
-                              suffixIcon: const Icon(
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: fieldBorder,
+                              enabledBorder: fieldBorder,
+                              focusedBorder: fieldBorder.copyWith(
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF2563EB),
+                                  width: 1.4,
+                                ),
+                              ),
+                              prefixIcon: const Icon(
                                 Icons.calendar_today_outlined,
+                                color: Color(0xFF2563EB),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 14,
                               ),
                             ),
                           ),
-                        ]);
-
-                        final notesField = fieldColumn([
-                          _buildFieldLabel('Deskripsi / Catatan'),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 12),
                           TextField(
                             controller: _deskripsiController,
-                            maxLines: 4,
-                            decoration: _inputDecoration(
+                            maxLines: 3,
+                            decoration: InputDecoration(
+                              labelText: 'Deskripsi / Catatan',
                               hintText:
                                   'Tambahkan deskripsi atau catatan untuk siswa...',
-                            ),
-                          ),
-                        ]);
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            titleField,
-                            const SizedBox(height: 14),
-                            if (isWide)
-                              Row(
-                                children: [
-                                  Expanded(child: mapelField),
-                                  const SizedBox(width: 12),
-                                  Expanded(child: soalField),
-                                  const SizedBox(width: 12),
-                                  Expanded(child: durasiField),
-                                ],
-                              )
-                            else ...[
-                              mapelField,
-                              const SizedBox(height: 14),
-                              soalField,
-                              const SizedBox(height: 14),
-                              durasiField,
-                            ],
-                            const SizedBox(height: 14),
-                            jadwalField,
-                            const SizedBox(height: 14),
-                            notesField,
-                            const SizedBox(height: 18),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: _saving
-                                    ? null
-                                    : () => _submit(publish: true),
-                                icon: _saving
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(Icons.publish_outlined),
-                                label: const Text('Publikasikan'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2563EB),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: fieldBorder,
+                              enabledBorder: fieldBorder,
+                              focusedBorder: fieldBorder.copyWith(
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF2563EB),
+                                  width: 1.4,
                                 ),
                               ),
+                              prefixIcon: const Icon(
+                                Icons.notes_outlined,
+                                color: Color(0xFF2563EB),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 14,
+                              ),
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: _saving
-                                        ? null
-                                        : () => _submit(publish: false),
-                                    icon: const Icon(Icons.save_outlined),
-                                    label: const Text('Simpan sebagai Draft'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFF374151),
-                                      side: const BorderSide(
-                                        color: Color(0xFFD1D5DB),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
+                          ),
+                          const SizedBox(height: 18),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: _saving
+                                      ? null
+                                      : () => Navigator.of(context).pop(),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF64748B),
+                                    side: const BorderSide(
+                                      color: Color(0xFFD8E1EE),
+                                    ),
+                                    backgroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 18,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
                                     ),
                                   ),
+                                  child: const Text('Batal'),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: _saving
-                                        ? null
-                                        : () => Navigator.of(context).pop(),
-                                    child: const Text('Batal'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFF6B7280),
-                                      side: const BorderSide(
-                                        color: Color(0xFFD1D5DB),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _saving
+                                      ? null
+                                      : () => _submit(publish: false),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2563EB),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 18,
+                                      vertical: 12,
                                     ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    elevation: 0,
                                   ),
+                                  child: _saving
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text('Simpan'),
                                 ),
-                              ],
-                            ),
-                          ],
-                        );
-                      },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
