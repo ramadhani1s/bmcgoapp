@@ -47,10 +47,7 @@ class AttendanceTokenCard extends StatelessWidget {
           const Text(
             'Dapatkan token 6 karakter dari mentor Anda',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFF6B7280),
-              height: 1.45,
-            ),
+            style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
           ),
           const SizedBox(height: 18),
           TextField(
@@ -88,7 +85,10 @@ class AttendanceTokenCard extends StatelessWidget {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFFFB7185), width: 1.2),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFB7185),
+                  width: 1.2,
+                ),
               ),
             ),
           ),
@@ -102,15 +102,16 @@ class AttendanceTokenCard extends StatelessWidget {
             ),
             child: const Row(
               children: [
-                Icon(Icons.access_time_rounded, size: 18, color: Color(0xFFF97316)),
+                Icon(
+                  Icons.access_time_rounded,
+                  size: 18,
+                  color: Color(0xFFF97316),
+                ),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Token berlaku 10-15 menit sejak dibuat mentor',
-                    style: TextStyle(
-                      color: Color(0xFFF97316),
-                      height: 1.35,
-                    ),
+                    style: TextStyle(color: Color(0xFFF97316), height: 1.35),
                   ),
                 ),
               ],

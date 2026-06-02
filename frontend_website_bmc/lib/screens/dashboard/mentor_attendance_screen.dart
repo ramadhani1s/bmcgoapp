@@ -512,7 +512,11 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
             SizedBox(height: 6),
             Text(
               'Belum ada sesi absensi yang berjalan. Token akan muncul di sini setelah mentor menekan Mulai Absensi.',
-              style: TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.45),
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textMuted,
+                height: 1.45,
+              ),
             ),
           ],
         ),
@@ -550,12 +554,18 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                   children: [
                     Text(
                       'Sesi Absensi Aktif',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'Token tetap tampil sampai sesi diganti atau selesai.',
-                      style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -592,9 +602,21 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _chip('Kelas: $className', const Color(0xFFDBEAFE), const Color(0xFF1D4ED8)),
-              _chip('Mapel: $subject', const Color(0xFFE0F2FE), const Color(0xFF0369A1)),
-              _chip('Mulai: ${_formatDate(session['started_at'])}', const Color(0xFFF3F4F6), const Color(0xFF374151)),
+              _chip(
+                'Kelas: $className',
+                const Color(0xFFDBEAFE),
+                const Color(0xFF1D4ED8),
+              ),
+              _chip(
+                'Mapel: $subject',
+                const Color(0xFFE0F2FE),
+                const Color(0xFF0369A1),
+              ),
+              _chip(
+                'Mulai: ${_formatDate(session['started_at'])}',
+                const Color(0xFFF3F4F6),
+                const Color(0xFF374151),
+              ),
             ],
           ),
         ],
@@ -637,9 +659,7 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
         ],
       ),
       child: _records.isEmpty
-          ? const Text(
-              'Belum ada siswa yang mengisi token absensi.',
-            )
+          ? const Text('Belum ada siswa yang mengisi token absensi.')
           : LayoutBuilder(
               builder: (context, tableConstraints) {
                 return SingleChildScrollView(
@@ -664,12 +684,8 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                         final status = (item['status'] ?? '-').toString();
                         return DataRow(
                           cells: [
-                            DataCell(
-                              Text((item['nama'] ?? '-').toString()),
-                            ),
-                            DataCell(
-                              Text((item['email'] ?? '-').toString()),
-                            ),
+                            DataCell(Text((item['nama'] ?? '-').toString())),
+                            DataCell(Text((item['email'] ?? '-').toString())),
                             DataCell(
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -677,8 +693,9 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _statusColor(status)
-                                      .withAlpha((0.14 * 255).round()),
+                                  color: _statusColor(
+                                    status,
+                                  ).withAlpha((0.14 * 255).round()),
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
@@ -691,13 +708,7 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                                 ),
                               ),
                             ),
-                            DataCell(
-                              Text(
-                                _formatDate(
-                                  item['submitted_at'],
-                                ),
-                              ),
-                            ),
+                            DataCell(Text(_formatDate(item['submitted_at']))),
                           ],
                         );
                       }).toList(),
