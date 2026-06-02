@@ -16,14 +16,15 @@ import (
 func GetMentors(c *gin.Context) {
 	rows, err := config.DB.Query(context.Background(), `
 		SELECT 
-			id,
-			nama,
-			COALESCE(email, ''),
-			COALESCE(password, ''),
-			COALESCE(mata_pelajaran, ''),
-			COALESCE(status, 'Aktif')
-		FROM mentor
-		ORDER BY id ASC
+			m.id,
+			COALESCE(m.nama_mentor, u.nama, u.username, ''),
+			COALESCE(m.email, u.email, u.username, '') AS email,
+			COALESCE(m.password, '') AS password,
+			COALESCE(m.mata_pelajaran, '') AS mata_pelajaran,
+			COALESCE(m.status, 'Aktif') AS status
+		FROM mentor m
+		LEFT JOIN users u ON u.id = m.user_id
+		ORDER BY m.id ASC
 	`)
 	if err != nil {
 		c.JSON(500, gin.H{
@@ -173,7 +174,7 @@ func CreateMentor(c *gin.Context) {
 		INSERT INTO mentor
 		(
 			user_id,
-			nama,
+			nama_mentor,
 			email,
 			password,
 			mata_pelajaran,
@@ -191,7 +192,7 @@ func CreateMentor(c *gin.Context) {
 		userID,
 		input.NamaMentor,
 		input.Email,
-		input.Password,
+		string(hashed),
 		input.MataPelajaran,
 		input.Status,
 	)
@@ -269,7 +270,7 @@ func UpdateMentor(c *gin.Context) {
 
 		_, err := config.DB.Exec(context.Background(), `
 			UPDATE mentor
-			SET nama=$1,
+			SET nama_mentor=$1,
 				email=$2,
 				password=$3,
 				mata_pelajaran=$4,
@@ -278,7 +279,7 @@ func UpdateMentor(c *gin.Context) {
 		`,
 			input.NamaMentor,
 			input.Email,
-			input.Password,
+			string(hashed),
 			input.MataPelajaran,
 			input.Status,
 			mentorID,
@@ -316,7 +317,7 @@ func UpdateMentor(c *gin.Context) {
 
 		_, err := config.DB.Exec(context.Background(), `
 			UPDATE mentor
-			SET nama=$1,
+			SET nama_mentor=$1,
 				email=$2,
 				mata_pelajaran=$3,
 				status=$4
@@ -413,8 +414,6 @@ func DeleteMentor(c *gin.Context) {
 		"message": "Mentor berhasil dinonaktifkan",
 	})
 }
-
-// ===============================
 // HARD DELETE MENTOR (Permanent)
 // ===============================
 func HardDeleteMentor(c *gin.Context) {
@@ -493,7 +492,7 @@ func ExportMentorExcel(c *gin.Context) {
 	rows, err := config.DB.Query(context.Background(), `
 		SELECT 
 			id,
-			nama,
+			COALESCE(nama_mentor, '') AS nama_mentor,
 			COALESCE(email, ''),
 			COALESCE(mata_pelajaran, ''),
 			COALESCE(status, 'Aktif')
