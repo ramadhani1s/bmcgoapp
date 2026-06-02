@@ -20,7 +20,6 @@ func StartDailyNotification() {
 			//currentHour := now.Hour()
 			currentMinute := now.Minute()
 
-			// 🔥 JAM 15:00 (3 sore)
 			if true && currentMinute == 0 && lastSentDate != currentDate {
 
 				log.Println("🔥 Kirim notifikasi latihan harian")

@@ -33,6 +33,7 @@ class LocalNotificationService {
       'FCM Notifications',
       importance: Importance.max,
       priority: Priority.high,
+      playSound: true,
     );
 
     const NotificationDetails notificationDetails =

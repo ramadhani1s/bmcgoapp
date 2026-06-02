@@ -1,8 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../routes/app_routes.dart';
 import '../../services/attendance_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../widgets/mentor_sidebar_shell.dart';
+import 'jadwal_pembelajaran_screen.dart';
+import 'mentor_olimpiade_screen.dart';
+import '../mentor/materi_pembelajaran_screen.dart';
 
 class MentorAttendanceScreen extends StatefulWidget {
   const MentorAttendanceScreen({super.key});
@@ -14,7 +19,6 @@ class MentorAttendanceScreen extends StatefulWidget {
 class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
   bool _isLoading = true;
   bool _isStarting = false;
-  bool _showToken = false;
   Map<String, dynamic>? _session;
   Map<String, dynamic>? _summary;
   List<dynamic> _records = const [];
@@ -110,7 +114,6 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
         _session = null;
         _summary = null;
         _records = const [];
-        _showToken = false;
       });
       _updateCountdown();
       return;
@@ -152,7 +155,6 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
         _session = null;
         _summary = null;
         _records = const [];
-        _showToken = false;
       });
       _updateCountdown();
     }
@@ -291,12 +293,6 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
 
     await _loadActiveSession();
 
-    if (mounted) {
-      setState(() {
-        _showToken = true;
-      });
-    }
-
     if (!mounted) {
       return;
     }
@@ -323,6 +319,46 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     }
   }
 
+  void _onSidebarMenuTap(String title) {
+    if (title == 'Dashboard') {
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
+      return;
+    }
+    if (title == 'Jadwal Mengajar') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+      );
+      return;
+    }
+    if (title == 'Absensi Kelas') {
+      return;
+    }
+    if (title == 'Soal Latihan') {
+      Navigator.pushNamed(context, AppRoutes.mentorExercise);
+      return;
+    }
+    if (title == 'Try Out') {
+      Navigator.pushNamed(context, AppRoutes.mentorTryout);
+      return;
+    }
+    if (title == 'Materi Pembelajaran') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MateriPembelajaranScreen(initialClass: null),
+        ),
+      );
+      return;
+    }
+    if (title == 'Olimpiade Akademik') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+      );
+    }
+  }
+
   String _formatDate(dynamic value) {
     final parsed = DateTime.tryParse((value ?? '').toString());
     if (parsed == null) {
@@ -336,13 +372,6 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     final hour = local.hour.toString().padLeft(2, '0');
     final minute = local.minute.toString().padLeft(2, '0');
     return '$day/$month/$year $hour:$minute';
-  }
-
-  String _formatDuration(Duration duration) {
-    final totalSeconds = duration.inSeconds;
-    final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
-    final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
   }
 
   int _readUnixSeconds(dynamic unixValue, {String? fallbackIso}) {
@@ -438,166 +467,161 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Absensi Kelas Mentor'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1F2937),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: _loadActiveSession,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildPageHeader(),
-                  const SizedBox(height: 20),
-                  _buildToolbar(),
-                  const SizedBox(height: 16),
-                  if (_summary != null) ...[
+    return MentorSidebarShell(
+      activeMenuTitle: 'Absensi Kelas',
+      onMenuTap: _onSidebarMenuTap,
+      child: Scaffold(
+
+        backgroundColor: const Color(0xFFF8FAFC),
+        
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPageHeader(),
+                    const SizedBox(height: 20),
+                    _buildToolbar(),
                     const SizedBox(height: 16),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth > 740;
-                        final children = [
-                          _buildSummaryCard(
-                            'Hadir',
-                            _summary!['hadir'] ?? 0,
-                            const Color(0xFF16A34A),
-                          ),
-                          _buildSummaryCard(
-                            'Terlambat',
-                            _summary!['terlambat'] ?? 0,
-                            const Color(0xFFE67E22),
-                          ),
-                          _buildSummaryCard(
-                            'Tidak Hadir',
-                            _summary!['tidak_hadir'] ?? 0,
-                            const Color(0xFFDC2626),
-                          ),
-                          _buildSummaryCard(
-                            'Total Masuk',
-                            _summary!['total_masuk'] ?? 0,
-                            const Color(0xFF1D4ED8),
-                          ),
-                        ];
+                    if (_summary != null) ...[
+                      const SizedBox(height: 16),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth > 740;
+                          final children = [
+                            _buildSummaryCard(
+                              'Hadir',
+                              _summary!['hadir'] ?? 0,
+                              const Color(0xFF16A34A),
+                            ),
+                            _buildSummaryCard(
+                              'Terlambat',
+                              _summary!['terlambat'] ?? 0,
+                              const Color(0xFFE67E22),
+                            ),
+                            _buildSummaryCard(
+                              'Tidak Hadir',
+                              _summary!['tidak_hadir'] ?? 0,
+                              const Color(0xFFDC2626),
+                            ),
+                            _buildSummaryCard(
+                              'Total Masuk',
+                              _summary!['total_masuk'] ?? 0,
+                              const Color(0xFF1D4ED8),
+                            ),
+                          ];
 
-                        if (isWide) {
-                          return GridView.count(
-                            physics: const NeverScrollableScrollPhysics(),
-                            crossAxisCount: 4,
-                            shrinkWrap: true,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 1.7,
-                            children: children,
+                          if (isWide) {
+                            return GridView.count(
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: 4,
+                              shrinkWrap: true,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 1.7,
+                              children: children,
+                            );
+                          }
+
+                          return Column(
+                            children: children
+                                .map(
+                                  (item) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: item,
+                                  ),
+                                )
+                                .toList(),
                           );
-                        }
-
-                        return Column(
-                          children: children
-                              .map(
-                                (item) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 10),
-                                  child: item,
-                                ),
-                              )
-                              .toList(),
-                        );
-                      },
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Daftar Kehadiran Siswa',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ],
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Daftar Kehadiran Siswa',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.softBorder),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color.fromRGBO(15, 23, 42, 0.04),
-                          blurRadius: 12,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: _records.isEmpty
-                        ? const Text(
-                            'Belum ada siswa yang mengisi token absensi.',
-                          )
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: DataTable(
-                              columns: const [
-                                DataColumn(label: Text('Nama')),
-                                DataColumn(label: Text('Email')),
-                                DataColumn(label: Text('Status')),
-                                DataColumn(label: Text('Waktu Input')),
-                              ],
-                              rows: _records.map((item) {
-                                final status = (item['status'] ?? '-')
-                                    .toString();
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Text((item['nama'] ?? '-').toString()),
-                                    ),
-                                    DataCell(
-                                      Text((item['email'] ?? '-').toString()),
-                                    ),
-                                    DataCell(
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _statusColor(
-                                            status,
-                                          ).withAlpha((0.14 * 255).round()),
-                                          borderRadius: BorderRadius.circular(
-                                            999,
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.softBorder),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color.fromRGBO(15, 23, 42, 0.04),
+                            blurRadius: 12,
+                            offset: Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: _records.isEmpty
+                          ? const Text(
+                              'Belum ada siswa yang mengisi token absensi.',
+                            )
+                          : SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: DataTable(
+                                columns: const [
+                                  DataColumn(label: Text('Nama')),
+                                  DataColumn(label: Text('Email')),
+                                  DataColumn(label: Text('Status')),
+                                  DataColumn(label: Text('Waktu Input')),
+                                ],
+                                rows: _records.map((item) {
+                                  final status = (item['status'] ?? '-')
+                                      .toString();
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(
+                                        Text((item['nama'] ?? '-').toString()),
+                                      ),
+                                      DataCell(
+                                        Text((item['email'] ?? '-').toString()),
+                                      ),
+                                      DataCell(
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
                                           ),
-                                        ),
-                                        child: Text(
-                                          status,
-                                          style: TextStyle(
-                                            color: _statusColor(status),
-                                            fontWeight: FontWeight.w700,
+                                          decoration: BoxDecoration(
+                                            color: _statusColor(
+                                              status,
+                                            ).withAlpha((0.14 * 255).round()),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            status,
+                                            style: TextStyle(
+                                              color: _statusColor(status),
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    DataCell(
-                                      Text(_formatDate(item['submitted_at'])),
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
+                                      DataCell(
+                                        Text(_formatDate(item['submitted_at'])),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
                             ),
-                          ),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 

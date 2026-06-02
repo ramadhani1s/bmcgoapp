@@ -1,17 +1,24 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, avoid_web_libraries_in_flutter
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/theme/app_colors.dart';
+import '../../routes/app_routes.dart';
 import '../../models/user.dart';
 import '../../models/materi_pembelajaran.dart';
+import '../dashboard/jadwal_pembelajaran_screen.dart';
+import '../dashboard/mentor_attendance_screen.dart';
+import '../dashboard/mentor_olimpiade_screen.dart';
 import '../../services/auth_service.dart';
 import '../../services/materi_service.dart';
 // ignore: deprecated_member_use
 import 'dart:html' as html;
+import '../../widgets/mentor_sidebar_shell.dart';
 
 class MateriPembelajaranScreen extends StatefulWidget {
-  const MateriPembelajaranScreen({super.key});
+  final String? initialClass;
+
+  const MateriPembelajaranScreen({super.key, this.initialClass});
 
   @override
   State<MateriPembelajaranScreen> createState() =>
@@ -22,6 +29,13 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
   User? _currentUser;
   bool _isLoading = true;
   List<MateriPembelajaran> _materiList = [];
+  String _selectedClass = 'Semua Kelas';
+  final List<String> _fixedClassOptions = const [
+    'Semua Kelas',
+    'Kelas 10',
+    'Kelas 11',
+    'Kelas 12',
+  ];
 
   // Use AppColors directly in widgets for consistency with Admin
 
@@ -38,6 +52,9 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       if (user != null) {
         _currentUser = user;
         await _fetchMateri();
+        if (widget.initialClass != null && widget.initialClass!.isNotEmpty) {
+          setState(() => _selectedClass = widget.initialClass!);
+        }
       }
     } catch (e) {
       _showErrorSnackBar('Gagal memuat data pengguna');
@@ -55,6 +72,44 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       });
     } catch (e) {
       _showErrorSnackBar('Gagal memuat materi: $e');
+    }
+  }
+
+  void _onSidebarMenuTap(String title) {
+    if (title == 'Dashboard') {
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
+      return;
+    }
+    if (title == 'Jadwal Mengajar') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+      );
+      return;
+    }
+    if (title == 'Absensi Kelas') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
+      );
+      return;
+    }
+    if (title == 'Soal Latihan') {
+      Navigator.pushNamed(context, AppRoutes.mentorExercise);
+      return;
+    }
+    if (title == 'Try Out') {
+      Navigator.pushNamed(context, AppRoutes.mentorTryout);
+      return;
+    }
+    if (title == 'Materi Pembelajaran') {
+      return;
+    }
+    if (title == 'Olimpiade Akademik') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+      );
     }
   }
 
@@ -200,38 +255,33 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.pageBg,
-      appBar: AppBar(
-        title: Text(
-          'Materi Pembelajaran',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-        elevation: 0.5,
-      ),
-      body: _isLoading && _materiList.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 24),
-                  _buildToolbar(),
-                  const SizedBox(height: 16),
-                  if (_materiList.isEmpty)
-                    _buildEmptyState()
-                  else
-                    _buildMateriGrid(),
-                ],
+    return MentorSidebarShell(
+      activeMenuTitle: 'Materi Pembelajaran',
+      onMenuTap: _onSidebarMenuTap,
+      child: Scaffold(
+        backgroundColor: AppColors.pageBg,
+       
+        body: _isLoading && _materiList.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 24),
+                    _buildToolbar(),
+                    const SizedBox(height: 16),
+                    if (_materiList.isEmpty)
+                      _buildEmptyState()
+                    else
+                      (_selectedClass == 'Semua Kelas'
+                          ? _buildMateriGrid()
+                          : _buildMateriGridFiltered()),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 
@@ -282,9 +332,58 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 180,
+            child: DropdownButtonFormField<String>(
+              value: _selectedClass,
+              items: _fixedClassOptions
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _selectedClass = v);
+              },
+              decoration: InputDecoration(
+                prefixIcon: const Icon(
+                  Icons.class_outlined,
+                  size: 18,
+                  color: Color(0xFF2563EB),
+                ),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF2563EB),
+                    width: 1.4,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  // ignore: unused_element
+  List<DropdownMenuItem<String>> _buildClassOptions() {
+    return _fixedClassOptions
+        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+        .toList();
   }
 
   Widget _buildHeader() {
@@ -379,6 +478,42 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       itemCount: _materiList.length,
       itemBuilder: (context, index) {
         final materi = _materiList[index];
+        return _buildMateriCard(materi);
+      },
+    );
+  }
+
+  Widget _buildMateriGridFiltered() {
+    final filtered = _materiList
+        .where((m) => m.classLevel == _selectedClass)
+        .toList();
+    if (filtered.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Text(
+          'Tidak ada materi untuk "$_selectedClass"',
+          style: TextStyle(color: AppColors.textMuted),
+        ),
+      );
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 400,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        mainAxisExtent: 140,
+      ),
+      itemCount: filtered.length,
+      itemBuilder: (context, index) {
+        final materi = filtered[index];
         return _buildMateriCard(materi);
       },
     );
@@ -534,6 +669,8 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
 
   PlatformFile? _selectedFile;
   bool _isUploading = false;
+  final List<String> _classOptions = const ['Kelas 10', 'Kelas 11', 'Kelas 12'];
+  String _selectedClass = 'Kelas 12';
 
   Future<void> _pickFile() async {
     try {
@@ -589,6 +726,7 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
       title: _titleController.text,
       description: _descController.text,
       file: _selectedFile!,
+      classLevel: _selectedClass,
     );
 
     setState(() => _isUploading = false);
@@ -700,8 +838,22 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Judul Materi',
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 1.4,
+                    ),
                   ),
                   prefixIcon: const Icon(Icons.title),
                 ),
@@ -714,13 +866,59 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                 controller: _descController,
                 decoration: InputDecoration(
                   labelText: 'Deskripsi (Opsional)',
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 1.4,
+                    ),
                   ),
                   prefixIcon: const Icon(Icons.description),
                 ),
                 maxLines: 3,
               ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedClass,
+                items: _classOptions
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _selectedClass = v);
+                },
+                decoration: InputDecoration(
+                  labelText: 'Kelas',
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 1.4,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               const SizedBox(height: 24),
 
               SizedBox(
