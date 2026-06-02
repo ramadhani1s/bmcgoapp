@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../routes/app_routes.dart';
+import '../services/auth_service.dart';
+
 class MentorSidebarShell extends StatelessWidget {
   final String activeMenuTitle;
   final Widget child;
@@ -169,9 +172,77 @@ class MentorSidebarShell extends StatelessWidget {
               }).toList(),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
+            child: SizedBox(
+              width: double.infinity,
+              child: InkWell(
+                onTap: () => _confirmAndLogout(context),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 11,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.logout_rounded,
+                        size: 19,
+                        color: Color(0xFF5B6578),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Keluar',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmAndLogout(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Konfirmasi Keluar'),
+        content: const Text('Apakah Anda yakin ingin keluar dari akun mentor?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2A58F2),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Ya'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout != true) return;
+
+    await AuthService.logout();
+    if (!context.mounted) return;
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 }
 
