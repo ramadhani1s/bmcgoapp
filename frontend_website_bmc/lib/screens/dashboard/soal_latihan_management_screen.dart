@@ -125,59 +125,28 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
         totalSoal: totalSoal,
       );
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
-      if (result['success'] != true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Gagal membuat latihan'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      final created = result['data'] as Latihan?;
-      if (publish && created != null && !created.isPublished) {
-        final publishResult = await LatihanManagementService.publishLatihan(
-          created.id,
-        );
-
-        if (!mounted) {
-          return;
+      if (result['success'] == true) {
+        if (publish && result['data'] is Latihan) {
+          final createdLatihan = result['data'] as Latihan;
+          await LatihanManagementService.publishLatihan(createdLatihan.id);
+          if (!mounted) return;
         }
 
-        if (publishResult['success'] != true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                publishResult['message'] ??
-                    'Latihan dibuat tapi gagal dipublikasikan',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-          return;
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Latihan "$title" berhasil dipublikasikan')),
-        );
-      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['message'] ?? 'Latihan berhasil disimpan'),
           ),
         );
+        Navigator.of(context).pop(true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal menyimpan latihan'),
+          ),
+        );
       }
-
-      if (!mounted) {
-        return;
-      }
-
-      Navigator.of(context).pop(true);
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -229,7 +198,7 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Row(
@@ -238,8 +207,8 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(10),
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 18),
           ),
@@ -283,28 +252,28 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
       backgroundColor: Colors.transparent,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: 900,
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
+          maxWidth: 720,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(18),
             boxShadow: const [
               BoxShadow(
-                color: Color.fromRGBO(15, 23, 42, 0.18),
-                blurRadius: 30,
-                offset: Offset(0, 18),
+                color: Color.fromRGBO(15, 23, 42, 0.16),
+                blurRadius: 24,
+                offset: Offset(0, 14),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(18),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
@@ -315,19 +284,19 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
                   child: Row(
                     children: [
                       Container(
-                        width: 42,
-                        height: 42,
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
                           Icons.menu_book_outlined,
                           color: Colors.white,
-                          size: 22,
+                          size: 20,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
                       const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,16 +305,16 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
                               'Tambah Latihan',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
+                                fontSize: 18,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            SizedBox(height: 3),
                             Text(
-                              'Form latihan soal dibuat dengan gaya yang sama seperti Try Out.',
+                              'Isi form di bawah untuk membuat soal latihan',
                               style: TextStyle(
                                 color: Colors.white70,
-                                fontSize: 12.5,
+                                fontSize: 12,
                                 height: 1.3,
                               ),
                             ),
@@ -363,7 +332,7 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
                 ),
                 Flexible(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,12 +340,12 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
                           const Text(
                             'Isi detail latihan di bawah',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF374151),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 14),
                           TextField(
                             controller: _judulController,
                             decoration: InputDecoration(
@@ -567,7 +536,7 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 14),
                           Row(
                             children: [
                               Expanded(
@@ -647,7 +616,7 @@ class _SoalLatihanManagementScreenState
   String _searchQuery = '';
   String _selectedStatus = 'Semua Status';
   String _selectedMapel = 'Semua Mapel';
-  Set<String> _mapelOptions = {};
+  final Set<String> _mapelOptions = {};
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -748,7 +717,7 @@ class _SoalLatihanManagementScreenState
             child: ListView.separated(
               shrinkWrap: true,
               itemCount: options.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final option = options[index];
                 final selected = option == selectedValue;
@@ -774,11 +743,10 @@ class _SoalLatihanManagementScreenState
   }
 
   Future<void> _showCreateDialog() async {
-    final created = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (context) =>
-            _LatihanCreatePage(mapelOptions: _mapelOptions.toList()),
-      ),
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (context) =>
+          _LatihanCreatePage(mapelOptions: _mapelOptions.toList()),
     );
 
     if (created == true) {
@@ -787,6 +755,7 @@ class _SoalLatihanManagementScreenState
   }
 
   void _showEditDialog(Latihan latihan) {
+    final parentContext = context;
     final titleController = TextEditingController(text: latihan.title);
     String selectedMapel = latihan.mapel;
     final soalController = TextEditingController(
@@ -862,6 +831,17 @@ class _SoalLatihanManagementScreenState
                   ),
                   keyboardType: TextInputType.number,
                 ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: soalController,
+                  decoration: InputDecoration(
+                    labelText: 'Total Soal',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
               ],
             ),
           ),
@@ -872,6 +852,9 @@ class _SoalLatihanManagementScreenState
             ),
             ElevatedButton(
               onPressed: () async {
+                final navigator = Navigator.of(parentContext);
+                final messenger = ScaffoldMessenger.of(parentContext);
+
                 final result = await LatihanManagementService.updateLatihan(
                   latihanId: latihan.id,
                   title: titleController.text,
@@ -881,15 +864,15 @@ class _SoalLatihanManagementScreenState
 
                 if (!mounted) return;
 
-                Navigator.pop(context);
+                navigator.pop();
 
                 if (result['success']) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(result['message'])));
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(result['message'])),
+                  );
                   _loadData();
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     SnackBar(
                       content: Text(result['message']),
                       backgroundColor: Colors.red,
@@ -996,6 +979,76 @@ class _SoalLatihanManagementScreenState
     return grouped;
   }
 
+  Widget _buildTopSummary() {
+    final latihanTotal = _allLatihan.length;
+    final totalMapel = _mapelOptions.length;
+    final totalSoal = _allLatihan.fold<int>(
+      0,
+      (sum, item) => sum + item.totalSoal,
+    );
+    final published = _allLatihan.where((item) => item.isPublished).length;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 1000
+            ? 4
+            : constraints.maxWidth >= 650
+            ? 2
+            : 1;
+        final cardWidth = columns == 1
+            ? constraints.maxWidth
+            : (constraints.maxWidth - (16 * (columns - 1))) / columns;
+
+        return Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            SizedBox(
+              width: cardWidth,
+              child: _buildSummaryCard(
+                icon: Icons.description_outlined,
+                iconColor: const Color(0xFF2563EB),
+                iconBg: const Color(0xFFEFF6FF),
+                value: '$latihanTotal',
+                label: 'Total Latihan',
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: _buildSummaryCard(
+                icon: Icons.check_circle_outline,
+                iconColor: const Color(0xFF16A34A),
+                iconBg: const Color(0xFFDCFCE7),
+                value: '$published',
+                label: 'Dipublikasi',
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: _buildSummaryCard(
+                icon: Icons.tag,
+                iconColor: const Color(0xFFF97316),
+                iconBg: const Color(0xFFFFEDD5),
+                value: '$totalSoal',
+                label: 'Total Soal',
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: _buildSummaryCard(
+                icon: Icons.menu_book_outlined,
+                iconColor: const Color(0xFF8B5CF6),
+                iconBg: const Color(0xFFF3E8FF),
+                value: '$totalMapel',
+                label: 'Mata Pelajaran',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   List<Widget> _buildLatihanByMapelSections() {
     final grouped = _groupLatihanByMapel();
     final sections = <Widget>[];
@@ -1043,6 +1096,85 @@ class _SoalLatihanManagementScreenState
     }
 
     return sections;
+  }
+
+  Widget _buildSummaryCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String value,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoItem(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 32 / 2,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
+        ),
+      ],
+    );
   }
 
   Widget _buildDetailedLatihanCard(
@@ -1125,7 +1257,7 @@ class _SoalLatihanManagementScreenState
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Row(
             children: [
               Container(
@@ -1300,26 +1432,6 @@ class _SoalLatihanManagementScreenState
           ),
         ],
       ),
-    );
-  }
-
-  Widget _infoItem(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 32 / 2,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
-        ),
-      ],
     );
   }
 
@@ -1654,7 +1766,7 @@ class _SoalLatihanManagementScreenState
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1663,7 +1775,7 @@ class _SoalLatihanManagementScreenState
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),

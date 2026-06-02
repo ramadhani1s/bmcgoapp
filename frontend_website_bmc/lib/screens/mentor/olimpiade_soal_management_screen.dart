@@ -276,102 +276,219 @@ class _OlimpiadseSoalManagementScreenState
       text: _extractDurasiMenit(widget.olimpiade.durationLabel).toString(),
     );
 
+    final dateController = TextEditingController(
+      text: widget.olimpiade.scheduleLabel,
+    );
+
+    final fieldBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+    );
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
-          'Edit Olimpiade',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        backgroundColor: Colors.transparent,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 900,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
           ),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(
-                  labelText: 'Judul Olimpiade',
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF2563EB),
-                      width: 1.4,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromRGBO(15, 23, 42, 0.18),
+                  blurRadius: 30,
+                  offset: Offset(0, 18),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.emoji_events_outlined,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Edit Olimpiade',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Ubah metadata Olimpiade. Tambahkan tanggal pelaksanaan.',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12.5,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close, color: Colors.white),
+                        ),
+                      ],
                     ),
                   ),
-                  contentPadding: const EdgeInsets.all(12),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: durationController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Durasi (menit)',
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF2563EB),
-                      width: 1.4,
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: titleController,
+                          decoration: InputDecoration(
+                            labelText: 'Judul Olimpiade',
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: fieldBorder,
+                            enabledBorder: fieldBorder,
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2563EB),
+                                width: 1.4,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.all(12),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: durationController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Durasi (menit)',
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: fieldBorder,
+                            enabledBorder: fieldBorder,
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2563EB),
+                                width: 1.4,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.all(12),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: dateController,
+                          readOnly: true,
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate:
+                                  DateTime.tryParse(dateController.text) ??
+                                  DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              dateController.text =
+                                  '${picked.day} ${_getMonthName(picked.month)} ${picked.year}';
+                            }
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Tanggal Olimpiade',
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: fieldBorder,
+                            enabledBorder: fieldBorder,
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2563EB),
+                                width: 1.4,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.all(12),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF6B7280),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: const Text('Batal'),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () {
+                                _showSnackbar('Olimpiade berhasil diperbarui');
+                                Navigator.pop(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.accentBlue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: const Text('Simpan'),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  contentPadding: const EdgeInsets.all(12),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF6B7280),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // For now, just show success message
-              // In production, you would call an API to update the olimpiade
-              _showSnackbar('Olimpiade berhasil diperbarui');
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accentBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Simpan'),
-          ),
-        ],
       ),
     );
   }
@@ -432,6 +549,24 @@ class _OlimpiadseSoalManagementScreenState
     return match != null ? int.tryParse(match.group(1) ?? '150') ?? 150 : 150;
   }
 
+  String _getMonthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
+  }
+
   void _onSidebarMenuTap(String title) {
     if (title == 'Dashboard') {
       Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
@@ -440,7 +575,9 @@ class _OlimpiadseSoalManagementScreenState
     if (title == 'Jadwal Mengajar') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        ),
       );
       return;
     }
@@ -708,7 +845,6 @@ class _OlimpiadseSoalManagementScreenState
                                         onPressed: _isSubmitting
                                             ? null
                                             : () => _clearForm(),
-                                        child: const Text('Batal Edit'),
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: const Color(
                                             0xFF64748B,
@@ -722,6 +858,7 @@ class _OlimpiadseSoalManagementScreenState
                                             ),
                                           ),
                                         ),
+                                        child: const Text('Batal Edit'),
                                       ),
                                     ),
                                   if (_editingItem != null)
@@ -874,7 +1011,7 @@ class _OlimpiadseSoalManagementScreenState
           side: BorderSide(color: borderColor),
         ),
         elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.03),
+        shadowColor: Colors.black.withValues(alpha: 0.03),
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(10),
@@ -910,10 +1047,10 @@ class _OlimpiadseSoalManagementScreenState
                 child: Center(
                   child: Text(
                     '$nomer',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
-                      color: const Color(0xFF2563EB),
+                      color: Color(0xFF2563EB),
                     ),
                   ),
                 ),

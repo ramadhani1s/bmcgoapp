@@ -393,7 +393,9 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.blue.withOpacity(0.1),
+                                          color: Colors.blue.withValues(
+                                            alpha: 0.1,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             10,
                                           ),
@@ -422,8 +424,12 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: item.status == "Selesai"
-                                              ? Colors.green.withOpacity(0.2)
-                                              : Colors.grey.withOpacity(0.2),
+                                              ? Colors.green.withValues(
+                                                  alpha: 0.2,
+                                                )
+                                              : Colors.grey.withValues(
+                                                  alpha: 0.2,
+                                                ),
 
                                           borderRadius: BorderRadius.circular(
                                             20,
@@ -431,8 +437,12 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
 
                                           border: Border.all(
                                             color: item.status == "Selesai"
-                                                ? Colors.green.withOpacity(0.2)
-                                                : Colors.grey.withOpacity(0.2),
+                                                ? Colors.green.withValues(
+                                                    alpha: 0.2,
+                                                  )
+                                                : Colors.grey.withValues(
+                                                    alpha: 0.2,
+                                                  ),
                                           ),
                                         ),
                                       ),
@@ -532,9 +542,9 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
         margin: const EdgeInsets.only(right: 10),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: color.withOpacity(0.18)),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
         ),
         child: Row(
           children: [
@@ -566,7 +576,7 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(icon, color: color, size: 28),

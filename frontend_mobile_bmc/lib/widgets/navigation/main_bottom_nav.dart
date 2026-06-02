@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class MainBottomNav extends StatelessWidget {
   const MainBottomNav({
-    super.key,
+    super.key,  
     required this.currentIndex,
     required this.onTap,
     required this.accentColor,

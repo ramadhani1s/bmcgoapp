@@ -122,7 +122,9 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     if (title == 'Jadwal Mengajar') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        ),
       );
       return;
     }
@@ -182,8 +184,16 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   Future<void> _openCreateForm() async {
     final result = await Navigator.push<bool?>(
       context,
-      MaterialPageRoute(
-        builder: (ctx) => CreateLatihanScreen(mapel: _selectedMapel),
+      PageRouteBuilder<bool?>(
+        opaque: false,
+        pageBuilder: (ctx, animation, secondaryAnimation) =>
+            CreateLatihanScreen(mapel: _selectedMapel),
+        transitionsBuilder: (ctx, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          );
+        },
       ),
     );
 
@@ -414,7 +424,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       onMenuTap: _onSidebarMenuTap,
       child: Scaffold(
         backgroundColor: const Color(0xFFF3F4F6),
-        
+
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
@@ -539,44 +549,51 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   }) {
     return Container(
       width: 230,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
               color: iconBg,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor, size: 22),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                    height: 1,
+                  ),
                 ),
-              ),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6B7280),
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -1071,7 +1088,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.16),
+                      color: Colors.white.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -1386,7 +1403,6 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
                     children: [
                       OutlinedButton(
                         onPressed: _isSubmitting ? null : _closeForm,
-                        child: const Text('Batal'),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -1396,6 +1412,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
+                        child: const Text('Batal'),
                       ),
                       const Spacer(),
                       SizedBox(

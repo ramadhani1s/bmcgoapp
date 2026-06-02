@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../routes/app_routes.dart';
 import '../../services/attendance_service.dart';
 import '../../core/theme/app_colors.dart';
@@ -327,7 +328,9 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     if (title == 'Jadwal Mengajar') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        ),
       );
       return;
     }
@@ -465,15 +468,265 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     );
   }
 
+  Future<void> _copyTokenToClipboard() async {
+    final token = (_session?['token'] ?? '').toString().trim();
+    if (token.isEmpty) {
+      return;
+    }
+
+    await Clipboard.setData(ClipboardData(text: token));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Token absensi disalin'),
+        backgroundColor: Color(0xFF16A34A),
+      ),
+    );
+  }
+
+  Widget _buildActiveSessionCard() {
+    final session = _session;
+    if (session == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.softBorder),
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromRGBO(15, 23, 42, 0.04),
+              blurRadius: 12,
+              offset: Offset(0, 6),
+            ),
+          ],
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sesi Absensi Aktif',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Belum ada sesi absensi yang berjalan. Token akan muncul di sini setelah mentor menekan Mulai Absensi.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textMuted,
+                height: 1.45,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final token = (session['token'] ?? '').toString();
+    final className = (session['class_name'] ?? '-').toString();
+    final subject = (session['subject'] ?? '-').toString();
+    final tokenVisible = token.isEmpty ? '------' : token;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.softBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(15, 23, 42, 0.04),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sesi Absensi Aktif',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Token tetap tampil sampai sesi diganti atau selesai.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _copyTokenToClipboard,
+                icon: const Icon(Icons.copy_rounded, size: 18),
+                label: const Text('Salin Token'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.softBorder),
+            ),
+            child: Text(
+              tokenVisible,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 8,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _chip(
+                'Kelas: $className',
+                const Color(0xFFDBEAFE),
+                const Color(0xFF1D4ED8),
+              ),
+              _chip(
+                'Mapel: $subject',
+                const Color(0xFFE0F2FE),
+                const Color(0xFF0369A1),
+              ),
+              _chip(
+                'Mulai: ${_formatDate(session['started_at'])}',
+                const Color(0xFFF3F4F6),
+                const Color(0xFF374151),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String text, Color bgColor, Color fgColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: fgColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttendanceRecordsTable() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.softBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(15, 23, 42, 0.04),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: _records.isEmpty
+          ? const Text('Belum ada siswa yang mengisi token absensi.')
+          : LayoutBuilder(
+              builder: (context, tableConstraints) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: tableConstraints.maxWidth,
+                    ),
+                    child: DataTable(
+                      columnSpacing: 22,
+                      horizontalMargin: 12,
+                      headingRowHeight: 40,
+                      dataRowMinHeight: 44,
+                      dataRowMaxHeight: 52,
+                      columns: const [
+                        DataColumn(label: Text('Nama')),
+                        DataColumn(label: Text('Email')),
+                        DataColumn(label: Text('Status')),
+                        DataColumn(label: Text('Waktu Input')),
+                      ],
+                      rows: _records.map((item) {
+                        final status = (item['status'] ?? '-').toString();
+                        return DataRow(
+                          cells: [
+                            DataCell(Text((item['nama'] ?? '-').toString())),
+                            DataCell(Text((item['email'] ?? '-').toString())),
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _statusColor(
+                                    status,
+                                  ).withAlpha((0.14 * 255).round()),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  status,
+                                  style: TextStyle(
+                                    color: _statusColor(status),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            DataCell(Text(_formatDate(item['submitted_at']))),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MentorSidebarShell(
       activeMenuTitle: 'Absensi Kelas',
       onMenuTap: _onSidebarMenuTap,
       child: Scaffold(
-
         backgroundColor: const Color(0xFFF8FAFC),
-        
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
@@ -485,8 +738,9 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                     const SizedBox(height: 20),
                     _buildToolbar(),
                     const SizedBox(height: 16),
+                    _buildActiveSessionCard(),
+                    const SizedBox(height: 16),
                     if (_summary != null) ...[
-                      const SizedBox(height: 16),
                       LayoutBuilder(
                         builder: (context, constraints) {
                           final isWide = constraints.maxWidth > 740;
@@ -520,7 +774,7 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                               shrinkWrap: true,
                               mainAxisSpacing: 12,
                               crossAxisSpacing: 12,
-                              childAspectRatio: 1.7,
+                              childAspectRatio: 2.5,
                               children: children,
                             );
                           }
@@ -547,77 +801,7 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.softBorder),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color.fromRGBO(15, 23, 42, 0.04),
-                            blurRadius: 12,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: _records.isEmpty
-                          ? const Text(
-                              'Belum ada siswa yang mengisi token absensi.',
-                            )
-                          : SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: DataTable(
-                                columns: const [
-                                  DataColumn(label: Text('Nama')),
-                                  DataColumn(label: Text('Email')),
-                                  DataColumn(label: Text('Status')),
-                                  DataColumn(label: Text('Waktu Input')),
-                                ],
-                                rows: _records.map((item) {
-                                  final status = (item['status'] ?? '-')
-                                      .toString();
-                                  return DataRow(
-                                    cells: [
-                                      DataCell(
-                                        Text((item['nama'] ?? '-').toString()),
-                                      ),
-                                      DataCell(
-                                        Text((item['email'] ?? '-').toString()),
-                                      ),
-                                      DataCell(
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: _statusColor(
-                                              status,
-                                            ).withAlpha((0.14 * 255).round()),
-                                            borderRadius: BorderRadius.circular(
-                                              999,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            status,
-                                            style: TextStyle(
-                                              color: _statusColor(status),
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Text(_formatDate(item['submitted_at'])),
-                                      ),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                    ),
+                    _buildAttendanceRecordsTable(),
                   ],
                 ),
               ),

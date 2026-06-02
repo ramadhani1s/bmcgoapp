@@ -43,7 +43,9 @@ String _extractResultMessageDynamic(dynamic result) {
 }
 
 class JadwalPembelajaranScreen extends StatefulWidget {
-  const JadwalPembelajaranScreen({super.key});
+  final bool mentorView;
+
+  const JadwalPembelajaranScreen({super.key, this.mentorView = false});
 
   @override
   State<JadwalPembelajaranScreen> createState() =>
@@ -83,7 +85,9 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       final results = await Future.wait([
         JadwalService.getPaketList(),
         JadwalService.getMentorList(),
-        JadwalService.getJadwalList(),
+        widget.mentorView
+            ? JadwalService.getMentorJadwalList()
+            : JadwalService.getJadwalList(),
       ]);
 
       if (!mounted) return;
@@ -114,9 +118,10 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   List<Map<String, dynamic>> get _filteredRows {
     return jadwalList.where((jadwal) {
       final hariMatch = selectedHari.isEmpty || jadwal['hari'] == selectedHari;
-      final mentorMatch =
-          selectedMentorFilterId == null ||
-          jadwal['mentor_id'] == selectedMentorFilterId;
+      final mentorMatch = widget.mentorView
+          ? true
+          : selectedMentorFilterId == null ||
+                jadwal['mentor_id'] == selectedMentorFilterId;
       return hariMatch && mentorMatch;
     }).toList();
   }
@@ -392,23 +397,26 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         DataCell(
           Text((jadwal['jumlah_siswa'] ?? jadwal['siswa'] ?? '-').toString()),
         ),
-        DataCell(
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit_rounded, color: Colors.blue),
-                onPressed: () => _createOrUpdateJadwal(existing: jadwal),
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Colors.red,
+        if (!widget.mentorView)
+          DataCell(
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit_rounded, color: Colors.blue),
+                  onPressed: () => _createOrUpdateJadwal(existing: jadwal),
                 ),
-                onPressed: () => _showDeleteDialog(jadwal['id'] as int),
-              ),
-            ],
-          ),
-        ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.red,
+                  ),
+                  onPressed: () => _showDeleteDialog(jadwal['id'] as int),
+                ),
+              ],
+            ),
+          )
+        else
+          const DataCell(Text('Lihat saja')),
       ],
     );
   }
@@ -454,9 +462,11 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Kelola Jadwal Pembelajaran',
-                                style: TextStyle(
+                              Text(
+                                widget.mentorView
+                                    ? 'Jadwal Mengajar Saya'
+                                    : 'Kelola Jadwal Pembelajaran',
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -464,7 +474,9 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Jadwal utama yang berlaku setiap minggu secara berkelanjutan',
+                                widget.mentorView
+                                    ? 'Jadwal yang ditetapkan admin untuk mentor yang sedang login'
+                                    : 'Jadwal utama yang berlaku setiap minggu secara berkelanjutan',
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 14,
@@ -483,26 +495,27 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _createOrUpdateJadwal(),
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Tambah Jadwal'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 12,
+                  if (!widget.mentorView)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _createOrUpdateJadwal(),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Tambah Jadwal'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 0,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 0,
                       ),
                     ),
-                  ),
                   const SizedBox(height: 20),
                   Row(
                     children: [
@@ -600,66 +613,70 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: DropdownButtonFormField<int?>(
-                            initialValue: selectedMentorFilterId,
-                            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                            dropdownColor: Colors.white,
-                            style: const TextStyle(
-                              color: Color(0xFF111827),
-                              fontWeight: FontWeight.w600,
-                            ),
-                            items: [
-                              const DropdownMenuItem<int?>(
-                                value: null,
-                                child: Text('Semua Mentor'),
+                        if (!widget.mentorView) ...[
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonFormField<int?>(
+                              initialValue: selectedMentorFilterId,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
                               ),
-                              ...mentorList.map(
-                                (mentor) => DropdownMenuItem<int?>(
-                                  value: mentor['id'] as int,
-                                  child: Text(_mentorLabel(mentor)),
+                              dropdownColor: Colors.white,
+                              style: const TextStyle(
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              items: [
+                                const DropdownMenuItem<int?>(
+                                  value: null,
+                                  child: Text('Semua Mentor'),
                                 ),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              setState(() => selectedMentorFilterId = value);
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'Filter Mentor',
-                              prefixIcon: const Icon(
-                                Icons.person_search_outlined,
-                                size: 18,
-                                color: Color(0xFF2563EB),
-                              ),
-                              filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE5E7EB),
+                                ...mentorList.map(
+                                  (mentor) => DropdownMenuItem<int?>(
+                                    value: mentor['id'] as int,
+                                    child: Text(_mentorLabel(mentor)),
+                                  ),
                                 ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE5E7EB),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
+                              ],
+                              onChanged: (value) {
+                                setState(() => selectedMentorFilterId = value);
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Filter Mentor',
+                                prefixIcon: const Icon(
+                                  Icons.person_search_outlined,
+                                  size: 18,
                                   color: Color(0xFF2563EB),
-                                  width: 1.4,
                                 ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 14,
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF2563EB),
+                                    width: 1.4,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 14,
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -713,15 +730,16 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                           child: DataTable(
                             columnSpacing: 45,
                             horizontalMargin: 19,
-                            columns: const [
-                              DataColumn(label: Text('HARI')),
-                              DataColumn(label: Text('WAKTU')),
-                              DataColumn(label: Text('KELAS')),
-                              DataColumn(label: Text('MATA PELAJARAN')),
-                              DataColumn(label: Text('MENTOR')),
-                              DataColumn(label: Text('RUANG')),
-                              DataColumn(label: Text('SISWA')),
-                              DataColumn(label: Text('AKSI')),
+                            columns: [
+                              const DataColumn(label: Text('HARI')),
+                              const DataColumn(label: Text('WAKTU')),
+                              const DataColumn(label: Text('KELAS')),
+                              const DataColumn(label: Text('MATA PELAJARAN')),
+                              const DataColumn(label: Text('MENTOR')),
+                              const DataColumn(label: Text('RUANG')),
+                              const DataColumn(label: Text('SISWA')),
+                              if (!widget.mentorView)
+                                const DataColumn(label: Text('AKSI')),
                             ],
                             rows: _filteredRows
                                 .asMap()

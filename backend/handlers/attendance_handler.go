@@ -33,6 +33,94 @@ func generateAttendanceToken(length int) (string, error) {
 	return string(b), nil
 }
 
+func resolveMentorDatabaseID(userID int) (int, error) {
+	var mentorID int
+	err := config.DB.QueryRow(
+		context.Background(),
+		`SELECT id FROM mentor WHERE user_id = $1 LIMIT 1`,
+		userID,
+	).Scan(&mentorID)
+	if err == nil {
+		return mentorID, nil
+	}
+
+	err = config.DB.QueryRow(
+		context.Background(),
+		`SELECT id FROM mentor WHERE id = $1 LIMIT 1`,
+		userID,
+	).Scan(&mentorID)
+	if err == nil {
+		return mentorID, nil
+	}
+
+	return 0, fmt.Errorf("mentor tidak ditemukan")
+}
+
+func resolveSiswaDatabaseID(userID int) (int, error) {
+	var siswaID int
+	err := config.DB.QueryRow(
+		context.Background(),
+		`SELECT id FROM siswa WHERE user_id = $1 LIMIT 1`,
+		userID,
+	).Scan(&siswaID)
+	if err == nil {
+		return siswaID, nil
+	}
+
+	err = config.DB.QueryRow(
+		context.Background(),
+		`SELECT id FROM siswa WHERE id = $1 LIMIT 1`,
+		userID,
+	).Scan(&siswaID)
+	if err == nil {
+		return siswaID, nil
+	}
+
+	return 0, fmt.Errorf("siswa tidak ditemukan")
+}
+
+func resolveJadwalIDForAttendance(mentorUserID int, subject string) (int, error) {
+	mentorID, err := resolveMentorDatabaseID(mentorUserID)
+	if err != nil {
+		return 0, err
+	}
+
+	trimmedSubject := strings.TrimSpace(subject)
+	if trimmedSubject != "" {
+		var jadwalID int
+		err = config.DB.QueryRow(
+			context.Background(),
+			`SELECT id
+			 FROM jadwal
+			 WHERE mentor_id = $1
+			   AND LOWER(COALESCE(mata_pelajaran, '')) = LOWER($2)
+			 ORDER BY id DESC
+			 LIMIT 1`,
+			mentorID,
+			trimmedSubject,
+		).Scan(&jadwalID)
+		if err == nil {
+			return jadwalID, nil
+		}
+	}
+
+	var jadwalID int
+	err = config.DB.QueryRow(
+		context.Background(),
+		`SELECT id
+		 FROM jadwal
+		 WHERE mentor_id = $1
+		 ORDER BY id DESC
+		 LIMIT 1`,
+		mentorID,
+	).Scan(&jadwalID)
+	if err == nil {
+		return jadwalID, nil
+	}
+
+	return 0, fmt.Errorf("jadwal mentor tidak ditemukan")
+}
+
 func StartAttendanceSessionHandler(c *gin.Context) {
 	mentorIDAny, _ := c.Get("user_id")
 	mentorID := mentorIDAny.(int)
@@ -383,6 +471,18 @@ func SubmitAttendanceTokenHandler(c *gin.Context) {
 		return
 	}
 
+	siswaDBID, err := resolveSiswaDatabaseID(siswaID)
+	if err != nil {
+		c.JSON(404, gin.H{"error": err.Error()})
+		return
+	}
+
+	jadwalID, err := resolveJadwalIDForAttendance(session.MentorID, session.Subject)
+	if err != nil {
+		c.JSON(404, gin.H{"error": err.Error()})
+		return
+	}
+
 	var existingStatus string
 	var existingSubmittedAt time.Time
 	existingErr := config.DB.QueryRow(
@@ -426,6 +526,20 @@ func SubmitAttendanceTokenHandler(c *gin.Context) {
 			`UPDATE attendance_sessions SET status = 'selesai' WHERE id = $1`,
 			session.ID,
 		)
+	}
+
+	_, err = config.DB.Exec(
+		context.Background(),
+		`INSERT INTO absensi (siswa_id, jadwal_id, status, tanggal)
+		 VALUES ($1,$2,$3,$4)`,
+		siswaDBID,
+		jadwalID,
+		attendanceStatus,
+		now,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Gagal menyimpan absensi ke tabel absensi"})
+		return
 	}
 
 	_, err = config.DB.Exec(

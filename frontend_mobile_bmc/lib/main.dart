@@ -5,8 +5,6 @@ import 'package:frontend_mobile_bmc/screens/auth/register_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/dashboard_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/attendance_screen.dart';
 import 'package:frontend_mobile_bmc/screens/home/package_screen.dart';
-import 'package:frontend_mobile_bmc/screens/home/theme_provider.dart';
-import 'package:provider/provider.dart';
 
 import 'package:frontend_mobile_bmc/screens/home/profile_detail_form_screen.dart';
 import 'package:frontend_mobile_bmc/screens/onboarding_screen.dart';
@@ -25,7 +23,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/local_notification_service.dart';
 
 void main() async {
-
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp();
@@ -34,7 +31,6 @@ void main() async {
 
   FirebaseMessaging.onMessage.listen(
     (RemoteMessage message) async {
-
       print(message.notification?.title);
       print(message.notification?.body);
 
@@ -47,19 +43,11 @@ void main() async {
 
   await FirebaseMessaging.instance.requestPermission();
 
-  String? token =
-      await FirebaseMessaging.instance.getToken();
+  String? token = await FirebaseMessaging.instance.getToken();
 
   print("FCM TOKEN: $token");
 
-  runApp(
-
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: const MyApp(),
-    ),
-
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -67,34 +55,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
 
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+      title: 'Bimbel Bintang Muda Center',
 
-        return MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF3B82F6),
+          brightness: Brightness.light,
+        ),
+      ),
 
-          debugShowCheckedModeBanner: false,
-
-          title: 'Bimbel Bintang Muda Center',
-
-          themeMode: themeProvider.themeMode,
-
-          theme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.light,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF3B82F6),
-              brightness: Brightness.light,
-            ),
-          ),
-
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.dark,
-          ),
-
-          home: const SplashScreen(),
-
+      
           routes: {
             '/splash': (context) => const SplashScreen(),
             '/onboarding': (context) => const OnboardingScreen(),
@@ -137,7 +111,5 @@ class MyApp extends StatelessWidget {
             return null;
           },
         );
-      },
-    );
-  }
-}
+
+  }}

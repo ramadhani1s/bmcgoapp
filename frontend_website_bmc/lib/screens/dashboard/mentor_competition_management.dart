@@ -75,7 +75,9 @@ class _MentorCompetitionManagementState
     if (title == 'Jadwal Mengajar') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        ),
       );
       return;
     }
@@ -224,214 +226,184 @@ class _MentorCompetitionManagementState
     final progressPercent = item.totalQuestions > 0 ? 100 : 0;
 
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFFD1D5DB),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: AppColors.accentBlue,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.title,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF1F2937),
-                                height: 1.2,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  item.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 10),
-                _buildBadge(
-                  item.isPublished ? 'Dipublikasikan' : 'Draft',
-                  backgroundColor: item.isPublished
-                      ? AppColors.successBg
-                      : AppColors.warningBg,
-                  foregroundColor: item.isPublished
-                      ? AppColors.success
-                      : AppColors.warning,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              _buildBadge(
+                item.isPublished ? 'Dipublikasikan' : 'Draft',
+                backgroundColor: item.isPublished
+                    ? const Color(0xFFDCFCE7)
+                    : const Color(0xFFFEF3C7),
+                foregroundColor: item.isPublished
+                    ? const Color(0xFF065F46)
+                    : const Color(0xFF92400E),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  item.subject,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
-                  ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                item.subject,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
                 ),
-                _buildBadge(
-                  item.classLevel,
-                  backgroundColor: AppColors.blueLightBg,
-                  foregroundColor: AppColors.accentBlue,
+              ),
+              _buildBadge(
+                item.classLevel,
+                backgroundColor: const Color(0xFFEFF6FF),
+                foregroundColor: const Color(0xFF2563EB),
+              ),
+              Text(
+                '${item.durationLabel} menit',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
                 ),
-                Text(
-                  '${item.durationLabel} menit',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
-                  ),
+              ),
+              Text(
+                '${item.totalQuestions} soal',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
                 ),
-                Text(
-                  '${item.totalQuestions} soal',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildSmallInfo(Icons.calendar_today_outlined, scheduleLabel),
-                _buildSmallInfo(Icons.timer_outlined, item.durationLabel),
-                _buildSmallInfo(
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSmallInfo(
+                  Icons.calendar_today_outlined,
+                  scheduleLabel,
+                ),
+              ),
+              Expanded(
+                child: _buildSmallInfo(
+                  Icons.timer_outlined,
+                  item.durationLabel,
+                ),
+              ),
+              Expanded(
+                child: _buildSmallInfo(
                   Icons.assignment_outlined,
                   '${item.totalQuestions} soal',
                 ),
-                _buildSmallInfo(Icons.chevron_right_rounded, ''),
-              ],
+              ),
+              Expanded(child: _buildSmallInfo(Icons.chevron_right_rounded, '')),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Progress Soal',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF374151),
+                ),
+              ),
+              Text(
+                '$progressPercent%',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2563EB),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progressValue,
+              minHeight: 6,
+              backgroundColor: const Color(0xFFE5E7EB),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.accentBlue,
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Progress Soal',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 42,
+                  child: ElevatedButton.icon(
+                    onPressed: () => widget.type == 'tryout'
+                        ? _openTryoutSoalManagement(item)
+                        : _openOlimpiadeSoalManagement(item),
+                    icon: const Icon(Icons.menu_book_outlined, size: 18),
+                    label: const Text('Kelola Soal'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
                       ),
-                    ),
-                    Text(
-                      '$progressPercent%',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF2563EB),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progressValue,
-                    minHeight: 8,
-                    backgroundColor: const Color(0xFFE5E7EB),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.accentBlue,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: ElevatedButton.icon(
-                      onPressed: () => widget.type == 'tryout'
-                          ? _openTryoutSoalManagement(item)
-                          : _openOlimpiadeSoalManagement(item),
-                      icon: const Icon(Icons.menu_book_outlined, size: 18),
-                      label: const Text('Kelola Soal'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accentBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                _buildActionIconButton(
-                  icon: Icons.edit_outlined,
-                  iconColor: const Color(0xFF6B7280),
-                  borderColor: const Color(0xFFE5E7EB),
-                  onPressed: () => _openForm(item: item),
-                  tooltip: 'Edit',
-                ),
-                const SizedBox(width: 8),
-                _buildActionIconButton(
-                  icon: Icons.delete_outline,
-                  iconColor: const Color(0xFFEF4444),
-                  borderColor: const Color(0xFFFECACA),
-                  onPressed: () => _deleteItem(item),
-                  tooltip: 'Hapus',
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.edit_outlined,
+                iconColor: const Color(0xFF6B7280),
+                borderColor: const Color(0xFFD1D5DB),
+                onPressed: () => _openForm(item: item),
+                tooltip: 'Edit',
+              ),
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.delete_outline,
+                iconColor: const Color(0xFFEF4444),
+                borderColor: const Color(0xFFFECACA),
+                onPressed: () => _deleteItem(item),
+                tooltip: 'Hapus',
+              ),
+            ],
           ),
         ],
       ),
@@ -451,11 +423,11 @@ class _MentorCompetitionManagementState
       child: GestureDetector(
         onTap: onPressed,
         child: Container(
-          width: 44,
-          height: 44,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
@@ -496,12 +468,12 @@ class _MentorCompetitionManagementState
     Color color,
   ) {
     return Container(
-      width: 160,
-      padding: const EdgeInsets.all(16),
+      width: 230,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -509,33 +481,34 @@ class _MentorCompetitionManagementState
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: color, size: 18),
+            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
+                  ),
                 ),
-              ),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF6B7280),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -555,7 +528,7 @@ class _MentorCompetitionManagementState
       activeMenuTitle: isTryout ? 'Try Out' : 'Olimpiade Akademik',
       onMenuTap: _onSidebarMenuTap,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFFF3F4F6),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
@@ -564,70 +537,67 @@ class _MentorCompetitionManagementState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.16),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                isTryout
-                                    ? Icons.rocket_launch_outlined
-                                    : Icons.emoji_events_outlined,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    pageTitle,
-                                    style: const TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    pageSubtitle,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.white70,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 32),
+                     Container(
+  width: double.infinity,
+  padding: const EdgeInsets.all(24),
+  decoration: BoxDecoration(
+    gradient: const LinearGradient(
+      colors: [
+        Color(0xFF1D4ED8),
+        Color(0xFF2563EB),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              pageTitle,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              pageSubtitle,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(width: 24),
+      Icon(
+        isTryout
+            ? Icons.quiz_outlined
+            : Icons.emoji_events_outlined,
+        color: Colors.white,
+        size: 64,
+      ),
+    ],
+  ),
+),
+
+                      const SizedBox(height: 20),
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
                             _buildInfoCard(
                               visibleItems.length.toString(),
-                              'Total Data',
+                              isTryout
+                                ? 'Total Try Out'
+                                : 'Total Olimpiade',
                               Icons.view_list_outlined,
                               AppColors.accentBlue,
                             ),
@@ -655,7 +625,7 @@ class _MentorCompetitionManagementState
                           ],
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 20),
                       LayoutBuilder(
                         builder: (context, constraints) {
                           final isWide = constraints.maxWidth >= 900;
@@ -668,9 +638,9 @@ class _MentorCompetitionManagementState
                               hintText: hintText,
                               prefixIcon: prefixIcon,
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: const Color(0xFFF3F4F6),
                               contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 14,
+                                horizontal: 16,
                                 vertical: 14,
                               ),
                               border: OutlineInputBorder(
@@ -703,15 +673,6 @@ class _MentorCompetitionManagementState
                           }
 
                           final searchField = fieldColumn([
-                            const Text(
-                              'Cari Data',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF374151),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
                             TextField(
                               controller: _searchController,
                               onChanged: (_) => setState(() {}),
@@ -719,45 +680,41 @@ class _MentorCompetitionManagementState
                                 hintText: isTryout
                                     ? 'Cari try out...'
                                     : 'Cari olimpiade...',
-                                prefixIcon: const Icon(Icons.search),
+                                prefixIcon: const Icon(
+                                  Icons.search,
+                                  color: Color(0xFF6B7280),
+                                ),
                               ),
                             ),
                           ]);
 
                           final classField = fieldColumn([
-                            const Text(
-                              'Filter Kelas',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF374151),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
                             DropdownButtonFormField<String>(
-                              initialValue: _selectedClass,
-                              items:
-                                  const [
-                                        'Semua Kelas',
-                                        'Kelas 10',
-                                        'Kelas 11',
-                                        'Kelas 12',
-                                      ]
-                                      .map(
-                                        (value) => DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(value),
-                                        ),
-                                      )
-                                      .toList(),
+                              value: _selectedClass,
+                              items: const [
+                                'Semua Kelas',
+                                'Kelas 10',
+                                'Kelas 11',
+                                'Kelas 12',
+                              ]
+                                  .map(
+                                    (value) => DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: (value) {
                                 setState(
-                                  () => _selectedClass = value ?? 'Semua Kelas',
+                                  () =>
+                                      _selectedClass = value ?? 'Semua Kelas',
                                 );
                               },
                               decoration: inputDecoration(
                                 prefixIcon: const Icon(
-                                  Icons.filter_alt_outlined,
+                                  Icons.class_outlined,
+                                  size: 18,
+                                  color: Color(0xFF2563EB),
                                 ),
                               ),
                             ),
@@ -767,17 +724,17 @@ class _MentorCompetitionManagementState
                             onPressed: () => _openForm(),
                             icon: const Icon(Icons.add, size: 18),
                             label: Text(
-                              isTryout ? 'Buat Try Out' : 'Buat Olimpiade',
+                              isTryout ? 'Tambah Try Out' : 'Tambah Olimpiade',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.accentBlue,
+                              backgroundColor: const Color(0xFF2563EB),
                               foregroundColor: Colors.white,
-                              minimumSize: const Size(0, 44),
+                              minimumSize: const Size(160, 46),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 22,
+                                horizontal: 20,
                                 vertical: 14,
                               ),
                               shape: RoundedRectangleBorder(
@@ -800,7 +757,7 @@ class _MentorCompetitionManagementState
                               : Column(
                                   children: [
                                     searchField,
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 10),
                                     classField,
                                     const SizedBox(height: 12),
                                     Align(
@@ -810,50 +767,87 @@ class _MentorCompetitionManagementState
                                   ],
                                 );
 
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              filterRow,
-                              const SizedBox(height: 24),
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                filterRow,
+                                const SizedBox(height: 24),
                               if (visibleItems.isEmpty)
-                                Padding(
+                                Container(
+                                  width: double.infinity,
                                   padding: const EdgeInsets.all(24),
-                                  child: Center(
-                                    child: Text(
-                                      'Belum ada data yang sesuai filter.',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        width: 42,
+                                        height: 42,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFFFEDD5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.description_outlined,
+                                          color: Color(0xFFF97316),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                )
-                              else
-                                LayoutBuilder(
-                                  builder: (context, listConstraints) {
-                                    final cardWidth =
-                                        listConstraints.maxWidth >= 1100
-                                        ? 520.0
-                                        : listConstraints.maxWidth >= 720
-                                        ? (listConstraints.maxWidth - 20) / 2
-                                        : listConstraints.maxWidth;
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        isTryout
+                                            ? 'Belum Ada Try Out'
+                                            : 'Belum Ada Olimpiade',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16,
+                                          color: Color(0xFF1F2937),
+                                        ),
+                                      ),const SizedBox(height: 8),
+Text(
+  isTryout
+      ? 'Belum ada data try out yang tersedia'
+      : 'Belum ada data olimpiade yang tersedia',
+  textAlign: TextAlign.center,
+  style: const TextStyle(
+    color: Color(0xFF6B7280),
+    fontSize: 12,
+  ),
+),
+],
+),
+)
+else
+LayoutBuilder(
+  builder: (context, listConstraints) {
+    final cardWidth = listConstraints.maxWidth >= 1100
+        ? 520.0
+        : listConstraints.maxWidth >= 720
+            ? (listConstraints.maxWidth - 20) / 2
+            : listConstraints.maxWidth;
 
-                                    return Wrap(
-                                      spacing: 20,
-                                      runSpacing: 20,
-                                      children: visibleItems
-                                          .map(
-                                            (item) => SizedBox(
-                                              width: cardWidth,
-                                              child: _buildCompetitionCard(
-                                                item,
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                    );
-                                  },
-                                ),
-                            ],
+    return Wrap(
+      spacing: 20,
+      runSpacing: 20,
+      children: visibleItems
+          .map(
+            (item) => SizedBox(
+              width: cardWidth,
+              child: _buildCompetitionCard(item),
+            ),
+          )
+          .toList(),
+    );
+  },
+),
+                              ],
+                            ),
                           );
                         },
                       ),
@@ -861,10 +855,14 @@ class _MentorCompetitionManagementState
                   ),
                 ),
               ),
-      ),
-    );
+            ),
+          );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dialog Form
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _CompetitionFormDialog extends StatefulWidget {
   final BuildContext parentContext;
@@ -900,7 +898,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
     _titleController = TextEditingController(text: existing?.title ?? '');
     _subjectController = TextEditingController(text: existing?.subject ?? '');
     _durationController = TextEditingController(
-      text: existing?.durationLabel ?? '60',
+      text: existing?.durationLabel ?? '',
     );
     _totalQuestionsController = TextEditingController(
       text: existing?.totalQuestions.toString() ?? '0',
@@ -970,28 +968,29 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
       backgroundColor: Colors.transparent,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: 900,
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
+          maxWidth: 720,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(18),
             boxShadow: const [
               BoxShadow(
-                color: Color.fromRGBO(15, 23, 42, 0.18),
-                blurRadius: 30,
-                offset: Offset(0, 18),
+                color: Color.fromRGBO(15, 23, 42, 0.16),
+                blurRadius: 24,
+                offset: Offset(0, 14),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(18),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // ── Header ──────────────────────────────────────────────────
                 Container(
-                  padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
@@ -1002,21 +1001,21 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                   child: Row(
                     children: [
                       Container(
-                        width: 42,
-                        height: 42,
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           widget.existing == null
                               ? Icons.add
                               : Icons.edit_rounded,
                           color: Colors.white,
-                          size: 22,
+                          size: 20,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1024,23 +1023,23 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                             Text(
                               widget.existing == null
                                   ? (isOlimpiade
-                                        ? 'Tambah Olimpiade'
-                                        : 'Tambah Try Out')
+                                      ? 'Tambah Olimpiade'
+                                      : 'Tambah Try Out')
                                   : 'Edit',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
+                                fontSize: 18,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 3),
                             Text(
                               isOlimpiade
                                   ? 'Form Olimpiade Akademik'
                                   : 'Form Try Out',
                               style: const TextStyle(
                                 color: Colors.white70,
-                                fontSize: 12.5,
+                                fontSize: 12,
                                 height: 1.3,
                               ),
                             ),
@@ -1054,9 +1053,11 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                     ],
                   ),
                 ),
+
+                // ── Body (scrollable form) ───────────────────────────────────
                 Flexible(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
                     child: SingleChildScrollView(
                       child: Form(
                         key: _formKey,
@@ -1066,27 +1067,34 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                             const Text(
                               'Isi detail kompetisi di bawah',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF374151),
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 14),
+
+                            // 1. Field Judul
                             TextFormField(
                               controller: _titleController,
-                              validator: (v) => v == null || v.isEmpty
-                                  ? 'Judul wajib diisi'
-                                  : null,
+                              validator: (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Judul wajib diisi'
+                                      : null,
                               decoration: InputDecoration(
                                 labelText: isOlimpiade
                                     ? 'Judul Olimpiade'
                                     : 'Judul Try Out',
-                                prefixIcon: const Icon(
-                                  Icons.title,
-                                  color: Color(0xFF2563EB),
+                                hintText: isOlimpiade
+                                    ? 'Masukkan nama olimpiade (Contoh: Olimpiade Sains Nasional)'
+                                    : 'Masukkan nama try out (Contoh: Try Out UTBK Sesi 1)',
+                                hintStyle: const TextStyle(
+                                  color: Color(0xFF9CA3AF),
+                                  fontWeight: FontWeight.normal,
+                                  fontSize: 14,
                                 ),
                                 filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
+                                fillColor: const Color(0xFFF3F4F6),
                                 border: fieldBorder,
                                 enabledBorder: fieldBorder,
                                 focusedBorder: fieldBorder.copyWith(
@@ -1096,26 +1104,33 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   ),
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 14,
+                                  horizontal: 16,
+                                  vertical: 18,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
+
+                            // 2. Field Lokasi / Subjek
                             TextFormField(
                               controller: _subjectController,
                               validator: (v) =>
                                   isOlimpiade && (v == null || v.isEmpty)
-                                  ? 'Lokasi wajib diisi'
-                                  : null,
+                                      ? 'Lokasi wajib diisi'
+                                      : null,
                               decoration: InputDecoration(
-                                labelText: isOlimpiade ? 'Lokasi' : 'Subjek',
-                                prefixIcon: const Icon(
-                                  Icons.place,
-                                  color: Color(0xFF2563EB),
+                                labelText:
+                                    isOlimpiade ? 'Lokasi' : 'Subjek',
+                                hintText: isOlimpiade
+                                    ? 'Masukkan lokasi ujian (Contoh: Aula Utama Kampus)'
+                                    : 'Masukkan mata pelajaran (Contoh: Matematika IPA)',
+                                hintStyle: const TextStyle(
+                                  color: Color(0xFF9CA3AF),
+                                  fontWeight: FontWeight.normal,
+                                  fontSize: 14,
                                 ),
                                 filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
+                                fillColor: const Color(0xFFF3F4F6),
                                 border: fieldBorder,
                                 enabledBorder: fieldBorder,
                                 focusedBorder: fieldBorder.copyWith(
@@ -1130,20 +1145,23 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
+
+                            // 3. Field kondisional
                             if (isOlimpiade) ...[
+                              // Field Tanggal Olimpiade
                               TextFormField(
                                 controller: _scheduleController,
                                 readOnly: true,
-                                validator: (v) => v == null || v.isEmpty
-                                    ? 'Tanggal wajib diisi'
-                                    : null,
+                                validator: (v) =>
+                                    v == null || v.isEmpty
+                                        ? 'Tanggal wajib diisi'
+                                        : null,
                                 onTap: () async {
                                   final now = DateTime.now();
                                   DateTime initial = now;
                                   final parsed = DateTime.tryParse(
-                                    _scheduleController.text,
-                                  );
+                                      _scheduleController.text);
                                   if (parsed != null) initial = parsed;
                                   final picked = await showDatePicker(
                                     context: context,
@@ -1152,18 +1170,30 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                     lastDate: DateTime(now.year + 5),
                                   );
                                   if (picked != null) {
-                                    _scheduleController.text = picked
-                                        .toIso8601String();
+                                    final yyyy = picked.year
+                                        .toString()
+                                        .padLeft(4, '0');
+                                    final mm = picked.month
+                                        .toString()
+                                        .padLeft(2, '0');
+                                    final dd = picked.day
+                                        .toString()
+                                        .padLeft(2, '0');
+                                    _scheduleController.text =
+                                        '$yyyy-$mm-$dd';
                                   }
                                 },
                                 decoration: InputDecoration(
                                   labelText: 'Tanggal Olimpiade',
-                                  prefixIcon: const Icon(
-                                    Icons.event,
-                                    color: Color(0xFF2563EB),
+                                  hintText:
+                                      'Pilih tanggal pelaksanaan kompetisi',
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFF9CA3AF),
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 14,
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: const Color(0xFFF3F4F6),
                                   border: fieldBorder,
                                   enabledBorder: fieldBorder,
                                   focusedBorder: fieldBorder.copyWith(
@@ -1178,22 +1208,27 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                             ] else ...[
+                              // Field Durasi
                               TextFormField(
                                 controller: _durationController,
                                 keyboardType: TextInputType.number,
-                                validator: (v) => v == null || v.isEmpty
-                                    ? 'Durasi wajib diisi'
-                                    : null,
+                                validator: (v) =>
+                                    v == null || v.isEmpty
+                                        ? 'Durasi wajib diisi'
+                                        : null,
                                 decoration: InputDecoration(
                                   labelText: 'Durasi (menit)',
-                                  prefixIcon: const Icon(
-                                    Icons.timer,
-                                    color: Color(0xFF2563EB),
+                                  hintText:
+                                      'Masukkan durasi waktu (Contoh: 90)',
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFF9CA3AF),
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 14,
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: const Color(0xFFF3F4F6),
                                   border: fieldBorder,
                                   enabledBorder: fieldBorder,
                                   focusedBorder: fieldBorder.copyWith(
@@ -1208,21 +1243,27 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
+
+                              // Field Total Soal
                               TextFormField(
                                 controller: _totalQuestionsController,
                                 keyboardType: TextInputType.number,
-                                validator: (v) => v == null || v.isEmpty
-                                    ? 'Total soal wajib diisi'
-                                    : null,
+                                validator: (v) =>
+                                    v == null || v.isEmpty
+                                        ? 'Total soal wajib diisi'
+                                        : null,
                                 decoration: InputDecoration(
                                   labelText: 'Total Soal',
-                                  prefixIcon: const Icon(
-                                    Icons.question_mark,
-                                    color: Color(0xFF2563EB),
+                                  hintText:
+                                      'Masukkan jumlah butir soal (Contoh: 40)',
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFF9CA3AF),
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 14,
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: const Color(0xFFF3F4F6),
                                   border: fieldBorder,
                                   enabledBorder: fieldBorder,
                                   focusedBorder: fieldBorder.copyWith(
@@ -1237,13 +1278,14 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                             ],
+
+                            // 4. Dropdown Pilihan Kelas
                             DropdownButtonFormField<String>(
-                              initialValue: _selectedClass,
+                              value: _selectedClass,
                               icon: const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                              ),
+                                  Icons.keyboard_arrow_down_rounded),
                               dropdownColor: Colors.white,
                               style: const TextStyle(
                                 color: Color(0xFF111827),
@@ -1262,13 +1304,9 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               ),
                               decoration: InputDecoration(
                                 labelText: 'Kelas',
-                                prefixIcon: const Icon(
-                                  Icons.class_outlined,
-                                  color: Color(0xFF2563EB),
-                                ),
                                 filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
-                                border: fieldBorder,
+                                fillColor: const Color(0xFFF3F4F6),
+border: fieldBorder,
                                 enabledBorder: fieldBorder,
                                 focusedBorder: fieldBorder.copyWith(
                                   borderSide: const BorderSide(
@@ -1282,65 +1320,71 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 24),
+
+                            // Tombol Batal & Simpan
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: _isSubmitting
+                                        ? null
+                                        : () => Navigator.of(context)
+                                            .pop(false),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor:
+                                          const Color(0xFF64748B),
+                                      side: const BorderSide(
+                                          color: Color(0xFFD8E1EE)),
+                                      backgroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                    child: const Text('Batal'),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed:
+                                        _isSubmitting ? null : _submit,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.accentBlue,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: _isSubmitting
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text('Simpan'),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
                     ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _isSubmitting
-                              ? null
-                              : () => Navigator.of(context).pop(false),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF64748B),
-                            side: const BorderSide(color: Color(0xFFD8E1EE)),
-                            backgroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: const Text('Batal'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.accentBlue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('Simpan'),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ],

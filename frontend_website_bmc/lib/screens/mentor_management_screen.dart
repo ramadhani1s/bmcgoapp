@@ -1107,7 +1107,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                   headingRowHeight: 58,
                   dataRowMinHeight: 78,
                   dataRowMaxHeight: 78,
-                  headingRowColor: MaterialStateProperty.all(
+                  headingRowColor: WidgetStateProperty.all(
                     const Color(0xFFEFF4FF),
                   ),
 
