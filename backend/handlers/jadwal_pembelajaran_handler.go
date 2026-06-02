@@ -151,45 +151,41 @@ func GetJadwalList(c *gin.Context) {
 
 // GetMentorJadwalList - Get jadwal milik mentor yang sedang login
 func GetMentorJadwalList(c *gin.Context) {
-	userIDAny, exists := c.Get("user_id")
-	if !exists {
+
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status":  "error",
-			"message": "Unauthorized",
+			"message": err.Error(),
 		})
 		return
 	}
 
-	userID, ok := userIDAny.(int)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"status":  "error",
-			"message": "Invalid user context",
-		})
-		return
-	}
-
-	var mentorID int
-	err := config.DB.QueryRow(context.Background(), `
-		SELECT id
-		FROM mentor
-		WHERE user_id = $1
-		LIMIT 1
-	`, userID).Scan(&mentorID)
+	mentorID, err := resolveMentorID(userID, 0)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"status":  "error",
-			"message": "Data mentor tidak ditemukan",
+			"message": "Mentor tidak ditemukan",
+			"detail":  err.Error(),
 		})
 		return
 	}
 
 	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, paket_id, mentor_id, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
+		SELECT
+			id,
+			paket_id,
+			mentor_id,
+			mata_pelajaran,
+			hari,
+			jam_mulai,
+			jam_selesai,
+			ruang
 		FROM jadwal
 		WHERE mentor_id = $1
 		ORDER BY hari, jam_mulai
 	`, mentorID)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -201,11 +197,23 @@ func GetMentorJadwalList(c *gin.Context) {
 	defer rows.Close()
 
 	var jadwals []models.Jadwal
+
 	for rows.Next() {
 		var j models.Jadwal
-		if err := rows.Scan(&j.ID, &j.PaketID, &j.MentorID, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang); err != nil {
+
+		if err := rows.Scan(
+			&j.ID,
+			&j.PaketID,
+			&j.MentorID,
+			&j.MataPelajaran,
+			&j.Hari,
+			&j.JamMulai,
+			&j.JamSelesai,
+			&j.Ruang,
+		); err != nil {
 			continue
 		}
+
 		jadwals = append(jadwals, j)
 	}
 
