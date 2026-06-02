@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:frontend_mobile_bmc/config/api_config.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/session/app_session.dart';
@@ -16,7 +17,6 @@ class OlimpiadeScreen extends StatefulWidget {
 }
 
 class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
-  static const String baseUrl = 'http://10.0.2.2:8080';
   static const Color _accent = Color(0xFFFF7070);
   static const Color _background = Color(0xFFF7EEEF);
   static const Color _textPrimary = Color(0xFF25273D);
@@ -46,7 +46,7 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
     setState(() => _isLoading = true);
     try {
       final token = await _getToken();
-      final uri = Uri.parse('$baseUrl/api/siswa/olimpiade').replace(
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/siswa/olimpiade').replace(
         queryParameters: {'status': status ?? _selectedStatus},
       );
       final response = await http.get(
@@ -144,7 +144,6 @@ class OlimpiadeSoalScreen extends StatefulWidget {
 }
 
 class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
-  static const String baseUrl = 'http://10.0.2.2:8080';
   static const Color _accent = Color(0xFFFF7070);
 
   List<Map<String, dynamic>> _soalList = [];
@@ -200,7 +199,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
       final token = await _getToken();
       final id = widget.olimpiade['id'];
       final response = await http.get(
-        Uri.parse('$baseUrl/api/siswa/olimpiade/$id/soal'),
+        Uri.parse('${ApiConfig.baseUrl}/api/siswa/olimpiade/$id/soal'),
         headers: {'Authorization': 'Bearer $token'},
       ).timeout(const Duration(seconds: 15));
 
@@ -233,7 +232,7 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
       final jawabanStr = _jawaban.map((k, v) => MapEntry(k.toString(), v));
 
       final response = await http.post(
-        Uri.parse('$baseUrl/api/siswa/olimpiade/$id/submit'),
+        Uri.parse('${ApiConfig.baseUrl}/api/siswa/olimpiade/$id/submit'),
         headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
         body: jsonEncode({'jawaban': jawabanStr}),
       ).timeout(const Duration(seconds: 15));

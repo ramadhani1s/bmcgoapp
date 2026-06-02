@@ -45,28 +45,25 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
   }
 
   // ✅ INIT MIDTRANS (FIXED)
-  Future<void> _initMidtrans() async {
-    try {
-      _midtransSDK = await MidtransSDK.init(
-        config: MidtransConfig(
-          clientKey: "Mid-client-oGUyoloFZJXYlklg",
-          merchantBaseUrl: PaymentService.baseUrl,
-          colorTheme: ColorTheme(
-            colorPrimary: _blueHeader,
-            colorPrimaryDark: _blueHeader,
-            colorSecondary: _accent,
-          ),
-        ),
-      );
-      _midtransSDK?.setTransactionFinishedCallback(_onTransactionFinished);
-    } catch (e) {
-      debugPrint("ERROR INIT MIDTRANS: $e");
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = 'Gagal inisialisasi Midtrans. Coba lagi.';
-      });
-    }
+ Future<void> _initMidtrans() async {
+  try {
+    debugPrint("MIDTRANS INIT START");
+
+    _midtransSDK = await MidtransSDK.init(
+      config: MidtransConfig(
+        clientKey: "Mid-client-oGUyoloFZJXYlklg",
+        merchantBaseUrl: PaymentService.baseUrl,
+      ),
+    );
+
+    debugPrint("MIDTRANS INIT SUCCESS");
+  } catch (e, s) {
+    debugPrint("MIDTRANS INIT ERROR");
+    debugPrint(e.toString());
+    debugPrint(s.toString());
   }
+}
+
 
   Future<Map<String, String>> _getUserData() async {
     String pickNonEmpty(List<String?> values, String fallback) {
@@ -159,6 +156,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
   }
 
   // ✅ HANDLE RESULT (FIXED)
+  // ignore: unused_element
   Future<void> _onTransactionFinished(TransactionResult result) async {
     final transactionId = result.transactionId ?? _currentTransactionId;
 
@@ -171,8 +169,8 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       return;
     }
 
-    final status = result.status.toLowerCase();
-
+    final status = (result.status ?? '').toLowerCase();
+    
     if (status == 'success' ||
         status == 'settlement' ||
         status == 'capture' ||
@@ -723,3 +721,4 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
     );
   }
 }
+

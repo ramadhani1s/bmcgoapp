@@ -3,13 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:frontend_mobile_bmc/models/payment_model.dart';
 import 'package:frontend_mobile_bmc/core/session/app_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend_mobile_bmc/config/api_config.dart';
 
 class PaymentService {
-  // GANTI DENGAN BASE URL BACKEND KAMU
-  // Jika kamu menjalankan Flutter di Android emulator, gunakan 10.0.2.2
-    static const String baseUrl =
-      'http://10.0.2.2:8080'; // Android emulator -> PC localhost (payment server)
-  // Untuk production: 'https://api.yourdomain.com'
+  // Base URL backend root; endpoint payment ditambahkan per request.
+  static final String baseUrl = ApiConfig.baseUrl;
 
   static Future<String> _getAuthToken() async {
     final prefs = await SharedPreferences.getInstance();

@@ -2,9 +2,10 @@ import 'dart:convert';
 
 import 'package:frontend_mobile_bmc/core/network/api_client.dart';
 import 'package:frontend_mobile_bmc/models/mentor_competition_item.dart';
+import 'package:frontend_mobile_bmc/config/api_config.dart';
 
 class MentorCompetitionService {
-  static final ApiClient _client = ApiClient(baseUrl: 'http://10.0.2.2:8080/api/mentor');
+  static final ApiClient _client = ApiClient(baseUrl: '${ApiConfig.baseUrl}/api/mentor');
 
   static String _normalizeDateForApi(String value) {
     final raw = value.trim();

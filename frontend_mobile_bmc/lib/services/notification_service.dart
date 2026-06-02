@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
+import 'package:frontend_mobile_bmc/config/api_config.dart';
 
 class NotificationService {
   static Future<void> saveTokenToBackend(int userId) async {
@@ -12,7 +13,7 @@ class NotificationService {
       print(token);
 
       final response = await http.post(
-        Uri.parse("http://10.0.2.2:8080/save-fcm-token"),
+        Uri.parse("${ApiConfig.baseUrl}/save-fcm-token"),
         headers: {
           "Content-Type": "application/json",
         },

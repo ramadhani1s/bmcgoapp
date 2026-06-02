@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../core/session/app_session.dart';
+import 'package:frontend_mobile_bmc/config/api_config.dart';
 
 class TryOutService {
-  static const String _base = 'http://10.0.2.2:8080';
+  static final String _base = '${ApiConfig.baseUrl}';
 
   static Future<List<Map<String, dynamic>>> getPackages() async {
     try {

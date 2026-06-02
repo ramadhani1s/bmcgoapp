@@ -1,19 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:frontend_mobile_bmc/config/api_config.dart';
 import '../core/session/app_session.dart';
 
 class PaketLesService {
-  static const String _defaultBaseUrl = "http://10.0.2.2:8080/api";
+  static final String _defaultBaseUrl = "${ApiConfig.baseUrl}/api";
   static String? _activeBaseUrl;
 
   static List<String> _candidateBaseUrls() {
     final urls = <String>[
-      "http://10.0.2.2:8080/api",
-      "http://localhost:8080/api",
-      "http://127.0.0.1:8080/api",
-      "http://172.27.66.99:8080/api",
+      "${ApiConfig.baseUrl}/api",
     ];
 
     if (_activeBaseUrl != null && _activeBaseUrl!.isNotEmpty) {

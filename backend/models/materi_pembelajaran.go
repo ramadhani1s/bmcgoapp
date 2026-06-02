@@ -10,6 +10,7 @@ type MateriPembelajaran struct {
 	FilePath    string    `json:"file_path" db:"file_path"`
 	FileType    string    `json:"file_type" db:"file_type"`
 	FileSize    int64     `json:"file_size" db:"file_size"`
+	Subject     string    `json:"subject" db:"subject"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }

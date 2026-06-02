@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/models/payment_model.dart';
 import 'package:frontend_mobile_bmc/screens/home/latihan_siswa_screen.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/materi_screen.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
 import 'package:frontend_mobile_bmc/services/jadwal_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -300,12 +301,8 @@ class _DashboardScreenState extends State<DashboardScreen>
       Color(0xFFE3FBF4),
       iconColor: Color(0xFF12B892),
     ),
-    _MainMenuItem(
-      'Pembayaran',
-      Icons.credit_card_rounded,
-      Color(0xFFDCEBFF),
-      iconColor: Color(0xFF4B9BFF),
-    ),
+    
+    
     _MainMenuItem(
       'Pengumuman',
       Icons.campaign_outlined,
@@ -421,7 +418,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       _incrementMateriProgress();
       Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => const LatihanSiswaScreen()));
+      ).push(MaterialPageRoute(builder: (_) => const MateriScreen()));
       return;
     }
     if (index == 2) {
@@ -473,15 +470,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       _incrementMateriProgress();
       Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => const LatihanSiswaScreen()));
+      ).push(MaterialPageRoute(builder: (_) => const MateriScreen()));
       return;
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Menu $menuKey siap dihubungkan ke data dinamis.'),
-          backgroundColor: const Color(0xFF23A66F),
-        ),
-      );
+      
     }
   }
 
@@ -970,7 +962,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             _incrementMateriProgress();
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => const LatihanSiswaScreen(),
+                                builder: (_) => const MateriScreen(),
                               ),
                             );
                           },

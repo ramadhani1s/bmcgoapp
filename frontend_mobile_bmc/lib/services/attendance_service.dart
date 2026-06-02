@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:frontend_mobile_bmc/core/network/api_client.dart';
+import 'package:frontend_mobile_bmc/config/api_config.dart';
 
 class AttendanceService {
-  static final ApiClient _client = ApiClient(baseUrl: 'http://10.0.2.2:8080/api');
+  static final ApiClient _client = ApiClient(baseUrl: '${ApiConfig.baseUrl}/api');
 
   static Future<Map<String, dynamic>> submitToken(String tokenValue) async {
     try {

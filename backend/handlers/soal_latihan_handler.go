@@ -117,3 +117,22 @@ func DeleteSoalLatihanHandler(c *gin.Context) {
 		"message": "Soal latihan berhasil dihapus",
 	})
 }
+
+// GetSoalLatihanSiswa mengambil soal latihan berdasarkan subject untuk siswa
+func GetSoalLatihanSiswa(c *gin.Context) {
+	subject := c.Query("subject")
+
+	items, err := services.GetSoalLatihanBySubject(subject)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Gagal mengambil soal latihan",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Soal latihan berhasil diambil",
+		"data":    items,
+	})
+}

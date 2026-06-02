@@ -13,6 +13,8 @@ import 'package:frontend_mobile_bmc/screens/onboarding_screen.dart';
 import 'package:frontend_mobile_bmc/screens/splash_screen.dart';
 import 'package:frontend_mobile_bmc/screens/payment/payment_history_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/materi_screen.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/materi_detail_screen.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/latihan_dari_materi_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/pengumuman_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/olimpiade_screen.dart';
 import 'package:frontend_mobile_bmc/screens/tryout/tryout_list_screen.dart';
@@ -115,6 +117,24 @@ class MyApp extends StatelessWidget {
                 const OlimpiadeScreen(),
             '/mentor-tryout': (context) =>
                 const TryOutListScreen(),
+          },
+
+          onGenerateRoute: (settings) {
+            if (settings.name == '/materi-detail') {
+              final materi = settings.arguments as Map<String, dynamic>;
+              return MaterialPageRoute(
+                builder: (context) => MateriDetailScreen(materi: materi),
+              );
+            } else if (settings.name == '/latihan-dari-materi') {
+              final args = settings.arguments as Map<String, dynamic>;
+              return MaterialPageRoute(
+                builder: (context) => LatihanDariMateriScreen(
+                  subject: args['subject'] as String,
+                  materiTitle: args['materi_title'] as String,
+                ),
+              );
+            }
+            return null;
           },
         );
       },

@@ -55,6 +55,10 @@ func UploadMateri(c *gin.Context) {
 		return
 	}
 	description := c.PostForm("description")
+	subject := c.PostForm("subject")
+	if subject == "" {
+		subject = "Umum" // Default subject jika tidak dikirim
+	}
 
 	// Limit upload size
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, MaxUploadSize)
@@ -95,9 +99,9 @@ func UploadMateri(c *gin.Context) {
 	filePathDB := "/uploads/materials/" + filename
 	var insertedID int
 	err = config.DB.QueryRow(context.Background(), `
-		INSERT INTO learning_materials (mentor_id, title, description, file_path, file_type, file_size)
-		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
-	`, mentorID, title, description, filePathDB, ext, file.Size).Scan(&insertedID)
+		INSERT INTO learning_materials (mentor_id, title, description, file_path, file_type, file_size, subject)
+		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id
+	`, mentorID, title, description, filePathDB, ext, file.Size, subject).Scan(&insertedID)
 
 	if err != nil {
 		log.Println("Gagal insert learning_materials ke DB:", err)
@@ -134,7 +138,7 @@ func GetMateriByMentor(c *gin.Context) {
 	}
 
 	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, mentor_id, title, description, file_path, file_type, file_size, created_at, updated_at
+		SELECT id, mentor_id, title, description, file_path, file_type, file_size, subject, created_at, updated_at
 		FROM learning_materials
 		WHERE mentor_id = $1
 		ORDER BY created_at DESC
@@ -150,7 +154,7 @@ func GetMateriByMentor(c *gin.Context) {
 	var materials []models.MateriPembelajaran
 	for rows.Next() {
 		var m models.MateriPembelajaran
-		if err := rows.Scan(&m.ID, &m.MentorID, &m.Title, &m.Description, &m.FilePath, &m.FileType, &m.FileSize, &m.CreatedAt, &m.UpdatedAt); err != nil {
+		if err := rows.Scan(&m.ID, &m.MentorID, &m.Title, &m.Description, &m.FilePath, &m.FileType, &m.FileSize, &m.Subject, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			log.Println("Gagal scan row:", err)
 			continue
 		}

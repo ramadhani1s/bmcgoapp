@@ -10,4 +10,6 @@ type SoalLatihan struct {
 	PilihanD   string `json:"pilihan_d"`
 	Jawaban    string `json:"jawaban"`
 	Pembahasan string `json:"pembahasan"`
+	Subject    string `json:"subject"`
+	LatihanID  *int   `json:"latihan_id"`
 }

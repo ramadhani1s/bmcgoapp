@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:frontend_mobile_bmc/config/api_config.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/session/app_session.dart';
@@ -16,7 +17,6 @@ class PengumumanScreen extends StatefulWidget {
 }
 
 class _PengumumanScreenState extends State<PengumumanScreen> {
-  static const String baseUrl = 'http://10.0.2.2:8080';
   static const Color _accent = Color(0xFFFF7070);
   static const Color _background = Color(0xFFF7EEEF);
   static const Color _textPrimary = Color(0xFF25273D);
@@ -49,7 +49,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
     setState(() => _isLoading = true);
     try {
       final token = await _getToken();
-      final uri = Uri.parse('$baseUrl/api/siswa/pengumuman').replace(
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/siswa/pengumuman').replace(
         queryParameters: kategori != null && kategori != 'Semua' ? {'kategori': kategori} : null,
       );
       final response = await http.get(

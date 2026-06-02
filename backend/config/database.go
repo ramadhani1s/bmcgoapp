@@ -348,12 +348,30 @@ func ConnectDB() {
 			file_path VARCHAR(500) NOT NULL,
 			file_type VARCHAR(50),
 			file_size BIGINT,
+			subject VARCHAR(100),
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)
 	`)
 	if err != nil {
 		log.Fatal("Gagal membuat table learning_materials:", err)
+	}
+
+	// Tambah kolom subject jika belum ada (untuk database lama)
+	_, err = DB.Exec(context.Background(), `
+		DO $$
+		BEGIN
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'learning_materials' AND column_name = 'subject'
+			) THEN
+				ALTER TABLE learning_materials ADD COLUMN subject VARCHAR(100);
+			END IF;
+		END
+		$$
+	`)
+	if err != nil {
+		log.Println("Warning: gagal add kolom subject di learning_materials:", err)
 	}
 
 	// Buat table paket_les (lesson packages)
@@ -485,6 +503,29 @@ func ConnectDB() {
 	`)
 	if err != nil {
 		log.Println("Warning: gagal add kolom pembahasan di soal_latihan:", err)
+	}
+
+	// Tambah kolom subject dan latihan_id untuk filtering dan grouping soal latihan
+	_, err = DB.Exec(context.Background(), `
+		DO $$
+		BEGIN
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'soal_latihan' AND column_name = 'subject'
+			) THEN
+				ALTER TABLE soal_latihan ADD COLUMN subject VARCHAR(100);
+			END IF;
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'soal_latihan' AND column_name = 'latihan_id'
+			) THEN
+				ALTER TABLE soal_latihan ADD COLUMN latihan_id INT;
+			END IF;
+		END
+		$$
+	`)
+	if err != nil {
+		log.Println("Warning: gagal add kolom subject dan latihan_id di soal_latihan:", err)
 	}
 
 	// Sinkronkan admin.user_id berdasarkan email agar FK pengumuman selalu menunjuk admin yang benar.

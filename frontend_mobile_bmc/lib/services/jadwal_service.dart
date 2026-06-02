@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:frontend_mobile_bmc/config/api_config.dart';
 
 class JadwalMobileService {
-  static const String baseUrl = "http://172.27.66.99:8080/api";
-
   // Get jadwal by hari (public endpoint)
   static Future<List<Map<String, dynamic>>> getJadwalByHari(String hari) async {
     try {
       final url = Uri.parse(
-        "$baseUrl/jadwal-by-hari",
+        "${ApiConfig.baseUrl}/jadwal-by-hari",
       ).replace(queryParameters: {'hari': hari});
 
       final response = await http.get(url);
@@ -28,7 +27,7 @@ class JadwalMobileService {
   // Get semua jadwal (public endpoint)
   static Future<List<Map<String, dynamic>>> getAllJadwal() async {
     try {
-      final url = Uri.parse("$baseUrl/jadwal");
+      final url = Uri.parse("${ApiConfig.baseUrl}/jadwal");
       final response = await http.get(url);
 
       if (response.statusCode == 200) {

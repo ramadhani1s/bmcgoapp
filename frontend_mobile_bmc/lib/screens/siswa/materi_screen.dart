@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:frontend_mobile_bmc/config/api_config.dart';
 import '../../core/session/app_session.dart';
 import '../../widgets/materi/materi_header.dart';
 import '../../widgets/materi/materi_search_bar.dart';
@@ -17,7 +17,6 @@ class MateriScreen extends StatefulWidget {
 }
 
 class _MateriScreenState extends State<MateriScreen> {
-  static const String baseUrl = 'http://10.0.2.2:8080';
   static const Color _accent = Color(0xFFFF7070);
   static const Color _background = Color(0xFFF7EEEF);
   static const Color _textPrimary = Color(0xFF25273D);
@@ -115,7 +114,7 @@ class _MateriScreenState extends State<MateriScreen> {
         return;
       }
 
-      final uri = Uri.parse('$baseUrl/api/siswa/materi').replace(
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/siswa/materi').replace(
         queryParameters: subject != null && subject != 'Semua'
             ? {'subject': subject}
             : null,
@@ -129,6 +128,14 @@ class _MateriScreenState extends State<MateriScreen> {
         final list = (data['data'] as List<dynamic>? ?? [])
             .whereType<Map<String, dynamic>>()
             .toList();
+        
+        // DEBUG: Print data structure
+        print('DEBUG: API Response data count: ${list.length}');
+        if (list.isNotEmpty) {
+          print('DEBUG: First item keys: ${list[0].keys}');
+          print('DEBUG: First item: ${list[0]}');
+        }
+        
         if (!mounted) return;
         setState(() {
           _allMateri = list;
@@ -171,24 +178,11 @@ class _MateriScreenState extends State<MateriScreen> {
   }
 
   Future<void> _openFile(Map<String, dynamic> materi) async {
-    final filePath = materi['file_path'] as String? ?? '';
-    if (!mounted) return;
-
-    if (filePath.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('File materi belum tersedia.'),
-          backgroundColor: _accent,
-        ),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Lokasi file: $baseUrl$filePath'),
-        backgroundColor: _accent,
-      ),
+    // Navigate to detail screen instead of opening file
+    Navigator.pushNamed(
+      context,
+      '/materi-detail',
+      arguments: materi,
     );
   }
 
