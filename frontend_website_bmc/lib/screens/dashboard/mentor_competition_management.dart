@@ -230,7 +230,9 @@ class _MentorCompetitionManagementState
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD1D5DB)),
+        border: Border.all(
+          color: const Color(0xFFD1D5DB),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,16 +367,19 @@ class _MentorCompetitionManagementState
               Expanded(
                 child: SizedBox(
                   height: 42,
-                  child: OutlinedButton.icon(
+                  child: ElevatedButton.icon(
                     onPressed: () => widget.type == 'tryout'
                         ? _openTryoutSoalManagement(item)
                         : _openOlimpiadeSoalManagement(item),
                     icon: const Icon(Icons.menu_book_outlined, size: 18),
                     label: const Text('Kelola Soal'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF111827),
-                      side: const BorderSide(color: Color(0xFFD1D5DB)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -463,7 +468,7 @@ class _MentorCompetitionManagementState
     Color color,
   ) {
     return Container(
-      width: 160,
+      width: 230,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -532,70 +537,67 @@ class _MentorCompetitionManagementState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.16),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                isTryout
-                                    ? Icons.rocket_launch_outlined
-                                    : Icons.emoji_events_outlined,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    pageTitle,
-                                    style: const TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    pageSubtitle,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.white70,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 32),
+                     Container(
+  width: double.infinity,
+  padding: const EdgeInsets.all(24),
+  decoration: BoxDecoration(
+    gradient: const LinearGradient(
+      colors: [
+        Color(0xFF1D4ED8),
+        Color(0xFF2563EB),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              pageTitle,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              pageSubtitle,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(width: 24),
+      Icon(
+        isTryout
+            ? Icons.quiz_outlined
+            : Icons.emoji_events_outlined,
+        color: Colors.white,
+        size: 64,
+      ),
+    ],
+  ),
+),
+
+                      const SizedBox(height: 20),
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
                             _buildInfoCard(
                               visibleItems.length.toString(),
-                              'Total Mata Pelajaran',
+                              isTryout
+                                ? 'Total Try Out'
+                                : 'Total Olimpiade',
                               Icons.view_list_outlined,
                               AppColors.accentBlue,
                             ),
@@ -623,7 +625,7 @@ class _MentorCompetitionManagementState
                           ],
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 20),
                       LayoutBuilder(
                         builder: (context, constraints) {
                           final isWide = constraints.maxWidth >= 900;
@@ -636,9 +638,9 @@ class _MentorCompetitionManagementState
                               hintText: hintText,
                               prefixIcon: prefixIcon,
                               filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
+                              fillColor: const Color(0xFFF3F4F6),
                               contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 14,
+                                horizontal: 16,
                                 vertical: 14,
                               ),
                               border: OutlineInputBorder(
@@ -671,15 +673,6 @@ class _MentorCompetitionManagementState
                           }
 
                           final searchField = fieldColumn([
-                            const Text(
-                              'Cari Data',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF374151),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
                             TextField(
                               controller: _searchController,
                               onChanged: (_) => setState(() {}),
@@ -687,21 +680,15 @@ class _MentorCompetitionManagementState
                                 hintText: isTryout
                                     ? 'Cari try out...'
                                     : 'Cari olimpiade...',
-                                prefixIcon: const Icon(Icons.search),
+                                prefixIcon: const Icon(
+                                  Icons.search,
+                                  color: Color(0xFF6B7280),
+                                ),
                               ),
                             ),
                           ]);
 
                           final classField = fieldColumn([
-                            const Text(
-                              'Filter Kelas',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF374151),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
                             DropdownButtonFormField<String>(
                               value: _selectedClass,
                               items: const [
@@ -725,7 +712,9 @@ class _MentorCompetitionManagementState
                               },
                               decoration: inputDecoration(
                                 prefixIcon: const Icon(
-                                  Icons.filter_alt_outlined,
+                                  Icons.class_outlined,
+                                  size: 18,
+                                  color: Color(0xFF2563EB),
                                 ),
                               ),
                             ),
@@ -735,7 +724,7 @@ class _MentorCompetitionManagementState
                             onPressed: () => _openForm(),
                             icon: const Icon(Icons.add, size: 18),
                             label: Text(
-                              isTryout ? 'Buat Try Out' : 'Buat Olimpiade',
+                              isTryout ? 'Tambah Try Out' : 'Tambah Olimpiade',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -743,7 +732,7 @@ class _MentorCompetitionManagementState
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF2563EB),
                               foregroundColor: Colors.white,
-                              minimumSize: const Size(182, 48),
+                              minimumSize: const Size(160, 46),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 20,
                                 vertical: 14,
@@ -768,7 +757,7 @@ class _MentorCompetitionManagementState
                               : Column(
                                   children: [
                                     searchField,
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 10),
                                     classField,
                                     const SizedBox(height: 12),
                                     Align(
@@ -778,52 +767,87 @@ class _MentorCompetitionManagementState
                                   ],
                                 );
 
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              filterRow,
-                              const SizedBox(height: 24),
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                filterRow,
+                                const SizedBox(height: 24),
                               if (visibleItems.isEmpty)
-                                Padding(
+                                Container(
+                                  width: double.infinity,
                                   padding: const EdgeInsets.all(24),
-                                  child: Center(
-                                    child: Text(
-                                      'Belum ada data yang sesuai filter.',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        width: 42,
+                                        height: 42,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFFFEDD5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.description_outlined,
+                                          color: Color(0xFFF97316),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                )
-                              else
-                                LayoutBuilder(
-                                  builder: (context, listConstraints) {
-                                    final cardWidth =
-                                        listConstraints.maxWidth >= 1100
-                                            ? 520.0
-                                            : listConstraints.maxWidth >= 720
-                                                ? (listConstraints.maxWidth -
-                                                        20) /
-                                                    2
-                                                : listConstraints.maxWidth;
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        isTryout
+                                            ? 'Belum Ada Try Out'
+                                            : 'Belum Ada Olimpiade',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16,
+                                          color: Color(0xFF1F2937),
+                                        ),
+                                      ),const SizedBox(height: 8),
+Text(
+  isTryout
+      ? 'Belum ada data try out yang tersedia'
+      : 'Belum ada data olimpiade yang tersedia',
+  textAlign: TextAlign.center,
+  style: const TextStyle(
+    color: Color(0xFF6B7280),
+    fontSize: 12,
+  ),
+),
+],
+),
+)
+else
+LayoutBuilder(
+  builder: (context, listConstraints) {
+    final cardWidth = listConstraints.maxWidth >= 1100
+        ? 520.0
+        : listConstraints.maxWidth >= 720
+            ? (listConstraints.maxWidth - 20) / 2
+            : listConstraints.maxWidth;
 
-                                    return Wrap(
-                                      spacing: 20,
-                                      runSpacing: 20,
-                                      children: visibleItems
-                                          .map(
-                                            (item) => SizedBox(
-                                              width: cardWidth,
-                                              child: _buildCompetitionCard(
-                                                item,
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                    );
-                                  },
-                                ),
-                            ],
+    return Wrap(
+      spacing: 20,
+      runSpacing: 20,
+      children: visibleItems
+          .map(
+            (item) => SizedBox(
+              width: cardWidth,
+              child: _buildCompetitionCard(item),
+            ),
+          )
+          .toList(),
+    );
+  },
+),
+                              ],
+                            ),
                           );
                         },
                       ),
@@ -831,8 +855,8 @@ class _MentorCompetitionManagementState
                   ),
                 ),
               ),
-      ),
-    );
+            ),
+          );
   }
 }
 
@@ -976,6 +1000,22 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                   ),
                   child: Row(
                     children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          widget.existing == null
+                              ? Icons.add
+                              : Icons.edit_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1054,7 +1094,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   fontSize: 14,
                                 ),
                                 filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
+                                fillColor: const Color(0xFFF3F4F6),
                                 border: fieldBorder,
                                 enabledBorder: fieldBorder,
                                 focusedBorder: fieldBorder.copyWith(
@@ -1064,8 +1104,8 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   ),
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 14,
+                                  horizontal: 16,
+                                  vertical: 18,
                                 ),
                               ),
                             ),
@@ -1090,7 +1130,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   fontSize: 14,
                                 ),
                                 filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
+                                fillColor: const Color(0xFFF3F4F6),
                                 border: fieldBorder,
                                 enabledBorder: fieldBorder,
                                 focusedBorder: fieldBorder.copyWith(
@@ -1153,7 +1193,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                     fontSize: 14,
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: const Color(0xFFF3F4F6),
                                   border: fieldBorder,
                                   enabledBorder: fieldBorder,
                                   focusedBorder: fieldBorder.copyWith(
@@ -1188,7 +1228,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                     fontSize: 14,
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: const Color(0xFFF3F4F6),
                                   border: fieldBorder,
                                   enabledBorder: fieldBorder,
                                   focusedBorder: fieldBorder.copyWith(
@@ -1223,7 +1263,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                     fontSize: 14,
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: const Color(0xFFF3F4F6),
                                   border: fieldBorder,
                                   enabledBorder: fieldBorder,
                                   focusedBorder: fieldBorder.copyWith(
@@ -1265,8 +1305,8 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               decoration: InputDecoration(
                                 labelText: 'Kelas',
                                 filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
-                                border: fieldBorder,
+                                fillColor: const Color(0xFFF3F4F6),
+border: fieldBorder,
                                 enabledBorder: fieldBorder,
                                 focusedBorder: fieldBorder.copyWith(
                                   borderSide: const BorderSide(

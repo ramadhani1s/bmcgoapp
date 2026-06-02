@@ -16,7 +16,7 @@ func ConnectDB() {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		// Use the project's default local database name if no DATABASE_URL provided
-		dsn = "postgres://postgres:ramadhani12@localhost:5432/bmcgo_db?sslmode=disable"
+		dsn = "postgres://postgres:123@localhost:5432/bmcgo_app?sslmode=disable"
 	}
 
 	var err error
