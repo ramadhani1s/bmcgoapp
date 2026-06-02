@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/alumni.dart';
 import 'auth_service.dart';
@@ -16,9 +17,11 @@ class AlumniService {
       if (response.statusCode != 200) {
         // debug log to help diagnose empty list issues
         try {
-          print(
-            'AlumniService.getAllAlumni: status=${response.statusCode} body=${response.body}',
-          );
+          if (kDebugMode) {
+            debugPrint(
+              'AlumniService.getAllAlumni: status=${response.statusCode} body=${response.body}',
+            );
+          }
         } catch (_) {}
         return [];
       }
@@ -68,7 +71,8 @@ class AlumniService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         // debug log
         try {
-          print('AlumniService.createAlumni: created id=${data['id']}');
+          if (kDebugMode)
+            debugPrint('AlumniService.createAlumni: created id=${data['id']}');
         } catch (_) {}
         return {
           'success': true,
@@ -79,9 +83,10 @@ class AlumniService {
 
       // debug log for failure
       try {
-        print(
-          'AlumniService.createAlumni: status=${response.statusCode} body=${response.body}',
-        );
+        if (kDebugMode)
+          debugPrint(
+            'AlumniService.createAlumni: status=${response.statusCode} body=${response.body}',
+          );
       } catch (_) {}
       return {
         'success': false,

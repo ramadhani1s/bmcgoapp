@@ -136,10 +136,10 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                   const Text(
                     'Buat Soal Latihan Baru',
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 26,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1F2937),
-                      letterSpacing: -0.4,
+                      color: Color(0xFF111827),
+                      letterSpacing: -0.3,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -150,15 +150,15 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                   const SizedBox(height: 18),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: const Color(0xFFE5E7EB)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
+                          color: const Color.fromRGBO(15, 23, 42, 0.04),
+                          blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
                       ],
@@ -197,35 +197,30 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                           },
                           decoration: InputDecoration(
                             labelText: 'Mata Pelajaran',
-                            prefixIcon: const Icon(
-                              Icons.menu_book_outlined,
-                              size: 18,
-                              color: Color(0xFF2563EB),
-                            ),
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
+                            fillColor: const Color(0xFFF3F4F6),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
+                                color: Color(0xFFD1D5DB),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
+                                color: Color(0xFFD1D5DB),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: const BorderSide(
                                 color: Color(0xFF2563EB),
                                 width: 1.4,
                               ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 14,
+                              horizontal: 12,
+                              vertical: 12,
                             ),
                           ),
                         ),
@@ -260,35 +255,30 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                           },
                           decoration: InputDecoration(
                             labelText: 'Kelas',
-                            prefixIcon: const Icon(
-                              Icons.class_outlined,
-                              size: 18,
-                              color: Color(0xFF2563EB),
-                            ),
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
+                            fillColor: const Color(0xFFF3F4F6),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
+                                color: Color(0xFFD1D5DB),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
+                                color: Color(0xFFD1D5DB),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: const BorderSide(
                                 color: Color(0xFF2563EB),
                                 width: 1.4,
                               ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 14,
+                              horizontal: 12,
+                              vertical: 12,
                             ),
                           ),
                         ),
@@ -310,19 +300,21 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                           decoration: InputDecoration(
                             hintText: 'Pilih tanggal jadwal',
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
+                                color: Color(0xFFD1D5DB),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: const BorderSide(
                                 color: Color(0xFF2563EB),
-                                width: 2,
+                                width: 1.4,
                               ),
                             ),
-                            contentPadding: const EdgeInsets.all(14),
+                            filled: true,
+                            fillColor: const Color(0xFFF3F4F6),
+                            contentPadding: const EdgeInsets.all(12),
                             suffixIcon: const Icon(
                               Icons.calendar_today_outlined,
                             ),
@@ -392,7 +384,7 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
       required ? '$text *' : text,
       style: const TextStyle(
         fontWeight: FontWeight.w700,
-        fontSize: 13,
+        fontSize: 12,
         color: Color(0xFF374151),
       ),
     );
@@ -409,14 +401,16 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
       decoration: InputDecoration(
         hintText: hintText,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.4),
         ),
-        contentPadding: const EdgeInsets.all(14),
+        filled: true,
+        fillColor: const Color(0xFFF3F4F6),
+        contentPadding: const EdgeInsets.all(12),
       ),
     );
   }

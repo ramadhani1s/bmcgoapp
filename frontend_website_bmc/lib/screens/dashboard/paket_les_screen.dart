@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../services/paket_les_service.dart';
 
 class PaketLesScreen extends StatefulWidget {
@@ -142,36 +143,39 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
         "status": selectedStatus,
       };
 
-      print("≡ƒÜÇ CREATE PAKET: $data");
+      if (kDebugMode) debugPrint("≡ƒÜÇ CREATE PAKET: $data");
+
+      final navigator = Navigator.of(context);
+      final messenger = ScaffoldMessenger.of(context);
 
       final response = await PaketLesService.createPaket(data);
 
-      if (mounted) {
-        if (response['status'] == 'success') {
-          _clearControllers();
-          await _loadPaketList();
-          await _loadStats();
-          if (mounted) Navigator.pop(context);
+      if (!mounted) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Paket les berhasil dibuat"),
-              backgroundColor: Colors.green,
+      if (response['status'] == 'success') {
+        _clearControllers();
+        await _loadPaketList();
+        await _loadStats();
+        navigator.pop();
+
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text("Paket les berhasil dibuat"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              "Γ¥î ${response['message'] ?? 'Gagal membuat paket'} (${response['detail'] ?? ''})",
             ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "Γ¥î ${response['message'] ?? 'Gagal membuat paket'} (${response['detail'] ?? ''})",
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
-      print("Γ¥î Exception: $e");
+      if (kDebugMode) debugPrint("Γ¥î Exception: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Γ¥î Error: $e"), backgroundColor: Colors.red),
@@ -256,35 +260,38 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
         "status": selectedStatus,
       };
 
-      print("Γ£Å∩╕Å UPDATE PAKET $paketId: $data");
+      if (kDebugMode) debugPrint("Γ£Å∩╕Å UPDATE PAKET $paketId: $data");
+
+      final navigator = Navigator.of(context);
+      final messenger = ScaffoldMessenger.of(context);
 
       final response = await PaketLesService.updatePaket(paketId, data);
 
-      if (mounted) {
-        if (response['status'] == 'success') {
-          await _loadPaketList();
-          await _loadStats();
-          if (mounted) Navigator.pop(context);
+      if (!mounted) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Γ£à Paket les berhasil diupdate"),
-              backgroundColor: Colors.green,
+      if (response['status'] == 'success') {
+        await _loadPaketList();
+        await _loadStats();
+        navigator.pop();
+
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text("Γ£à Paket les berhasil diupdate"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              "Γ¥î ${response['message'] ?? 'Gagal update paket'} (${response['detail'] ?? ''})",
             ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "Γ¥î ${response['message'] ?? 'Gagal update paket'} (${response['detail'] ?? ''})",
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
-      print("Γ¥î Exception: $e");
+      if (kDebugMode) debugPrint("Γ¥î Exception: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Γ¥î Error: $e"), backgroundColor: Colors.red),
@@ -295,29 +302,28 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
 
   Future<void> _deletePaket(int paketId) async {
     try {
+      final messenger = ScaffoldMessenger.of(context);
       final response = await PaketLesService.deletePaket(paketId);
 
-      if (mounted) {
-        if (response['status'] == 'success') {
-          await _loadPaketList();
-          await _loadStats();
+      if (!mounted) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Γ£à Paket les berhasil dihapus"),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "Γ¥î ${response['message'] ?? 'Gagal hapus paket'}",
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      if (response['status'] == 'success') {
+        await _loadPaketList();
+        await _loadStats();
+
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text("Γ£à Paket les berhasil dihapus"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text("Γ¥î ${response['message'] ?? 'Gagal hapus paket'}"),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

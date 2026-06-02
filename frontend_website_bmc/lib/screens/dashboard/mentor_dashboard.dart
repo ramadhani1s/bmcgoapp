@@ -28,7 +28,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   List<Map<String, dynamic>> _recentSchedules = [];
   List<MentorCompetitionItem> _recentTryouts = [];
   List<MentorCompetitionItem> _recentOlimpiades = [];
-  String _selectedClass = 'Semua Kelas';
+  final String _selectedClass = 'Semua Kelas';
 
   static const Color _sidebarBg = Color(0xFFF8FAFD);
   static const Color _sidebarBorder = Color(0xFFDDE4F0);
@@ -95,7 +95,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
 
     setState(() => _loadingDashboardCards = true);
     final schedules = await _safeLoad(
-      JadwalService.getJadwalList(mentorId: mentorId),
+      JadwalService.getMentorJadwalList(),
       <Map<String, dynamic>>[],
     );
     final tryouts = await _safeLoad(
@@ -267,7 +267,9 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
 
     if (title == 'Jadwal Mengajar') {
       await navigator.push(
-        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        ),
       );
       await _loadStats();
       return;
@@ -793,7 +795,8 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   onPressed: () async {
                     await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const JadwalPembelajaranScreen(),
+                        builder: (_) =>
+                            const JadwalPembelajaranScreen(mentorView: true),
                       ),
                     );
                     await _loadDashboardCards();

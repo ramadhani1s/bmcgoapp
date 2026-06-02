@@ -327,7 +327,9 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     if (title == 'Jadwal Mengajar') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        ),
       );
       return;
     }
@@ -471,9 +473,8 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
       activeMenuTitle: 'Absensi Kelas',
       onMenuTap: _onSidebarMenuTap,
       child: Scaffold(
-
         backgroundColor: const Color(0xFFF8FAFC),
-        
+
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
