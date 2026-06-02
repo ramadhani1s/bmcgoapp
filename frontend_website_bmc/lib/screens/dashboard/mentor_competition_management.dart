@@ -589,7 +589,6 @@ class _MentorCompetitionManagementState
                         ),
                       ),
                       const SizedBox(height: 32),
-
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
@@ -704,24 +703,24 @@ class _MentorCompetitionManagementState
                             ),
                             const SizedBox(height: 6),
                             DropdownButtonFormField<String>(
-                              initialValue: _selectedClass,
-                              items:
-                                  const [
-                                        'Semua Kelas',
-                                        'Kelas 10',
-                                        'Kelas 11',
-                                        'Kelas 12',
-                                      ]
-                                      .map(
-                                        (value) => DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(value),
-                                        ),
-                                      )
-                                      .toList(),
+                              value: _selectedClass,
+                              items: const [
+                                'Semua Kelas',
+                                'Kelas 10',
+                                'Kelas 11',
+                                'Kelas 12',
+                              ]
+                                  .map(
+                                    (value) => DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: (value) {
                                 setState(
-                                  () => _selectedClass = value ?? 'Semua Kelas',
+                                  () =>
+                                      _selectedClass = value ?? 'Semua Kelas',
                                 );
                               },
                               decoration: inputDecoration(
@@ -801,10 +800,12 @@ class _MentorCompetitionManagementState
                                   builder: (context, listConstraints) {
                                     final cardWidth =
                                         listConstraints.maxWidth >= 1100
-                                        ? 520.0
-                                        : listConstraints.maxWidth >= 720
-                                        ? (listConstraints.maxWidth - 20) / 2
-                                        : listConstraints.maxWidth;
+                                            ? 520.0
+                                            : listConstraints.maxWidth >= 720
+                                                ? (listConstraints.maxWidth -
+                                                        20) /
+                                                    2
+                                                : listConstraints.maxWidth;
 
                                     return Wrap(
                                       spacing: 20,
@@ -834,6 +835,10 @@ class _MentorCompetitionManagementState
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dialog Form
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _CompetitionFormDialog extends StatefulWidget {
   final BuildContext parentContext;
@@ -869,7 +874,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
     _titleController = TextEditingController(text: existing?.title ?? '');
     _subjectController = TextEditingController(text: existing?.subject ?? '');
     _durationController = TextEditingController(
-      text: existing?.durationLabel ?? '60',
+      text: existing?.durationLabel ?? '',
     );
     _totalQuestionsController = TextEditingController(
       text: existing?.totalQuestions.toString() ?? '0',
@@ -959,6 +964,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // ── Header ──────────────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
                   decoration: const BoxDecoration(
@@ -977,8 +983,8 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                             Text(
                               widget.existing == null
                                   ? (isOlimpiade
-                                        ? 'Tambah Olimpiade'
-                                        : 'Tambah Try Out')
+                                      ? 'Tambah Olimpiade'
+                                      : 'Tambah Try Out')
                                   : 'Edit',
                               style: const TextStyle(
                                 color: Colors.white,
@@ -1007,6 +1013,8 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                     ],
                   ),
                 ),
+
+                // ── Body (scrollable form) ───────────────────────────────────
                 Flexible(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
@@ -1025,18 +1033,25 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               ),
                             ),
                             const SizedBox(height: 14),
+
+                            // 1. Field Judul
                             TextFormField(
                               controller: _titleController,
-                              validator: (v) => v == null || v.isEmpty
-                                  ? 'Judul wajib diisi'
-                                  : null,
+                              validator: (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Judul wajib diisi'
+                                      : null,
                               decoration: InputDecoration(
                                 labelText: isOlimpiade
                                     ? 'Judul Olimpiade'
                                     : 'Judul Try Out',
-                                prefixIcon: const Icon(
-                                  Icons.title,
-                                  color: Color(0xFF2563EB),
+                                hintText: isOlimpiade
+                                    ? 'Masukkan nama olimpiade (Contoh: Olimpiade Sains Nasional)'
+                                    : 'Masukkan nama try out (Contoh: Try Out UTBK Sesi 1)',
+                                hintStyle: const TextStyle(
+                                  color: Color(0xFF9CA3AF),
+                                  fontWeight: FontWeight.normal,
+                                  fontSize: 14,
                                 ),
                                 filled: true,
                                 fillColor: const Color(0xFFF8FAFC),
@@ -1055,17 +1070,24 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               ),
                             ),
                             const SizedBox(height: 10),
+
+                            // 2. Field Lokasi / Subjek
                             TextFormField(
                               controller: _subjectController,
                               validator: (v) =>
                                   isOlimpiade && (v == null || v.isEmpty)
-                                  ? 'Lokasi wajib diisi'
-                                  : null,
+                                      ? 'Lokasi wajib diisi'
+                                      : null,
                               decoration: InputDecoration(
-                                labelText: isOlimpiade ? 'Lokasi' : 'Subjek',
-                                prefixIcon: const Icon(
-                                  Icons.place,
-                                  color: Color(0xFF2563EB),
+                                labelText:
+                                    isOlimpiade ? 'Lokasi' : 'Subjek',
+                                hintText: isOlimpiade
+                                    ? 'Masukkan lokasi ujian (Contoh: Aula Utama Kampus)'
+                                    : 'Masukkan mata pelajaran (Contoh: Matematika IPA)',
+                                hintStyle: const TextStyle(
+                                  color: Color(0xFF9CA3AF),
+                                  fontWeight: FontWeight.normal,
+                                  fontSize: 14,
                                 ),
                                 filled: true,
                                 fillColor: const Color(0xFFF8FAFC),
@@ -1084,19 +1106,22 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               ),
                             ),
                             const SizedBox(height: 10),
+
+                            // 3. Field kondisional
                             if (isOlimpiade) ...[
+                              // Field Tanggal Olimpiade
                               TextFormField(
                                 controller: _scheduleController,
                                 readOnly: true,
-                                validator: (v) => v == null || v.isEmpty
-                                    ? 'Tanggal wajib diisi'
-                                    : null,
+                                validator: (v) =>
+                                    v == null || v.isEmpty
+                                        ? 'Tanggal wajib diisi'
+                                        : null,
                                 onTap: () async {
                                   final now = DateTime.now();
                                   DateTime initial = now;
                                   final parsed = DateTime.tryParse(
-                                    _scheduleController.text,
-                                  );
+                                      _scheduleController.text);
                                   if (parsed != null) initial = parsed;
                                   final picked = await showDatePicker(
                                     context: context,
@@ -1105,15 +1130,27 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                     lastDate: DateTime(now.year + 5),
                                   );
                                   if (picked != null) {
-                                    _scheduleController.text = picked
-                                        .toIso8601String();
+                                    final yyyy = picked.year
+                                        .toString()
+                                        .padLeft(4, '0');
+                                    final mm = picked.month
+                                        .toString()
+                                        .padLeft(2, '0');
+                                    final dd = picked.day
+                                        .toString()
+                                        .padLeft(2, '0');
+                                    _scheduleController.text =
+                                        '$yyyy-$mm-$dd';
                                   }
                                 },
                                 decoration: InputDecoration(
                                   labelText: 'Tanggal Olimpiade',
-                                  prefixIcon: const Icon(
-                                    Icons.event,
-                                    color: Color(0xFF2563EB),
+                                  hintText:
+                                      'Pilih tanggal pelaksanaan kompetisi',
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFF9CA3AF),
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 14,
                                   ),
                                   filled: true,
                                   fillColor: const Color(0xFFF8FAFC),
@@ -1133,17 +1170,22 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               ),
                               const SizedBox(height: 10),
                             ] else ...[
+                              // Field Durasi
                               TextFormField(
                                 controller: _durationController,
                                 keyboardType: TextInputType.number,
-                                validator: (v) => v == null || v.isEmpty
-                                    ? 'Durasi wajib diisi'
-                                    : null,
+                                validator: (v) =>
+                                    v == null || v.isEmpty
+                                        ? 'Durasi wajib diisi'
+                                        : null,
                                 decoration: InputDecoration(
                                   labelText: 'Durasi (menit)',
-                                  prefixIcon: const Icon(
-                                    Icons.timer,
-                                    color: Color(0xFF2563EB),
+                                  hintText:
+                                      'Masukkan durasi waktu (Contoh: 90)',
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFF9CA3AF),
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 14,
                                   ),
                                   filled: true,
                                   fillColor: const Color(0xFFF8FAFC),
@@ -1162,17 +1204,23 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                 ),
                               ),
                               const SizedBox(height: 10),
+
+                              // Field Total Soal
                               TextFormField(
                                 controller: _totalQuestionsController,
                                 keyboardType: TextInputType.number,
-                                validator: (v) => v == null || v.isEmpty
-                                    ? 'Total soal wajib diisi'
-                                    : null,
+                                validator: (v) =>
+                                    v == null || v.isEmpty
+                                        ? 'Total soal wajib diisi'
+                                        : null,
                                 decoration: InputDecoration(
                                   labelText: 'Total Soal',
-                                  prefixIcon: const Icon(
-                                    Icons.question_mark,
-                                    color: Color(0xFF2563EB),
+                                  hintText:
+                                      'Masukkan jumlah butir soal (Contoh: 40)',
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFF9CA3AF),
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 14,
                                   ),
                                   filled: true,
                                   fillColor: const Color(0xFFF8FAFC),
@@ -1192,11 +1240,12 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               ),
                               const SizedBox(height: 10),
                             ],
+
+                            // 4. Dropdown Pilihan Kelas
                             DropdownButtonFormField<String>(
-                              initialValue: _selectedClass,
+                              value: _selectedClass,
                               icon: const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                              ),
+                                  Icons.keyboard_arrow_down_rounded),
                               dropdownColor: Colors.white,
                               style: const TextStyle(
                                 color: Color(0xFF111827),
@@ -1215,10 +1264,6 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               ),
                               decoration: InputDecoration(
                                 labelText: 'Kelas',
-                                prefixIcon: const Icon(
-                                  Icons.class_outlined,
-                                  color: Color(0xFF2563EB),
-                                ),
                                 filled: true,
                                 fillColor: const Color(0xFFF8FAFC),
                                 border: fieldBorder,
@@ -1235,65 +1280,71 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 24),
+
+                            // Tombol Batal & Simpan
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: _isSubmitting
+                                        ? null
+                                        : () => Navigator.of(context)
+                                            .pop(false),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor:
+                                          const Color(0xFF64748B),
+                                      side: const BorderSide(
+                                          color: Color(0xFFD8E1EE)),
+                                      backgroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                    child: const Text('Batal'),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed:
+                                        _isSubmitting ? null : _submit,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.accentBlue,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: _isSubmitting
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text('Simpan'),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
                     ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _isSubmitting
-                              ? null
-                              : () => Navigator.of(context).pop(false),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF64748B),
-                            side: const BorderSide(color: Color(0xFFD8E1EE)),
-                            backgroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: const Text('Batal'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.accentBlue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('Simpan'),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ],
