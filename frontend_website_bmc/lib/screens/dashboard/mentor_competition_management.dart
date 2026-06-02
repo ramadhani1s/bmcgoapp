@@ -75,7 +75,9 @@ class _MentorCompetitionManagementState
     if (title == 'Jadwal Mengajar') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        ),
       );
       return;
     }
@@ -224,214 +226,179 @@ class _MentorCompetitionManagementState
     final progressPercent = item.totalQuestions > 0 ? 100 : 0;
 
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFD1D5DB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: AppColors.accentBlue,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.title,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF1F2937),
-                                height: 1.2,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  item.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 10),
-                _buildBadge(
-                  item.isPublished ? 'Dipublikasikan' : 'Draft',
-                  backgroundColor: item.isPublished
-                      ? AppColors.successBg
-                      : AppColors.warningBg,
-                  foregroundColor: item.isPublished
-                      ? AppColors.success
-                      : AppColors.warning,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              _buildBadge(
+                item.isPublished ? 'Dipublikasikan' : 'Draft',
+                backgroundColor: item.isPublished
+                    ? const Color(0xFFDCFCE7)
+                    : const Color(0xFFFEF3C7),
+                foregroundColor: item.isPublished
+                    ? const Color(0xFF065F46)
+                    : const Color(0xFF92400E),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  item.subject,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
-                  ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                item.subject,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
                 ),
-                _buildBadge(
-                  item.classLevel,
-                  backgroundColor: AppColors.blueLightBg,
-                  foregroundColor: AppColors.accentBlue,
+              ),
+              _buildBadge(
+                item.classLevel,
+                backgroundColor: const Color(0xFFEFF6FF),
+                foregroundColor: const Color(0xFF2563EB),
+              ),
+              Text(
+                '${item.durationLabel} menit',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
                 ),
-                Text(
-                  '${item.durationLabel} menit',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
-                  ),
+              ),
+              Text(
+                '${item.totalQuestions} soal',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
                 ),
-                Text(
-                  '${item.totalQuestions} soal',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildSmallInfo(Icons.calendar_today_outlined, scheduleLabel),
-                _buildSmallInfo(Icons.timer_outlined, item.durationLabel),
-                _buildSmallInfo(
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSmallInfo(
+                  Icons.calendar_today_outlined,
+                  scheduleLabel,
+                ),
+              ),
+              Expanded(
+                child: _buildSmallInfo(
+                  Icons.timer_outlined,
+                  item.durationLabel,
+                ),
+              ),
+              Expanded(
+                child: _buildSmallInfo(
                   Icons.assignment_outlined,
                   '${item.totalQuestions} soal',
                 ),
-                _buildSmallInfo(Icons.chevron_right_rounded, ''),
-              ],
+              ),
+              Expanded(child: _buildSmallInfo(Icons.chevron_right_rounded, '')),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Progress Soal',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF374151),
+                ),
+              ),
+              Text(
+                '$progressPercent%',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2563EB),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progressValue,
+              minHeight: 6,
+              backgroundColor: const Color(0xFFE5E7EB),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.accentBlue,
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Progress Soal',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151),
-                      ),
-                    ),
-                    Text(
-                      '$progressPercent%',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF2563EB),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progressValue,
-                    minHeight: 8,
-                    backgroundColor: const Color(0xFFE5E7EB),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.accentBlue,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: ElevatedButton.icon(
-                      onPressed: () => widget.type == 'tryout'
-                          ? _openTryoutSoalManagement(item)
-                          : _openOlimpiadeSoalManagement(item),
-                      icon: const Icon(Icons.menu_book_outlined, size: 18),
-                      label: const Text('Kelola Soal'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accentBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 42,
+                  child: OutlinedButton.icon(
+                    onPressed: () => widget.type == 'tryout'
+                        ? _openTryoutSoalManagement(item)
+                        : _openOlimpiadeSoalManagement(item),
+                    icon: const Icon(Icons.menu_book_outlined, size: 18),
+                    label: const Text('Kelola Soal'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF111827),
+                      side: const BorderSide(color: Color(0xFFD1D5DB)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                _buildActionIconButton(
-                  icon: Icons.edit_outlined,
-                  iconColor: const Color(0xFF6B7280),
-                  borderColor: const Color(0xFFE5E7EB),
-                  onPressed: () => _openForm(item: item),
-                  tooltip: 'Edit',
-                ),
-                const SizedBox(width: 8),
-                _buildActionIconButton(
-                  icon: Icons.delete_outline,
-                  iconColor: const Color(0xFFEF4444),
-                  borderColor: const Color(0xFFFECACA),
-                  onPressed: () => _deleteItem(item),
-                  tooltip: 'Hapus',
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.edit_outlined,
+                iconColor: const Color(0xFF6B7280),
+                borderColor: const Color(0xFFD1D5DB),
+                onPressed: () => _openForm(item: item),
+                tooltip: 'Edit',
+              ),
+              const SizedBox(width: 8),
+              _buildActionIconButton(
+                icon: Icons.delete_outline,
+                iconColor: const Color(0xFFEF4444),
+                borderColor: const Color(0xFFFECACA),
+                onPressed: () => _deleteItem(item),
+                tooltip: 'Hapus',
+              ),
+            ],
           ),
         ],
       ),
@@ -451,11 +418,11 @@ class _MentorCompetitionManagementState
       child: GestureDetector(
         onTap: onPressed,
         child: Container(
-          width: 44,
-          height: 44,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
@@ -497,11 +464,11 @@ class _MentorCompetitionManagementState
   ) {
     return Container(
       width: 160,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -509,33 +476,34 @@ class _MentorCompetitionManagementState
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: color, size: 18),
+            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
+                  ),
                 ),
-              ),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF6B7280),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -555,7 +523,7 @@ class _MentorCompetitionManagementState
       activeMenuTitle: isTryout ? 'Try Out' : 'Olimpiade Akademik',
       onMenuTap: _onSidebarMenuTap,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFFF3F4F6),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
@@ -621,13 +589,14 @@ class _MentorCompetitionManagementState
                         ),
                       ),
                       const SizedBox(height: 32),
+
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
                             _buildInfoCard(
                               visibleItems.length.toString(),
-                              'Total Data',
+                              'Total Mata Pelajaran',
                               Icons.view_list_outlined,
                               AppColors.accentBlue,
                             ),
@@ -668,7 +637,7 @@ class _MentorCompetitionManagementState
                               hintText: hintText,
                               prefixIcon: prefixIcon,
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: const Color(0xFFF8FAFC),
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 14,
@@ -773,11 +742,11 @@ class _MentorCompetitionManagementState
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.accentBlue,
+                              backgroundColor: const Color(0xFF2563EB),
                               foregroundColor: Colors.white,
-                              minimumSize: const Size(0, 44),
+                              minimumSize: const Size(182, 48),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 22,
+                                horizontal: 20,
                                 vertical: 14,
                               ),
                               shape: RoundedRectangleBorder(
@@ -970,28 +939,28 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
       backgroundColor: Colors.transparent,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: 900,
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
+          maxWidth: 720,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(18),
             boxShadow: const [
               BoxShadow(
-                color: Color.fromRGBO(15, 23, 42, 0.18),
-                blurRadius: 30,
-                offset: Offset(0, 18),
+                color: Color.fromRGBO(15, 23, 42, 0.16),
+                blurRadius: 24,
+                offset: Offset(0, 14),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(18),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
@@ -1002,21 +971,21 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                   child: Row(
                     children: [
                       Container(
-                        width: 42,
-                        height: 42,
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           widget.existing == null
                               ? Icons.add
                               : Icons.edit_rounded,
                           color: Colors.white,
-                          size: 22,
+                          size: 20,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1029,18 +998,18 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   : 'Edit',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
+                                fontSize: 18,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 3),
                             Text(
                               isOlimpiade
                                   ? 'Form Olimpiade Akademik'
                                   : 'Form Try Out',
                               style: const TextStyle(
                                 color: Colors.white70,
-                                fontSize: 12.5,
+                                fontSize: 12,
                                 height: 1.3,
                               ),
                             ),
@@ -1056,7 +1025,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                 ),
                 Flexible(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
                     child: SingleChildScrollView(
                       child: Form(
                         key: _formKey,
@@ -1066,12 +1035,12 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                             const Text(
                               'Isi detail kompetisi di bawah',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF374151),
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 14),
                             TextFormField(
                               controller: _titleController,
                               validator: (v) => v == null || v.isEmpty
@@ -1101,7 +1070,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             TextFormField(
                               controller: _subjectController,
                               validator: (v) =>
@@ -1130,7 +1099,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             if (isOlimpiade) ...[
                               TextFormField(
                                 controller: _scheduleController,
@@ -1178,7 +1147,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                             ] else ...[
                               TextFormField(
                                 controller: _durationController,
@@ -1208,7 +1177,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               TextFormField(
                                 controller: _totalQuestionsController,
                                 keyboardType: TextInputType.number,
@@ -1237,7 +1206,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                             ],
                             DropdownButtonFormField<String>(
                               initialValue: _selectedClass,
@@ -1289,7 +1258,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
                   child: Row(
                     children: [
                       Expanded(

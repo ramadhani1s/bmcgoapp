@@ -337,8 +337,10 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _soalList.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (_, i) => _buildSoalCard(i, _soalList[i]),
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, i) =>
+                            _buildSoalCard(i, _soalList[i]),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(

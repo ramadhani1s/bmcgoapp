@@ -83,7 +83,9 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     if (title == 'Jadwal Mengajar') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const JadwalPembelajaranScreen()),
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        ),
       );
       return;
     }
@@ -260,7 +262,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       onMenuTap: _onSidebarMenuTap,
       child: Scaffold(
         backgroundColor: AppColors.pageBg,
-       
+
         body: _isLoading && _materiList.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
@@ -336,7 +338,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
           SizedBox(
             width: 180,
             child: DropdownButtonFormField<String>(
-              value: _selectedClass,
+              initialValue: _selectedClass,
               items: _fixedClassOptions
                   .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                   .toList(),

@@ -391,4 +391,25 @@ class JadwalService {
       return [];
     }
   }
+
+  // Get mentor jadwal (protected, for mentor dashboard)
+  static Future<List<Map<String, dynamic>>> getMentorJadwalList() async {
+    try {
+      final headers = await _getHeaders();
+
+      final response = await _requestPublicWithFallback(
+        (baseUrl) =>
+            http.get(Uri.parse('$baseUrl/mentor/jadwal'), headers: headers),
+      );
+
+      if (response.statusCode == 200) {
+        final list = _parseListResponse(response.body);
+        return list;
+      }
+      return [];
+    } catch (e) {
+      print("❌ ERROR: $e");
+      return [];
+    }
+  }
 }

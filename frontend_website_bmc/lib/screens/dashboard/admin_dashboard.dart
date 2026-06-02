@@ -1045,7 +1045,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 border: Border.all(
                                   color: _getStatusColorDashboard(
                                     item,
-                                  ).withOpacity(0.35),
+                                  ).withValues(alpha: 0.35),
                                 ),
                               ),
                               child: Text(

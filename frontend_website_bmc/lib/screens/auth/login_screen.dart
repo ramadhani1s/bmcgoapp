@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/user.dart';
 import '../../services/auth_service.dart';
 
@@ -41,12 +42,14 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result['success'] == true) {
       final user = result['user'] as User;
 
-      print(
-        'DEBUG: Login user - ID: ${user.id}, Role: ${user.roleId}, Nama: ${user.nama}',
-      );
-      print(
-        'DEBUG: isAdmin=${user.isAdmin}, isMentor=${user.isMentor}, isSiswa=${user.isSiswa}',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          'DEBUG: Login user - ID: ${user.id}, Role: ${user.roleId}, Nama: ${user.nama}',
+        );
+        debugPrint(
+          'DEBUG: isAdmin=${user.isAdmin}, isMentor=${user.isMentor}, isSiswa=${user.isSiswa}',
+        );
+      }
 
       if (user.isAdmin) {
         Navigator.of(context).pushReplacementNamed('/admin-dashboard');

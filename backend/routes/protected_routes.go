@@ -123,6 +123,7 @@ func ProtectedRoutes(r *gin.Engine) {
 	mentor.DELETE("/olimpiade/:id", handlers.DeleteOlimpiadeHandler)
 	mentor.GET("/olimpiade/:id/peserta", handlers.GetPesertaOlimpiadeHandler)
 	mentor.POST("/olimpiade/:id/peserta", handlers.CreatePesertaOlimpiadeHandler)
+	mentor.GET("/jadwal", handlers.GetMentorJadwalList)
 	mentor.POST("/attendance/start", handlers.StartAttendanceSessionHandler)
 	mentor.GET("/attendance/active", handlers.GetActiveAttendanceSessionHandler)
 	mentor.GET("/attendance/sessions/:sessionId/summary", handlers.GetAttendanceSessionSummaryHandler)
