@@ -184,8 +184,16 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   Future<void> _openCreateForm() async {
     final result = await Navigator.push<bool?>(
       context,
-      MaterialPageRoute(
-        builder: (ctx) => CreateLatihanScreen(mapel: _selectedMapel),
+      PageRouteBuilder<bool?>(
+        opaque: false,
+        pageBuilder: (ctx, animation, secondaryAnimation) =>
+            CreateLatihanScreen(mapel: _selectedMapel),
+        transitionsBuilder: (ctx, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          );
+        },
       ),
     );
 
