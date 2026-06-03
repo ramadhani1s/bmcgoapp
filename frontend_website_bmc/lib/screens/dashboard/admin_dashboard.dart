@@ -13,6 +13,7 @@ import 'admin_kelola_absensi_screen.dart';
 import 'admin_kelola_alumni_screen.dart';
 import '../mentor_management_screen.dart';
 import '../../models/payment_verification_item.dart';
+import '../../routes/app_routes.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key, this.initialMenuTitle});
@@ -749,45 +750,71 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ],
           ),
           const SizedBox(width: 12),
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: const Color(0xFF6388FF),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'AD',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
+          InkWell(
+            onTap: () {
+              Navigator.of(context).pushNamed(AppRoutes.adminProfile).then((_) {
+                _loadUser();
+              });
+            },
+            borderRadius: BorderRadius.circular(8),
+            hoverColor: Colors.black12,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A58F2),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF2A58F2).withOpacity(0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _currentUser?.nama.isNotEmpty == true
+                          ? _currentUser!.nama.substring(0, 2).toUpperCase()
+                          : 'AD',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _currentUser?.nama.isNotEmpty == true
+                            ? _currentUser!.nama
+                            : 'Admin BMC',
+                        style: const TextStyle(
+                          color: Color(0xFF27344B),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        _currentUser?.roleName == 'Unknown'
+                            ? 'Administrator'
+                            : _currentUser!.roleName,
+                        style: const TextStyle(color: Color(0xFF99A4B5), fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _currentUser?.nama.isNotEmpty == true
-                    ? _currentUser!.nama
-                    : 'Admin BMC',
-                style: const TextStyle(
-                  color: Color(0xFF27344B),
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                _currentUser?.roleName == 'Unknown'
-                    ? 'Administrator'
-                    : _currentUser!.roleName,
-                style: const TextStyle(color: Color(0xFF99A4B5), fontSize: 10),
-              ),
-            ],
           ),
         ],
       ),
@@ -915,13 +942,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ),
                       ),
                       Container(
-                        width: 38,
-                        height: 38,
+                        width: 42,
+                        height: 42,
                         decoration: BoxDecoration(
-                          color: e.color,
-                          borderRadius: BorderRadius.circular(8),
+                          color: e.color.withOpacity(0.12),
+                          shape: BoxShape.circle,
                         ),
-                        child: Icon(e.icon, color: Colors.white, size: 20),
+                        child: Icon(e.icon, color: e.color, size: 22),
                       ),
                     ],
                   ),
@@ -952,24 +979,50 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 topRight: Radius.circular(10),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Pendaftaran Menunggu Verifikasi',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
+            child: Row(
+  children: [
+    Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Pendaftaran Menunggu Verifikasi',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${_summary?.waitingVerifications ?? 0} pendaftaran belum diverifikasi',
+            style: const TextStyle(
+              color: Color(0xFFFFD5BC),
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    ),
+
+                TextButton(
+                  onPressed: () {
+                    final index = _menuItems.indexWhere(
+                      (item) => item.title == 'Verifikasi Pendaftaran',
+                    );
+
+                    if (index != -1) {
+                      setState(() {
+                        _selectedMenuIndex = index;
+                        _selectedMenuTitle = 'Verifikasi Pendaftaran';
+                      });
+                    }
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.15),
+                    foregroundColor: Colors.white,
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${_summary?.waitingVerifications ?? 0} pendaftaran belum diverifikasi',
-                  style: const TextStyle(
-                    color: Color(0xFFFFD5BC),
-                    fontSize: 11,
-                  ),
+                  child: const Text('Lihat Detail'),
                 ),
               ],
             ),
@@ -1181,33 +1234,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                     ),
               ],
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 0, 12),
-              child: TextButton(
-                onPressed: () {
-                  final index = _menuItems.indexWhere(
-                    (item) => item.title == 'Verifikasi Pendaftaran',
-                  );
-
-                  if (index != -1) {
-                    setState(() {
-                      _selectedMenuIndex = index;
-                      _selectedMenuTitle = 'Verifikasi Pendaftaran';
-                    });
-                  }
-                },
-                child: const Text(
-                  'Lihat Detail',
-                  style: TextStyle(
-                    color: Color(0xFFFF6400),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
             ),
           ),
         ],

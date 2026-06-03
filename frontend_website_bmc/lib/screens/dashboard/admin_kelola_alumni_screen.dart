@@ -115,10 +115,10 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
         builder: (dialogCtx, setStateDialog) {
           final messenger = ScaffoldMessenger.of(ctx);
           final bodyFont = GoogleFonts.plusJakartaSans();
-          final titleStyle = GoogleFonts.dmSerifDisplay(
+          final titleStyle = GoogleFonts.plusJakartaSans(
             color: Colors.white,
             fontSize: 22,
-            height: 1.05,
+            fontWeight: FontWeight.w800,
           );
 
           final inputDecoration = InputDecoration(
@@ -578,7 +578,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                 backgroundColor: const Color(0xFF2563EB),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
@@ -608,14 +608,15 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                   children: [
                     Text(
                       'Kelola Alumni',
-                      style: GoogleFonts.dmSerifDisplay(
-                        fontSize: 32,
-                        color: const Color(0xFF1F2937),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Buat, kelola, dan tampilkan profil alumni yang sudah lulus',
+                      'Kelola dan tampilkan seluruh data alumni yang telah lulus dari BMC',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         color: const Color(0xFF6B7280),
@@ -633,7 +634,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
@@ -689,8 +690,8 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                       Text(
                         'Daftar Alumni',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
                           color: Colors.white,
                         ),
                       ),
@@ -741,7 +742,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: valueColor.withAlpha(42)),
       ),
       child: Row(
@@ -863,9 +864,17 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
       children: [
         Expanded(
           child: TextField(
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Cari nama alumni...',
+              hintStyle: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                color: const Color(0xFF94A3B8),
+              ),
               prefixIcon: const Icon(Icons.search, color: Color(0xFF9AA4B6)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -893,7 +902,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
         ),
         const SizedBox(width: 12),
         SizedBox(
-          width: 170,
+          width: 200,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
@@ -905,7 +914,13 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
               final items = _buildYearFilterOptions()
                   .map((tahun) => DropdownMenuItem(
                         value: tahun,
-                        child: Text(tahun, style: const TextStyle(fontSize: 13)),
+                        child: Text(
+                          tahun,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ))
                   .toList();
               final hasSelected = items.any((it) => it.value == _selectedTahun);
@@ -947,7 +962,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           Container(
@@ -979,10 +994,10 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
               children: [
                 Text(
                   alumni.nama,
-                  style: const TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
-                    color: Color(0xFF1F2937),
+                    color: const Color(0xFF1F2937),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -990,9 +1005,9 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                 const SizedBox(height: 4),
                 Text(
                   alumni.sekolah,
-                  style: const TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: Color(0xFF6B7280),
+                    color: const Color(0xFF6B7280),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1144,9 +1159,9 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
           side: BorderSide(color: color.withValues(alpha: 0.28)),
           padding: const EdgeInsets.all(8),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-          minimumSize: const Size(36, 36),
+          minimumSize: const Size(40, 40),
         ),
-        child: Icon(icon, size: 16, color: color),
+        child: Icon(icon, size: 18, color: color),
       ),
     );
   }
