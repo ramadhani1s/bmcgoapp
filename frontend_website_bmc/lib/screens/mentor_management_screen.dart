@@ -1285,13 +1285,12 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
         .where((e) => e.status.toLowerCase() == 'aktif')
         .length;
 
-    final tableSection = useExpandedTable
-        ? Expanded(child: _buildMentorTableCard())
-        : SizedBox(height: 500, child: _buildMentorTableCard());
+    final tableSection = _buildMentorTableCard();
 
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -1414,6 +1413,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
 
           tableSection,
         ],
+      ),
       ),
     );
   }

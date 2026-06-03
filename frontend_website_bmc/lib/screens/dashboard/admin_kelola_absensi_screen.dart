@@ -26,10 +26,7 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AdminSidebarShell(
-      activeMenuTitle: 'Kelola Absensi',
-      onMenuTap: _onSidebarMenuTap,
-      child: Container(
+    return Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7F9FF), Color(0xFFF3F6FB)],
@@ -37,10 +34,9 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-            child: Column(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+          child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ================= TITLE =================
@@ -468,9 +464,7 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
               ],
             ),
           ),
-        ),
-      ),
-    );
+        );
   }
 
   void _onSidebarMenuTap(String title) {

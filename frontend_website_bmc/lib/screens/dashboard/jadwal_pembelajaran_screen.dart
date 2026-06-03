@@ -424,23 +424,22 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
-    return MentorSidebarShell(
-      activeMenuTitle: 'Jadwal Mengajar',
-      onMenuTap: _onSidebarMenuTap,
-      child: Material(
-        type: MaterialType.transparency,
-        child: RefreshIndicator(
+    return RefreshIndicator(
           onRefresh: _loadInitialData,
           child: Container(
             decoration: const BoxDecoration(color: Color(0xFFF8FAFC)),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+                child: Column(
+
+                
                 children: [
                   Container(
                     width: double.infinity,
@@ -765,11 +764,10 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                   ),
                 ],
               ),
+              ),
             ),
-          ),
-        ),
-      ),
-    );
+            ),
+        );
   }
 }
 
@@ -791,7 +789,8 @@ class _StatCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+    Widget build(BuildContext context) {
+     print("JADWAL SCREEN BUILD");
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(

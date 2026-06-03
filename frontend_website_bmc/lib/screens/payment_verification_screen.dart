@@ -13,7 +13,7 @@ class PaymentVerificationScreen extends StatefulWidget {
 }
 
 class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
-  static const Color _pageBg = Color(0xFFF7F9FF);
+  static const Color _pageBg = Color(0xFFF8FAFC);
   static const Color _surface = Colors.white;
   static const Color _border = Color(0xFFE6EDF7);
   static const Color _primary = Color(0xFF2563EB);
@@ -233,48 +233,73 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, int value, Color bgColor) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: _border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '$value',
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF111827),
-              ),
-            ),
-          ],
+  Widget _buildStatCard(
+  String title,
+  int value,
+  Color color,
+  Color backgroundColor,
+  IconData icon,
+) {
+  return Expanded(
+    child: Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: color.withValues(alpha: 0.18),
         ),
       ),
-    );
-  }
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '$value',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Row(
@@ -645,21 +670,55 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Verifikasi Pendaftaran',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
-                    letterSpacing: -0.4,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Kelola Verifikasi Pendaftaran',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Verifikasi pembayaran dan pendaftaran siswa',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.verified_user,
+                        color: Colors.white,
+                        size: 64,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Lihat, kelola, dan perbarui data verifikasi pendaftaran siswa baru',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 20),
                 FutureBuilder<PaymentVerificationOverview>(
                   future: _overviewFuture,
                   builder: (context, snapshot) {
@@ -675,40 +734,93 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                         _buildStatCard(
                           'Menunggu Verifikasi',
                           overview.waiting,
+                          const Color(0xFFF59E0B),
                           const Color(0xFFFFF1E6),
+                          Icons.pending_actions,
                         ),
+
+                        const SizedBox(width: 14),
+
                         _buildStatCard(
                           'Disetujui',
                           overview.approved,
+                          const Color(0xFF16A34A),
                           const Color(0xFFEAF8EF),
+                          Icons.check_circle,
                         ),
+
+                        const SizedBox(width: 14),
+
                         _buildStatCard(
                           'Ditolak',
                           overview.rejected,
+                          const Color(0xFFEF4444),
                           const Color(0xFFFFECEC),
+                          Icons.cancel,
                         ),
                       ],
                     );
                   },
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: _buildSearchBar()),
-                    const SizedBox(width: 10),
-                    _buildFilterChip('Pending', 'pending'),
-                    const SizedBox(width: 10),
-                    _buildFilterChip('Disetujui', 'approved'),
-                    const SizedBox(width: 10),
-                    _buildFilterChip('History', 'all'),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: _logout,
-                      child: const Text('Keluar'),
+                Container(
+  padding: const EdgeInsets.all(12),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(18),
+    border: Border.all(
+      color: const Color(0xFFE6EDF7),
+    ),
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        flex: 2,
+        child: _buildSearchBar(),
+      ),
+
+      const SizedBox(width: 12),
+
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedFilter,
+                    decoration: InputDecoration(
+                      labelText: 'Filter Status',
+                      prefixIcon: const Icon(
+                        Icons.filter_alt_outlined,
+                        color: Color(0xFF2563EB),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
-                  ],
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'pending',
+                        child: Text('Menunggu'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'approved',
+                        child: Text('Disetujui'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'all',
+                        child: Text('Semua Data'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        _setFilter(value);
+                      }
+                    },
+                  ),
                 ),
-                const SizedBox(height: 22),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
                 _buildTableSection(),
               ],
             ),

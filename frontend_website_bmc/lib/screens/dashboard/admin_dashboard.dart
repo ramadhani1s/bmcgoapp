@@ -407,7 +407,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1120),
-                  child: SingleChildScrollView(
+                  child: Padding(
                     padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
