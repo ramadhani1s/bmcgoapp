@@ -409,7 +409,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   constraints: const BoxConstraints(maxWidth: 1120),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
-                    child: Column(
+                    child: SingleChildScrollView(
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (_selectedMenuTitle == 'Kelola Mentor')
@@ -449,6 +450,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
                 ),
               ),
+            ),
             ),
           ],
         ),
