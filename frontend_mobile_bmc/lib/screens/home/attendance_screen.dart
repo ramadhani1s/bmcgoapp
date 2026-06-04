@@ -24,6 +24,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Timer? _countdownTimer;
   Timer? _refreshTimer;
   Map<String, dynamic>? _activeSession;
+  DateTime? _localDeadline;
   Duration _remainingTime = Duration.zero;
 
   @override
@@ -56,8 +57,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   void _updateCountdown() {
-    final active = _activeSession;
-    if (active == null) {
+    final localDeadline = _localDeadline;
+    if (localDeadline == null) {
       if (_remainingTime != Duration.zero) {
         setState(() {
           _remainingTime = Duration.zero;
@@ -66,11 +67,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return;
     }
 
-    final nowMillis = DateTime.now().millisecondsSinceEpoch;
-    final deadlineUnix = active['hadir_deadline_unix'] as int? ?? 0;
-    final remaining = Duration(
-      milliseconds: (deadlineUnix * 1000) - nowMillis,
-    );
+    final remaining = localDeadline.difference(DateTime.now());
 
     if (!mounted) return;
 
@@ -84,13 +81,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (!mounted) return;
 
     if (response['success'] == true && response['session'] != null) {
+      final session = response['session'] as Map<String, dynamic>;
+      final serverTimeUnix = response['server_time_unix'] as int? ?? (DateTime.now().millisecondsSinceEpoch ~/ 1000);
+      final deadlineUnix = session['hadir_deadline_unix'] as int? ?? 0;
+      
+      final clientNow = DateTime.now().millisecondsSinceEpoch;
+      final serverOffsetMillis = (deadlineUnix - serverTimeUnix) * 1000;
+
       setState(() {
-        _activeSession = response['session'] as Map<String, dynamic>;
+        _activeSession = session;
+        _localDeadline = DateTime.fromMillisecondsSinceEpoch(clientNow + serverOffsetMillis);
       });
       _updateCountdown();
     } else {
       setState(() {
         _activeSession = null;
+        _localDeadline = null;
         _remainingTime = Duration.zero;
       });
     }

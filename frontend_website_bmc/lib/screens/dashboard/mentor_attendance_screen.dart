@@ -781,11 +781,6 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                               const Color(0xFF16A34A),
                             ),
                             _buildSummaryCard(
-                              'Terlambat',
-                              _summary!['terlambat'] ?? 0,
-                              const Color(0xFFE67E22),
-                            ),
-                            _buildSummaryCard(
                               'Tidak Hadir',
                               _summary!['tidak_hadir'] ?? 0,
                               const Color(0xFFDC2626),
@@ -800,7 +795,7 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                           if (isWide) {
                             return GridView.count(
                               physics: const NeverScrollableScrollPhysics(),
-                              crossAxisCount: 4,
+                              crossAxisCount: 3,
                               shrinkWrap: true,
                               mainAxisSpacing: 12,
                               crossAxisSpacing: 12,
