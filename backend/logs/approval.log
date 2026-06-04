@@ -2,3 +2,8 @@
 2026-05-19T14:47:26+07:00 - ApprovePaymentVerification: transaction=BMC-23-2-1779176798715 user_id=23 db_user_status= is_verified=true verified_by_admin=0xc000483050 verified_at=2026-05-19 14:47:26.977851 +0000 UTC
 2026-05-19T15:10:10+07:00 - ApprovePaymentVerification: transaction=BMC-24-1-1779178108104 user_id=24 db_user_status= is_verified=true verified_by_admin=0xc000112fa0 verified_at=2026-05-19 15:10:10.32037 +0000 UTC
 2026-05-19T15:18:04+07:00 - ApprovePaymentVerification: transaction=BMC-25-1-1779178634909 user_id=25 db_user_status= is_verified=true verified_by_admin=0xc00000b328 verified_at=2026-05-19 15:18:04.560649 +0000 UTC
+2026-06-04T19:18:41+07:00 - ApprovePaymentVerification: transaction=BMC-28-2-1780574887768 user_id=28 db_user_status= is_verified=true verified_by_admin=0xc000b01bd0 verified_at=2026-06-04 19:18:41.367639 +0000 UTC
+2026-06-04T19:18:46+07:00 - ApprovePaymentVerification: transaction=BMC-28-2-1780565671919 user_id=28 db_user_status= is_verified=true verified_by_admin=0xc00011ccf8 verified_at=2026-06-04 19:18:46.662622 +0000 UTC
+2026-06-04T19:19:31+07:00 - ApprovePaymentVerification: transaction=BMC-28-2-1780564391607 user_id=28 db_user_status= is_verified=true verified_by_admin=0xc000877770 verified_at=2026-06-04 19:19:31.595167 +0000 UTC
+2026-06-04T19:19:43+07:00 - ApprovePaymentVerification: transaction=BMC-25-2-1780473199793 user_id=25 db_user_status= is_verified=true verified_by_admin=0xc00011c0a8 verified_at=2026-06-04 19:19:43.853675 +0000 UTC
+2026-06-04T20:42:25+07:00 - ApprovePaymentVerification: transaction=BMC-1-1-1780578989573 user_id=1 db_user_status= is_verified=true verified_by_admin=0xc000418288 verified_at=2026-06-04 20:42:25.643997 +0000 UTC

@@ -120,20 +120,44 @@ func Register(user models.User) error {
 		return errors.New("gagal hash password")
 	}
 
+	var userID int
 	query := `
 		INSERT INTO users
-		(nama,email,password,role_id,status)
-		VALUES ($1,$2,$3,$4,'nonaktif')
+		(nama,email,password,role_id,status,phone_number)
+		VALUES ($1,$2,$3,$4,'nonaktif',$5)
+		RETURNING id
 	`
 
-	_, err = config.DB.Exec(
+	err = config.DB.QueryRow(
 		context.Background(),
 		query,
 		user.Nama,
 		user.Email,
 		string(hashedPassword),
 		user.RoleID,
-	)
+		user.WhatsApp,
+	).Scan(&userID)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Jika mendaftar sebagai siswa, masukkan data pelengkap ke tabel siswa
+	if user.RoleID == 3 {
+		siswaQuery := `
+			INSERT INTO siswa (user_id, kelas, asal_sekolah, alamat)
+			VALUES ($1, $2, $3, $4)
+		`
+		_, err = config.DB.Exec(
+			context.Background(),
+			siswaQuery,
+			userID,
+			user.Kelas,
+			user.AsalSekolah,
+			user.Alamat,
+		)
+		return err
+	}
+
+	return nil
 }
