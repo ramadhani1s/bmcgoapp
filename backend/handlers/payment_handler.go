@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/coreapi"
+	"github.com/midtrans/midtrans-go/snap"
 )
 
 // PaymentRequest struct untuk menerima data pembayaran
@@ -221,13 +222,19 @@ func CreateTransaction(c *gin.Context) {
 
 	transactionID := fmt.Sprintf("BMC-%d-%s-%d", userIDInt, req.PackageID, time.Now().UnixMilli())
 
-	chargeReq := &coreapi.ChargeReq{
-		PaymentType: coreapi.PaymentTypeBankTransfer,
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	successPath := strings.Replace(c.Request.URL.Path, "/create-transaction", "/success", 1)
+	successURL := fmt.Sprintf("%s://%s%s", scheme, c.Request.Host, successPath)
+
+	snapReq := &snap.Request{
 		TransactionDetails: midtrans.TransactionDetails{
 			OrderID:  transactionID,
 			GrossAmt: amount,
 		},
-		CustomerDetails: &midtrans.CustomerDetails{
+		CustomerDetail: &midtrans.CustomerDetails{
 			FName: req.CustomerName,
 			Email: req.CustomerEmail,
 			Phone: req.CustomerPhone,
@@ -238,35 +245,27 @@ func CreateTransaction(c *gin.Context) {
 			Price: amount,
 			Qty:   1,
 		}},
-		BankTransfer: &coreapi.BankTransferDetails{
-			Bank: resolveBankTransferBank(),
+		Callbacks: &snap.Callbacks{
+			Finish: successURL,
 		},
 	}
 
-	client := coreapi.Client{}
+	client := snap.Client{}
 	client.New(midtrans.ServerKey, midtrans.Sandbox)
-	chargeResp, midtransErr := client.ChargeTransaction(chargeReq)
+	snapResp, midtransErr := client.CreateTransaction(snapReq)
 	if midtransErr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create transaction", "error": midtransErr.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create snap transaction", "error": midtransErr.GetMessage()})
 		return
 	}
 
-	status := normalizeStatus(chargeResp.TransactionStatus)
-	if status == "" {
-		status = "pending"
-	}
-	savePaymentTransaction(c, transactionID, userIDInt, req, amount, status, chargeResp.PaymentType)
-
-	bank, vaNumber, billKey, billerCode := extractPaymentDetails(chargeResp)
+	status := "pending"
+	savePaymentTransaction(c, transactionID, userIDInt, req, amount, status, "snap")
 
 	c.JSON(http.StatusOK, gin.H{"message": "Transaction created successfully", "data": PaymentResponse{
-		TransactionID:        transactionID,
-		Status:               status,
-		PaymentType:          chargeResp.PaymentType,
-		VirtualAccountBank:   bank,
-		VirtualAccountNumber: vaNumber,
-		BillKey:              billKey,
-		BillerCode:           billerCode,
+		TransactionID: transactionID,
+		Status:        status,
+		Token:         snapResp.Token,
+		RedirectURL:   snapResp.RedirectURL,
 	}})
 }
 
@@ -351,6 +350,37 @@ func PaymentNotification(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Notification received", "order_id": transactionID, "transaction_status": status})
+}
+
+// PaymentSuccessPage menampilkan halaman sukses statis
+func PaymentSuccessPage(c *gin.Context) {
+	html := `<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pembayaran Selesai</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f5f5f5; margin: 0; text-align: center; padding: 20px; }
+        .card { background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; width: 100%; }
+        .icon { font-size: 60px; margin-bottom: 20px; }
+        h1 { color: #2D8B3A; font-size: 24px; margin-bottom: 10px; }
+        p { color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 25px; }
+        .instruction { background-color: #FFF3CD; color: #856404; padding: 15px; border-radius: 8px; font-size: 14px; font-weight: 600; border: 1px solid #FFEEBA; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">✅</div>
+        <h1>Pembayaran Diproses</h1>
+        <p>Transaksi Anda telah kami terima dan sedang diverifikasi oleh sistem.</p>
+        <div class="instruction">
+            💡 Silakan tekan tombol X (Silang) atau Done di sudut layar untuk kembali ke aplikasi.
+        </div>
+    </div>
+</body>
+</html>`
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
 }
 
 // GetPaymentHistory daftar riwayat pembayaran user

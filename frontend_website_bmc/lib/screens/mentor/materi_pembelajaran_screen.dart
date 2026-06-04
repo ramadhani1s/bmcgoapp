@@ -7,7 +7,6 @@ import '../../routes/app_routes.dart';
 import '../../models/user.dart';
 import '../../models/materi_pembelajaran.dart';
 import 'latihan_soal_screen.dart';
-import '../../models/materi_pembelajaran.dart';
 import '../dashboard/jadwal_pembelajaran_screen.dart';
 import '../dashboard/mentor_attendance_screen.dart';
 import '../dashboard/mentor_olimpiade_screen.dart';
@@ -41,8 +40,6 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     'Kelas 12 IPA',
     'Kelas 12 IPS',
   ];
-
-  // Use AppColors directly in widgets for consistency with Admin
 
   @override
   void initState() {
@@ -88,8 +85,8 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     if (title == 'Jadwal Mengajar') {
       Navigator.pushReplacement(
         context,
-        InstantPageRoute(
-          child: const JadwalPembelajaranScreen(mentorView: true),
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
         ),
       );
       return;
@@ -97,7 +94,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     if (title == 'Absensi Kelas') {
       Navigator.pushReplacement(
         context,
-        InstantPageRoute(child: const MentorAttendanceScreen()),
+        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
       );
       return;
     }
@@ -115,7 +112,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     if (title == 'Olimpiade Akademik') {
       Navigator.pushReplacement(
         context,
-        InstantPageRoute(child: const MentorOlimpiadeScreen()),
+        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
       );
     }
   }
@@ -154,8 +151,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       _showErrorSnackBar('Gagal mengunduh file');
     }
   }
-
-  Future<void> _handleDelete(int id) async {
+    Future<void> _handleDelete(int id) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -268,150 +264,47 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       ),
     );
   }
-
-  @override
+    @override
   Widget build(BuildContext context) {
     return MentorSidebarShell(
       activeMenuTitle: 'Materi Pembelajaran',
       onMenuTap: _onSidebarMenuTap,
       child: Scaffold(
         backgroundColor: AppColors.pageBg,
-
         body: _isLoading && _materiList.isEmpty
             ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 24),
-                    _buildToolbar(),
-                    const SizedBox(height: 16),
-                    if (_materiList.isEmpty)
-                      _buildEmptyState()
-                    else
-                      (_selectedClass == 'Semua Kelas'
-                          ? _buildMateriGrid()
-                          : _buildMateriGridFiltered()),
-                  ],
-                ),
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(constraints),
+                        const SizedBox(height: 24),
+                        _buildToolbar(constraints),
+                        const SizedBox(height: 16),
+                        if (_materiList.isEmpty)
+                          _buildEmptyState()
+                        else
+                          (_selectedClass == 'Semua Kelas'
+                              ? _buildMateriGrid(constraints)
+                              : _buildMateriGridFiltered(constraints)),
+                      ],
+                    ),
+                  );
+                },
               ),
       ),
     );
   }
 
-  Widget _buildToolbar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.softBorder),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Kelola Upload Materi',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Tambahkan file materi baru dengan tampilan tombol yang seragam seperti halaman lain.',
-                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(
-            height: 46,
-            child: ElevatedButton.icon(
-              onPressed: _openUploadDialog,
-              icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-              label: const Text('Upload Materi'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accentBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 180,
-            child: DropdownButtonFormField<String>(
-              initialValue: _selectedClass,
-              dropdownColor: Colors.white,
-              icon: const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: Color(0xFF6B7280),
-                size: 20,
-              ),
-              items: _fixedClassOptions
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _selectedClass = v);
-              },
-              decoration: InputDecoration(
-                prefixIcon: const Icon(
-                  Icons.class_outlined,
-                  size: 18,
-                  color: Color(0xFF2563EB),
-                ),
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF2563EB),
-                    width: 1.4,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ignore: unused_element
-  List<DropdownMenuItem<String>> _buildClassOptions() {
-    return _fixedClassOptions
-        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-        .toList();
-  }
-
-  Widget _buildHeader() {
+  Widget _buildHeader(BoxConstraints constraints) {
+    final isSmallScreen = constraints.maxWidth < 600;
+    
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
       decoration: BoxDecoration(
         color: AppColors.accentBlue,
         borderRadius: BorderRadius.circular(16),
@@ -423,17 +316,17 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
+      child: isSmallScreen
+          ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Icon(Icons.menu_book, color: Colors.white, size: 48),
+                const SizedBox(height: 16),
                 const Text(
                   'Kelola Materi Pembelajaran',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -442,20 +335,223 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                   'Bagikan modul, presentasi, atau dokumen pendukung untuk membantu siswa memahami pelajaran lebih baik.',
                   style: TextStyle(
                     color: Colors.white.withAlpha((0.9 * 255).round()),
-                    fontSize: 14,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Kelola Materi Pembelajaran',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Bagikan modul, presentasi, atau dokumen pendukung untuk membantu siswa memahami pelajaran lebih baik.',
+                        style: TextStyle(
+                          color: Colors.white.withAlpha((0.9 * 255).round()),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 24),
+                const Icon(Icons.menu_book, color: Colors.white, size: 64),
+              ],
+            ),
+    );
+  }
+    Widget _buildToolbar(BoxConstraints constraints) {
+    final isSmallScreen = constraints.maxWidth < 700;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.softBorder),
+      ),
+      child: isSmallScreen
+          ? Column(
+              children: [
+                const Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Kelola Upload Materi',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Tambahkan file materi baru',
+                            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: ElevatedButton.icon(
+                          onPressed: _openUploadDialog,
+                          icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                          label: const Text('Upload Materi'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accentBlue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedClass,
+                          dropdownColor: Colors.white,
+                          icon: const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: Color(0xFF6B7280),
+                            size: 20,
+                          ),
+                          items: _fixedClassOptions
+                              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                              .toList(),
+                          onChanged: (v) {
+                            if (v == null) return;
+                            setState(() => _selectedClass = v);
+                          },
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(
+                              Icons.class_outlined,
+                              size: 18,
+                              color: Color(0xFF2563EB),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Kelola Upload Materi',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Tambahkan file materi baru dengan tampilan tombol yang seragam seperti halaman lain.',
+                        style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: _openUploadDialog,
+                    icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                    label: const Text('Upload Materi'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accentBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 180,
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedClass,
+                    dropdownColor: Colors.white,
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF6B7280),
+                      size: 20,
+                    ),
+                    items: _fixedClassOptions
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() => _selectedClass = v);
+                    },
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(
+                        Icons.class_outlined,
+                        size: 18,
+                        color: Color(0xFF2563EB),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 24),
-          const Icon(Icons.menu_book, color: Colors.white, size: 64),
-        ],
-      ),
     );
   }
-
-  Widget _buildEmptyState() {
+    Widget _buildEmptyState() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 60),
@@ -487,15 +583,17 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     );
   }
 
-  Widget _buildMateriGrid() {
+  Widget _buildMateriGrid(BoxConstraints constraints) {
+    final crossAxisCount = constraints.maxWidth < 600 ? 1 : (constraints.maxWidth < 900 ? 2 : 3);
+    
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 400,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        mainAxisExtent: 140,
+        childAspectRatio: 3.5,
       ),
       itemCount: _materiList.length,
       itemBuilder: (context, index) {
@@ -505,7 +603,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     );
   }
 
-  Widget _buildMateriGridFiltered() {
+  Widget _buildMateriGridFiltered(BoxConstraints constraints) {
     final filtered = _materiList
         .where((m) => m.classLevel == _selectedClass)
         .toList();
@@ -524,14 +622,16 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       );
     }
 
+    final crossAxisCount = constraints.maxWidth < 600 ? 1 : (constraints.maxWidth < 900 ? 2 : 3);
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 400,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        mainAxisExtent: 140,
+        childAspectRatio: 3.5,
       ),
       itemCount: filtered.length,
       itemBuilder: (context, index) {
@@ -540,8 +640,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       },
     );
   }
-
-  Widget _buildMateriCard(MateriPembelajaran materi) {
+    Widget _buildMateriCard(MateriPembelajaran materi) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -565,25 +664,25 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
             '${materi.title}${materi.fileType}',
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 50,
+                  height: 50,
                   decoration: BoxDecoration(
                     color: _getFileColor(
                       materi.fileType,
                     ).withAlpha((0.1 * 255).round()),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     _getFileIcon(materi.fileType),
                     color: _getFileColor(materi.fileType),
-                    size: 32,
+                    size: 28,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -595,28 +694,28 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 14,
                           color: AppColors.textPrimary,
                         ),
                       ),
                       if (materi.description.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           materi.description,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: AppColors.textMuted,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
+                              horizontal: 6,
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
@@ -626,17 +725,17 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                             child: Text(
                               materi.fileType.toUpperCase().replaceAll('.', ''),
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 9,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey.shade700,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
                             _formatFileSize(materi.fileSize),
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: AppColors.textMuted,
                             ),
                           ),
@@ -648,6 +747,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                 IconButton(
                   icon: const Icon(
                     Icons.download_outlined,
+                    size: 20,
                     color: Color(0xFF2563EB),
                   ),
                   onPressed: () => _downloadFile(
@@ -659,13 +759,14 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                 IconButton(
                   icon: const Icon(
                     Icons.assignment_outlined,
+                    size: 20,
                     color: Color(0xFF10B981),
                   ),
                   onPressed: () => _openKelolaSoal(materi),
                   tooltip: 'Kelola Latihan Soal',
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
                   onPressed: () => _handleDelete(materi.id),
                   tooltip: 'Hapus Materi',
                 ),
@@ -677,7 +778,6 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     );
   }
 }
-
 class UploadMateriDialog extends StatefulWidget {
   final int mentorId;
   final VoidCallback onUploadSuccess;
@@ -719,12 +819,11 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
       FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'ppt', 'pptx', 'doc', 'docx'],
-        withData: true, // Penting untuk flutter web
+        withData: true,
       );
 
       if (result != null) {
         final file = result.files.first;
-        // Cek ukuran max 15MB
         if (file.size > 15 * 1024 * 1024) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -738,7 +837,6 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
 
         setState(() {
           _selectedFile = file;
-          // Auto fill title if empty
           if (_titleController.text.isEmpty) {
             _titleController.text = file.name.split('.').first;
           }
@@ -793,247 +891,210 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        width: 500,
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isSmallScreen = constraints.maxWidth < 500;
+          
+          return Container(
+            width: isSmallScreen ? double.infinity : 500,
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Upload Materi Baru',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Upload Materi Baru',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // File Selector
+                  GestureDetector(
+                    onTap: _pickFile,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.pageBg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _selectedFile != null
+                              ? AppColors.accentBlue
+                              : AppColors.border,
+                          width: 2,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            _selectedFile != null
+                                ? Icons.check_circle
+                                : Icons.upload_file,
+                            size: 40,
+                            color: _selectedFile != null
+                                ? AppColors.accentBlue
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _selectedFile != null
+                                ? _selectedFile!.name
+                                : 'Klik untuk memilih file',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _selectedFile != null
+                                  ? AppColors.accentBlue
+                                  : AppColors.textMuted,
+                              fontWeight: _selectedFile != null
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              fontSize: 13,
+                            ),
+                          ),
+                          if (_selectedFile == null) ...[
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Maksimal 15MB. Format: PDF, PPTX, DOCX',
+                              style: TextStyle(fontSize: 11, color: Colors.grey),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Judul Materi',
+                      filled: true,
+                      fillColor: const Color(0xFFF3F4F6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                      ),
+                      prefixIcon: const Icon(Icons.title),
+                    ),
+                    validator: (value) =>
+                        value == null || value.isEmpty ? 'Judul wajib diisi' : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextFormField(
+                    controller: _descController,
+                    decoration: InputDecoration(
+                      labelText: 'Deskripsi (Opsional)',
+                      filled: true,
+                      fillColor: const Color(0xFFF3F4F6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                      ),
+                      prefixIcon: const Icon(Icons.description),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 12),
+
+                  DropdownButtonFormField<String>(
+                    value: _selectedClass,
+                    dropdownColor: Colors.white,
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF6B7280),
+                      size: 20,
+                    ),
+                    items: _classOptions
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() => _selectedClass = v);
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Kelas',
+                      filled: true,
+                      fillColor: const Color(0xFFF3F4F6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  DropdownButtonFormField<String>(
+                    value: _selectedMapel,
+                    items: _mapelOptions
+                        .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() => _selectedMapel = v);
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Mata Pelajaran',
+                      filled: true,
+                      fillColor: const Color(0xFFF3F4F6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: _isUploading ? null : _handleUpload,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accentBlue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: _isUploading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Upload Sekarang',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-
-              // File Selector
-              GestureDetector(
-                onTap: _pickFile,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.pageBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _selectedFile != null
-                          ? AppColors.accentBlue
-                          : AppColors.border,
-                      width: 2,
-                      style: BorderStyle.solid,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        _selectedFile != null
-                            ? Icons.check_circle
-                            : Icons.upload_file,
-                        size: 48,
-                        color: _selectedFile != null
-                            ? AppColors.accentBlue
-                            : Colors.grey.shade400,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _selectedFile != null
-                            ? _selectedFile!.name
-                            : 'Klik untuk memilih file',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: _selectedFile != null
-                              ? AppColors.accentBlue
-                              : AppColors.textMuted,
-                          fontWeight: _selectedFile != null
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                      if (_selectedFile == null) ...[
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Maksimal 15MB. Format: PDF, PPTX, DOCX',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  labelText: 'Judul Materi',
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF2563EB),
-                      width: 1.4,
-                    ),
-                  ),
-                  prefixIcon: const Icon(Icons.title),
-                ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Judul wajib diisi' : null,
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _descController,
-                decoration: InputDecoration(
-                  labelText: 'Deskripsi (Opsional)',
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF2563EB),
-                      width: 1.4,
-                    ),
-                  ),
-                  prefixIcon: const Icon(Icons.description),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedClass,
-                dropdownColor: Colors.white,
-                icon: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFF6B7280),
-                  size: 20,
-                ),
-                items: _classOptions
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _selectedClass = v);
-                },
-                decoration: InputDecoration(
-                  labelText: 'Kelas',
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF2563EB),
-                      width: 1.4,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedMapel,
-                items: _mapelOptions
-                    .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _selectedMapel = v);
-                },
-                decoration: InputDecoration(
-                  labelText: 'Mata Pelajaran',
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF2563EB),
-                      width: 1.4,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const SizedBox(height: 24),
-
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _isUploading ? null : _handleUpload,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accentBlue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: _isUploading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'Upload Sekarang',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
