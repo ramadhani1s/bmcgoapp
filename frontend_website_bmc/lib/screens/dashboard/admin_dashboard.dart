@@ -420,7 +420,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             embeddedInDashboard: true,
                           )
                         else if (_selectedMenuTitle == 'Kelola Jadwal')
-                          const JadwalPembelajaranScreen()
+                          const JadwalPembelajaranScreen(
+                            embeddedInDashboard: true,
+                          )
                         else if (_selectedMenuTitle == 'Kelola Paket Les')
                           const PaketLesScreen()
                         else if (_selectedMenuTitle == 'Kelola Pengumuman')
