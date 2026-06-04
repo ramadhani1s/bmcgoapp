@@ -193,6 +193,57 @@ class _VerifikasiPendaftaranScreenState
     );
   }
 
+  Widget _buildStatCard(
+  String title,
+  String value,
+  Color color,
+  Color bgColor,
+  IconData icon,
+) {
+  return Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(
+        color: color.withOpacity(0.2),
+      ),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Icon(
+          icon,
+          size: 32,
+          color: color,
+        ),
+      ],
+    ),
+  );
+}
+
   Widget _buildTableHeader() {
     return Container(
       decoration: const BoxDecoration(
@@ -410,7 +461,7 @@ class _VerifikasiPendaftaranScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  'Data Verifikasi Pendaftaran',
+                  'Data Pendaftaran',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -419,7 +470,7 @@ class _VerifikasiPendaftaranScreenState
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Data ditampilkan secara dinamis',
+                  'Daftar siswa yang menunggu verifikasi',
                   style: TextStyle(
                     color: Color(0xFFDBEAFE),
                     fontSize: 13,
@@ -436,13 +487,37 @@ class _VerifikasiPendaftaranScreenState
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSearchBar(),
-        const SizedBox(height: 16),
-        FutureBuilder<PaymentVerificationOverview>(
+    Widget build(BuildContext context) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          const Text(
+            'Verifikasi Pendaftaran',
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+
+          SizedBox(height: 6),
+
+          const Text(
+            'Verifikasi pembayaran dan pendaftaran siswa',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF64748B),
+            ),
+          ),
+
+          SizedBox(height: 24),
+
+          _buildSearchBar(),
+
+          const SizedBox(height: 24),
+
+          FutureBuilder<PaymentVerificationOverview>(
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -495,7 +570,54 @@ class _VerifikasiPendaftaranScreenState
             
             final filtered = _filterItems(overview.items);
 
-            return _buildTable(filtered);
+            return Column(
+              children: [
+
+                Row(
+                  children: [
+
+                    Expanded(
+                      child: _buildStatCard(
+                        'Menunggu',
+                        overview.waiting.toString(),
+                        const Color(0xFFF59E0B),
+                        const Color(0xFFFFFBEB),
+                        Icons.pending_actions,
+                      ),
+                    ),
+
+                    const SizedBox(width: 14),
+
+                    Expanded(
+                      child: _buildStatCard(
+                        'Disetujui',
+                        overview.approved.toString(),
+                        const Color(0xFF16A34A),
+                        const Color(0xFFECFDF5),
+                        Icons.check_circle,
+                      ),
+                    ),
+
+                    const SizedBox(width: 14),
+
+                    Expanded(
+                      child: _buildStatCard(
+                        'Ditolak',
+                        overview.rejected.toString(),
+                        const Color(0xFFDC2626),
+                        const Color(0xFFFEF2F2),
+                        Icons.cancel,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                _buildTable(filtered),
+
+              ],
+            );
           },
         ),
       ],

@@ -650,7 +650,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
               .map(
                 (e) => DropdownMenuItem(
                   value: e,
-                  child: Text(e == 'aktif' ? 'Segera Hadir' : 'Nonaktif'),
+                  child: Text(e == 'aktif' ? 'Aktif' : 'Nonaktif'),
                 ),
               )
               .toList(),

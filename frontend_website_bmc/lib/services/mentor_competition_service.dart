@@ -30,6 +30,7 @@ class MentorCompetitionService {
     return fallback;
   }
 
+  // ==================== GET BY TYPE (DIPERBAIKI) ====================
   static Future<List<MentorCompetitionItem>> getByType(
     String type, {
     String? classLevel,
@@ -41,6 +42,12 @@ class MentorCompetitionService {
           .get(Uri.parse('$_baseUrl/api/mentor/$endpoint'), headers: headers)
           .timeout(const Duration(seconds: 15));
 
+      print('========== GET BY TYPE ==========');
+      print('URL: $_baseUrl/api/mentor/$endpoint');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('==================================');
+
       if (response.statusCode != 200) {
         return [];
       }
@@ -48,7 +55,9 @@ class MentorCompetitionService {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final list = (data['data'] as List<dynamic>? ?? const []);
 
-      final items = list.map((raw) {
+      final items = <MentorCompetitionItem>[];
+      
+      for (final raw in list) {
         final row = raw as Map<String, dynamic>;
         final rawCategories = row['category_questions'];
         final parsedCategories = <String, int>{};
@@ -59,24 +68,27 @@ class MentorCompetitionService {
           }
         }
 
-        final totalFromCategories = parsedCategories.values.fold<int>(
-          0,
-          (previousValue, element) => previousValue + element,
-        );
-        return MentorCompetitionItem.fromJson({
+        // 🔥 PERBAIKAN: Langsung ambil total_questions dari response API
+        // Tidak perlu panggil getTotalSoalOlimpiade lagi karena backend sudah mengirimkan total_questions
+        int totalQuestions = row['total_questions'] ?? 0;
+        
+        print('📊 ID: ${row['id']}, Total Soal dari response: $totalQuestions');
+        
+        items.add(MentorCompetitionItem.fromJson({
           'id': row['id'],
           'type': type,
           'class_level': row['class_level'],
           'title': row['judul'] ?? row['nama'],
           'subject': row['lokasi'] ?? '-',
-          'totalQuestions': row['total_questions'] ?? totalFromCategories,
-          'durationLabel': row['durasi'] ?? '-',
+          'totalQuestions': totalQuestions,  // 🔥 PAKAI totalQuestions dari response
+          'soal_terbuat': row['soal_terbuat'] ?? 0, // 🔥 TAMBAHKAN SOAL TERBUAT
+          'durationLabel': row['durasi'] ?? (type == 'olimpiade' ? '120' : '-'),
           'scheduleLabel': row['tanggal'] ?? '',
           'isPublished': true,
           'createdAt': row['tanggal'] ?? DateTime.now().toIso8601String(),
           'categoryQuestions': parsedCategories,
-        });
-      }).toList();
+        }));
+      }
 
       final filtered = classLevel == null || classLevel == 'Semua Kelas'
           ? items
@@ -84,11 +96,13 @@ class MentorCompetitionService {
 
       filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return filtered;
-    } catch (_) {
+    } catch (e) {
+      print('ERROR getByType: $e');
       return [];
     }
   }
 
+  // ==================== CREATE OR UPDATE ====================
   static Future<Map<String, dynamic>> createOrUpdate({
     required String type,
     int? id,
@@ -105,12 +119,20 @@ class MentorCompetitionService {
       final endpoint = type == 'olimpiade' ? 'olimpiade' : 'tryout';
       final isUpdate = id != null && id > 0;
 
+      print('========== CREATE OR UPDATE ==========');
+      print('Type: $type');
+      print('Is Update: $isUpdate');
+      print('Total Questions: $totalQuestions');
+      print('=======================================');
+
       final body = type == 'olimpiade'
           ? {
               'class_level': classLevel,
               'nama': title,
               'tanggal': scheduleLabel,
               'lokasi': subject,
+              'total_questions': totalQuestions,  // 🔥 PASTIKAN INI DIKIRIM
+              'category_questions': categoryQuestions,
             }
           : {
               'paket_id': 0,
@@ -125,6 +147,8 @@ class MentorCompetitionService {
               'category_questions': categoryQuestions,
             };
 
+      print('Request Body: ${jsonEncode(body)}');
+
       final request = isUpdate
           ? await http.put(
               Uri.parse('$_baseUrl/api/mentor/$endpoint/$id'),
@@ -136,6 +160,9 @@ class MentorCompetitionService {
               headers: headers,
               body: jsonEncode(body),
             );
+
+      print('Response Status: ${request.statusCode}');
+      print('Response Body: ${request.body}');
 
       final data = request.body.isNotEmpty ? jsonDecode(request.body) : {};
       if (request.statusCode == 200 || request.statusCode == 201) {
@@ -150,10 +177,12 @@ class MentorCompetitionService {
         'message': _extractError(data, fallback: 'Gagal menyimpan data'),
       };
     } catch (e) {
+      print('ERROR createOrUpdate: $e');
       return {'success': false, 'message': 'Terjadi kesalahan: $e'};
     }
   }
 
+  // ==================== DELETE BY ID ====================
   static Future<Map<String, dynamic>> deleteById(String type, int id) async {
     try {
       final headers = await AuthService.getAuthHeaders();

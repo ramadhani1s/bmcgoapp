@@ -62,4 +62,28 @@ class AttendanceService {
       return const [];
     }
   }
+
+  static Future<Map<String, dynamic>> getActiveSessionForSiswa() async {
+    try {
+      final response = await _client.get(
+        '/siswa/attendance/active',
+        auth: true,
+      );
+
+      final body = response.body.isNotEmpty
+          ? jsonDecode(response.body) as Map<String, dynamic>
+          : <String, dynamic>{};
+
+      if (response.statusCode == 200) {
+        return {'success': true, ...body};
+      }
+
+      return {
+        'success': false,
+        'message': (body['error'] ?? 'Gagal mengambil sesi aktif').toString(),
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
+    }
+  }
 }

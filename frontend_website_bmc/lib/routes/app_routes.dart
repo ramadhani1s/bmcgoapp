@@ -15,6 +15,8 @@ import '../screens/dashboard/admin_kelola_alumni_screen.dart';
 import '../screens/mentor/materi_pembelajaran_screen.dart';
 import '../screens/mentor/latihan_soal_screen.dart';
 import '../screens/mentor/evaluasi_siswa_screen.dart';
+
+import '../screens/dashboard/admin_profile_screen.dart';
 import '../services/auth_service.dart';
 
 class AppRoutes {
@@ -24,6 +26,20 @@ class AppRoutes {
   // ADMIN
   static const String adminDashboard = '/admin-dashboard';
   static const String paymentVerification = '/payment-verification';
+
+  static const String mentorDashboard = '/mentor-dashboard';
+  static const String mentorAttendance = '/mentor-attendance';
+  static const String mentorProfile = '/mentor-profile';
+  static const String adminProfile = '/admin-profile';
+  static const String mentorManagement = '/mentor-management';
+  static const String mentorExercise = '/mentor-exercise';
+  static const String mentorTryout = '/mentor-tryout';
+  static const String mentorOlimpiade = '/mentor-olimpiade';
+
+  static const String mentorEvaluasi = '/mentor-evaluasi';
+  static const String mentorMateri = '/mentor-materi';
+
+
   static const String paketLes = '/paket-les';
   static const String soalLatihanManagement = '/soal-latihan-management';
   static const String adminKelolaAbsensi = '/admin-kelola-absensi';
@@ -84,31 +100,44 @@ class AppRoutes {
         );
 
       case mentorDashboard:
-        return MaterialPageRoute(builder: (_) => const MentorDashboard());
+        return InstantPageRoute(child: const MentorDashboard(), settings: settings);
 
       case mentorAttendance:
-        return MaterialPageRoute(
-          builder: (_) => const MentorAttendanceScreen(),
+        return InstantPageRoute(
+          child: const MentorAttendanceScreen(),
+          settings: settings,
         );
 
       case mentorProfile:
-        return MaterialPageRoute(builder: (_) => const MentorProfileScreen());
+        return InstantPageRoute(child: const MentorProfileScreen(), settings: settings);
 
+      case adminProfile:
+        return MaterialPageRoute(builder: (_) => const AdminProfileScreen());
+
+
+      case mentorManagement:
+        return InstantPageRoute(
+          child: const MentorManagementScreen(),
+          settings: settings,
+        );
+
+ 
       case mentorExercise:
-        return MaterialPageRoute(builder: (_) => const LatihanSoalScreen());
+        return InstantPageRoute(child: const LatihanSoalScreen(), settings: settings);
 
       case mentorTryout:
-        return MaterialPageRoute(builder: (_) => const MentorTryoutScreen());
+        return InstantPageRoute(child: const MentorTryoutScreen(), settings: settings);
 
       case mentorOlimpiade:
-        return MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen());
+        return InstantPageRoute(child: const MentorOlimpiadeScreen(), settings: settings);
 
       case mentorEvaluasi:
-        return MaterialPageRoute(builder: (_) => const EvaluasiSiswaScreen());
+        return InstantPageRoute(child: const EvaluasiSiswaScreen(), settings: settings);
 
       case mentorMateri:
-        return MaterialPageRoute(
-          builder: (_) => const MateriPembelajaranScreen(),
+        return InstantPageRoute(
+          child: const MateriPembelajaranScreen(),
+          settings: settings,
         );
 
       default:
@@ -137,7 +166,6 @@ class AppRoutes {
         );
     }
   }
-
   static Future<String> getInitialRoute() async {
     final isLoggedIn = await AuthService.isLoggedIn();
 
@@ -167,4 +195,18 @@ class AppRoutes {
       return login;
     }
   }
+
+}
+
+
+
+class InstantPageRoute<T> extends PageRouteBuilder<T> {
+  final Widget child;
+  InstantPageRoute({required this.child, RouteSettings? settings})
+      : super(
+          pageBuilder: (context, animation, secondaryAnimation) => child,
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+          settings: settings,
+        );
 }

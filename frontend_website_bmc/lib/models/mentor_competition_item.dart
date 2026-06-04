@@ -5,6 +5,7 @@ class MentorCompetitionItem {
   final String title;
   final String subject;
   final int totalQuestions;
+  final int soalTerbuat;
   final String durationLabel;
   final String scheduleLabel;
   final bool isPublished;
@@ -18,6 +19,7 @@ class MentorCompetitionItem {
     required this.title,
     required this.subject,
     required this.totalQuestions,
+    required this.soalTerbuat,
     required this.durationLabel,
     required this.scheduleLabel,
     required this.isPublished,
@@ -34,6 +36,16 @@ class MentorCompetitionItem {
       }
     }
 
+    final totalQuestions = int.tryParse(
+          '${json['totalQuestions'] ?? json['total_questions'] ?? 0}',
+        ) ??
+        0;
+
+    final soalTerbuat = int.tryParse(
+          '${json['soalTerbuat'] ?? json['soal_terbuat'] ?? 0}',
+        ) ??
+        0;
+
     return MentorCompetitionItem(
       id: int.tryParse('${json['id']}') ?? 0,
       type: json['type']?.toString() ?? 'tryout',
@@ -43,11 +55,8 @@ class MentorCompetitionItem {
           'Kelas 12',
       title: json['title']?.toString() ?? json['nama']?.toString() ?? '',
       subject: json['subject']?.toString() ?? json['lokasi']?.toString() ?? '-',
-      totalQuestions:
-          int.tryParse(
-            '${json['totalQuestions'] ?? json['total_questions'] ?? 0}',
-          ) ??
-          0,
+      totalQuestions: totalQuestions,
+      soalTerbuat: soalTerbuat,
       durationLabel:
           json['durationLabel']?.toString() ??
           json['durasi']?.toString() ??
@@ -56,7 +65,7 @@ class MentorCompetitionItem {
           json['scheduleLabel']?.toString() ??
           json['tanggal']?.toString() ??
           '',
-      isPublished: json['isPublished'] == true || json['is_published'] == true,
+      isPublished: soalTerbuat >= totalQuestions && totalQuestions > 0,
       createdAt:
           DateTime.tryParse('${json['createdAt'] ?? json['created_at']}') ??
           DateTime.now(),

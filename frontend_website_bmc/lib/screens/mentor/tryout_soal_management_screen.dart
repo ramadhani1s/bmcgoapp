@@ -94,135 +94,135 @@ class _TryoutSoalManagementScreenState
   }
 
   Future<void> _submitSoal() async {
-    if (_pertanyaanController.text.trim().isEmpty) {
-      _showSnackbar('Pertanyaan harus diisi', isError: true);
-      return;
-    }
-
-    if (_pilihanAController.text.trim().isEmpty ||
-        _pilihanBController.text.trim().isEmpty ||
-        _pilihanCController.text.trim().isEmpty ||
-        _pilihanDController.text.trim().isEmpty) {
-      _showSnackbar('Pilihan A-D harus diisi', isError: true);
-      return;
-    }
-
-    setState(() => _isSubmitting = true);
-
-    try {
-      Map<String, dynamic> response;
-
-      // Guard: ensure kompetisi id is valid before sending
-      if (widget.tryout.id <= 0) {
-        setState(() => _isSubmitting = false);
-        _showSnackbar(
-          'ID tryout tidak valid. Tidak dapat menyimpan soal.',
-          isError: true,
-        );
-        return;
-      }
-
-      if (_editingItem == null) {
-        // Debug: print payload for server troubleshooting
-        if (kDebugMode) {
-          debugPrint(
-            'createSoal payload: kompetisi_id=${widget.tryout.id}, pertanyaan=${_pertanyaanController.text.trim()}, jawaban=$_selectedJawaban, kategori=$_selectedKategori',
-          );
-        }
-
-        response = await SoalKompetisiService.createSoal(
-          kompetisiId: widget.tryout.id,
-          tipe: 'tryout',
-          pertanyaan: _pertanyaanController.text.trim(),
-          pilihanA: _pilihanAController.text.trim(),
-          pilihanB: _pilihanBController.text.trim(),
-          pilihanC: _pilihanCController.text.trim(),
-          pilihanD: _pilihanDController.text.trim(),
-          pilihanE: _pilihanEController.text.trim(),
-          jawaban: _selectedJawaban,
-          pembahasan: _pembahasanController.text.trim(),
-          kategori: _selectedKategori,
-        );
-      } else {
-        response = await SoalKompetisiService.updateSoal(
-          soalId: _editingItem!.id,
-          tipe: 'tryout',
-          pertanyaan: _pertanyaanController.text.trim(),
-          pilihanA: _pilihanAController.text.trim(),
-          pilihanB: _pilihanBController.text.trim(),
-          pilihanC: _pilihanCController.text.trim(),
-          pilihanD: _pilihanDController.text.trim(),
-          pilihanE: _pilihanEController.text.trim(),
-          jawaban: _selectedJawaban,
-          pembahasan: _pembahasanController.text.trim(),
-          kategori: _selectedKategori,
-        );
-      }
-
-      if (!mounted) return;
-      setState(() => _isSubmitting = false);
-
-      if (response['success'] == true) {
-        _showSnackbar(response['message'] ?? 'Soal berhasil disimpan');
-        _clearForm();
-        await _loadSoal();
-      } else {
-        // Log full response for debugging
-        if (kDebugMode) debugPrint('createSoal failed: ${response.toString()}');
-
-        // Build concise user-facing message. If server returned details, include short snippet.
-        String userMsg = response['message'] ?? 'Gagal menyimpan soal';
-        String? details;
-        if (response.containsKey('details') && response['details'] != null) {
-          details = response['details'].toString();
-          final snippet = details.length > 200
-              ? '${details.substring(0, 200)}...'
-              : details;
-          userMsg = '$userMsg: $snippet';
-        }
-
-        _showSnackbar(userMsg, isError: true);
-
-        // If server provided details, show them in a dialog for copying/debugging
-        if (details != null && mounted) {
-          await showDialog<void>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              title: const Text(
-                'Detail respons server',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              content: SingleChildScrollView(child: SelectableText(details!)),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF6B7280),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                  child: const Text('Tutup'),
-                ),
-              ],
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isSubmitting = false);
-      _showSnackbar('Error: ${e.toString()}', isError: true);
-    }
+  if (_pertanyaanController.text.trim().isEmpty) {
+    _showSnackbar('Pertanyaan harus diisi', isError: true);
+    return;
   }
 
+  if (_pilihanAController.text.trim().isEmpty ||
+      _pilihanBController.text.trim().isEmpty ||
+      _pilihanCController.text.trim().isEmpty ||
+      _pilihanDController.text.trim().isEmpty) {
+    _showSnackbar('Pilihan A-D harus diisi', isError: true);
+    return;
+  }
+
+  setState(() => _isSubmitting = true);
+
+  try {
+    Map<String, dynamic> response;
+
+    // Guard: ensure kompetisi id is valid before sending
+    if (widget.tryout.id <= 0) {
+      setState(() => _isSubmitting = false);
+      _showSnackbar(
+        'ID tryout tidak valid. Tidak dapat menyimpan soal.',
+        isError: true,
+      );
+      return;
+    }
+
+    if (_editingItem == null) {
+      // Debug: print payload for server troubleshooting
+      if (kDebugMode) {
+        debugPrint(
+          'createSoal payload: kompetisi_id=${widget.tryout.id}, pertanyaan=${_pertanyaanController.text.trim()}, jawaban=$_selectedJawaban, kategori=$_selectedKategori',
+        );
+      }
+
+      // ✅ PERBAIKAN: Gunakan 'kategori:' (tanpa petik)
+      response = await SoalKompetisiService.createSoal(
+        kompetisiId: widget.tryout.id,
+        tipe: 'tryout',
+        pertanyaan: _pertanyaanController.text.trim(),
+        pilihanA: _pilihanAController.text.trim(),
+        pilihanB: _pilihanBController.text.trim(),
+        pilihanC: _pilihanCController.text.trim(),
+        pilihanD: _pilihanDController.text.trim(),
+        pilihanE: _pilihanEController.text.trim(),
+        jawaban: _selectedJawaban,
+        pembahasan: _pembahasanController.text.trim(),
+        kategori: _selectedKategori,  // ✅ Perbaikan di sini!
+      );
+    } else {
+      response = await SoalKompetisiService.updateSoal(
+        soalId: _editingItem!.id,
+        tipe: 'tryout',
+        pertanyaan: _pertanyaanController.text.trim(),
+        pilihanA: _pilihanAController.text.trim(),
+        pilihanB: _pilihanBController.text.trim(),
+        pilihanC: _pilihanCController.text.trim(),
+        pilihanD: _pilihanDController.text.trim(),
+        pilihanE: _pilihanEController.text.trim(),
+        jawaban: _selectedJawaban,
+        pembahasan: _pembahasanController.text.trim(),
+        kategori: _selectedKategori,
+      );
+    }
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (response['success'] == true) {
+      _showSnackbar(response['message'] ?? 'Soal berhasil disimpan');
+      _clearForm();
+      await _loadSoal();
+    } else {
+      // Log full response for debugging
+      if (kDebugMode) debugPrint('createSoal failed: ${response.toString()}');
+
+      // Build concise user-facing message
+      String userMsg = response['message'] ?? 'Gagal menyimpan soal';
+      String? details;
+      if (response.containsKey('details') && response['details'] != null) {
+        details = response['details'].toString();
+        final snippet = details.length > 200
+            ? '${details.substring(0, 200)}...'
+            : details;
+        userMsg = '$userMsg: $snippet';
+      }
+
+      _showSnackbar(userMsg, isError: true);
+
+      // If server provided details, show them in a dialog for copying/debugging
+      if (details != null && mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: const Text(
+              'Detail respons server',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF111827),
+              ),
+            ),
+            content: SingleChildScrollView(child: SelectableText(details!)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF6B7280),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text('Tutup'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  } catch (e) {
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+    _showSnackbar('Error: ${e.toString()}', isError: true);
+  }
+}
   Future<void> _deleteSoal(SoalKompetisi soal) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -291,7 +291,7 @@ class _TryoutSoalManagementScreenState
       _pilihanDController.text = soal.pilihanD;
       _pilihanEController.text = soal.pilihanE;
       _pembahasanController.text = soal.pembahasan;
-      _selectedJawaban = soal.jawaban;
+      _selectedJawaban = const ['A', 'B', 'C', 'D', 'E'].contains(soal.jawaban) ? soal.jawaban : 'A';
       _selectedKategori = soal.kategori.isEmpty
           ? 'Penalaran Umum'
           : soal.kategori;
@@ -592,50 +592,56 @@ class _TryoutSoalManagementScreenState
     return counts;
   }
 
-  void _onSidebarMenuTap(String title) {
-    if (title == 'Dashboard') {
-      Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
-      return;
-    }
-    if (title == 'Jadwal Mengajar') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
-        ),
-      );
-      return;
-    }
-    if (title == 'Absensi Kelas') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
-      );
-      return;
-    }
-    if (title == 'Soal Latihan') {
-      Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
-      return;
-    }
-    if (title == 'Try Out') {
-      return;
-    }
-    if (title == 'Materi Pembelajaran') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const MateriPembelajaranScreen(initialClass: null),
-        ),
-      );
-      return;
-    }
-    if (title == 'Olimpiade Akademik') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
-      );
-    }
+ void _onSidebarMenuTap(String title) {
+  if (title == 'Dashboard') {
+    Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
+    return;
   }
+  if (title == 'Jadwal Mengajar') {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+      ),
+    );
+    return;
+  }
+  if (title == 'Absensi Kelas') {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MentorAttendanceScreen(),
+      ),
+    );
+    return;
+  }
+  if (title == 'Soal Latihan') {
+    Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
+    return;
+  }
+  if (title == 'Try Out') {
+    // Tetap di halaman Try Out
+    return;
+  }
+  if (title == 'Materi Pembelajaran') {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MateriPembelajaranScreen(initialClass: null),
+      ),
+    );
+    return;
+  }
+  if (title == 'Olimpiade Akademik') {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MentorOlimpiadeScreen(),
+      ),
+    );
+    return;
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -665,7 +671,7 @@ class _TryoutSoalManagementScreenState
                         // Overview Card
                         SoalOverviewCard(
                           title: widget.tryout.title,
-                          status: widget.tryout.isPublished
+                          status: (_soalList.length >= widget.tryout.totalQuestions && widget.tryout.totalQuestions > 0)
                               ? 'Dipublikasikan'
                               : 'Draft',
                           tanggal: widget.tryout.createdAt,
@@ -878,7 +884,13 @@ class _TryoutSoalManagementScreenState
                               ),
                               const SizedBox(height: 8),
                               DropdownButtonFormField<String>(
-                                initialValue: _selectedJawaban,
+                                value: _selectedJawaban,
+                                dropdownColor: Colors.white,
+                                icon: const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: Color(0xFF6B7280),
+                                  size: 20,
+                                ),
                                 items: ['A', 'B', 'C', 'D', 'E']
                                     .map(
                                       (e) => DropdownMenuItem(
@@ -996,13 +1008,14 @@ class _TryoutSoalManagementScreenState
                                       onPressed: _isSubmitting
                                           ? null
                                           : _submitSoal,
-                                      icon: const Icon(Icons.add, size: 16),
+                                      icon: const Icon(Icons.add, size: 16, color: Colors.white),
                                       label: Text(
                                         _editingItem == null
                                             ? 'Tambah Soal'
                                             : 'Simpan Perubahan',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
+                                          color: Colors.white,
                                         ),
                                       ),
                                       style: ElevatedButton.styleFrom(

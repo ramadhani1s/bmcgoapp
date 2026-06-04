@@ -37,6 +37,12 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     '10 IPA IPS',
     '11 IPA IPS',
     '12 IPA IPS',
+    'Kelas 10 IPA',
+    'Kelas 10 IPS',
+    'Kelas 11 IPA',
+    'Kelas 11 IPS',
+    'Kelas 12 IPA',
+    'Kelas 12 IPS',
   ];
 
   // Use AppColors directly in widgets for consistency with Admin
@@ -83,36 +89,36 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       return;
     }
     if (title == 'Jadwal Mengajar') {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        InstantPageRoute(
+          child: const JadwalPembelajaranScreen(mentorView: true),
         ),
       );
       return;
     }
     if (title == 'Absensi Kelas') {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
+        InstantPageRoute(child: const MentorAttendanceScreen()),
       );
       return;
     }
     if (title == 'Soal Latihan') {
-      Navigator.pushNamed(context, AppRoutes.mentorExercise);
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
       return;
     }
     if (title == 'Try Out') {
-      Navigator.pushNamed(context, AppRoutes.mentorTryout);
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorTryout);
       return;
     }
     if (title == 'Materi Pembelajaran') {
       return;
     }
     if (title == 'Olimpiade Akademik') {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+        InstantPageRoute(child: const MentorOlimpiadeScreen()),
       );
     }
   }
@@ -350,6 +356,12 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
             width: 180,
             child: DropdownButtonFormField<String>(
               initialValue: _selectedClass,
+              dropdownColor: Colors.white,
+              icon: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF6B7280),
+                size: 20,
+              ),
               items: _fixedClassOptions
                   .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                   .toList(),
@@ -923,7 +935,13 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: _selectedClass,
+                value: _selectedClass,
+                dropdownColor: Colors.white,
+                icon: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFF6B7280),
+                  size: 20,
+                ),
                 items: _classOptions
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),

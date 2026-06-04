@@ -78,4 +78,68 @@ class SoalLatihan {
       materiId: materiId ?? this.materiId,
     );
   }
+
+  // ── Tag Helpers for Latihan Grouping ──────────────────────────────────────
+
+  static const String skeletonTag = '[SKELETON]';
+
+  bool get isSkeleton => pertanyaan.contains(skeletonTag);
+
+  static String _parseTag(String raw, String tagPrefix) {
+    final regExp = RegExp('\\[' + tagPrefix + ':(.+?)\\]');
+    final match = regExp.firstMatch(raw);
+    if (match != null) {
+      return match.group(1)?.trim() ?? '';
+    }
+    return '';
+  }
+
+  String get kelas {
+    final regExp = RegExp(r'\[(Kelas \d+(?:\s+[a-zA-Z]+)?)\]');
+    final match = regExp.firstMatch(pertanyaan);
+    return match != null ? match.group(1) ?? 'Kelas 10 IPA' : 'Kelas 10 IPA';
+  }
+
+  String get mapel {
+    final val = _parseTag(pertanyaan, 'Mapel');
+    if (val.isNotEmpty) return val;
+    final regExp = RegExp(
+      r'\[(Matematika|Fisika|Kimia|Biologi|Bahasa Indonesia|Bahasa Inggris|Ekonomi|Geografi|Sosiologi|Sejarah)\]',
+    );
+    final match = regExp.firstMatch(pertanyaan);
+    return match != null ? match.group(1) ?? 'Matematika' : 'Matematika';
+  }
+
+  String get latihanTitle {
+    final val = _parseTag(pertanyaan, 'Latihan');
+    if (val.isNotEmpty) return val;
+    return 'Latihan $mapel';
+  }
+
+  int get durasi {
+    final val = _parseTag(pertanyaan, 'Durasi');
+    return int.tryParse(val) ?? 30;
+  }
+
+  int get targetSoal {
+    final val = _parseTag(pertanyaan, 'Target');
+    return int.tryParse(val) ?? 5;
+  }
+
+  String get cleanPertanyaan {
+    return pertanyaan.replaceAll(RegExp(r'\[.+?\]'), '').trim();
+  }
+
+  static String buildPertanyaan({
+    required String text,
+    required String kelas,
+    required String mapel,
+    required String latihanTitle,
+    required int durasi,
+    required int target,
+    bool isSkeletonFlag = false,
+  }) {
+    final skeletonStr = isSkeletonFlag ? skeletonTag : '';
+    return '[$kelas][Mapel:$mapel][Latihan:$latihanTitle][Durasi:$durasi][Target:$target]$skeletonStr $text';
+  }
 }

@@ -144,7 +144,7 @@ func StartAttendanceSessionHandler(c *gin.Context) {
 
 	now := time.Now().UTC()
 	hadirDeadline := now.Add(15 * time.Minute)
-	terlambatDeadline := now.Add(30 * time.Minute)
+	terlambatDeadline := now.Add(15 * time.Minute)
 
 	// Pastikan hanya satu sesi aktif per mentor.
 	_, _ = config.DB.Exec(
@@ -514,19 +514,16 @@ func SubmitAttendanceTokenHandler(c *gin.Context) {
 	}
 
 	now := time.Now().UTC()
-	attendanceStatus := "hadir"
-
 	if now.After(session.HadirDeadline) {
-		attendanceStatus = "terlambat"
-	}
-	if now.After(session.TerlambatDeadine) {
-		attendanceStatus = "tidak_hadir"
 		_, _ = config.DB.Exec(
 			context.Background(),
 			`UPDATE attendance_sessions SET status = 'selesai' WHERE id = $1`,
 			session.ID,
 		)
+		c.JSON(400, gin.H{"error": "Waktu absensi telah habis (maksimal 15 menit)"})
+		return
 	}
+	attendanceStatus := "hadir"
 
 	_, err = config.DB.Exec(
 		context.Background(),
@@ -688,5 +685,65 @@ func DebugAttendanceExplainHandler(c *gin.Context) {
 			"lebih dari 30 menit: tidak_hadir",
 		},
 		"server_time": fmt.Sprintf("%s", now.Format(time.RFC3339)),
+	})
+}
+
+func GetActiveAttendanceSessionForSiswaHandler(c *gin.Context) {
+	// Auto-close expired sessions before checking
+	_, _ = config.DB.Exec(
+		context.Background(),
+		`UPDATE attendance_sessions
+		 SET status = 'selesai'
+		 WHERE status = 'aktif'
+		   AND hadir_deadline <= $1`,
+		time.Now().UTC(),
+	)
+
+	var session struct {
+		ID            int
+		ClassName     string
+		Subject       string
+		StartedAt     time.Time
+		HadirDeadline time.Time
+		Status        string
+	}
+
+	err := config.DB.QueryRow(
+		context.Background(),
+		`SELECT id, class_name, COALESCE(subject,''), started_at, hadir_deadline, status
+		 FROM attendance_sessions
+		 WHERE status = 'aktif'
+		   AND hadir_deadline > $1
+		 ORDER BY started_at DESC
+		 LIMIT 1`,
+		time.Now().UTC(),
+	).Scan(
+		&session.ID,
+		&session.ClassName,
+		&session.Subject,
+		&session.StartedAt,
+		&session.HadirDeadline,
+		&session.Status,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(200, gin.H{"session": nil})
+			return
+		}
+		c.JSON(500, gin.H{"error": "Gagal mengambil sesi absensi aktif"})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"session": gin.H{
+			"id":                  session.ID,
+			"class_name":          session.ClassName,
+			"subject":             session.Subject,
+			"started_at_unix":     session.StartedAt.Unix(),
+			"hadir_deadline_unix": session.HadirDeadline.Unix(),
+			"status":              session.Status,
+		},
+		"server_time_unix": time.Now().UTC().Unix(),
 	})
 }
