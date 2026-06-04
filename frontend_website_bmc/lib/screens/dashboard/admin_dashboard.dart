@@ -150,13 +150,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
       final paketList = results[1];
       final mentorList = results[2];
 
-      String paketName(dynamic paketId) {
+      String resolveClassName(Map<String, dynamic> j) {
+        final classLevel = j['class_level']?.toString();
+        if (classLevel != null && classLevel.isNotEmpty && classLevel != 'null') {
+          if (classLevel.contains('Kelas')) return classLevel;
+          return 'Kelas $classLevel';
+        }
+        final pId = j['paket_id'];
         for (final paket in paketList) {
-          if (paket['id'] == paketId) {
+          if (paket['id'] == pId) {
+            final pkgClass = paket['class_level']?.toString();
+            if (pkgClass != null && pkgClass.isNotEmpty && pkgClass != 'null') {
+              if (pkgClass.contains('Kelas')) return pkgClass;
+              return 'Kelas $pkgClass';
+            }
             return (paket['nama_paket'] ?? paket['nama'] ?? '-').toString();
           }
         }
-        return 'Kelas ${paketId ?? '-'}';
+        return 'Kelas ${pId ?? '-'}';
       }
 
       String mentorName(dynamic mentorId) {
@@ -220,7 +231,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
         return _ScheduleRow(
           time: '$start - $end',
-          className: paketName(jadwal['paket_id']),
+          className: resolveClassName(jadwal),
           subject: (jadwal['mata_pelajaran'] ?? '-').toString(),
           mentor: mentorName(jadwal['mentor_id']),
           room: (jadwal['ruang'] ?? '-').toString(),
@@ -556,7 +567,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'BMC',
+                        'BMC GROWUP',
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 18,

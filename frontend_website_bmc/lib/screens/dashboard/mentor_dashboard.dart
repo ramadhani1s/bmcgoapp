@@ -189,7 +189,13 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     return null;
   }
 
-  String _resolveKelas(int? paketId) {
+  String _resolveKelasFromJadwal(Map<String, dynamic> j) {
+    final classLevel = j['class_level']?.toString();
+    if (classLevel != null && classLevel.isNotEmpty && classLevel != 'null') {
+      if (classLevel.contains('Kelas')) return classLevel;
+      return 'Kelas $classLevel';
+    }
+    final paketId = j['paket_id'] as int?;
     if (paketId == null) return 'Kelas';
     final paket = _findPaketById(paketId);
     if (paket == null) return 'Kelas';
@@ -785,8 +791,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     final filtered = _selectedClass == 'Semua Kelas'
         ? _recentSchedules
         : _recentSchedules.where((item) {
-            final paketId = item['paket_id'] as int?;
-            final kelas = _resolveKelas(paketId);
+            final kelas = _resolveKelasFromJadwal(item);
             return kelas == _selectedClass;
           }).toList();
 
@@ -987,8 +992,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       'judul',
       'nama',
     ], fallback: 'Jadwal');
-    final paketId = item['paket_id'] as int?;
-    final kelas = _resolveKelas(paketId);
+    final kelas = _resolveKelasFromJadwal(item);
     final ruang = _pickValue(item, ['ruang', 'room'], fallback: 'Ruang');
     final time = _formatScheduleTime(item);
 

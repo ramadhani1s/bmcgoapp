@@ -59,10 +59,10 @@ func CreateJadwal(c *gin.Context) {
 
 	// Insert into database
 	err = config.DB.QueryRow(context.Background(), `
-		INSERT INTO jadwal (paket_id, mentor_id, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO jadwal (paket_id, mentor_id, class_level, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
-	`, req.PaketID, req.MentorID, req.MataPelajaran, req.Hari, jamMulai, jamSelesai, req.Ruang).Scan(&jadwalID)
+	`, req.PaketID, req.MentorID, req.ClassLevel, req.MataPelajaran, req.Hari, jamMulai, jamSelesai, req.Ruang).Scan(&jadwalID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -89,7 +89,7 @@ func GetJadwalList(c *gin.Context) {
 	hari := c.Query("hari")
 
 	query := `
-		SELECT id, paket_id, mentor_id, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
+		SELECT id, paket_id, mentor_id, class_level, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
 		FROM jadwal
 		WHERE 1=1
 	`
@@ -130,7 +130,7 @@ func GetJadwalList(c *gin.Context) {
 	var jadwals []models.Jadwal
 	for rows.Next() {
 		var j models.Jadwal
-		if err := rows.Scan(&j.ID, &j.PaketID, &j.MentorID, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang); err != nil {
+		if err := rows.Scan(&j.ID, &j.PaketID, &j.MentorID, &j.ClassLevel, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang); err != nil {
 			fmt.Println("Scan error:", err)
 			continue
 		}
@@ -176,6 +176,7 @@ func GetMentorJadwalList(c *gin.Context) {
 			id,
 			paket_id,
 			mentor_id,
+			class_level,
 			mata_pelajaran,
 			hari,
 			jam_mulai,
@@ -205,6 +206,7 @@ func GetMentorJadwalList(c *gin.Context) {
 			&j.ID,
 			&j.PaketID,
 			&j.MentorID,
+			&j.ClassLevel,
 			&j.MataPelajaran,
 			&j.Hari,
 			&j.JamMulai,
@@ -235,10 +237,10 @@ func GetJadwalDetail(c *gin.Context) {
 
 	var j models.Jadwal
 	err := config.DB.QueryRow(context.Background(), `
-		SELECT id, paket_id, mentor_id, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
+		SELECT id, paket_id, mentor_id, class_level, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
 		FROM jadwal
 		WHERE id = $1
-	`, id).Scan(&j.ID, &j.PaketID, &j.MentorID, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang)
+	`, id).Scan(&j.ID, &j.PaketID, &j.MentorID, &j.ClassLevel, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -283,6 +285,12 @@ func UpdateJadwal(c *gin.Context) {
 	if req.MentorID != nil {
 		updateFields = append(updateFields, fmt.Sprintf(`mentor_id = $%d`, argCount))
 		args = append(args, *req.MentorID)
+		argCount++
+	}
+
+	if req.ClassLevel != nil {
+		updateFields = append(updateFields, fmt.Sprintf(`class_level = $%d`, argCount))
+		args = append(args, *req.ClassLevel)
 		argCount++
 	}
 
@@ -412,7 +420,7 @@ func GetJadwalByHari(c *gin.Context) {
 	}
 
 	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, paket_id, mentor_id, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
+		SELECT id, paket_id, mentor_id, class_level, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
 		FROM jadwal
 		WHERE hari = $1
 		ORDER BY jam_mulai
@@ -430,7 +438,7 @@ func GetJadwalByHari(c *gin.Context) {
 	var jadwals []models.Jadwal
 	for rows.Next() {
 		var j models.Jadwal
-		if err := rows.Scan(&j.ID, &j.PaketID, &j.MentorID, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang); err != nil {
+		if err := rows.Scan(&j.ID, &j.PaketID, &j.MentorID, &j.ClassLevel, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang); err != nil {
 			continue
 		}
 		jadwals = append(jadwals, j)

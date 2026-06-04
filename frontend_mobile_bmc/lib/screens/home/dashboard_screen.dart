@@ -438,6 +438,11 @@ class _DashboardScreenState extends State<DashboardScreen>
       return;
     }
 
+    if (menuKey.toLowerCase() == 'alumni') {
+      Navigator.of(context).pushNamed('/alumni');
+      return;
+    }
+
     if (!_isActive) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -879,7 +884,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _SectionTitleRow(
                   title: 'Alumni Berprestasi',
                   actionText: 'Lihat Semua',
-                  onTap: _showDynamicInfo,
+                  onTap: () => Navigator.of(context).pushNamed('/alumni'),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -1669,55 +1674,58 @@ class _AlumniPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 104,
-      padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: item.avatarColor,
-            child: Text(
-              item.initials,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pushNamed('/alumni'),
+      child: Container(
+        width: 104,
+        padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: item.avatarColor,
+              child: Text(
+                item.initials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            item.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF22243A),
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
+            const SizedBox(height: 10),
+            Text(
+              item.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF22243A),
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            item.facultyLine,
-            style: const TextStyle(
-              color: Color(0xFFFF6E72),
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
+            const SizedBox(height: 4),
+            Text(
+              item.facultyLine,
+              style: const TextStyle(
+                color: Color(0xFFFF6E72),
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
             ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            item.majorLine,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Color(0xFFA2A7B5), fontSize: 11.5),
-          ),
-        ],
+            const SizedBox(height: 3),
+            Text(
+              item.majorLine,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Color(0xFFA2A7B5), fontSize: 11.5),
+            ),
+          ],
+        ),
       ),
     );
   }
