@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io' show Platform;
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../config/api_config.dart';
+import '../../core/session/app_session.dart';
 class MateriDetailScreen extends StatefulWidget {
   final Map<String, dynamic> materi;
 
@@ -19,6 +22,10 @@ class _MateriDetailScreenState extends State<MateriDetailScreen> {
   static const Color _background = Color(0xFFF7EEEF);
   static const Color _textPrimary = Color(0xFF25273D);
   static const Color _textMuted = Color(0xFF8D90A3);
+
+  bool _isLoadingLatihan = true;
+  String? _errorMessage;
+  Map<String, List<Map<String, dynamic>>> _groupedQuestions = {};
 
   Map<String, Map<String, dynamic>> get _subjectConfig => {
     'Matematika': {
@@ -68,14 +75,107 @@ class _MateriDetailScreenState extends State<MateriDetailScreen> {
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
-  void _startPractice() {
-    final subject = widget.materi['subject'] as String? ?? 'Umum';
+  @override
+  void initState() {
+    super.initState();
+    _loadQuestionsFromApi();
+  }
+
+  Future<void> _loadQuestionsFromApi() async {
+    if (!mounted) return;
+    setState(() => _isLoadingLatihan = true);
+
+    try {
+      final token = await AppSession.getAuthToken();
+      if (!mounted) return;
+
+      if (token == null || token.isEmpty) {
+        setState(() {
+          _isLoadingLatihan = false;
+          _errorMessage = 'Sesi telah habis, silakan login kembali.';
+        });
+        return;
+      }
+
+      final materiId = widget.materi['id'] ?? 0;
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/siswa/materi/$materiId/soal');
+      final response = await http
+          .get(uri, headers: {'Authorization': 'Bearer $token'})
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final List<dynamic> soalList = data['data'] as List<dynamic>? ?? [];
+        
+        final Map<String, List<Map<String, dynamic>>> grouped = {};
+
+        for (final soal in soalList) {
+          final String rawPertanyaan = soal['pertanyaan'] ?? '';
+          
+          if (rawPertanyaan.contains('[SKELETON]')) {
+            continue;
+          }
+
+          String title = 'Latihan Soal';
+          String cleanPertanyaan = rawPertanyaan;
+          
+          // Try to extract title from [Latihan:Title] format
+          final titleMatch = RegExp(r'\[Latihan:(.*?)\]').firstMatch(rawPertanyaan);
+          if (titleMatch != null) {
+            title = titleMatch.group(1)?.trim() ?? 'Latihan Soal';
+          } else {
+             // Fallback for older formats where the 3rd bracket was the title
+             final oldFormatMatch = RegExp(r'^\[.*?\]\[.*?\]\[(.*?)\]').firstMatch(rawPertanyaan);
+             if (oldFormatMatch != null && !oldFormatMatch.group(1)!.contains(':')) {
+                 title = oldFormatMatch.group(1)?.trim() ?? 'Latihan Soal';
+             }
+          }
+
+          // Aggressively strip ALL metadata brackets at the start of the string
+          cleanPertanyaan = rawPertanyaan.replaceFirst(RegExp(r'^(?:\[.*?\]\s*)+'), '').trim();
+
+          final formattedSoal = {
+            'pertanyaan': cleanPertanyaan,
+            'pilihan_a': soal['pilihan_a'] ?? '',
+            'pilihan_b': soal['pilihan_b'] ?? '',
+            'pilihan_c': soal['pilihan_c'] ?? '',
+            'pilihan_d': soal['pilihan_d'] ?? '',
+            'jawaban': soal['jawaban'] ?? '',
+            'pembahasan': soal['pembahasan'] ?? 'Tidak ada pembahasan',
+          };
+
+          grouped.putIfAbsent(title, () => []).add(formattedSoal);
+        }
+
+        if (!mounted) return;
+        setState(() {
+          _groupedQuestions = grouped;
+          _isLoadingLatihan = false;
+        });
+      } else {
+        if (!mounted) return;
+        setState(() {
+          _isLoadingLatihan = false;
+          _errorMessage = 'Gagal memuat soal: ${response.statusCode}';
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingLatihan = false;
+        _errorMessage = 'Error: $e';
+      });
+    }
+  }
+
+  void _startPractice(String title, List<Map<String, dynamic>> questions) {
     Navigator.pushNamed(
       context,
       '/latihan-dari-materi',
       arguments: {
-        'materi_title': widget.materi['title'] as String? ?? 'Latihan Soal',
+        'materi_title': title,
         'materi_id': widget.materi['id'] ?? 0,
+        'questions': questions,
       },
     );
   }
@@ -348,36 +448,110 @@ class _MateriDetailScreenState extends State<MateriDetailScreen> {
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + MediaQuery.of(context).padding.bottom),
-        child: ElevatedButton(
-          onPressed: _startPractice,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _accent,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            elevation: 2,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.play_circle_outline_rounded, color: Colors.white),
-              const SizedBox(width: 8),
-              Text(
-                'Mulai Latihan Soal',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+            
+            // --- Daftar Latihan Soal ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Daftar Latihan Soal',
+                    style: TextStyle(
+                      color: _textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (_isLoadingLatihan)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (_errorMessage != null)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    )
+                  else if (_groupedQuestions.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          'Belum ada latihan soal untuk materi ini.',
+                          style: TextStyle(color: _textMuted),
+                        ),
+                      ),
+                    )
+                  else
+                    ..._groupedQuestions.entries.map((entry) {
+                      final title = entry.key;
+                      final questions = entry.value;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x0A000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            )
+                          ],
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          leading: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: _accent.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.quiz_rounded,
+                              color: _accent,
+                            ),
+                          ),
+                          title: Text(
+                            title,
+                            style: TextStyle(
+                              color: _textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${questions.length} Soal',
+                            style: TextStyle(color: _textMuted, fontSize: 13),
+                          ),
+                          trailing: ElevatedButton(
+                            onPressed: () => _startPractice(title, questions),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _accent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            ),
+                            child: const Text('Mulai', style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  const SizedBox(height: 32),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -125,6 +125,7 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
         pilihanD: _optionDController.text.trim(),
         jawaban: _selectedAnswer,
         pembahasan: _pembahasanController.text.trim(),
+        materiId: widget.materiId,
       );
     } else if (skeletonItem != null) {
       // Promote the skeleton placeholder to be the first real question
@@ -137,6 +138,7 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
         pilihanD: _optionDController.text.trim(),
         jawaban: _selectedAnswer,
         pembahasan: _pembahasanController.text.trim(),
+        materiId: widget.materiId,
       );
     } else {
       res = await LatihanSoalService.createSoalLatihan(
@@ -147,6 +149,7 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
         pilihanD: _optionDController.text.trim(),
         jawaban: _selectedAnswer,
         pembahasan: _pembahasanController.text.trim(),
+        materiId: widget.materiId,
       );
     }
 

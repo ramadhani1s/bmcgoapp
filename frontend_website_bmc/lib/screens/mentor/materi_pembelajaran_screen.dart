@@ -34,9 +34,6 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
   String _selectedClass = 'Semua Kelas';
   final List<String> _fixedClassOptions = const [
     'Semua Kelas',
-    '10 IPA IPS',
-    '11 IPA IPS',
-    '12 IPA IPS',
     'Kelas 10 IPA',
     'Kelas 10 IPS',
     'Kelas 11 IPA',
@@ -702,8 +699,8 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
 
   PlatformFile? _selectedFile;
   bool _isUploading = false;
-  final List<String> _classOptions = const ['10 IPA IPS', '11 IPA IPS', '12 IPA IPS'];
-  String _selectedClass = '12 IPA IPS';
+  final List<String> _classOptions = const ['10 IPA', '10 IPS', '11 IPA', '11 IPS', '12 IPA', '12 IPS'];
+  String _selectedClass = '10 IPA'; 
   final List<String> _mapelOptions = const [
     'Matematika',
     'Bahasa Indonesia',
