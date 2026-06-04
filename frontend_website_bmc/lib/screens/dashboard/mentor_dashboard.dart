@@ -267,8 +267,8 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
 
     if (title == 'Jadwal Mengajar') {
       await navigator.push(
-        MaterialPageRoute(
-          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        InstantPageRoute(
+          child: const JadwalPembelajaranScreen(mentorView: true),
         ),
       );
       await _loadStats();
@@ -276,7 +276,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     }
     if (title == 'Absensi Kelas') {
       await navigator.push(
-        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
+        InstantPageRoute(child: const MentorAttendanceScreen()),
       );
       await _loadStats();
       return;
@@ -293,8 +293,8 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     }
     if (title == 'Materi Pembelajaran') {
       await navigator.push(
-        MaterialPageRoute(
-          builder: (_) => MateriPembelajaranScreen(
+        InstantPageRoute(
+          child: MateriPembelajaranScreen(
             initialClass: _selectedClass == 'Semua Kelas'
                 ? null
                 : _selectedClass,
@@ -306,7 +306,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     }
     if (title == 'Olimpiade Akademik') {
       await navigator.push(
-        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+        InstantPageRoute(child: const MentorOlimpiadeScreen()),
       );
       await _loadStats();
     }

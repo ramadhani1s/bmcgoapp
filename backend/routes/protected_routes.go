@@ -102,10 +102,10 @@ func ProtectedRoutes(r *gin.Engine) {
 	mentor.PUT("/tryout-soal/:id", handlers.UpdateTryoutSoalHandler)
 	mentor.DELETE("/tryout-soal/:id", handlers.DeleteTryoutSoalHandler)
 
-	mentor.GET("/olimpiade-soal", handlers.GetOlimpiadseSoalHandler)
-	mentor.POST("/olimpiade-soal", handlers.CreateOlimpiadseSoalHandler)
-	mentor.PUT("/olimpiade-soal/:id", handlers.UpdateOlimpiadseSoalHandler)
-	mentor.DELETE("/olimpiade-soal/:id", handlers.DeleteOlimpiadseSoalHandler)
+	mentor.GET("/olimpiade-soal", handlers.GetOlimpiadeSoalHandler)
+	mentor.POST("/olimpiade-soal", handlers.CreateOlimpiadeSoalHandler)
+	mentor.PUT("/olimpiade-soal/:id", handlers.UpdateOlimpiadeSoalHandler)
+	mentor.DELETE("/olimpiade-soal/:id", handlers.DeleteOlimpiadeSoalHandler)
 
 	mentor.GET("/tryout", handlers.GetTryoutHandler)
 	mentor.POST("/tryout", handlers.CreateTryoutHandler)
