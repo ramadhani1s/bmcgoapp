@@ -5,6 +5,7 @@ import '../../models/materi_pembelajaran.dart';
 
 import '../../models/soal_latihan.dart';
 import '../../services/latihan_soal_service.dart';
+import 'mengelola_soal_screen.dart';
 
 class CreateLatihanScreen extends StatefulWidget {
   final String mapel;
@@ -32,18 +33,6 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
     'Sosiologi',
     'Ekonomi',
     'Geografi',
-  ];
-
-  final List<String> _classOptions = const [
-    '10 IPA IPS',
-    '11 IPA IPS',
-    '12 IPA IPS',
-    'Bahasa Indonesia',
-    'Bahasa Inggris',
-    'Ekonomi',
-    'Geografi',
-    'Sosiologi',
-    'Sejarah',
   ];
 
   final List<String> _classOptions = const [
@@ -129,20 +118,6 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
     final jumlah = _parseJumlahSoal();
     final durasi = int.tryParse(_durasiController.text.trim()) ?? 30;
 
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (ctx) => MengelolaSoalScreen(
-          mapel: _selectedMapel!,
-          latihanTitle: _judulController.text.trim(),
-          targetSoal: jumlah,
-          kelas: _selectedClass,
-          materiId: _selectedMateriId,
-        ),
-      ),
-
-
     final skeletonPertanyaan = SoalLatihan.buildPertanyaan(
       text: 'Placeholder',
       kelas: _selectedClass ?? 'Kelas 10',
@@ -161,13 +136,29 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
       pilihanD: '',
       jawaban: 'A',
       pembahasan: '',
+      materiId: _selectedMateriId,
     );
 
     setState(() => _isSubmitting = false);
     if (!mounted) return;
 
     if (res['success'] == true) {
-      Navigator.pop(context, true);
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (ctx) => MengelolaSoalScreen(
+            mapel: _selectedMapel!,
+            latihanTitle: _judulController.text.trim(),
+            targetSoal: jumlah,
+            kelas: _selectedClass ?? 'Kelas 10',
+            materiId: _selectedMateriId,
+            durasi: durasi,
+          ),
+        ),
+      );
+      if (result == true) {
+        Navigator.pop(context, true);
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

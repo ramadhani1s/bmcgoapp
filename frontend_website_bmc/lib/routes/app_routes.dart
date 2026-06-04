@@ -44,17 +44,7 @@ class AppRoutes {
   static const String soalLatihanManagement = '/soal-latihan-management';
   static const String adminKelolaAbsensi = '/admin-kelola-absensi';
   static const String adminKelolaAlumni = '/admin-kelola-alumni';
-  static const String mentorManagement = '/mentor-management';
 
-  // MENTOR
-  static const String mentorDashboard = '/mentor-dashboard';
-  static const String mentorAttendance = '/mentor-attendance';
-  static const String mentorProfile = '/mentor-profile';
-  static const String mentorExercise = '/mentor-exercise';
-  static const String mentorTryout = '/mentor-tryout';
-  static const String mentorOlimpiade = '/mentor-olimpiade';
-  static const String mentorEvaluasi = '/mentor-evaluasi';
-  static const String mentorMateri = '/mentor-materi';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -113,13 +103,6 @@ class AppRoutes {
 
       case adminProfile:
         return MaterialPageRoute(builder: (_) => const AdminProfileScreen());
-
-
-      case mentorManagement:
-        return InstantPageRoute(
-          child: const MentorManagementScreen(),
-          settings: settings,
-        );
 
  
       case mentorExercise:

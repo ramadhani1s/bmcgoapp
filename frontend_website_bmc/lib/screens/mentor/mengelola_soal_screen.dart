@@ -71,63 +71,6 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
     }
   }
 
-  Future<void> _submitSoal() async {
-    if (_questionController.text.trim().isEmpty ||
-        _optionAController.text.trim().isEmpty ||
-        _optionBController.text.trim().isEmpty ||
-        _optionCController.text.trim().isEmpty ||
-        _optionDController.text.trim().isEmpty) {
-      _showSnackbar('Semua pilihan jawaban harus diisi', isError: true);
-      return;
-    }
-
-    setState(() => _isSubmitting = true);
-
-    final kelasTag = widget.kelas != null && widget.kelas!.isNotEmpty
-        ? '[${widget.kelas}]'
-        : '';
-    final pertanyaan =
-        '$kelasTag[${widget.mapel}] ${_questionController.text.trim()}';
-    final res = await LatihanSoalService.createSoalLatihan(
-      pertanyaan: pertanyaan,
-      pilihanA: _optionAController.text.trim(),
-      pilihanB: _optionBController.text.trim(),
-      pilihanC: _optionCController.text.trim(),
-      pilihanD: _optionDController.text.trim(),
-      jawaban: _selectedAnswer,
-      pembahasan: _pembahasanController.text.trim(),
-      materiId: widget.materiId,
-    );
-
-    setState(() => _isSubmitting = false);
-
-    if (!mounted) return;
-
-    if (res['success'] == true) {
-      _showSnackbar('Soal berhasil ditambahkan');
-      _clearForm();
-      await _loadSoal();
-      setState(() => _isAddingNew = false);
-      // If target reached, close this flow and signal success to caller
-      if (_soalList.length >= widget.targetSoal) {
-        await Future<void>.delayed(const Duration(milliseconds: 300));
-        if (!mounted) return;
-        Navigator.of(context).pop(); // close MengelolaSoalScreen
-        Navigator.of(
-          context,
-        ).pop(true); // close CreateLatihanScreen with success
-      }
-    } else {
-      final detailText = res['details'] != null
-          ? '\nDetail: ${res['details']}'
-          : '';
-      _showSnackbar(
-        '${res['message'] ?? 'Gagal menambah soal'}$detailText',
-        isError: true,
-      );
-    }
-  }
-
 
   void _clearForm() {
     _questionController.clear();
