@@ -140,6 +140,7 @@ func ProtectedRoutes(r *gin.Engine) {
 	})
 
 	siswa.POST("/attendance/submit", handlers.SubmitAttendanceTokenHandler)
+	siswa.GET("/attendance/active", handlers.GetActiveAttendanceSessionForSiswaHandler)
 	siswa.GET("/attendance/history", handlers.GetStudentAttendanceHistoryHandler)
 	siswa.GET("/materi", handlers.GetAllMateri)
 	siswa.GET("/soal-latihan", handlers.GetSoalLatihanSiswa)
