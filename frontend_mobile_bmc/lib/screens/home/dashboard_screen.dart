@@ -8,7 +8,10 @@ import 'package:frontend_mobile_bmc/services/payment_service.dart';
 import 'package:frontend_mobile_bmc/services/jadwal_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend_mobile_bmc/widgets/navigation/main_bottom_nav.dart';
+import 'package:frontend_mobile_bmc/config/api_config.dart';
+import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'dart:convert';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -32,32 +35,24 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _isCheckingVerification = true;
   String _activePackageTitle = 'Paket belum dipilih';
   bool _isLoadingPackageInfo = true;
-  int _openedMateriCount = 0;
-  int _openedTryoutCount = 0;
+  int _totalLatihanTarget = 0;
+  int _completedLatihanCount = 0;
+  int _totalTryoutTarget = 0;
+  int _completedTryoutCount = 0;
+  int _realOverallProgressPercent = 0;
   Timer? _verificationRefreshTimer;
 
   // Jadwal variables
   List<Map<String, dynamic>> _jadwalList = [];
 
-  int get _totalMateriTarget => 24;
-  int get _totalTryoutTarget => 12;
-
-  double get _overallProgress {
-    final total = _totalMateriTarget + _totalTryoutTarget;
-    if (total <= 0) {
-      return 0;
-    }
-    final opened = _openedMateriCount + _openedTryoutCount;
-    return (opened / total).clamp(0, 1);
-  }
-
-  int get _overallProgressPercent => (_overallProgress * 100).round();
+  double get _overallProgress => _realOverallProgressPercent / 100.0;
+  int get _overallProgressPercent => _realOverallProgressPercent;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadLearningProgress();
+    _loadRealProgress();
     _loadDashboardStatus();
     _loadJadwalHariIni();
     _verificationRefreshTimer = Timer.periodic(
@@ -81,51 +76,36 @@ class _DashboardScreenState extends State<DashboardScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _loadDashboardStatus();
+      _loadRealProgress();
     }
   }
 
-  String _progressKey(String suffix) {
-    return 'learning_progress_${_studentEmail}_$suffix';
-  }
+  Future<void> _loadRealProgress() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (token == null) return;
+      
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/siswa/progress'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 10));
 
-  Future<void> _loadLearningProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) {
-      return;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            _realOverallProgressPercent = data['percentage'] ?? 0;
+            _totalLatihanTarget = data['total_latihan'] ?? 0;
+            _completedLatihanCount = data['completed_latihan'] ?? 0;
+            _totalTryoutTarget = data['total_tryout'] ?? 0;
+            _completedTryoutCount = data['completed_tryout'] ?? 0;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Gagal load progress: $e');
     }
-
-    setState(() {
-      _openedMateriCount = prefs.getInt(_progressKey('materi_opened')) ?? 0;
-      _openedTryoutCount = prefs.getInt(_progressKey('tryout_opened')) ?? 0;
-    });
-  }
-
-  Future<void> _saveLearningProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_progressKey('materi_opened'), _openedMateriCount);
-    await prefs.setInt(_progressKey('tryout_opened'), _openedTryoutCount);
-  }
-
-  Future<void> _incrementMateriProgress() async {
-    if (!_isActive || _openedMateriCount >= _totalMateriTarget) {
-      return;
-    }
-
-    setState(() {
-      _openedMateriCount += 1;
-    });
-    await _saveLearningProgress();
-  }
-
-  Future<void> _incrementTryoutProgress() async {
-    if (!_isActive || _openedTryoutCount >= _totalTryoutTarget) {
-      return;
-    }
-
-    setState(() {
-      _openedTryoutCount += 1;
-    });
-    await _saveLearningProgress();
   }
 
   Future<void> _loadDashboardStatus({bool silent = false}) async {
@@ -415,15 +395,17 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
 
     if (index == 1) {
-      _incrementMateriProgress();
       Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => const MateriScreen()));
+      ).push(MaterialPageRoute(builder: (_) => const MateriScreen())).then((_) {
+        _loadRealProgress();
+      });
       return;
     }
     if (index == 2) {
-      _incrementTryoutProgress();
-      Navigator.of(context).pushNamed('/mentor-tryout');
+      Navigator.of(context).pushNamed('/mentor-tryout').then((_) {
+        _loadRealProgress();
+      });
       return;
     }
 
@@ -435,8 +417,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   void _onMainMenuTap(String menuKey) {
     if (menuKey.toLowerCase() == 'try out') {
-      _incrementTryoutProgress();
-      Navigator.of(context).pushNamed('/mentor-tryout');
+      Navigator.of(context).pushNamed('/mentor-tryout').then((_) {
+        _loadRealProgress();
+      });
       return;
     }
 
@@ -467,10 +450,11 @@ class _DashboardScreenState extends State<DashboardScreen>
       return;
     }
     if (menuKey.toLowerCase() == 'materi') {
-      _incrementMateriProgress();
       Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => const MateriScreen()));
+      ).push(MaterialPageRoute(builder: (_) => const MateriScreen())).then((_) {
+        _loadRealProgress();
+      });
       return;
     } else {
       
@@ -684,23 +668,22 @@ class _DashboardScreenState extends State<DashboardScreen>
                             children: [
                               Expanded(
                                 child: _TopMetricCard(
-                                  value: '$_openedMateriCount',
-                                  label: 'Materi',
+                                  value: '$_completedLatihanCount',
+                                  label: 'Latihan Soal\nSelesai',
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: _TopMetricCard(
-                                  value:
-                                      '${_openedMateriCount + _openedTryoutCount}',
-                                  label: 'Latihan',
+                                  value: '$_completedTryoutCount',
+                                  label: 'Try Out\nSelesai',
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: _TopMetricCard(
-                                  value: '$_openedTryoutCount',
-                                  label: 'Try Out',
+                                  value: '${_totalLatihanTarget + _totalTryoutTarget}',
+                                  label: 'Total\nTugas',
                                 ),
                               ),
                             ],
@@ -959,12 +942,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            _incrementMateriProgress();
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => const MateriScreen(),
                               ),
-                            );
+                            ).then((_) {
+                              _loadRealProgress();
+                            });
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _accent,

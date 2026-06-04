@@ -107,6 +107,7 @@ class MyApp extends StatelessWidget {
                 builder: (context) => LatihanDariMateriScreen(
                   materiTitle: args['materi_title'] as String,
                   materiId: args['materi_id'] as int,
+                  questions: args['questions'] as List<Map<String, dynamic>>,
                 ),
               );
             }

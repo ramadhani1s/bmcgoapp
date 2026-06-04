@@ -31,11 +31,14 @@ class _MateriScreenState extends State<MateriScreen> {
   final List<String> _subjects = [
     'Semua',
     'Matematika',
-    'IPA',
-    'IPS',
-    'B. Indo',
-    'B. Inggris',
-    'Umum',
+    'Bahasa Indonesia',
+    'Bahasa Inggris',
+    'Fisika',
+    'Kimia',
+    'Biologi',
+    'Sosiologi',
+    'Ekonomi',
+    'Geografi',
   ];
 
   Map<String, Map<String, dynamic>> get _subjectConfig => {
