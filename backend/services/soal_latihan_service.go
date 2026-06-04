@@ -44,7 +44,7 @@ func GetSoalLatihanByMentorUserID(userID int) ([]models.SoalLatihan, error) {
 
 	rows, err := config.DB.Query(
 		context.Background(),
-		`SELECT id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id FROM soal_latihan WHERE mentor_id = $1 ORDER BY id DESC`,
+		`SELECT id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id, materi_id FROM soal_latihan WHERE mentor_id = $1 ORDER BY id DESC`,
 		mentorID,
 	)
 	if err != nil {
@@ -67,6 +67,7 @@ func GetSoalLatihanByMentorUserID(userID int) ([]models.SoalLatihan, error) {
 			&item.Pembahasan,
 			&item.Subject,
 			&item.LatihanID,
+			&item.MateriID,
 		); err != nil {
 			return nil, err
 		}
@@ -93,7 +94,7 @@ func CreateSoalLatihan(userID int, input models.SoalLatihan) (*models.SoalLatiha
 	created := &models.SoalLatihan{}
 	err = config.DB.QueryRow(
 		context.Background(),
-		`INSERT INTO soal_latihan (mentor_id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, jawaban, pembahasan, subject, latihan_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id`,
+		`INSERT INTO soal_latihan (mentor_id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, jawaban, pembahasan, subject, latihan_id, materi_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id, materi_id`,
 		mentorID,
 		input.Pertanyaan,
 		input.PilihanA,
@@ -104,6 +105,7 @@ func CreateSoalLatihan(userID int, input models.SoalLatihan) (*models.SoalLatiha
 		input.Pembahasan,
 		input.Subject,
 		input.LatihanID,
+		input.MateriID,
 	).Scan(
 		&created.ID,
 		&created.MentorID,
@@ -116,6 +118,7 @@ func CreateSoalLatihan(userID int, input models.SoalLatihan) (*models.SoalLatiha
 		&created.Pembahasan,
 		&created.Subject,
 		&created.LatihanID,
+		&created.MateriID,
 	)
 	if err != nil {
 		return nil, err
@@ -133,7 +136,7 @@ func UpdateSoalLatihan(userID, soalID int, input models.SoalLatihan) (*models.So
 	updated := &models.SoalLatihan{}
 	err = config.DB.QueryRow(
 		context.Background(),
-		`UPDATE soal_latihan SET pertanyaan = $1, pilihan_a = $2, pilihan_b = $3, pilihan_c = $4, pilihan_d = $5, jawaban = $6, pembahasan = $7, subject = $8, latihan_id = $9 WHERE id = $10 AND mentor_id = $11 RETURNING id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id`,
+		`UPDATE soal_latihan SET pertanyaan = $1, pilihan_a = $2, pilihan_b = $3, pilihan_c = $4, pilihan_d = $5, jawaban = $6, pembahasan = $7, subject = $8, latihan_id = $9, materi_id = $10 WHERE id = $11 AND mentor_id = $12 RETURNING id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id, materi_id`,
 		input.Pertanyaan,
 		input.PilihanA,
 		input.PilihanB,
@@ -143,6 +146,7 @@ func UpdateSoalLatihan(userID, soalID int, input models.SoalLatihan) (*models.So
 		input.Pembahasan,
 		input.Subject,
 		input.LatihanID,
+		input.MateriID,
 		soalID,
 		mentorID,
 	).Scan(
@@ -157,6 +161,7 @@ func UpdateSoalLatihan(userID, soalID int, input models.SoalLatihan) (*models.So
 		&updated.Pembahasan,
 		&updated.Subject,
 		&updated.LatihanID,
+		&updated.MateriID,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -199,13 +204,13 @@ func GetSoalLatihanBySubject(subject string) ([]models.SoalLatihan, error) {
 	if subject != "" && subject != "Semua" {
 		rows, err = config.DB.Query(
 			context.Background(),
-			`SELECT id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id FROM soal_latihan WHERE subject = $1 ORDER BY id DESC`,
+			`SELECT id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id, materi_id FROM soal_latihan WHERE subject = $1 ORDER BY id DESC`,
 			subject,
 		)
 	} else {
 		rows, err = config.DB.Query(
 			context.Background(),
-			`SELECT id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id FROM soal_latihan ORDER BY id DESC`,
+			`SELECT id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id, materi_id FROM soal_latihan ORDER BY id DESC`,
 		)
 	}
 
@@ -229,6 +234,51 @@ func GetSoalLatihanBySubject(subject string) ([]models.SoalLatihan, error) {
 			&item.Pembahasan,
 			&item.Subject,
 			&item.LatihanID,
+			&item.MateriID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+// GetSoalLatihanByMateriID mengambil soal latihan berdasarkan materi_id (untuk fitur dinamis)
+func GetSoalLatihanByMateriID(materiID int) ([]models.SoalLatihan, error) {
+	rows, err := config.DB.Query(
+		context.Background(),
+		`SELECT id, mentor_id, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(subject, ''), latihan_id, materi_id 
+		 FROM soal_latihan 
+		 WHERE materi_id = $1 
+		 ORDER BY id ASC`,
+		materiID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]models.SoalLatihan, 0)
+	for rows.Next() {
+		var item models.SoalLatihan
+		if err := rows.Scan(
+			&item.ID,
+			&item.MentorID,
+			&item.Pertanyaan,
+			&item.PilihanA,
+			&item.PilihanB,
+			&item.PilihanC,
+			&item.PilihanD,
+			&item.Jawaban,
+			&item.Pembahasan,
+			&item.Subject,
+			&item.LatihanID,
+			&item.MateriID,
 		); err != nil {
 			return nil, err
 		}

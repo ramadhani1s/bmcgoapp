@@ -136,3 +136,28 @@ func GetSoalLatihanSiswa(c *gin.Context) {
 		"data":    items,
 	})
 }
+
+// GetSoalLatihanByMateri mengambil soal latihan berdasarkan materi_id untuk siswa
+func GetSoalLatihanByMateri(c *gin.Context) {
+	materiID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || materiID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "id materi tidak valid",
+		})
+		return
+	}
+
+	items, err := services.GetSoalLatihanByMateriID(materiID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Gagal mengambil soal latihan",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Soal latihan berhasil diambil",
+		"data":    items,
+	})
+}

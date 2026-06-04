@@ -12,27 +12,34 @@ import '../screens/dashboard/verifikasi_pendaftaran_screen.dart';
 import '../screens/dashboard/admin_dashboard.dart';
 import '../screens/dashboard/admin_kelola_absensi_screen.dart';
 import '../screens/dashboard/admin_kelola_alumni_screen.dart';
+import '../screens/mentor/materi_pembelajaran_screen.dart';
+import '../screens/mentor/latihan_soal_screen.dart';
+import '../screens/mentor/evaluasi_siswa_screen.dart';
 import '../services/auth_service.dart';
 
 class AppRoutes {
+  // AUTH
   static const String login = '/login';
+
+  // ADMIN
   static const String adminDashboard = '/admin-dashboard';
   static const String paymentVerification = '/payment-verification';
-  static const String mentorDashboard = '/mentor-dashboard';
-  static const String mentorAttendance = '/mentor-attendance';
-  static const String mentorProfile = '/mentor-profile';
-  static const String mentorManagement = '/mentor-management';
-  static const String mentorExercise = '/mentor-exercise';
-  static const String mentorTryout = '/mentor-tryout';
-  static const String mentorOlimpiade = '/mentor-olimpiade';
-
-  static const String mentorEvaluasi = '/mentor-evaluasi';
-  static const String mentorMateri = '/mentor-materi';
-
   static const String paketLes = '/paket-les';
   static const String soalLatihanManagement = '/soal-latihan-management';
   static const String adminKelolaAbsensi = '/admin-kelola-absensi';
   static const String adminKelolaAlumni = '/admin-kelola-alumni';
+  static const String mentorManagement = '/mentor-management';
+
+  // MENTOR
+  static const String mentorDashboard = '/mentor-dashboard';
+  static const String mentorAttendance = '/mentor-attendance';
+  static const String mentorProfile = '/mentor-profile';
+  static const String mentorExercise = '/mentor-exercise';
+  static const String mentorTryout = '/mentor-tryout';
+  static const String mentorOlimpiade = '/mentor-olimpiade';
+  static const String mentorEvaluasi = '/mentor-evaluasi';
+  static const String mentorMateri = '/mentor-materi';
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case login:
@@ -61,6 +68,21 @@ class AppRoutes {
           builder: (_) => const VerifikasiPendaftaranScreen(),
         );
 
+      case paketLes:
+        return MaterialPageRoute(
+          builder: (_) => const PaketLesScreen(),
+        );
+
+      case soalLatihanManagement:
+        return MaterialPageRoute(
+          builder: (_) => const SoalLatihanManagementScreen(),
+        );
+
+      case mentorManagement:
+        return MaterialPageRoute(
+          builder: (_) => const MentorManagementScreen(),
+        );
+
       case mentorDashboard:
         return MaterialPageRoute(builder: (_) => const MentorDashboard());
 
@@ -71,11 +93,6 @@ class AppRoutes {
 
       case mentorProfile:
         return MaterialPageRoute(builder: (_) => const MentorProfileScreen());
-
-      case mentorManagement:
-        return MaterialPageRoute(
-          builder: (_) => const MentorManagementScreen(),
-        );
 
       case mentorExercise:
         return MaterialPageRoute(builder: (_) => const LatihanSoalScreen());
@@ -94,18 +111,28 @@ class AppRoutes {
           builder: (_) => const MateriPembelajaranScreen(),
         );
 
-      case paketLes:
-        return MaterialPageRoute(builder: (_) => const PaketLesScreen());
-
-      case soalLatihanManagement:
-        return MaterialPageRoute(
-          builder: (_) => const SoalLatihanManagementScreen(),
-        );
-
       default:
         return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(child: Text('Halaman tidak ditemukan')),
+          builder: (context) => Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Halaman tidak ditemukan: ${settings.name}',
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Kembali'),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
     }

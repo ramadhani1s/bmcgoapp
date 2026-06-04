@@ -42,24 +42,39 @@ class TransactionRequest {
 }
 
 class TransactionResponse {
-  final String token;
-  final String redirectUrl;
   final String transactionId;
   final String status;
+  final String paymentType;
+  final String virtualAccountBank;
+  final String virtualAccountNumber;
+  final String billKey;
+  final String billerCode;
+  final String token;
+  final String redirectUrl;
 
   TransactionResponse({
-    required this.token,
-    required this.redirectUrl,
     required this.transactionId,
     required this.status,
+    required this.paymentType,
+    required this.virtualAccountBank,
+    required this.virtualAccountNumber,
+    required this.billKey,
+    required this.billerCode,
+    required this.token,
+    required this.redirectUrl,
   });
 
   factory TransactionResponse.fromJson(Map<String, dynamic> json) {
     return TransactionResponse(
-      token: json['token'] ?? '',
-      redirectUrl: json['redirect_url'] ?? '',
       transactionId: json['transaction_id'] ?? '',
       status: json['status'] ?? '',
+      paymentType: json['payment_type'] ?? '',
+      virtualAccountBank: json['virtual_account_bank'] ?? '',
+      virtualAccountNumber: json['virtual_account_number'] ?? '',
+      billKey: json['bill_key'] ?? '',
+      billerCode: json['biller_code'] ?? '',
+      token: json['token'] ?? '',
+      redirectUrl: json['redirect_url'] ?? '',
     );
   }
 }

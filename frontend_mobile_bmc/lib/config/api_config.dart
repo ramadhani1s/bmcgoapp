@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const bool useEmulator = false;
+  static const bool useEmulator = true;
 
   static String get baseUrl {
     if (useEmulator) {

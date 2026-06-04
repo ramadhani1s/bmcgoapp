@@ -8,6 +8,7 @@ class MengelolaSoalScreen extends StatefulWidget {
   final String latihanTitle;
   final int targetSoal;
   final String? kelas;
+  final int? materiId;
 
   const MengelolaSoalScreen({
     super.key,
@@ -15,6 +16,7 @@ class MengelolaSoalScreen extends StatefulWidget {
     required this.latihanTitle,
     this.targetSoal = 5,
     this.kelas,
+    this.materiId,
   });
 
   @override
@@ -93,6 +95,7 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
       pilihanD: _optionDController.text.trim(),
       jawaban: _selectedAnswer,
       pembahasan: _pembahasanController.text.trim(),
+      materiId: widget.materiId,
     );
 
     setState(() => _isSubmitting = false);

@@ -6,6 +6,8 @@ import '../../core/theme/app_colors.dart';
 import '../../routes/app_routes.dart';
 import '../../models/user.dart';
 import '../../models/materi_pembelajaran.dart';
+import 'latihan_soal_screen.dart';
+import '../../models/materi_pembelajaran.dart';
 import '../dashboard/jadwal_pembelajaran_screen.dart';
 import '../dashboard/mentor_attendance_screen.dart';
 import '../dashboard/mentor_olimpiade_screen.dart';
@@ -32,9 +34,9 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
   String _selectedClass = 'Semua Kelas';
   final List<String> _fixedClassOptions = const [
     'Semua Kelas',
-    'Kelas 10',
-    'Kelas 11',
-    'Kelas 12',
+    '10 IPA IPS',
+    '11 IPA IPS',
+    '12 IPA IPS',
   ];
 
   // Use AppColors directly in widgets for consistency with Admin
@@ -253,6 +255,15 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
+  }
+
+  void _openKelolaSoal(MateriPembelajaran materi) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LatihanSoalScreen(materi: materi),
+      ),
+    );
   }
 
   @override
@@ -637,6 +648,14 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
                   tooltip: 'Unduh Materi',
                 ),
                 IconButton(
+                  icon: const Icon(
+                    Icons.assignment_outlined,
+                    color: Color(0xFF10B981),
+                  ),
+                  onPressed: () => _openKelolaSoal(materi),
+                  tooltip: 'Kelola Latihan Soal',
+                ),
+                IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () => _handleDelete(materi.id),
                   tooltip: 'Hapus Materi',
@@ -671,8 +690,20 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
 
   PlatformFile? _selectedFile;
   bool _isUploading = false;
-  final List<String> _classOptions = const ['Kelas 10', 'Kelas 11', 'Kelas 12'];
-  String _selectedClass = 'Kelas 12';
+  final List<String> _classOptions = const ['10 IPA IPS', '11 IPA IPS', '12 IPA IPS'];
+  String _selectedClass = '12 IPA IPS';
+  final List<String> _mapelOptions = const [
+    'Matematika',
+    'Bahasa Indonesia',
+    'Bahasa Inggris',
+    'Fisika',
+    'Kimia',
+    'Biologi',
+    'Sosiologi',
+    'Ekonomi',
+    'Geografi',
+  ];
+  String _selectedMapel = 'Matematika';
 
   Future<void> _pickFile() async {
     try {
@@ -729,6 +760,7 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
       description: _descController.text,
       file: _selectedFile!,
       classLevel: _selectedClass,
+      subject: _selectedMapel,
     );
 
     setState(() => _isUploading = false);
@@ -901,6 +933,37 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
                 },
                 decoration: InputDecoration(
                   labelText: 'Kelas',
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 1.4,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedMapel,
+                items: _mapelOptions
+                    .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _selectedMapel = v);
+                },
+                decoration: InputDecoration(
+                  labelText: 'Mata Pelajaran',
                   filled: true,
                   fillColor: const Color(0xFFF3F4F6),
                   border: OutlineInputBorder(

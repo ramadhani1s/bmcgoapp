@@ -12,9 +12,11 @@ import '../../services/latihan_soal_service.dart';
 import '../../widgets/mentor_sidebar_shell.dart';
 import 'create_latihan_screen.dart';
 import 'mengelola_soal_screen.dart';
+import '../../models/materi_pembelajaran.dart';
 
 class LatihanSoalScreen extends StatefulWidget {
-  const LatihanSoalScreen({super.key});
+  final MateriPembelajaran? materi;
+  const LatihanSoalScreen({super.key, this.materi});
 
   @override
   State<LatihanSoalScreen> createState() => _LatihanSoalScreenState();
@@ -38,11 +40,14 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
 
   final List<String> _mapelOptions = const [
     'Matematika',
+    'Bahasa Indonesia',
+    'Bahasa Inggris',
     'Fisika',
     'Kimia',
     'Biologi',
-    'Bahasa Indonesia',
-    'Bahasa Inggris',
+    'Sosiologi',
+    'Ekonomi',
+    'Geografi',
   ];
 
   String _selectedMapel = 'Matematika';
@@ -51,9 +56,9 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   String _selectedClass = 'Semua Kelas';
   final List<String> _classOptions = const [
     'Semua Kelas',
-    'Kelas 10',
-    'Kelas 11',
-    'Kelas 12',
+    '10 IPA IPS',
+    '11 IPA IPS',
+    '12 IPA IPS',
   ];
 
   static const Color _primaryBlue = Color(0xFF2563EB);
@@ -81,6 +86,14 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.materi != null) {
+      _selectedMapel = _mapelOptions.contains(widget.materi!.subject)
+          ? widget.materi!.subject
+          : _mapelOptions.first;
+      _selectedClass = _classOptions.contains(widget.materi!.classLevel)
+          ? widget.materi!.classLevel
+          : 'Semua Kelas';
+    }
     _loadItems();
   }
 
@@ -187,7 +200,10 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       PageRouteBuilder<bool?>(
         opaque: false,
         pageBuilder: (ctx, animation, secondaryAnimation) =>
-            CreateLatihanScreen(mapel: _selectedMapel),
+            CreateLatihanScreen(
+              mapel: _selectedMapel,
+              materiId: widget.materi?.id,
+            ),
         transitionsBuilder: (ctx, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
@@ -270,6 +286,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
             pilihanD: draft.optionDController.text.trim(),
             jawaban: draft.selectedAnswer,
             pembahasan: draft.pembahasanController.text.trim(),
+            materiId: widget.materi?.id,
           );
 
           if (result['success'] != true) {
@@ -294,6 +311,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           pilihanD: draft.optionDController.text.trim(),
           jawaban: draft.selectedAnswer,
           pembahasan: draft.pembahasanController.text.trim(),
+          materiId: widget.materi?.id ?? _editingItem!.materiId,
         );
       }
 
@@ -1647,8 +1665,10 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       final matchesClass =
           _selectedClass == 'Semua Kelas' ||
           item.pertanyaan.contains('[$_selectedClass]');
+      final matchesMateri =
+          widget.materi == null || item.materiId == widget.materi!.id;
 
-      return matchesSearch && matchesStatus && matchesMapel && matchesClass;
+      return matchesSearch && matchesStatus && matchesMapel && matchesClass && matchesMateri;
     }).toList();
   }
 
