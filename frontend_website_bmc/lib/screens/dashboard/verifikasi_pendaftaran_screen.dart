@@ -188,61 +188,72 @@ class _VerifikasiPendaftaranScreenState
           fontSize: 15,
           color: Color(0xFF9CA3AF),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(
+            color: Color(0xFF2563EB),
+            width: 1.4,
+          ),
+        ),
       ),
-      style: const TextStyle(fontSize: 15, color: Color(0xFF27344B), fontWeight: FontWeight.w500),
+      style: const TextStyle(
+        fontSize: 15,
+        color: Color(0xFF27344B),
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 
-  Widget _buildStatCard(
-  String title,
-  String value,
-  Color color,
-  Color bgColor,
-  IconData icon,
-) {
-  return Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: bgColor,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(
-        color: color.withOpacity(0.2),
+  Widget _statCard(String title, String value, Color color, IconData icon) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: color, size: 28),
+            ),
+          ],
+        ),
       ),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Icon(
-          icon,
-          size: 32,
-          color: color,
-        ),
-      ],
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildTableHeader() {
     return Container(
@@ -321,8 +332,6 @@ class _VerifikasiPendaftaranScreenState
 
   Widget _buildRow(PaymentVerificationItem item) {
     final status = _statusLabel(item);
-    final statusColor = _statusColor(status);
-    final statusBg = _statusBgColor(status);
     final canAct = !item.isVerified && item.status == 'success';
 
     return Container(
@@ -372,18 +381,37 @@ class _VerifikasiPendaftaranScreenState
           ),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              padding: const EdgeInsets.symmetric(
+                vertical: 6,
+                horizontal: 10,
+              ),
               decoration: BoxDecoration(
-                color: statusBg,
-                borderRadius: BorderRadius.circular(12),
+                color: status == 'Disetujui'
+                    ? const Color(0xFFDCFCE7)
+                    : status == 'Ditolak'
+                        ? const Color(0xFFFEE2E2)
+                        : const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: status == 'Disetujui'
+                      ? const Color(0xFFBBF7D0)
+                      : status == 'Ditolak'
+                          ? const Color(0xFFFCA5A5)
+                          : const Color(0xFFFDE68A),
+                  width: 1,
+                ),
               ),
               child: Text(
                 status,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: statusColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                  color: status == 'Disetujui'
+                      ? const Color(0xFF166534)
+                      : status == 'Ditolak'
+                          ? const Color(0xFF991B1B)
+                          : const Color(0xFF92400E),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
                 ),
               ),
             ),
@@ -391,33 +419,38 @@ class _VerifikasiPendaftaranScreenState
           Expanded(
             child: Row(
               children: [
-                OutlinedButton(
+                ElevatedButton(
                   onPressed: canAct ? () => _approve(item) : null,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 30),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    foregroundColor: _green,
-                    side: const BorderSide(color: _green),
-                    visualDensity: VisualDensity.compact,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
                   ),
                   child: const Text(
                     'Setujui',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton(
                   onPressed: canAct ? () => _reject(item) : null,
                   style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 30),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    foregroundColor: _red,
-                    side: const BorderSide(color: _red),
-                    visualDensity: VisualDensity.compact,
+                    foregroundColor: const Color(0xFFEF4444),
+                    side: const BorderSide(color: Color(0xFFEF4444)),
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: const Text(
                     'Tolak',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -487,140 +520,125 @@ class _VerifikasiPendaftaranScreenState
   }
 
   @override
-    Widget build(BuildContext context) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFF7F9FF), Color(0xFFF3F6FB)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: FutureBuilder<PaymentVerificationOverview>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
 
-          const Text(
-            'Verifikasi Pendaftaran',
-            style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-
-          SizedBox(height: 6),
-
-          const Text(
-            'Verifikasi pembayaran dan pendaftaran siswa',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF64748B),
-            ),
-          ),
-
-          SizedBox(height: 24),
-
-          _buildSearchBar(),
-
-          const SizedBox(height: 24),
-
-          FutureBuilder<PaymentVerificationOverview>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            if (snapshot.hasError) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40),
-                child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Gagal memuat data',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: _textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          snapshot.error.toString(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: _textSecondary,
-                          ),
-                        ),
-                      ],
-                  ),
-                ),
-              );
-            }
-
-            final overview =
-                snapshot.data ??
-                const PaymentVerificationOverview(
-                  waiting: 0,
-                  approved: 0,
-                  rejected: 0,
-                  items: [],
-                );
-            
-            final filtered = _filterItems(overview.items);
-
-            return Column(
-              children: [
-
-                Row(
+          if (snapshot.hasError) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
-                    Expanded(
-                      child: _buildStatCard(
-                        'Menunggu',
-                        overview.waiting.toString(),
-                        const Color(0xFFF59E0B),
-                        const Color(0xFFFFFBEB),
-                        Icons.pending_actions,
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Gagal memuat data',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: _textSecondary,
                       ),
                     ),
-
-                    const SizedBox(width: 14),
-
-                    Expanded(
-                      child: _buildStatCard(
-                        'Disetujui',
-                        overview.approved.toString(),
-                        const Color(0xFF16A34A),
-                        const Color(0xFFECFDF5),
-                        Icons.check_circle,
-                      ),
-                    ),
-
-                    const SizedBox(width: 14),
-
-                    Expanded(
-                      child: _buildStatCard(
-                        'Ditolak',
-                        overview.rejected.toString(),
-                        const Color(0xFFDC2626),
-                        const Color(0xFFFEF2F2),
-                        Icons.cancel,
+                    const SizedBox(height: 8),
+                    Text(
+                      snapshot.error.toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: _textSecondary,
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 24),
-
-                _buildTable(filtered),
-
-              ],
+              ),
             );
-          },
-        ),
-      ],
+          }
+
+          final overview = snapshot.data ??
+              const PaymentVerificationOverview(
+                waiting: 0,
+                approved: 0,
+                rejected: 0,
+                items: [],
+              );
+          final filtered = _filterItems(overview.items);
+
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Verifikasi Pendaftaran",
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF111827),
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Verifikasi pembayaran dan pendaftaran siswa secara real-time",
+                    style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  Row(
+                    children: [
+                      _statCard(
+                        "Menunggu",
+                        overview.waiting.toString(),
+                        const Color(0xFFF59E0B),
+                        Icons.pending_actions,
+                      ),
+                      _statCard(
+                        "Disetujui",
+                        overview.approved.toString(),
+                        const Color(0xFF16A34A),
+                        Icons.check_circle,
+                      ),
+                      _statCard(
+                        "Ditolak",
+                        overview.rejected.toString(),
+                        const Color(0xFFDC2626),
+                        Icons.cancel,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  _buildSearchBar(),
+
+                  const SizedBox(height: 22),
+
+                  _buildTable(filtered),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
