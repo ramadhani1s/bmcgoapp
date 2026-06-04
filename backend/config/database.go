@@ -16,7 +16,7 @@ func ConnectDB() {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		// Use the project's default local database name if no DATABASE_URL provided
-		dsn = "postgres://postgres:123@localhost:5432/bmcgo_app?sslmode=disable"
+		dsn = "postgres://postgres:ramadhani12@localhost:5432/bmcgo_app?sslmode=disable"
 	}
 
 	var err error
@@ -349,6 +349,7 @@ func ConnectDB() {
 			file_type VARCHAR(50),
 			file_size BIGINT,
 			subject VARCHAR(100),
+			class_level VARCHAR(50),
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)
@@ -357,7 +358,7 @@ func ConnectDB() {
 		log.Fatal("Gagal membuat table learning_materials:", err)
 	}
 
-	// Tambah kolom subject jika belum ada (untuk database lama)
+	// Tambah kolom subject & class_level jika belum ada (untuk database lama)
 	_, err = DB.Exec(context.Background(), `
 		DO $$
 		BEGIN
@@ -367,11 +368,17 @@ func ConnectDB() {
 			) THEN
 				ALTER TABLE learning_materials ADD COLUMN subject VARCHAR(100);
 			END IF;
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'learning_materials' AND column_name = 'class_level'
+			) THEN
+				ALTER TABLE learning_materials ADD COLUMN class_level VARCHAR(50);
+			END IF;
 		END
 		$$
 	`)
 	if err != nil {
-		log.Println("Warning: gagal add kolom subject di learning_materials:", err)
+		log.Println("Warning: gagal add kolom subject atau class_level di learning_materials:", err)
 	}
 
 	// Buat table paket_les (lesson packages)
@@ -505,7 +512,7 @@ func ConnectDB() {
 		log.Println("Warning: gagal add kolom pembahasan di soal_latihan:", err)
 	}
 
-	// Tambah kolom subject dan latihan_id untuk filtering dan grouping soal latihan
+	// Tambah kolom subject, latihan_id, dan materi_id untuk filtering dan grouping soal latihan
 	_, err = DB.Exec(context.Background(), `
 		DO $$
 		BEGIN
@@ -521,11 +528,38 @@ func ConnectDB() {
 			) THEN
 				ALTER TABLE soal_latihan ADD COLUMN latihan_id INT;
 			END IF;
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'soal_latihan' AND column_name = 'materi_id'
+			) THEN
+				ALTER TABLE soal_latihan ADD COLUMN materi_id INT;
+			END IF;
 		END
 		$$
 	`)
 	if err != nil {
-		log.Println("Warning: gagal add kolom subject dan latihan_id di soal_latihan:", err)
+		log.Println("Warning: gagal add kolom subject, latihan_id, dan materi_id di soal_latihan:", err)
+	}
+
+	// Tambahkan constraint foreign key untuk materi_id
+	_, err = DB.Exec(context.Background(), `
+		DO $$
+		BEGIN
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.table_constraints
+				WHERE constraint_name = 'fk_soal_latihan_materi'
+			) THEN
+				ALTER TABLE soal_latihan
+				ADD CONSTRAINT fk_soal_latihan_materi
+				FOREIGN KEY (materi_id)
+				REFERENCES learning_materials(id)
+				ON DELETE CASCADE;
+			END IF;
+		END
+		$$
+	`)
+	if err != nil {
+		log.Println("Warning: gagal add constraint fk_soal_latihan_materi:", err)
 	}
 
 	// Sinkronkan admin.user_id berdasarkan email agar FK pengumuman selalu menunjuk admin yang benar.

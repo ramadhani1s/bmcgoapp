@@ -45,9 +45,26 @@ func UploadMateri(c *gin.Context) {
 
 	mentorID, err := strconv.Atoi(mentorIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid mentor_id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid mentor_id parameter"})
 		return
 	}
+
+	// Resolve actual mentor_id from DB
+	var actualMentorID int
+	err = config.DB.QueryRow(context.Background(), `
+		SELECT id FROM mentor WHERE user_id = $1 LIMIT 1
+	`, mentorID).Scan(&actualMentorID)
+	
+	if err != nil {
+		err = config.DB.QueryRow(context.Background(), `
+			SELECT id FROM mentor WHERE id = $1 LIMIT 1
+		`, mentorID).Scan(&actualMentorID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Mentor not found"})
+			return
+		}
+	}
+	mentorID = actualMentorID
 
 	title := c.PostForm("title")
 	if title == "" {
@@ -133,9 +150,26 @@ func GetMateriByMentor(c *gin.Context) {
 
 	mentorID, err := strconv.Atoi(mentorIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid mentor_id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid mentor_id parameter"})
 		return
 	}
+
+	// Resolve actual mentor_id from DB
+	var actualMentorID int
+	err = config.DB.QueryRow(context.Background(), `
+		SELECT id FROM mentor WHERE user_id = $1 LIMIT 1
+	`, mentorID).Scan(&actualMentorID)
+	
+	if err != nil {
+		err = config.DB.QueryRow(context.Background(), `
+			SELECT id FROM mentor WHERE id = $1 LIMIT 1
+		`, mentorID).Scan(&actualMentorID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Mentor not found"})
+			return
+		}
+	}
+	mentorID = actualMentorID
 
 	rows, err := config.DB.Query(context.Background(), `
 		SELECT id, mentor_id, title, description, file_path, file_type, file_size, subject, created_at, updated_at

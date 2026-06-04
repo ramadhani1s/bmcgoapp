@@ -99,7 +99,7 @@ func GetPendingPaymentVerifications(ctx context.Context) ([]PaymentVerificationI
 		SELECT DISTINCT ON (pt.user_id)
 			pt.transaction_id,
 			pt.user_id,
-			COALESCE(NULLIF(s.nama_siswa, ''), NULLIF(u.nama, ''), pt.customer_name) AS student_name,
+			COALESCE(NULLIF(u.nama, ''), pt.customer_name) AS student_name,
 			COALESCE(s.kelas, '') AS class_name,
 			COALESCE(s.asal_sekolah, '') AS school_name,
 			'' AS address,
@@ -170,7 +170,6 @@ func GetPaymentVerificationsWithFilter(ctx context.Context, filterStatus string)
 			pt.user_id,
 
 			COALESCE(
-				NULLIF(s.nama_siswa, ''),
 				NULLIF(u.nama, ''),
 				COALESCE(pt.customer_name, '')
 			) AS student_name,
