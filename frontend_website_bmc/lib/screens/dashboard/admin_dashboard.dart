@@ -437,16 +437,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           )
                         else ...[
                           _buildTopBar(),
-                          const SizedBox(height: 14),
-                          _buildHeroCard(),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 18),
                           if (_isSummaryLoading)
                             const LinearProgressIndicator(minHeight: 2),
                           if (_isSummaryLoading) const SizedBox(height: 8),
                           _buildStatsRow(),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 18),
                           _buildPendingVerificationCard(),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
                           _buildScheduleCard(),
                         ],
                       ],
@@ -678,65 +676,57 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildTopBar() {
+    final today = DateTime.now();
+
     return Container(
-      height: 66,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: _surfaceCream,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _borderCream),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE6EDF7)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(15, 23, 42, 0.04),
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Expanded(
-            child: Container(
-              height: 40,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFF),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _softBorderCream),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.search, size: 16, color: Color(0xFF9AA3B2)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Cari siswa, sekolah, kelas, mapel, mentor...',
-                        hintStyle: TextStyle(
-                          color: Color(0xFFA0A9B7),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        border: InputBorder.none,
-                        isDense: true,
-                      ),
-                      style: const TextStyle(
-                        color: Color(0xFF27344B),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Selamat Datang, Admin!',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                    letterSpacing: -0.5,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Berikut adalah ringkasan informasi terkini dari sistem manajemen BMC - ${_formatIndoDate(today)}.',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Stack(
             children: [
               const Icon(
                 Icons.notifications_none_rounded,
                 color: Color(0xFF7D8797),
+                size: 22,
               ),
               Positioned(
                 right: 1,
@@ -752,191 +742,103 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           MouseRegion(
-  cursor: SystemMouseCursors.click,
-
-  onEnter: (_) {
-    setState(() {
-      _isProfileHovered = true;
-    });
-  },
-
-  onExit: (_) {
-    setState(() {
-      _isProfileHovered = false;
-    });
-  },
-
-  child: InkWell(
-    onTap: () {
-      Navigator.of(context)
-          .pushNamed(AppRoutes.adminProfile)
-          .then((_) {
-        _loadUser();
-      });
-    },
-
-    borderRadius: BorderRadius.circular(12),
-
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 4,
-      ),
-
-      decoration: BoxDecoration(
-        color: _isProfileHovered
-        ? const Color(0xFFF1F5FF)
-        : Colors.transparent,
-
-        borderRadius: BorderRadius.circular(12),
-
-        border: Border.all(
-          color: Colors.transparent,
-        ),
-      ),
-
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-                  AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-
-                  width: _isProfileHovered ? 38 : 32,
-                  height: _isProfileHovered ? 38 : 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2A58F2),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2A58F2).withOpacity(0.25),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) {
+              setState(() {
+                _isProfileHovered = true;
+              });
+            },
+            onExit: (_) {
+              setState(() {
+                _isProfileHovered = false;
+              });
+            },
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context)
+                    .pushNamed(AppRoutes.adminProfile)
+                    .then((_) {
+                  _loadUser();
+                });
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: _isProfileHovered
+                      ? const Color(0xFFF1F5FF)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: _isProfileHovered ? 38 : 32,
+                      height: _isProfileHovered ? 38 : 32,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A58F2),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2A58F2).withOpacity(0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        _currentUser?.nama.isNotEmpty == true
+                            ? _currentUser!.nama.substring(0, 2).toUpperCase()
+                            : 'AD',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            color: _isProfileHovered
+                                ? const Color(0xFF2A58F2)
+                                : const Color(0xFF27344B),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          child: Text(
+                            _currentUser?.nama ?? 'Administrator BMC',
+                          ),
+                        ),
+                        Text(
+                          _currentUser?.roleName == 'Unknown'
+                              ? 'Administrator'
+                              : _currentUser!.roleName,
+                          style: const TextStyle(
+                            color: Color(0xFF99A4B5),
+                            fontSize: 10,
+                          ),
                         ),
                       ],
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      _currentUser?.nama.isNotEmpty == true
-                          ? _currentUser!.nama.substring(0, 2).toUpperCase()
-                          : 'AD',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 200),
-                        style: TextStyle(
-                          color: _isProfileHovered
-                              ? const Color(0xFF2A58F2)
-                              : const Color(0xFF27344B),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        child: Text(
-                          _currentUser?.nama ?? 'Administrator BMC',
-                        ),
-                      ),
-
-                      Text(
-                        _currentUser?.roleName == 'Unknown'
-                            ? 'Administrator'
-                            : _currentUser!.roleName,
-                        style: const TextStyle(
-                          color: Color(0xFF99A4B5),
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeroCard() {
-    final today = DateTime.now();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2B57E4), Color(0xFF2756F0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x332557E4),
-            blurRadius: 14,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: 110,
-            top: -20,
-            child: Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                color: Colors.white.withAlpha((0.05 * 255).round()),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            right: 30,
-            top: -12,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.white.withAlpha((0.06 * 255).round()),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Selamat Datang, Admin!',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Berikut adalah ringkasan informasi terkini dari sistem manajemen BMC - ${_formatIndoDate(today)}.',
-                style: const TextStyle(
-                  color: Color(0xFFD9E4FF),
-                  fontSize: 11.5,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -948,59 +850,59 @@ class _AdminDashboardState extends State<AdminDashboard> {
       children: _stats
           .map(
             (e) => Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                  decoration: BoxDecoration(
-                    color: e.backgroundColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _borderCream),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              e.title,
-                              style: const TextStyle(
-                                color: Color(0xFF667287),
-                                fontSize: 11.5,
-                              ),
+              child: Container(
+                margin: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+                decoration: BoxDecoration(
+                  color: e.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: e.color.withValues(alpha: 0.18)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            e.title,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              e.value,
-                              style: const TextStyle(
-                                color: Color(0xFF1E2B3D),
-                                fontSize: 34,
-                                fontWeight: FontWeight.w800,
-                              ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            e.value,
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              color: e.color,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              e.subtitle,
-                              style: const TextStyle(
-                                color: Color(0xFFA1ABBC),
-                                fontSize: 10.5,
-                              ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            e.subtitle,
+                            style: const TextStyle(
+                              color: Color(0xFF8290A6),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: e.color.withOpacity(0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(e.icon, color: e.color, size: 22),
+                    ),
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: e.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ],
-                  ),
+                      child: Icon(e.icon, color: e.color, size: 28),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1013,47 +915,55 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Container(
       decoration: BoxDecoration(
         color: _surfaceCream,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _borderCream),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE6EDF7)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(15, 23, 42, 0.05),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
             decoration: const BoxDecoration(
-              color: Color(0xFFFF6400),
+              gradient: LinearGradient(
+                colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+              ),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(10),
-                topRight: Radius.circular(10),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
             child: Row(
-  children: [
-    Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Pendaftaran Menunggu Verifikasi',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '${_summary?.waitingVerifications ?? 0} pendaftaran belum diverifikasi',
-            style: const TextStyle(
-              color: Color(0xFFFFD5BC),
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
-    ),
-
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Pendaftaran Menunggu Verifikasi',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_summary?.waitingVerifications ?? 0} pendaftaran belum diverifikasi',
+                        style: const TextStyle(
+                          color: Color(0xFFDBEAFE),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 TextButton(
                   onPressed: () {
                     final index = _menuItems.indexWhere(
@@ -1070,28 +980,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   style: TextButton.styleFrom(
                     backgroundColor: Colors.white.withOpacity(0.15),
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: const Text('Lihat Detail'),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: const _TableHeaderRow(
+              columns: [
+                'NAMA SISWA',
+                'SEKOLAH',
+                'KELAS',
+                'TANGGAL',
+                'STATUS',
+                'AKSI',
+              ],
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Column(
               children: [
-                const _TableHeaderRow(
-                  columns: [
-                    'NAMA SISWA',
-                    'SEKOLAH',
-                    'KELAS',
-                    'TANGGAL',
-                    'STATUS',
-                    'AKSI',
-                  ],
-                ),
-                const SizedBox(height: 6),
                 if (_isQuickPendingLoading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
@@ -1294,19 +1211,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Container(
       decoration: BoxDecoration(
         color: _surfaceCream,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _borderCream),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE6EDF7)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(15, 23, 42, 0.05),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
             decoration: const BoxDecoration(
-              color: Color(0xFF2A58E8),
+              gradient: LinearGradient(
+                colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+              ),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(10),
-                topRight: Radius.circular(10),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
             child: Row(
@@ -1319,16 +1245,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         'Jadwal Belajar Hari Ini',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 14.5,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         '${_formatIndoDate(DateTime.now())} - total $_todayScheduleCount sesi',
                         style: const TextStyle(
-                          color: Color(0xFFC9D7FF),
-                          fontSize: 10.5,
+                          color: Color(0xFFDBEAFE),
+                          fontSize: 13,
                         ),
                       ),
                     ],
@@ -1345,32 +1271,39 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: Colors.white.withAlpha(
-                      (0.2 * 255).round(),
+                      (0.15 * 255).round(),
                     ),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: const Text('Lihat semua'),
                 ),
               ],
             ),
           ),
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: const _TableHeaderRow(
+              columns: [
+                'WAKTU',
+                'KELAS',
+                'MATA PELAJARAN',
+                'MENTOR',
+                'RUANG',
+                'STATUS',
+                'AKSI',
+              ],
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Column(
               children: [
-                const _TableHeaderRow(
-                  columns: [
-                    'WAKTU',
-                    'KELAS',
-                    'MATA PELAJARAN',
-                    'MENTOR',
-                    'RUANG',
-                    'STATUS',
-                    'AKSI',
-                  ],
-                ),
-                const SizedBox(height: 6),
                 if (_scheduleRows.isEmpty)
                   const _EmptyTableRow(
                     message: 'Belum ada jadwal belajar untuk hari ini.',

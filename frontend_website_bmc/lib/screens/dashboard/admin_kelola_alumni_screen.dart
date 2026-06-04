@@ -554,179 +554,293 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
 
     if (widget.embeddedInDashboard) {
       return Container(
-        color: const Color(0xFFF8FAFC),
-        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7F9FF), Color(0xFFF3F6FB)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: content,
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        title: const SizedBox.shrink(),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: ElevatedButton.icon(
-              onPressed: () => _openForm(),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Tambah Alumni'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
-                ),
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7F9FF), Color(0xFFF3F6FB)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-        ],
+        ),
+        child: content,
       ),
-      body: content,
     );
   }
 
   Widget _buildMainPanel({required bool embedded}) {
     return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children: const [
                     Text(
                       'Kelola Alumni',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF111827),
                         letterSpacing: -0.4,
                       ),
                     ),
-
-                    const SizedBox(height: 6),
-
+                    SizedBox(height: 4),
                     Text(
                       'Kelola dan tampilkan seluruh data alumni yang telah lulus dari BMC',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6B7280),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: () => _openForm(),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Tambah Alumni'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                ElevatedButton.icon(
+                  onPressed: () => _openForm(),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Tambah Alumni'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: 300,
-            child: _statCard(
-              title: 'Total Alumni',
-              value: _allAlumni.length.toString(),
-              icon: Icons.groups_outlined,
-              backgroundColor: const Color(0xFFE6F0FF),
-              valueColor: const Color(0xFF2563EB),
-              iconBackground: const Color(0xFFD5E4FF),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(15, 23, 42, 0.06),
-                  blurRadius: 24,
-                  offset: Offset(0, 10),
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            const SizedBox(height: 24),
+            Row(
               children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF2563EB),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(18),
-                      topRight: Radius.circular(18),
+                _statCard(
+                  'Total Alumni',
+                  _allAlumni.length.toString(),
+                  const Color(0xFF2563EB),
+                  Icons.groups_outlined,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFE6EDF7)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color.fromRGBO(15, 23, 42, 0.05),
+                    blurRadius: 18,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(18),
+                        topRight: Radius.circular(18),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Daftar Alumni',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Data alumni ditampilkan secara dinamis',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFFDBEAFE),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Daftar Alumni',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      Text(
-                        'Data ditampilkan secara dinamis',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFFDBEAFE),
-                        ),
-                      ),
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        _buildFilterBar(),
+                        const SizedBox(height: 16),
+                        _buildTableHeader(),
+                        _buildListContent(embedded: true),
+                      ],
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      _buildFilterBar(),
-                      const SizedBox(height: 16),
-                      embedded
-                          ? _buildListContent(embedded: true)
-                          : SizedBox(
-                              height: 520,
-                              child: _buildListContent(embedded: false),
-                            ),
-                    ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statCard(String title, String value, Color color, IconData icon) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: color, size: 28),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 1,
+            child: Text(
+              'FOTO',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'NAMA',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'SEKOLAH',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Text(
+              'TAHUN LULUS',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              'PRESTASI',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Text(
+              'AKSI',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -734,57 +848,144 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
     );
   }
 
-  Widget _statCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color backgroundColor,
-    required Color valueColor,
-    required Color iconBackground,
-  }) {
+  Widget _buildAlumniRow(Alumni alumni) {
+    final initial = alumni.nama.isNotEmpty ? alumni.nama[0].toUpperCase() : 'A';
+    final photoUrl = _resolvePhotoUrl(alumni.foto);
+
     return Container(
-      height: 116,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: valueColor.withAlpha(42)),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
       ),
       child: Row(
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+            flex: 1,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                  color: Colors.white,
+                ),
+                child: ClipOval(
+                  child: photoUrl != null
+                      ? Image.network(
+                          photoUrl,
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildFallbackAvatar(initial),
+                        )
+                      : _buildFallbackAvatar(initial),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              alumni.nama,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: Color(0xFF1F2937),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              alumni.sekolah,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF4B5563),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F0E7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${alumni.tahunLulus}',
+                  style: const TextStyle(
+                    color: Color(0xFF7C6A2A),
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF64748B),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  value,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: valueColor,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              (alumni.prestasi?.isNotEmpty == true) ? alumni.prestasi! : '-',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF4B5563),
+                fontStyle: FontStyle.italic,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  onPressed: () => _openAlumniProfilePage(alumni),
+                  icon: const Icon(
+                    Icons.visibility_outlined,
+                    color: Color(0xFF2563EB),
+                    size: 18,
                   ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Detail',
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () => _openForm(alumni: alumni),
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    color: Color(0xFF2563EB),
+                    size: 18,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Edit',
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () => _deleteAlumni(alumni),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFEF4444),
+                    size: 18,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Hapus',
                 ),
               ],
             ),
-          ),
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: iconBackground,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: valueColor, size: 28),
           ),
         ],
       ),
@@ -793,74 +994,31 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
 
   Widget _buildListContent({required bool embedded}) {
     if (_isLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(strokeWidth: 3),
-            const SizedBox(height: 16),
-            Text(
-              'Memuat data alumni...',
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: CircularProgressIndicator(),
         ),
       );
     }
 
     if (_filteredAlumni.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF2FF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.badge_outlined,
-                size: 36,
-                color: Color(0xFF3B82F6),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'Belum ada alumni',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF111827),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Klik tombol Tambah Alumni untuk menambahkan profil baru.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                color: const Color(0xFF6B7280),
-              ),
-            ),
-          ],
+      return const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(
+          child: Text(
+            'Belum ada alumni',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
         ),
       );
     }
 
-    return ListView.separated(
+    return ListView.builder(
       itemCount: _filteredAlumni.length,
-      shrinkWrap: embedded,
-      physics: embedded
-          ? const NeverScrollableScrollPhysics()
-          : const AlwaysScrollableScrollPhysics(),
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) =>
-          _buildAlumniListItem(_filteredAlumni[index]),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemBuilder: (context, index) => _buildAlumniRow(_filteredAlumni[index]),
     );
   }
 
@@ -869,10 +1027,6 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
       children: [
         Expanded(
           child: TextField(
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Cari nama alumni...',
@@ -882,205 +1036,73 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
               ),
               prefixIcon: const Icon(Icons.search, color: Color(0xFF9AA4B6)),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 borderSide: const BorderSide(
                   color: Color(0xFF2563EB),
-                  width: 2,
+                  width: 1.4,
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
-                vertical: 12,
+                vertical: 18,
               ),
               filled: true,
               fillColor: Colors.white,
             ),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         const SizedBox(width: 12),
-        SizedBox(
+        Container(
           width: 200,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.white,
-            ),
-            child: Builder(builder: (_) {
-              final items = _buildYearFilterOptions()
-                  .map((tahun) => DropdownMenuItem(
-                        value: tahun,
-                        child: Text(
-                          tahun,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ))
-                  .toList();
-              final hasSelected = items.any((it) => it.value == _selectedTahun);
-
-              return DropdownButton<String>(
-                value: hasSelected ? _selectedTahun : null,
-                isExpanded: true,
-                underline: const SizedBox(),
-                icon: const Icon(Icons.expand_more, color: Color(0xFF6B7280)),
-                items: items,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedTahun = value);
-                    _applyFilters();
-                  }
-                },
-              );
-            }),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(14),
+            color: Colors.white,
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAlumniListItem(Alumni alumni) {
-    final initial = alumni.nama.isNotEmpty ? alumni.nama[0].toUpperCase() : 'A';
-    final photoUrl = _resolvePhotoUrl(alumni.foto);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-              color: Colors.white,
-            ),
-            child: ClipOval(
-              child: photoUrl != null
-                  ? Image.network(
-                      photoUrl,
-                      width: 64,
-                      height: 64,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _buildFallbackAvatar(initial),
-                    )
-                  : _buildFallbackAvatar(initial),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  alumni.nama,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: const Color(0xFF1F2937),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  alumni.sekolah,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    color: const Color(0xFF6B7280),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    _chip(
-                      'Tahun ${alumni.tahunLulus}',
-                      const Color(0xFFF3F0E7),
-                      const Color(0xFF7C6A2A),
-                    ),
-                    if (alumni.prestasi != null &&
-                        alumni.prestasi!.isNotEmpty) ...[
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          alumni.prestasi!,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF4B5563),
-                            fontStyle: FontStyle.italic,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+          child: Builder(builder: (_) {
+            final items = _buildYearFilterOptions()
+                .map((tahun) => DropdownMenuItem(
+                      value: tahun,
+                      child: Text(
+                        tahun,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 120,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Expanded(
-                  child: _actionButton(
-                    icon: Icons.visibility_outlined,
-                    tooltip: 'Detail',
-                    onPressed: () => _openAlumniProfilePage(alumni),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: _actionButton(
-                    icon: Icons.edit_outlined,
-                    tooltip: 'Edit',
-                    onPressed: () => _openForm(alumni: alumni),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: _actionButton(
-                    icon: Icons.delete_outline,
-                    tooltip: 'Hapus',
-                    onPressed: () => _deleteAlumni(alumni),
-                    danger: true,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                    ))
+                .toList();
+            final hasSelected = items.any((it) => it.value == _selectedTahun);
+
+            return DropdownButton<String>(
+              value: hasSelected ? _selectedTahun : null,
+              isExpanded: true,
+              underline: const SizedBox(),
+              icon: const Icon(Icons.expand_more, color: Color(0xFF6B7280)),
+              items: items,
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _selectedTahun = value);
+                  _applyFilters();
+                }
+              },
+            );
+          }),
+        ),
+      ],
     );
   }
 
@@ -1128,49 +1150,6 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
     }
   }
 
-  Widget _chip(String label, Color backgroundColor, Color textColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _actionButton({
-    required IconData icon,
-    required String tooltip,
-    required VoidCallback onPressed,
-    bool danger = false,
-  }) {
-    final Color color = danger
-        ? const Color(0xFFEF4444)
-        : const Color(0xFF2563EB);
-    return Tooltip(
-      message: tooltip,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: color,
-          side: BorderSide(color: color.withValues(alpha: 0.28)),
-          padding: const EdgeInsets.all(8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-          minimumSize: const Size(40, 40),
-        ),
-        child: Icon(icon, size: 18, color: color),
-      ),
-    );
-  }
-
   Widget _fieldWithLabel({
     required TextStyle? font,
     required String label,
@@ -1182,8 +1161,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
       children: [
         RichText(
           text: TextSpan(
-            style:
-                font?.copyWith(
+            style: font?.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF374151),

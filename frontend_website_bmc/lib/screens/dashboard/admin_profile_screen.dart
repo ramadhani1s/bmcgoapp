@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../../models/user.dart';
 import '../../routes/app_routes.dart';
 import '../../services/auth_service.dart';
@@ -23,12 +22,16 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
   }
 
   Future<void> _loadUser() async {
-    final user = await AuthService.getCurrentUser();
-    if (!mounted) return;
     setState(() {
-      _user = user;
-      _isLoading = false;
+      _isLoading = true;
     });
+    final user = await AuthService.getCurrentUser();
+    if (mounted) {
+      setState(() {
+        _user = user;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _logout() async {
@@ -44,10 +47,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: Colors.white,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
             child: const Text('Keluar'),
           ),
         ],
@@ -67,9 +67,20 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
 
     await Clipboard.setData(ClipboardData(text: email));
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Email disalin')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text('Email disalin ke papan klip!'),
+          ],
+        ),
+        backgroundColor: Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -77,250 +88,142 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     final user = _user;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F172A),
-        elevation: 0,
-        title: const Text(
-          'Profil Admin',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: _logout,
-            icon: const Icon(Icons.logout_rounded, size: 18),
-            label: const Text('Keluar'),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      backgroundColor: const Color(0xFFF8FAFC), 
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 760),
-                    child: Column(
+                padding: const EdgeInsets.all(32),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color.fromRGBO(15, 23, 42, 0.04),
-                                blurRadius: 16,
-                                offset: Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 68,
-                                height: 68,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFDBEAFE),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    (user?.nama.isNotEmpty == true
-                                            ? user!.nama[0]
-                                            : 'A')
-                                        .toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF1D4ED8),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      user?.nama ?? 'Admin',
-                                      style: const TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w900,
-                                        color: Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      user?.email ?? '-',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Color(0xFF64748B),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: [
-                                        _tag(
-                                          icon: Icons.shield_rounded,
-                                          text: user?.roleName ?? 'Admin',
-                                          background: const Color(0xFFEFF6FF),
-                                          foreground: const Color(0xFF1D4ED8),
-                                        ),
-                                        _tag(
-                                          icon: Icons.circle,
-                                          text: 'Aktif',
-                                          background: const Color(0xFFE8FDF5),
-                                          foreground: const Color(0xFF047857),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isWide = constraints.maxWidth >= 640;
+                        _buildHeroHeader(user),
 
-                            final infoCards = [
-                              _infoCard(
-                                'Nama Login',
-                                user?.nama ?? '-',
-                                Icons.person_outline,
-                              ),
-                              _infoCard(
-                                'Email Login',
-                                user?.email ?? '-',
-                                Icons.mail_outline,
-                              ),
-                              _infoCard(
-                                'Role Login',
-                                user?.roleName ?? '-',
-                                Icons.badge_outlined,
-                              ),
-                            ];
-
-                            if (isWide) {
-                              return Row(
-                                children: [
-                                  Expanded(child: infoCards[0]),
-                                  const SizedBox(width: 12),
-                                  Expanded(child: infoCards[1]),
-                                  const SizedBox(width: 12),
-                                  Expanded(child: infoCards[2]),
-                                ],
-                              );
-                            }
-
-                            return Column(
-                              children: [
-                                for (final card in infoCards) ...[
-                                  card,
-                                  const SizedBox(height: 12),
-                                ],
-                              ],
-                            );
-                          },
-                        ),
                         const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Aksi Cepat',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  OutlinedButton.icon(
-                                    onPressed: _copyEmail,
-                                    icon: const Icon(Icons.copy_rounded),
-                                    label: const Text('Salin Email'),
-                                  ),
-                                  OutlinedButton.icon(
-                                    onPressed: _loadUser,
-                                    icon: const Icon(Icons.refresh_rounded),
-                                    label: const Text('Muat Ulang'),
-                                  ),
-                                  FilledButton.icon(
-                                    onPressed: _logout,
-                                    icon: const Icon(Icons.logout_rounded),
-                                    label: const Text('Keluar'),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        const Text(
-                          'Halaman profil ini hanya menampilkan data login aktif agar tetap sederhana, cepat dibaca, dan rapi di layar kecil maupun besar.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF64748B),
-                            height: 1.5,
-                          ),
-                        ),
+
+                        _buildInfoCards(user),
+
+                        const SizedBox(height: 16),
+
+                        _buildQuickActions(),
                       ],
                     ),
                   ),
                 ),
               ),
-      ),
-    );
+      );
   }
 
-  Widget _tag({
-    required IconData icon,
-    required String text,
-    required Color background,
-    required Color foreground,
-  }) {
+  Widget _buildHeroHeader(User? user) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2A58F2), Color(0xFF1E3A8A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2A58F2).withOpacity(0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
         children: [
-          Icon(icon, size: 15, color: foreground),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: foreground,
+          Positioned(
+            right: -15,
+            top: -15,
+            child: Container(
+              width: 130,
+              height: 130,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 36),
+            child: Row(
+              children: [
+                // Avatar circle with border
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    color: Colors.white24,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Container(
+                    width: 90,
+                    height: 90,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        (user?.nama.isNotEmpty == true ? user!.nama.substring(0, 2) : 'AD')
+                            .toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF2A58F2),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user?.nama ?? 'Administrator',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        user?.email ?? 'admin@starbmc.com',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _tag(
+                            icon: Icons.shield_rounded,
+                            text: user?.roleName ?? 'Administrator',
+                            background: Colors.white.withOpacity(0.18),
+                            foreground: Colors.white,
+                          ),
+                          _tag(
+                            icon: Icons.circle,
+                            text: 'Aktif',
+                            background: const Color(0xFFE8FDF5).withOpacity(0.2),
+                            foreground: const Color(0xFF4ADE80),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -328,33 +231,105 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     );
   }
 
-  Widget _infoCard(String label, String value, IconData icon) {
+  Widget _buildInfoCards(User? user) {
+  return Column(
+    children: [
+      _infoCard(
+        label: 'Nama Login',
+        value: user?.nama ?? '-',
+        icon: Icons.person_outline_rounded,
+        iconColor: const Color(0xFF2A58F2),
+        bgColor: const Color(0xFFEFF6FF),
+      ),
+
+      const SizedBox(height: 12),
+
+      _infoCard(
+        label: 'Email Login',
+        value: user?.email ?? '-',
+        icon: Icons.mail_outline_rounded,
+        iconColor: const Color(0xFF7C3AED),
+        bgColor: const Color(0xFFF5F3FF),
+      ),
+
+      const SizedBox(height: 12),
+
+      _infoCard(
+        label: 'Role Login',
+        value: user?.roleName ?? 'Administrator',
+        icon: Icons.badge_outlined,
+        iconColor: const Color(0xFF0D9488),
+        bgColor: const Color(0xFFF0FDFA),
+      ),
+    ],
+  );
+}
+
+
+Widget _buildInfoRow(
+  String title,
+  String value,
+) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+
+        Expanded(
+          child: Text(value),
+        ),
+      ],
+    ),
+  );
+}
+
+
+  Widget _infoCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(15, 23, 42, 0.02),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(12),
+              color: bgColor,
+              shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: const Color(0xFF1D4ED8),
-              size: 20,
-            ),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   label,
@@ -372,8 +347,98 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                     color: Color(0xFF0F172A),
                     fontWeight: FontWeight.w800,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(15, 23, 42, 0.02),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Aksi Cepat',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+                OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.arrow_back_rounded),
+                label: const Text('Kembali'),
+              ),
+              FilledButton.icon(
+                onPressed: _logout,
+                icon: const Icon(Icons.logout_rounded, size: 16),
+                label: const Text('Keluar'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  backgroundColor: const Color(0xFFEF4444),
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tag({
+    required IconData icon,
+    required String text,
+    required Color background,
+    required Color foreground,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: foreground),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w800,
+              color: foreground,
             ),
           ),
         ],
