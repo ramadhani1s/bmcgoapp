@@ -608,18 +608,21 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                   children: [
                     Text(
                       'Kelola Alumni',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: const TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F172A),
+                        color: Color(0xFF111827),
+                        letterSpacing: -0.4,
                       ),
                     ),
+
                     const SizedBox(height: 6),
+
                     Text(
                       'Kelola dan tampilkan seluruh data alumni yang telah lulus dari BMC',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: const TextStyle(
                         fontSize: 14,
-                        color: const Color(0xFF6B7280),
+                        color: Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -689,18 +692,20 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                     children: [
                       Text(
                         'Daftar Alumni',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
                       ),
+
                       const SizedBox(height: 4),
+
                       Text(
-                        'Kelola dan lihat semua profil alumni yang telah dibuat',
-                        style: GoogleFonts.plusJakartaSans(
+                        'Data ditampilkan secara dinamis',
+                        style: const TextStyle(
                           fontSize: 13,
-                          color: Colors.white.withAlpha(220),
+                          color: Color(0xFFDBEAFE),
                         ),
                       ),
                     ],
@@ -755,7 +760,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                 Text(
                   title,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF64748B),
                   ),
@@ -764,7 +769,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                 Text(
                   value,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 30,
+                    fontSize: 32,
                     fontWeight: FontWeight.w700,
                     color: valueColor,
                   ),
@@ -796,9 +801,9 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
             const SizedBox(height: 16),
             Text(
               'Memuat data alumni...',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                color: Colors.grey[600],
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -871,9 +876,9 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Cari nama alumni...',
-              hintStyle: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                color: const Color(0xFF94A3B8),
+              hintStyle: const TextStyle(
+                fontSize: 15,
+                color: Color(0xFF9CA3AF),
               ),
               prefixIcon: const Icon(Icons.search, color: Color(0xFF9AA4B6)),
               border: OutlineInputBorder(
@@ -996,7 +1001,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                   alumni.nama,
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontSize: 15,
                     color: const Color(0xFF1F2937),
                   ),
                   maxLines: 1,
@@ -1006,7 +1011,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                 Text(
                   alumni.sekolah,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
+                    fontSize: 13,
                     color: const Color(0xFF6B7280),
                   ),
                   maxLines: 1,
@@ -1134,8 +1139,8 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
         label,
         style: TextStyle(
           color: textColor,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

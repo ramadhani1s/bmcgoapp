@@ -93,18 +93,19 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 820),
-                    child: Column(
+                padding: const EdgeInsets.all(32),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHeroHeader(user),
-                        const SizedBox(height: 20),
+
+                        const SizedBox(height: 16),
 
                         _buildInfoCards(user),
-                        const SizedBox(height: 20),
+
+                        const SizedBox(height: 16),
 
                         _buildQuickActions(),
                       ],
@@ -112,8 +113,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                   ),
                 ),
               ),
-      ),
-    );
+      );
   }
 
   Widget _buildHeroHeader(User? user) {
@@ -149,7 +149,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 36),
             child: Row(
               children: [
                 // Avatar circle with border
@@ -160,8 +160,8 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: Container(
-                    width: 72,
-                    height: 72,
+                    width: 90,
+                    height: 90,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -171,7 +171,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                         (user?.nama.isNotEmpty == true ? user!.nama.substring(0, 2) : 'AD')
                             .toUpperCase(),
                         style: const TextStyle(
-                          fontSize: 26,
+                          fontSize: 32,
                           fontWeight: FontWeight.w900,
                           color: Color(0xFF2A58F2),
                         ),
@@ -232,58 +232,38 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
   }
 
   Widget _buildInfoCards(User? user) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 640;
+  return Column(
+    children: [
+      _infoCard(
+        label: 'Nama Login',
+        value: user?.nama ?? '-',
+        icon: Icons.person_outline_rounded,
+        iconColor: const Color(0xFF2A58F2),
+        bgColor: const Color(0xFFEFF6FF),
+      ),
 
-        final infoCards = [
-          _infoCard(
-            label: 'Nama Login',
-            value: user?.nama ?? '-',
-            icon: Icons.person_outline_rounded,
-            iconColor: const Color(0xFF2A58F2),
-            bgColor: const Color(0xFFEFF6FF),
-          ),
-          _infoCard(
-            label: 'Email Login',
-            value: user?.email ?? '-',
-            icon: Icons.mail_outline_rounded,
-            iconColor: const Color(0xFF7C3AED),
-            bgColor: const Color(0xFFF5F3FF),
-          ),
-          _infoCard(
-            label: 'Role Login',
-            value: user?.roleName ?? 'Administrator',
-            icon: Icons.badge_outlined,
-            iconColor: const Color(0xFF0D9488),
-            bgColor: const Color(0xFFF0FDFA),
-          ),
-        ];
+      const SizedBox(height: 12),
 
-        if (isWide) {
-          return Row(
-            children: [
-              Expanded(child: infoCards[0]),
-              const SizedBox(width: 12),
-              Expanded(child: infoCards[1]),
-              const SizedBox(width: 12),
-              Expanded(child: infoCards[2]),
-            ],
-          );
-        }
+      _infoCard(
+        label: 'Email Login',
+        value: user?.email ?? '-',
+        icon: Icons.mail_outline_rounded,
+        iconColor: const Color(0xFF7C3AED),
+        bgColor: const Color(0xFFF5F3FF),
+      ),
 
-        return Column(
-          children: [
-            infoCards[0],
-            const SizedBox(height: 12),
-            infoCards[1],
-            const SizedBox(height: 12),
-            infoCards[2],
-          ],
-        );
-      },
-    );
-  }
+      const SizedBox(height: 12),
+
+      _infoCard(
+        label: 'Role Login',
+        value: user?.roleName ?? 'Administrator',
+        icon: Icons.badge_outlined,
+        iconColor: const Color(0xFF0D9488),
+        bgColor: const Color(0xFFF0FDFA),
+      ),
+    ],
+  );
+}
 
 
 Widget _buildInfoRow(
@@ -381,7 +361,7 @@ Widget _buildInfoRow(
   Widget _buildQuickActions() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),

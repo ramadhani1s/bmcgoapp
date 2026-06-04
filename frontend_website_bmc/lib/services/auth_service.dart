@@ -201,6 +201,63 @@ class AuthService {
   }
 
   // =====================================================
+  // UPDATE PROFILE
+  // =====================================================
+  static Future<Map<String, dynamic>> updateProfile({
+    required String nama,
+    required String email,
+    String oldPassword = '',
+    String newPassword = '',
+  }) async {
+    try {
+      final headers = await getAuthHeaders();
+
+      final response = await http
+          .put(
+            Uri.parse('$baseUrl/api/profile'),
+            headers: headers,
+            body: jsonEncode({
+              'nama': nama.trim(),
+              'email': email.trim(),
+              if (oldPassword.trim().isNotEmpty) 'old_password': oldPassword.trim(),
+              if (newPassword.trim().isNotEmpty) 'new_password': newPassword.trim(),
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+
+      if (response.statusCode == 200) {
+        final userMap = data['user'];
+        if (userMap is Map<String, dynamic>) {
+          final updatedUser = User.fromJson(userMap);
+          final currentToken = await getToken();
+          if (currentToken != null) {
+            await AppSession.save(
+              token: currentToken,
+              userJson: jsonEncode(updatedUser.toJson()),
+            );
+          }
+          return {
+            'success': true,
+            'message': data['message'] ?? 'Profil berhasil diperbarui',
+            'user': updatedUser,
+          };
+        }
+      }
+
+      return {
+        'success': false,
+        'message': data['error'] ?? 'Gagal memperbarui profil',
+      };
+    } on TimeoutException {
+      return {'success': false, 'message': 'Koneksi timeout'};
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
+    }
+  }
+
+  // =====================================================
   // CREATE MENTOR
   // =====================================================
   static Future<Map<String, dynamic>> createMentor({

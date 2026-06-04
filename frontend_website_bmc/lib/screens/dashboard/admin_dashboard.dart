@@ -32,6 +32,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   static const Color _softBorderCream = Color(0xFFE9EFF8);
 
   User? _currentUser;
+  bool _isProfileHovered = false;
   int _selectedMenuIndex = 0;
   String _selectedMenuTitle = 'Dashboard';
   AdminDashboardData? _summary;
@@ -750,22 +751,60 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ],
           ),
           const SizedBox(width: 12),
-          InkWell(
-            onTap: () {
-              Navigator.of(context).pushNamed(AppRoutes.adminProfile).then((_) {
-                _loadUser();
-              });
-            },
-            borderRadius: BorderRadius.circular(8),
-            hoverColor: Colors.black12,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
+          MouseRegion(
+  cursor: SystemMouseCursors.click,
+
+  onEnter: (_) {
+    setState(() {
+      _isProfileHovered = true;
+    });
+  },
+
+  onExit: (_) {
+    setState(() {
+      _isProfileHovered = false;
+    });
+  },
+
+  child: InkWell(
+    onTap: () {
+      Navigator.of(context)
+          .pushNamed(AppRoutes.adminProfile)
+          .then((_) {
+        _loadUser();
+      });
+    },
+
+    borderRadius: BorderRadius.circular(12),
+
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 4,
+      ),
+
+      decoration: BoxDecoration(
+        color: _isProfileHovered
+        ? const Color(0xFFF1F5FF)
+        : Colors.transparent,
+
+        borderRadius: BorderRadius.circular(12),
+
+        border: Border.all(
+          color: Colors.transparent,
+        ),
+      ),
+
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+                  AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+
+                  width: _isProfileHovered ? 38 : 32,
+                  height: _isProfileHovered ? 38 : 32,
                     decoration: BoxDecoration(
                       color: const Color(0xFF2A58F2),
                       borderRadius: BorderRadius.circular(16),
@@ -794,27 +833,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _currentUser?.nama.isNotEmpty == true
-                            ? _currentUser!.nama
-                            : 'Admin BMC',
-                        style: const TextStyle(
-                          color: Color(0xFF27344B),
-                          fontSize: 12.5,
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        style: TextStyle(
+                          color: _isProfileHovered
+                              ? const Color(0xFF2A58F2)
+                              : const Color(0xFF27344B),
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
+                        child: Text(
+                          _currentUser?.nama ?? 'Administrator BMC',
+                        ),
                       ),
+
                       Text(
                         _currentUser?.roleName == 'Unknown'
                             ? 'Administrator'
                             : _currentUser!.roleName,
-                        style: const TextStyle(color: Color(0xFF99A4B5), fontSize: 10),
+                        style: const TextStyle(
+                          color: Color(0xFF99A4B5),
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
+          ),
           ),
         ],
       ),
