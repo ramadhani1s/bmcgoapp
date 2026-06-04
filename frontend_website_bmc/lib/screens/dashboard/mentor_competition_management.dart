@@ -124,11 +124,9 @@ class _MentorCompetitionManagementState
   // ── Actions ────────────────────────────────────────────────────────────────
 
   Future<void> _openTryoutSoalManagement(MentorCompetitionItem tryout) async {
-    await Navigator.of(context).push(
-      InstantPageRoute(
-        child: TryoutSoalManagementScreen(tryout: tryout),
-      ),
-    );
+    await Navigator.of(
+      context,
+    ).push(InstantPageRoute(child: TryoutSoalManagementScreen(tryout: tryout)));
     if (mounted) await _load();
   }
 
@@ -343,7 +341,9 @@ class _MentorCompetitionManagementState
 
   Widget _buildCompetitionCard(MentorCompetitionItem item) {
     final scheduleLabel = _formatScheduleLabel(item.scheduleLabel);
-    final progressValue = item.totalQuestions > 0 ? (item.soalTerbuat / item.totalQuestions).clamp(0.0, 1.0) : 0.0;
+    final progressValue = item.totalQuestions > 0
+        ? (item.soalTerbuat / item.totalQuestions).clamp(0.0, 1.0)
+        : 0.0;
     final progressPercent = (progressValue * 100).round();
     final isPublished = item.isPublished;
 
@@ -439,7 +439,10 @@ class _MentorCompetitionManagementState
                 ),
               ),
               Expanded(
-                child: _buildSmallInfo(Icons.timer_outlined, '${item.durationLabel} mnt'),
+                child: _buildSmallInfo(
+                  Icons.timer_outlined,
+                  '${item.durationLabel} mnt',
+                ),
               ),
               Expanded(
                 child: _buildSmallInfo(
@@ -480,8 +483,9 @@ class _MentorCompetitionManagementState
               value: progressValue,
               minHeight: 6,
               backgroundColor: const Color(0xFFE5E7EB),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.accentBlue),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.accentBlue,
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -614,10 +618,7 @@ class _MentorCompetitionManagementState
                 const SizedBox(height: 8),
                 Text(
                   pageSubtitle,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
@@ -782,22 +783,23 @@ class _MentorCompetitionManagementState
             color: Color(0xFF6B7280),
             size: 20,
           ),
-          items: const [
-            'Semua Kelas',
-            'Kelas 10 IPA',
-            'Kelas 10 IPS',
-            'Kelas 11 IPA',
-            'Kelas 11 IPS',
-            'Kelas 12 IPA',
-            'Kelas 12 IPS'
-          ]
-              .map(
-                (value) => DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                ),
-              )
-              .toList(),
+          items:
+              const [
+                    'Semua Kelas',
+                    'Kelas 10 IPA',
+                    'Kelas 10 IPS',
+                    'Kelas 11 IPA',
+                    'Kelas 11 IPS',
+                    'Kelas 12 IPA',
+                    'Kelas 12 IPS',
+                  ]
+                  .map(
+                    (value) => DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    ),
+                  )
+                  .toList(),
           onChanged: (value) =>
               setState(() => _selectedClass = value ?? 'Semua Kelas'),
           decoration: inputDecoration(
@@ -905,10 +907,7 @@ class _MentorCompetitionManagementState
                 ? 'Belum ada data try out yang tersedia'
                 : 'Belum ada data olimpiade yang tersedia',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF6B7280),
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
           ),
         ],
       ),
@@ -919,7 +918,9 @@ class _MentorCompetitionManagementState
     return LayoutBuilder(
       builder: (context, listConstraints) {
         final width = listConstraints.maxWidth;
-        final columns = width >= 1500 ? 4 : (width >= 1100 ? 3 : (width >= 700 ? 2 : 1));
+        final columns = width >= 1500
+            ? 4
+            : (width >= 1100 ? 3 : (width >= 700 ? 2 : 1));
         final cardWidth = (width - ((columns - 1) * 20)) / columns;
 
         return Wrap(
@@ -983,8 +984,9 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
     _titleController = TextEditingController(text: e?.title ?? '');
     _subjectController = TextEditingController(text: e?.subject ?? '');
     _durationController = TextEditingController(text: e?.durationLabel ?? '');
-    _totalQuestionsController =
-        TextEditingController(text: e?.totalQuestions.toString() ?? '0');
+    _totalQuestionsController = TextEditingController(
+      text: e?.totalQuestions.toString() ?? '0',
+    );
     _scheduleController = TextEditingController(text: e?.scheduleLabel ?? '');
     _selectedClass = e?.classLevel ?? 'Kelas 12 IPA';
     if (_selectedClass == 'Kelas 10') _selectedClass = 'Kelas 10 IPA';
@@ -1011,7 +1013,17 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(widget.parentContext);
     final totalQuestions = int.tryParse(_totalQuestionsController.text) ?? 0;
+    final isOlimpiade = widget.type == 'olimpiade';
 
+    print('========== SUBMIT DATA ==========');
+    print('Type: ${widget.type}');
+    print('Title: ${_titleController.text.trim()}');
+    print('Subject/Lokasi: ${_subjectController.text.trim()}');
+    print('Class Level: $_selectedClass');
+    print('Schedule: ${_scheduleController.text.trim()}');
+    print('Duration: ${_durationController.text.trim()}');
+    print('Total Questions: $totalQuestions');
+    print('==================================');
     try {
       final res = await MentorCompetitionService.createOrUpdate(
         type: widget.type,
@@ -1037,9 +1049,12 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
         setState(() => _isSubmitting = false);
       }
     } catch (e) {
+      print('Error: $e');
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -1140,8 +1155,8 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                             Text(
                               widget.existing == null
                                   ? (isOlimpiade
-                                      ? 'Tambah Olimpiade'
-                                      : 'Tambah Try Out')
+                                        ? 'Tambah Olimpiade'
+                                        : 'Tambah Try Out')
                                   : 'Edit',
                               style: const TextStyle(
                                 color: Colors.white,
@@ -1194,10 +1209,9 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                             // 1. Judul
                             TextFormField(
                               controller: _titleController,
-                              validator: (v) =>
-                                  v == null || v.isEmpty
-                                      ? 'Judul wajib diisi'
-                                      : null,
+                              validator: (v) => v == null || v.isEmpty
+                                  ? 'Judul wajib diisi'
+                                  : null,
                               decoration: _fieldDecoration(
                                 labelText: isOlimpiade
                                     ? 'Judul Olimpiade'
@@ -1214,8 +1228,8 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               controller: _subjectController,
                               validator: (v) =>
                                   isOlimpiade && (v == null || v.isEmpty)
-                                      ? 'Lokasi wajib diisi'
-                                      : null,
+                                  ? 'Lokasi wajib diisi'
+                                  : null,
                               decoration: _fieldDecoration(
                                 labelText: isOlimpiade ? 'Lokasi' : 'Subjek',
                                 hintText: isOlimpiade
@@ -1231,10 +1245,9 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               TextFormField(
                                 controller: _scheduleController,
                                 readOnly: true,
-                                validator: (v) =>
-                                    v == null || v.isEmpty
-                                        ? 'Tanggal wajib diisi'
-                                        : null,
+                                validator: (v) => v == null || v.isEmpty
+                                    ? 'Tanggal wajib diisi'
+                                    : null,
                                 onTap: () async {
                                   final now = DateTime.now();
                                   DateTime initial = now;
@@ -1249,15 +1262,19 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                     lastDate: DateTime(now.year + 5),
                                   );
                                   if (picked != null) {
-                                    final yyyy =
-                                        picked.year.toString().padLeft(4, '0');
-                                    final mm = picked.month
-                                        .toString()
-                                        .padLeft(2, '0');
-                                    final dd =
-                                        picked.day.toString().padLeft(2, '0');
-                                    _scheduleController.text =
-                                        '$yyyy-$mm-$dd';
+                                    final yyyy = picked.year.toString().padLeft(
+                                      4,
+                                      '0',
+                                    );
+                                    final mm = picked.month.toString().padLeft(
+                                      2,
+                                      '0',
+                                    );
+                                    final dd = picked.day.toString().padLeft(
+                                      2,
+                                      '0',
+                                    );
+                                    _scheduleController.text = '$yyyy-$mm-$dd';
                                   }
                                 },
                                 decoration: _fieldDecoration(
@@ -1272,10 +1289,9 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               TextFormField(
                                 controller: _totalQuestionsController,
                                 keyboardType: TextInputType.number,
-                                validator: (v) =>
-                                    v == null || v.isEmpty
-                                        ? 'Total soal wajib diisi'
-                                        : null,
+                                validator: (v) => v == null || v.isEmpty
+                                    ? 'Total soal wajib diisi'
+                                    : null,
                                 decoration: _fieldDecoration(
                                   labelText: 'Total Soal',
                                   hintText:
@@ -1288,10 +1304,9 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               TextFormField(
                                 controller: _durationController,
                                 keyboardType: TextInputType.number,
-                                validator: (v) =>
-                                    v == null || v.isEmpty
-                                        ? 'Durasi wajib diisi'
-                                        : null,
+                                validator: (v) => v == null || v.isEmpty
+                                    ? 'Durasi wajib diisi'
+                                    : null,
                                 decoration: _fieldDecoration(
                                   labelText: 'Durasi (menit)',
                                   hintText:
@@ -1304,10 +1319,9 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                               TextFormField(
                                 controller: _totalQuestionsController,
                                 keyboardType: TextInputType.number,
-                                validator: (v) =>
-                                    v == null || v.isEmpty
-                                        ? 'Total soal wajib diisi'
-                                        : null,
+                                validator: (v) => v == null || v.isEmpty
+                                    ? 'Total soal wajib diisi'
+                                    : null,
                                 decoration: _fieldDecoration(
                                   labelText: 'Total Soal',
                                   hintText:
@@ -1330,21 +1344,22 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                 color: Color(0xFF111827),
                                 fontWeight: FontWeight.w600,
                               ),
-                              items: const [
-                                'Kelas 10 IPA',
-                                'Kelas 10 IPS',
-                                'Kelas 11 IPA',
-                                'Kelas 11 IPS',
-                                'Kelas 12 IPA',
-                                'Kelas 12 IPS'
-                              ]
-                                  .map(
-                                    (c) => DropdownMenuItem<String>(
-                                      value: c,
-                                      child: Text(c),
-                                    ),
-                                  )
-                                  .toList(),
+                              items:
+                                  const [
+                                        'Kelas 10 IPA',
+                                        'Kelas 10 IPS',
+                                        'Kelas 11 IPA',
+                                        'Kelas 11 IPS',
+                                        'Kelas 12 IPA',
+                                        'Kelas 12 IPS',
+                                      ]
+                                      .map(
+                                        (c) => DropdownMenuItem<String>(
+                                          value: c,
+                                          child: Text(c),
+                                        ),
+                                      )
+                                      .toList(),
                               onChanged: (v) => setState(
                                 () => _selectedClass = v ?? _selectedClass,
                               ),
@@ -1360,10 +1375,9 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                     onPressed: _isSubmitting
                                         ? null
                                         : () =>
-                                            Navigator.of(context).pop(false),
+                                              Navigator.of(context).pop(false),
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor:
-                                          const Color(0xFF64748B),
+                                      foregroundColor: const Color(0xFF64748B),
                                       side: const BorderSide(
                                         color: Color(0xFFD8E1EE),
                                       ),
@@ -1373,8 +1387,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                         vertical: 12,
                                       ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(14),
+                                        borderRadius: BorderRadius.circular(14),
                                       ),
                                     ),
                                     child: const Text('Batal'),
@@ -1392,8 +1405,7 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                                         vertical: 12,
                                       ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(14),
+                                        borderRadius: BorderRadius.circular(14),
                                       ),
                                       elevation: 0,
                                     ),

@@ -39,15 +39,15 @@ class _OlimpiadeSoalManagementScreenState
 
   String _selectedJawaban = 'A';
 
-  // 🔥 GETTER UNTUK VALIDASI BATAS SOAL
-  bool get _isFull => _soalList.length >= widget.olimpiade.totalQuestions;
-  
+  bool get _isFull => _soalList.length >= (widget.olimpiade.totalQuestions ?? 0);
+
   double get _progressValue {
-    if (widget.olimpiade.totalQuestions == 0) return 0.0;
-    final progress = _soalList.length / widget.olimpiade.totalQuestions;
+    final total = widget.olimpiade.totalQuestions ?? 0;
+    if (total == 0) return 0.0;
+    final progress = _soalList.length / total;
     return progress.clamp(0.0, 1.0);
   }
-  
+
   int get _progressPercent => (_progressValue * 100).round();
 
   @override
@@ -68,7 +68,6 @@ class _OlimpiadeSoalManagementScreenState
     super.dispose();
   }
 
-  // 🔥 PERBAIKAN: LOAD SOAL DENGAN SORTING
   Future<void> _loadSoal() async {
     setState(() => _isLoading = true);
     final soal = await SoalKompetisiService.getSoalByKompetisi(
@@ -76,15 +75,11 @@ class _OlimpiadeSoalManagementScreenState
       'olimpiade',
     );
     if (!mounted) return;
-    
-    // 🔥 URUTKAN SOAL BERDASARKAN ID
     soal.sort((a, b) => a.id.compareTo(b.id));
-    
     setState(() {
       _soalList = soal;
       _isLoading = false;
     });
-    print('📊 Loaded ${_soalList.length} soal for olimpiade ${widget.olimpiade.id}');
   }
 
   void _clearForm() {
@@ -98,11 +93,13 @@ class _OlimpiadeSoalManagementScreenState
     _selectedJawaban = 'A';
     _editingItem = null;
   }
+
   Future<void> _submitSoal() async {
-    // 🔥 VALIDASI: CEK APAKAH SUDAH PENUH
+    final totalQuestions = widget.olimpiade.totalQuestions ?? 0;
+
     if (_isFull) {
       _showSnackbar(
-        '⚠️ Batas maksimal ${widget.olimpiade.totalQuestions} soal sudah tercapai!',
+        '⚠️ Batas maksimal $totalQuestions soal sudah tercapai!',
         isError: true,
       );
       return;
@@ -178,11 +175,7 @@ class _OlimpiadeSoalManagementScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
-          'Hapus Soal?',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
+        title: const Text('Hapus Soal?'),
         content: const Text('Soal ini akan dihapus permanen.'),
         actions: [
           TextButton(
@@ -191,10 +184,7 @@ class _OlimpiadeSoalManagementScreenState
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: Colors.white,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Hapus'),
           ),
         ],
@@ -227,7 +217,7 @@ class _OlimpiadeSoalManagementScreenState
       _pilihanDController.text = soal.pilihanD;
       _pilihanEController.text = soal.pilihanE;
       _pembahasanController.text = soal.pembahasan;
-      _selectedJawaban = const ['A', 'B', 'C', 'D', 'E'].contains(soal.jawaban) ? soal.jawaban : 'A';
+      _selectedJawaban = soal.jawaban;
     });
   }
 
@@ -240,7 +230,6 @@ class _OlimpiadeSoalManagementScreenState
             Icon(
               isError ? Icons.error_outline : Icons.check_circle_outline,
               color: Colors.white,
-              size: 20,
             ),
             const SizedBox(width: 12),
             Expanded(child: Text(message)),
@@ -251,16 +240,17 @@ class _OlimpiadeSoalManagementScreenState
       ),
     );
   }
-    void _showTambahSoalDialog() {
-    // 🔥 CEK APAKAH SUDAH PENUH
+
+  void _showTambahSoalDialog() {
+    final totalQuestions = widget.olimpiade.totalQuestions ?? 0;
+
     if (_isFull) {
       _showSnackbar(
-        '⚠️ Batas maksimal ${widget.olimpiade.totalQuestions} soal sudah tercapai!',
+        '⚠️ Batas maksimal $totalQuestions soal sudah tercapai!',
         isError: true,
       );
       return;
     }
-    
     _clearForm();
     showDialog(
       context: context,
@@ -296,25 +286,25 @@ class _OlimpiadeSoalManagementScreenState
                 decoration: const InputDecoration(labelText: 'Pilihan E'),
               ),
               const SizedBox(height: 12),
-              // 🔥 DROPDOWN JAWABAN YANG SUDAH DIPERBAIKI
-              DropdownButtonFormField<String>(
-                value: _selectedJawaban,
-                items: const [
-                  DropdownMenuItem(value: 'A', child: Text('A')),
-                  DropdownMenuItem(value: 'B', child: Text('B')),
-                  DropdownMenuItem(value: 'C', child: Text('C')),
-                  DropdownMenuItem(value: 'D', child: Text('D')),
-                  DropdownMenuItem(value: 'E', child: Text('E')),
-                ],
-                onChanged: (value) {
-                  if (value != null) setState(() => _selectedJawaban = value);
+              StatefulBuilder(
+                builder: (context, setDialogState) {
+                  return DropdownButtonFormField<String>(
+                    value: _selectedJawaban,
+                    items: const [
+                      DropdownMenuItem(value: 'A', child: Text('A')),
+                      DropdownMenuItem(value: 'B', child: Text('B')),
+                      DropdownMenuItem(value: 'C', child: Text('C')),
+                      DropdownMenuItem(value: 'D', child: Text('D')),
+                      DropdownMenuItem(value: 'E', child: Text('E')),
+                    ],
+                    onChanged: (value) {
+                      setDialogState(() => _selectedJawaban = value!);
+                      setState(() => _selectedJawaban = value!);
+                    },
+                    decoration: const InputDecoration(labelText: 'Jawaban Benar'),
+                  );
                 },
-                decoration: const InputDecoration(
-                  labelText: 'Jawaban Benar',
-                  border: OutlineInputBorder(),
-                ),
               ),
-              const SizedBox(height: 12),
               TextField(
                 controller: _pembahasanController,
                 decoration: const InputDecoration(labelText: 'Pembahasan'),
@@ -337,174 +327,64 @@ class _OlimpiadeSoalManagementScreenState
     );
   }
 
-  void _showEditDialog() {
-    final titleController = TextEditingController(text: widget.olimpiade.title);
-    final durationController = TextEditingController(
-      text: _extractDurasiMenit(widget.olimpiade.durationLabel).toString(),
-    );
-    final dateController = TextEditingController(
-      text: widget.olimpiade.scheduleLabel,
-    );
-
-    final fieldBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-    );
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Judul Olimpiade'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: durationController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Durasi (menit)'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: dateController,
-                readOnly: true,
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked != null) {
-                    dateController.text = picked.toLocal().toString().split(' ')[0];
-                  }
-                },
-                decoration: const InputDecoration(labelText: 'Tanggal'),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Batal'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _showSnackbar('Olimpiade berhasil diperbarui');
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Simpan'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showDeleteConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus Olimpiade'),
-        content: const Text('Apakah Anda yakin ingin menghapus olimpiade ini?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _showSnackbar('Olimpiade berhasil dihapus');
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  int _extractDurasiMenit(String durationLabel) {
-    final regex = RegExp(r'(\d+)');
-    final match = regex.firstMatch(durationLabel);
-    return match != null ? int.tryParse(match.group(1) ?? '150') ?? 150 : 150;
-  }
-
   void _onSidebarMenuTap(String title) {
-  if (title == 'Dashboard') {
-    Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
-    return;
+    if (title == 'Dashboard') {
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
+    } else if (title == 'Jadwal Mengajar') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        ),
+      );
+    } else if (title == 'Absensi Kelas') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
+      );
+    } else if (title == 'Soal Latihan') {
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
+    } else if (title == 'Try Out') {
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorTryout);
+    } else if (title == 'Materi Pembelajaran') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MateriPembelajaranScreen(initialClass: null),
+        ),
+      );
+    } else if (title == 'Olimpiade Akademik') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+      );
+    }
   }
-  if (title == 'Jadwal Mengajar') {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
-      ),
-    );
-    return;
-  }
-  if (title == 'Absensi Kelas') {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
-    );
-    return;
-  }
-  if (title == 'Soal Latihan') {
-    Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
-    return;
-  }
-  if (title == 'Try Out') {
-    Navigator.pushReplacementNamed(context, AppRoutes.mentorTryout);
-    return;
-  }
-  if (title == 'Materi Pembelajaran') {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const MateriPembelajaranScreen(initialClass: null),
-      ),
-    );
-    return;
-  }
-  if (title == 'Olimpiade Akademik') {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const MentorOlimpiadeScreen(),
-      ),
-    );
-    return;
-  }
-}
+
   Widget _buildPilihanInput(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
               child: Text(
                 label,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),
@@ -512,9 +392,12 @@ class _OlimpiadeSoalManagementScreenState
           Expanded(
             child: TextField(
               controller: controller,
-              decoration: InputDecoration(
-                hintText: 'Pilihan $label',
-                border: const OutlineInputBorder(),
+              style: const TextStyle(fontSize: 14),
+              decoration: const InputDecoration(
+                hintText: 'Pilihan',
+                hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
@@ -574,6 +457,8 @@ class _OlimpiadeSoalManagementScreenState
 
   @override
   Widget build(BuildContext context) {
+    final totalQuestions = widget.olimpiade.totalQuestions ?? 0;
+
     return MentorSidebarShell(
       activeMenuTitle: 'Olimpiade Akademik',
       onMenuTap: _onSidebarMenuTap,
@@ -597,141 +482,434 @@ class _OlimpiadeSoalManagementScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 🔥 PROGRESS CARD
+                    // PROGRESS CARD
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        color: _isFull
+                            ? const Color(0xFFFEF2F2)
+                            : const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _isFull
+                              ? const Color(0xFFFEE2E2)
+                              : const Color(0xFFDBEAFE),
+                        ),
                       ),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'Progress Pembuatan Soal',
-                                style: TextStyle(fontWeight: FontWeight.w600),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: _isFull
+                                          ? const Color(0xFFEF4444)
+                                          : const Color(0xFF2563EB),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      _isFull
+                                          ? Icons.warning_amber_rounded
+                                          : Icons.quiz_outlined,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Progress Pembuatan Soal',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                      color: Color(0xFF1F2937),
+                                    ),
+                                  ),
+                                ],
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
+                                  horizontal: 14,
+                                  vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _isFull ? Colors.red.shade50 : Colors.green.shade50,
-                                  borderRadius: BorderRadius.circular(20),
+                                  color: _isFull
+                                      ? const Color(0xFFEF4444)
+                                      : const Color(0xFF2563EB),
+                                  borderRadius: BorderRadius.circular(30),
                                 ),
                                 child: Text(
                                   '$_progressPercent%',
-                                  style: TextStyle(
-                                    color: _isFull ? Colors.red : Colors.green.shade700,
-                                    fontWeight: FontWeight.w700,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          LinearProgressIndicator(
-                            value: _progressValue,
-                            minHeight: 8,
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor: AlwaysStoppedAnimation(
-                              _isFull ? Colors.red : const Color(0xFF2563EB),
+                          const SizedBox(height: 16),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: LinearProgressIndicator(
+                              value: _progressValue,
+                              minHeight: 10,
+                              backgroundColor: Colors.white,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                _isFull
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFF2563EB),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('${_soalList.length} soal terbuat'),
-                              Text('Target: ${widget.olimpiade.totalQuestions} soal'),
+                              Flexible(
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.check_circle_outline,
+                                      size: 14,
+                                      color: Color(0xFF10B981),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        '${_soalList.length} soal terbuat',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFF4B5563),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Flexible(
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.flag_outlined,
+                                      size: 14,
+                                      color: Color(0xFFF59E0B),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        'Target: $totalQuestions soal',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFF4B5563),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
+                          if (_isFull) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFFFEE2E2),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: Color(0xFFEF4444),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Batas maksimal $totalQuestions soal sudah tercapai. Hapus beberapa soal untuk menambah.',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFFEF4444),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
 
                     // FORM TAMBAH SOAL
                     Container(
-                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _editingItem == null ? 'Tambah Soal Baru' : 'Edit Soal',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: _pertanyaanController,
-                            decoration: const InputDecoration(labelText: 'Pertanyaan'),
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 12),
-                          const Text('Pilihan Jawaban'),
-                          _buildPilihanInput('A', _pilihanAController),
-                          _buildPilihanInput('B', _pilihanBController),
-                          _buildPilihanInput('C', _pilihanCController),
-                          _buildPilihanInput('D', _pilihanDController),
-                          _buildPilihanInput('E', _pilihanEController),
-                          const SizedBox(height: 16),
-                          DropdownButtonFormField<String>(
-                            value: _selectedJawaban,
-                            dropdownColor: Colors.white,
-                            icon: const Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: Color(0xFF6B7280),
-                              size: 20,
-                            ),
-                            items: const [
-                              DropdownMenuItem(value: 'A', child: Text('A')),
-                              DropdownMenuItem(value: 'B', child: Text('B')),
-                              DropdownMenuItem(value: 'C', child: Text('C')),
-                              DropdownMenuItem(value: 'D', child: Text('D')),
-                              DropdownMenuItem(value: 'E', child: Text('E')),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) setState(() => _selectedJawaban = value);
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'Jawaban Benar',
-                              filled: true,
-                              fillColor: const Color(0xFFF3F4F6),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF2563EB),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                topRight: Radius.circular(20),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: _pembahasanController,
-                            decoration: const InputDecoration(labelText: 'Pembahasan'),
-                            maxLines: 2,
-                          ),
-                          const SizedBox(height: 20),
-                          ElevatedButton.icon(
-                            onPressed: _isSubmitting || _isFull ? null : _submitSoal,
-                            icon: const Icon(Icons.add, color: Colors.white),
-                            label: Text(
-                              _editingItem == null ? 'Tambah Soal' : 'Simpan Perubahan',
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha(51),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    _editingItem == null
+                                        ? Icons.add_task
+                                        : Icons.edit_note,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _editingItem == null
+                                        ? 'Tambah Soal Baru'
+                                        : 'Edit Soal',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                if (_editingItem != null)
+                                  GestureDetector(
+                                    onTap: _clearForm,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withAlpha(51),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: const Text(
+                                        'Batal Edit',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isFull ? Colors.grey : const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size(double.infinity, 45),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Pertanyaan',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF9FAFB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5E7EB),
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _pertanyaanController,
+                                    maxLines: 4,
+                                    decoration: const InputDecoration(
+                                      hintText:
+                                          'Tulis pertanyaan soal di sini...',
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.all(14),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'Pilihan Jawaban',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildPilihanInput('A', _pilihanAController),
+                                _buildPilihanInput('B', _pilihanBController),
+                                _buildPilihanInput('C', _pilihanCController),
+                                _buildPilihanInput('D', _pilihanDController),
+                                _buildPilihanInput('E', _pilihanEController),
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'Jawaban Benar',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF9FAFB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5E7EB),
+                                    ),
+                                  ),
+                                  child: DropdownButtonFormField<String>(
+                                    value: _selectedJawaban,
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'A',
+                                        child: Text('A'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'B',
+                                        child: Text('B'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'C',
+                                        child: Text('C'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'D',
+                                        child: Text('D'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'E',
+                                        child: Text('E'),
+                                      ),
+                                    ],
+                                    onChanged: (value) => setState(
+                                      () => _selectedJawaban = value!,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'Pembahasan (Opsional)',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF9FAFB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5E7EB),
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _pembahasanController,
+                                    maxLines: 3,
+                                    decoration: const InputDecoration(
+                                      hintText:
+                                          'Tambahkan pembahasan untuk siswa...',
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.all(14),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: _isSubmitting || _isFull
+                                        ? null
+                                        : _submitSoal,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _isFull
+                                          ? Colors.grey
+                                          : const Color(0xFF2563EB),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                    child: _isSubmitting
+                                        ? const SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                _editingItem == null
+                                                    ? Icons.add
+                                                    : Icons.save,
+                                                size: 18,
+                                                color: Colors.white,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                _editingItem == null
+                                                    ? 'Tambah Soal'
+                                                    : 'Simpan Perubahan',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -739,12 +917,12 @@ class _OlimpiadeSoalManagementScreenState
                     ),
                     const SizedBox(height: 24),
 
-                    // DAFTAR SOAL
                     Text(
-                      'Daftar Soal (${_soalList.length}/${widget.olimpiade.totalQuestions})',
+                      'Daftar Soal (${_soalList.length}/$totalQuestions)',
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 12),
+
                     if (_soalList.isEmpty)
                       Container(
                         padding: const EdgeInsets.all(40),
@@ -760,19 +938,11 @@ class _OlimpiadeSoalManagementScreenState
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _soalList.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final soal = _soalList[index];
-                          return _buildSoalCard(soal, index + 1);
-                        },
+                        itemBuilder: (context, index) =>
+                            _buildSoalCard(_soalList[index], index + 1),
                       ),
                   ],
                 ),
-              ),
-        floatingActionButton: _isFull
-            ? null
-            : FloatingActionButton(
-                onPressed: _showTambahSoalDialog,
-                child: const Icon(Icons.add),
               ),
       ),
     );
