@@ -32,9 +32,12 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
   String _selectedClass = 'Semua Kelas';
   final List<String> _fixedClassOptions = const [
     'Semua Kelas',
-    'Kelas 10',
-    'Kelas 11',
-    'Kelas 12',
+    'Kelas 10 IPA',
+    'Kelas 10 IPS',
+    'Kelas 11 IPA',
+    'Kelas 11 IPS',
+    'Kelas 12 IPA',
+    'Kelas 12 IPS',
   ];
 
   // Use AppColors directly in widgets for consistency with Admin
@@ -81,36 +84,36 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
       return;
     }
     if (title == 'Jadwal Mengajar') {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        InstantPageRoute(
+          child: const JadwalPembelajaranScreen(mentorView: true),
         ),
       );
       return;
     }
     if (title == 'Absensi Kelas') {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
+        InstantPageRoute(child: const MentorAttendanceScreen()),
       );
       return;
     }
     if (title == 'Soal Latihan') {
-      Navigator.pushNamed(context, AppRoutes.mentorExercise);
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
       return;
     }
     if (title == 'Try Out') {
-      Navigator.pushNamed(context, AppRoutes.mentorTryout);
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorTryout);
       return;
     }
     if (title == 'Materi Pembelajaran') {
       return;
     }
     if (title == 'Olimpiade Akademik') {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+        InstantPageRoute(child: const MentorOlimpiadeScreen()),
       );
     }
   }
@@ -339,6 +342,12 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
             width: 180,
             child: DropdownButtonFormField<String>(
               initialValue: _selectedClass,
+              dropdownColor: Colors.white,
+              icon: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF6B7280),
+                size: 20,
+              ),
               items: _fixedClassOptions
                   .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                   .toList(),
@@ -671,8 +680,15 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
 
   PlatformFile? _selectedFile;
   bool _isUploading = false;
-  final List<String> _classOptions = const ['Kelas 10', 'Kelas 11', 'Kelas 12'];
-  String _selectedClass = 'Kelas 12';
+  final List<String> _classOptions = const [
+    'Kelas 10 IPA',
+    'Kelas 10 IPS',
+    'Kelas 11 IPA',
+    'Kelas 11 IPS',
+    'Kelas 12 IPA',
+    'Kelas 12 IPS',
+  ];
+  String _selectedClass = 'Kelas 12 IPA';
 
   Future<void> _pickFile() async {
     try {
@@ -891,7 +907,13 @@ class _UploadMateriDialogState extends State<UploadMateriDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: _selectedClass,
+                value: _selectedClass,
+                dropdownColor: Colors.white,
+                icon: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFF6B7280),
+                  size: 20,
+                ),
                 items: _classOptions
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),

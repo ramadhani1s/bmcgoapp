@@ -8,12 +8,21 @@ import 'auth_service.dart';
 class LatihanManagementService {
   static String get _baseUrl => AuthService.baseUrl;
 
+  // ==================== GET ALL LATIHAN ====================
   static Future<List<Latihan>> getLatihan() async {
     try {
       final headers = await AuthService.getAuthHeaders();
       final response = await http
-          .get(Uri.parse('$_baseUrl/api/mentor/latihan'), headers: headers)
+          .get(
+            Uri.parse('$_baseUrl/api/mentor/latihan'),
+            headers: headers,
+          )
           .timeout(const Duration(seconds: 15));
+
+      print('========== GET LATIHAN ==========');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('=================================');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -21,11 +30,38 @@ class LatihanManagementService {
         return list.map((item) => Latihan.fromJson(item)).toList();
       }
       return [];
-    } catch (_) {
+    } catch (e) {
+      print('ERROR getLatihan: $e');
       return [];
     }
   }
 
+  // ==================== GET LATIHAN BY ID ====================
+  static Future<Latihan?> getLatihanById(int latihanId) async {
+    try {
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/api/mentor/latihan/$latihanId'),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final latihanData = data['data'];
+        if (latihanData != null) {
+          return Latihan.fromJson(latihanData);
+        }
+      }
+      return null;
+    } catch (e) {
+      print('ERROR getLatihanById: $e');
+      return null;
+    }
+  }
+
+  // ==================== CREATE LATIHAN ====================
   static Future<Map<String, dynamic>> createLatihan({
     required String title,
     required String mapel,
@@ -33,20 +69,33 @@ class LatihanManagementService {
   }) async {
     try {
       final headers = await AuthService.getAuthHeaders();
+      
+      final body = jsonEncode({
+        'title': title,
+        'mapel': mapel,
+        'total_soal': totalSoal,
+        'status': 'Draft',
+      });
+
+      print('========== CREATE LATIHAN ==========');
+      print('Request Body: $body');
+      print('=====================================');
+
       final response = await http
           .post(
             Uri.parse('$_baseUrl/api/mentor/latihan'),
             headers: headers,
-            body: jsonEncode({
-              'title': title,
-              'mapel': mapel,
-              'total_soal': totalSoal,
-              'status': 'Draft',
-            }),
+            body: body,
           )
           .timeout(const Duration(seconds: 15));
 
+      print('========== RESPONSE CREATE LATIHAN ==========');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('==============================================');
+
       final data = jsonDecode(response.body);
+      
       if (response.statusCode == 201 || response.statusCode == 200) {
         return {
           'success': true,
@@ -60,6 +109,7 @@ class LatihanManagementService {
         'message': data['details'] ?? data['error'] ?? 'Gagal membuat latihan',
       };
     } catch (e) {
+      print('ERROR createLatihan: $e');
       return {
         'success': false,
         'message': 'Terjadi kesalahan: ${e.toString()}',
@@ -67,6 +117,7 @@ class LatihanManagementService {
     }
   }
 
+  // ==================== UPDATE LATIHAN ====================
   static Future<Map<String, dynamic>> updateLatihan({
     required int latihanId,
     required String title,
@@ -88,6 +139,7 @@ class LatihanManagementService {
           .timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(response.body);
+      
       if (response.statusCode == 200) {
         return {
           'success': true,
@@ -98,8 +150,7 @@ class LatihanManagementService {
 
       return {
         'success': false,
-        'message':
-            data['details'] ?? data['error'] ?? 'Gagal mengupdate latihan',
+        'message': data['details'] ?? data['error'] ?? 'Gagal mengupdate latihan',
       };
     } catch (e) {
       return {
@@ -109,6 +160,7 @@ class LatihanManagementService {
     }
   }
 
+  // ==================== PUBLISH LATIHAN ====================
   static Future<Map<String, dynamic>> publishLatihan(int latihanId) async {
     try {
       final headers = await AuthService.getAuthHeaders();
@@ -120,6 +172,7 @@ class LatihanManagementService {
           .timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(response.body);
+      
       if (response.statusCode == 200) {
         return {
           'success': true,
@@ -139,6 +192,7 @@ class LatihanManagementService {
     }
   }
 
+  // ==================== DELETE LATIHAN ====================
   static Future<Map<String, dynamic>> deleteLatihan(int latihanId) async {
     try {
       final headers = await AuthService.getAuthHeaders();
@@ -150,6 +204,7 @@ class LatihanManagementService {
           .timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(response.body);
+      
       if (response.statusCode == 200) {
         return {
           'success': true,

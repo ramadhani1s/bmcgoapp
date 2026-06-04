@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'mengelola_soal_screen.dart';
+import '../../models/soal_latihan.dart';
+import '../../services/latihan_soal_service.dart';
 
 class CreateLatihanScreen extends StatefulWidget {
   final String mapel;
@@ -24,16 +25,23 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
     'Biologi',
     'Bahasa Indonesia',
     'Bahasa Inggris',
+    'Ekonomi',
+    'Geografi',
+    'Sosiologi',
+    'Sejarah',
   ];
 
   final List<String> _classOptions = const [
-    'Kelas 10',
-    'Kelas 11',
-    'Kelas 12',
+    'Kelas 10 IPA',
+    'Kelas 10 IPS',
+    'Kelas 11 IPA',
+    'Kelas 11 IPS',
+    'Kelas 12 IPA',
+    'Kelas 12 IPS',
   ];
 
   String? _selectedMapel;
-  String? _selectedClass;
+  String? _selectedClass = 'Kelas 12 IPA';
   bool _isSubmitting = false;
 
   @override
@@ -63,21 +71,41 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
 
     setState(() => _isSubmitting = true);
     final jumlah = _parseJumlahSoal();
-    await Future<void>.delayed(const Duration(milliseconds: 150));
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
+    final durasi = int.tryParse(_durasiController.text.trim()) ?? 30;
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (ctx) => MengelolaSoalScreen(
-          mapel: _selectedMapel!,
-          latihanTitle: _judulController.text.trim(),
-          targetSoal: jumlah,
-          kelas: _selectedClass,
-        ),
-      ),
+    final skeletonPertanyaan = SoalLatihan.buildPertanyaan(
+      text: 'Placeholder',
+      kelas: _selectedClass ?? 'Kelas 10',
+      mapel: _selectedMapel!,
+      latihanTitle: _judulController.text.trim(),
+      durasi: durasi,
+      target: jumlah,
+      isSkeletonFlag: true,
     );
+
+    final res = await LatihanSoalService.createSoalLatihan(
+      pertanyaan: skeletonPertanyaan,
+      pilihanA: '',
+      pilihanB: '',
+      pilihanC: '',
+      pilihanD: '',
+      jawaban: 'A',
+      pembahasan: '',
+    );
+
+    setState(() => _isSubmitting = false);
+    if (!mounted) return;
+
+    if (res['success'] == true) {
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res['message'] ?? 'Gagal membuat latihan'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   // ── helpers ──────────────────────────────────────────────────────────────

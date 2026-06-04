@@ -326,10 +326,10 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
       return;
     }
     if (title == 'Jadwal Mengajar') {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        InstantPageRoute(
+          child: const JadwalPembelajaranScreen(mentorView: true),
         ),
       );
       return;
@@ -338,26 +338,26 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
       return;
     }
     if (title == 'Soal Latihan') {
-      Navigator.pushNamed(context, AppRoutes.mentorExercise);
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
       return;
     }
     if (title == 'Try Out') {
-      Navigator.pushNamed(context, AppRoutes.mentorTryout);
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorTryout);
       return;
     }
     if (title == 'Materi Pembelajaran') {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const MateriPembelajaranScreen(initialClass: null),
+        InstantPageRoute(
+          child: const MateriPembelajaranScreen(initialClass: null),
         ),
       );
       return;
     }
     if (title == 'Olimpiade Akademik') {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+        InstantPageRoute(child: const MentorOlimpiadeScreen()),
       );
     }
   }

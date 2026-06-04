@@ -127,44 +127,52 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   }
 
   void _onSidebarMenuTap(String title) {
-    if (title == 'Dashboard') {
-      Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
-      return;
-    }
-    if (title == 'Jadwal Mengajar') {
-      return;
-    }
-    if (title == 'Absensi Kelas') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
-      );
-      return;
-    }
-    if (title == 'Soal Latihan') {
-      Navigator.pushNamed(context, AppRoutes.mentorExercise);
-      return;
-    }
-    if (title == 'Try Out') {
-      Navigator.pushNamed(context, AppRoutes.mentorTryout);
-      return;
-    }
-    if (title == 'Materi Pembelajaran') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const MateriPembelajaranScreen(initialClass: null),
-        ),
-      );
-      return;
-    }
-    if (title == 'Olimpiade Akademik') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
-      );
-    }
+  if (title == 'Dashboard') {
+    Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
+    return;
   }
+  if (title == 'Jadwal Mengajar') {
+    // TODO: Tambahkan navigasi ke Jadwal Mengajar
+    // Navigator.pushReplacement(
+    //   context,
+    //   MaterialPageRoute(builder: (_) => const JadwalMengajarScreen()),
+    // );
+    return;
+  }
+  if (title == 'Absensi Kelas') {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
+    );
+    return;
+  }
+  if (title == 'Soal Latihan') {
+    Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
+    return;
+  }
+  if (title == 'Try Out') {
+    Navigator.pushReplacementNamed(context, AppRoutes.mentorTryout);
+    return;
+  }
+  if (title == 'Materi Pembelajaran') {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MateriPembelajaranScreen(initialClass: null),
+      ),
+    );
+    return;
+  }
+  if (title == 'Olimpiade Akademik') {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MentorOlimpiadeScreen(),
+      ),
+    );
+    return;
+  }
+}
 
   String _timeToString(dynamic value) {
     if (value == null) return '';

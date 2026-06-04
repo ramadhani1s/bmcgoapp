@@ -9,11 +9,15 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// GetTryoutSoal retrieves all soal for a tryout by kompetisi_id
+// ==================== TRYOUT SOAL ====================
+
 func GetTryoutSoal(kompetisiID int) ([]models.SoalKompetisi, error) {
 	rows, err := config.DB.Query(
 		context.Background(),
-		`SELECT id, kompetisi_id, 'tryout' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(kategori, '') FROM tryout_soal WHERE kompetisi_id = $1 ORDER BY id DESC`,
+		`SELECT id, kompetisi_id, 'tryout' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(kategori, '') 
+		FROM tryout_soal 
+		WHERE kompetisi_id = $1 
+		ORDER BY id ASC`,
 		kompetisiID,
 	)
 	if err != nil {
@@ -50,48 +54,6 @@ func GetTryoutSoal(kompetisiID int) ([]models.SoalKompetisi, error) {
 	return items, nil
 }
 
-// GetOlimpiadseSoal retrieves all soal for olimpiade by kompetisi_id
-func GetOlimpiadseSoal(kompetisiID int) ([]models.SoalKompetisi, error) {
-	rows, err := config.DB.Query(
-		context.Background(),
-		`SELECT id, kompetisi_id, 'olimpiade' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), '' as kategori FROM olimpiade_soal WHERE kompetisi_id = $1 ORDER BY id DESC`,
-		kompetisiID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	items := make([]models.SoalKompetisi, 0)
-	for rows.Next() {
-		var item models.SoalKompetisi
-		if err := rows.Scan(
-			&item.ID,
-			&item.KompetisiID,
-			&item.Tipe,
-			&item.Pertanyaan,
-			&item.PilihanA,
-			&item.PilihanB,
-			&item.PilihanC,
-			&item.PilihanD,
-			&item.PilihanE,
-			&item.Jawaban,
-			&item.Pembahasan,
-			&item.Kategori,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, item)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return items, nil
-}
-
-// CreateTryoutSoal creates a new tryout soal
 func CreateTryoutSoal(input models.SoalKompetisi) (*models.SoalKompetisi, error) {
 	if input.Pertanyaan == "" || input.Jawaban == "" || input.KompetisiID <= 0 {
 		return nil, errors.New("pertanyaan, jawaban, dan kompetisi_id wajib diisi")
@@ -100,7 +62,9 @@ func CreateTryoutSoal(input models.SoalKompetisi) (*models.SoalKompetisi, error)
 	created := &models.SoalKompetisi{}
 	err := config.DB.QueryRow(
 		context.Background(),
-		`INSERT INTO tryout_soal (kompetisi_id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, pilihan_e, jawaban, pembahasan, kategori) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, kompetisi_id, 'tryout' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(kategori, '')`,
+		`INSERT INTO tryout_soal (kompetisi_id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, pilihan_e, jawaban, pembahasan, kategori) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+		RETURNING id, kompetisi_id, 'tryout' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(kategori, '')`,
 		input.KompetisiID,
 		input.Pertanyaan,
 		input.PilihanA,
@@ -132,12 +96,14 @@ func CreateTryoutSoal(input models.SoalKompetisi) (*models.SoalKompetisi, error)
 	return created, nil
 }
 
-// UpdateTryoutSoal updates an existing tryout soal
 func UpdateTryoutSoal(soalID int, input models.SoalKompetisi) (*models.SoalKompetisi, error) {
 	updated := &models.SoalKompetisi{}
 	err := config.DB.QueryRow(
 		context.Background(),
-		`UPDATE tryout_soal SET pertanyaan = $1, pilihan_a = $2, pilihan_b = $3, pilihan_c = $4, pilihan_d = $5, pilihan_e = $6, jawaban = $7, pembahasan = $8, kategori = $9 WHERE id = $10 RETURNING id, kompetisi_id, 'tryout' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(kategori, '')`,
+		`UPDATE tryout_soal 
+		SET pertanyaan = $1, pilihan_a = $2, pilihan_b = $3, pilihan_c = $4, pilihan_d = $5, pilihan_e = $6, jawaban = $7, pembahasan = $8, kategori = $9 
+		WHERE id = $10 
+		RETURNING id, kompetisi_id, 'tryout' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), COALESCE(kategori, '')`,
 		input.Pertanyaan,
 		input.PilihanA,
 		input.PilihanB,
@@ -172,7 +138,6 @@ func UpdateTryoutSoal(soalID int, input models.SoalKompetisi) (*models.SoalKompe
 	return updated, nil
 }
 
-// DeleteTryoutSoal deletes a tryout soal
 func DeleteTryoutSoal(soalID int) error {
 	result, err := config.DB.Exec(
 		context.Background(),
@@ -190,8 +155,52 @@ func DeleteTryoutSoal(soalID int) error {
 	return nil
 }
 
-// CreateOlimpiadseSoal creates a new olimpiade soal
-func CreateOlimpiadseSoal(input models.SoalKompetisi) (*models.SoalKompetisi, error) {
+// ==================== OLIMPIADE SOAL ====================
+
+func GetOlimpiadeSoal(kompetisiID int) ([]models.SoalKompetisi, error) {
+	rows, err := config.DB.Query(
+		context.Background(),
+		`SELECT id, kompetisi_id, 'olimpiade' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), '' as kategori 
+		FROM olimpiade_soal 
+		WHERE kompetisi_id = $1 
+		ORDER BY id ASC`,
+		kompetisiID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]models.SoalKompetisi, 0)
+	for rows.Next() {
+		var item models.SoalKompetisi
+		if err := rows.Scan(
+			&item.ID,
+			&item.KompetisiID,
+			&item.Tipe,
+			&item.Pertanyaan,
+			&item.PilihanA,
+			&item.PilihanB,
+			&item.PilihanC,
+			&item.PilihanD,
+			&item.PilihanE,
+			&item.Jawaban,
+			&item.Pembahasan,
+			&item.Kategori,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func CreateOlimpiadeSoal(input models.SoalKompetisi) (*models.SoalKompetisi, error) {
 	if input.Pertanyaan == "" || input.Jawaban == "" || input.KompetisiID <= 0 {
 		return nil, errors.New("pertanyaan, jawaban, dan kompetisi_id wajib diisi")
 	}
@@ -199,7 +208,9 @@ func CreateOlimpiadseSoal(input models.SoalKompetisi) (*models.SoalKompetisi, er
 	created := &models.SoalKompetisi{}
 	err := config.DB.QueryRow(
 		context.Background(),
-		`INSERT INTO olimpiade_soal (kompetisi_id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, pilihan_e, jawaban, pembahasan) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, kompetisi_id, 'olimpiade' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), ''`,
+		`INSERT INTO olimpiade_soal (kompetisi_id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, pilihan_e, jawaban, pembahasan) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		RETURNING id, kompetisi_id, 'olimpiade' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), ''`,
 		input.KompetisiID,
 		input.Pertanyaan,
 		input.PilihanA,
@@ -230,12 +241,14 @@ func CreateOlimpiadseSoal(input models.SoalKompetisi) (*models.SoalKompetisi, er
 	return created, nil
 }
 
-// UpdateOlimpiadseSoal updates an existing olimpiade soal
-func UpdateOlimpiadseSoal(soalID int, input models.SoalKompetisi) (*models.SoalKompetisi, error) {
+func UpdateOlimpiadeSoal(soalID int, input models.SoalKompetisi) (*models.SoalKompetisi, error) {
 	updated := &models.SoalKompetisi{}
 	err := config.DB.QueryRow(
 		context.Background(),
-		`UPDATE olimpiade_soal SET pertanyaan = $1, pilihan_a = $2, pilihan_b = $3, pilihan_c = $4, pilihan_d = $5, pilihan_e = $6, jawaban = $7, pembahasan = $8 WHERE id = $9 RETURNING id, kompetisi_id, 'olimpiade' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), ''`,
+		`UPDATE olimpiade_soal 
+		SET pertanyaan = $1, pilihan_a = $2, pilihan_b = $3, pilihan_c = $4, pilihan_d = $5, pilihan_e = $6, jawaban = $7, pembahasan = $8 
+		WHERE id = $9 
+		RETURNING id, kompetisi_id, 'olimpiade' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), ''`,
 		input.Pertanyaan,
 		input.PilihanA,
 		input.PilihanB,
@@ -269,8 +282,7 @@ func UpdateOlimpiadseSoal(soalID int, input models.SoalKompetisi) (*models.SoalK
 	return updated, nil
 }
 
-// DeleteOlimpiadseSoal deletes an olimpiade soal
-func DeleteOlimpiadseSoal(soalID int) error {
+func DeleteOlimpiadeSoal(soalID int) error {
 	result, err := config.DB.Exec(
 		context.Background(),
 		`DELETE FROM olimpiade_soal WHERE id = $1`,

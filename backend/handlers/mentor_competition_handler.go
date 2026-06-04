@@ -14,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ==================== PAYLOAD STRUCTS ====================
+
 type tryoutPayload struct {
 	PaketID           int            `json:"paket_id"`
 	MentorID          int            `json:"mentor_id"`
@@ -26,12 +28,16 @@ type tryoutPayload struct {
 }
 
 type olimpiadePayload struct {
-	MentorID   int    `json:"mentor_id"`
-	ClassLevel string `json:"class_level"`
-	Nama       string `json:"nama"`
-	Tanggal    string `json:"tanggal"`
-	Lokasi     string `json:"lokasi"`
+	MentorID          int            `json:"mentor_id"`
+	ClassLevel        string         `json:"class_level"`
+	Nama              string         `json:"nama"`
+	Tanggal           string         `json:"tanggal"`
+	Lokasi            string         `json:"lokasi"`
+	TotalQuestions    int            `json:"total_questions"`
+	CategoryQuestions map[string]int `json:"category_questions"`
 }
+
+// ==================== HELPER FUNCTIONS ====================
 
 func getUserIDFromContext(c *gin.Context) (int, error) {
 	userIDRaw, exists := c.Get("user_id")
@@ -170,7 +176,7 @@ func resolvePaketID(providedPaketID int) (int, error) {
 }
 
 func parseDateOrNil(dateText string) (*time.Time, error) {
-	dateText = stringsTrim(dateText)
+	dateText = strings.TrimSpace(dateText)
 	if dateText == "" {
 		return nil, nil
 	}
@@ -188,16 +194,13 @@ func parseDateOrNil(dateText string) (*time.Time, error) {
 	return nil, fmt.Errorf("format tanggal harus YYYY-MM-DD atau DD/MM/YYYY")
 }
 
-func stringsTrim(s string) string {
-	return strings.TrimSpace(s)
-}
-
 func formatDate(t *time.Time) string {
 	if t == nil {
 		return ""
 	}
 	return t.Format("2006-01-02")
 }
+// ==================== TRYOUT HANDLERS ====================
 
 func GetTryoutHandler(c *gin.Context) {
 	userID, err := getUserIDFromContext(c)
@@ -213,7 +216,8 @@ func GetTryoutHandler(c *gin.Context) {
 	}
 
 	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, paket_id, mentor_id, class_level, judul, tanggal, durasi, total_questions, category_questions
+		SELECT id, paket_id, mentor_id, class_level, judul, tanggal, durasi, total_questions, category_questions,
+		       COALESCE((SELECT COUNT(*) FROM tryout_soal WHERE kompetisi_id = tryout.id), 0) as soal_terbuat
 		FROM tryout
 		WHERE mentor_id = $1
 		ORDER BY id DESC
@@ -226,13 +230,13 @@ func GetTryoutHandler(c *gin.Context) {
 
 	items := make([]gin.H, 0)
 	for rows.Next() {
-		var id, paketID, mentorIDRow, durasi, totalQuestions int
+		var id, paketID, mentorIDRow, durasi, totalQuestions, soalTerbuat int
 		var classLevel string
 		var judul string
 		var tanggal *time.Time
 		var categoryQuestions []byte
 
-		if err := rows.Scan(&id, &paketID, &mentorIDRow, &classLevel, &judul, &tanggal, &durasi, &totalQuestions, &categoryQuestions); err != nil {
+		if err := rows.Scan(&id, &paketID, &mentorIDRow, &classLevel, &judul, &tanggal, &durasi, &totalQuestions, &categoryQuestions, &soalTerbuat); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -251,6 +255,7 @@ func GetTryoutHandler(c *gin.Context) {
 			"tanggal":            formatDate(tanggal),
 			"durasi":             durasi,
 			"total_questions":    totalQuestions,
+			"soal_terbuat":       soalTerbuat,
 			"category_questions": catData,
 		})
 	}
@@ -306,7 +311,10 @@ func CreateTryoutHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Tryout berhasil dibuat", "id": id})
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Tryout berhasil dibuat",
+		"id":      id,
+	})
 }
 
 func UpdateTryoutHandler(c *gin.Context) {
@@ -410,6 +418,299 @@ func DeleteTryoutHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Tryout berhasil dihapus"})
 }
+// ==================== OLIMPIADE HANDLERS (DIPERBAIKI) ====================
+
+func GetOlimpiadeHandler(c *gin.Context) {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	mentorID, err := resolveMentorID(userID, 0)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	rows, err := config.DB.Query(context.Background(), `
+		SELECT id, mentor_id, class_level, nama, tanggal, lokasi, total_questions, category_questions,
+		       COALESCE((SELECT COUNT(*) FROM olimpiade_soal WHERE kompetisi_id = olimpiade.id), 0) as soal_terbuat
+		FROM olimpiade
+		WHERE mentor_id = $1
+		ORDER BY id DESC
+	`, mentorID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	items := make([]gin.H, 0)
+	for rows.Next() {
+		var id, mentorIDRow, totalQuestions, soalTerbuat int
+		var classLevel, nama, lokasi string
+		var tanggal *time.Time
+		var categoryQuestions []byte
+
+		if err := rows.Scan(&id, &mentorIDRow, &classLevel, &nama, &tanggal, &lokasi, &totalQuestions, &categoryQuestions, &soalTerbuat); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		catData := gin.H{}
+		if len(categoryQuestions) > 0 {
+			_ = json.Unmarshal(categoryQuestions, &catData)
+		}
+
+		items = append(items, gin.H{
+			"id":                 id,
+			"mentor_id":          mentorIDRow,
+			"class_level":        classLevel,
+			"nama":               nama,
+			"tanggal":            formatDate(tanggal),
+			"lokasi":             lokasi,
+			"total_questions":    totalQuestions,
+			"soal_terbuat":       soalTerbuat,
+			"category_questions": catData,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": items})
+}
+
+func CreateOlimpiadeHandler(c *gin.Context) {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	var payload olimpiadePayload
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "request tidak valid", "details": err.Error()})
+		return
+	}
+
+	mentorID, err := resolveMentorID(userID, payload.MentorID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	tanggal, err := parseDateOrNil(payload.Tanggal)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 🔥 PERBAIKAN: Ubah category_questions ke JSON
+	categoryQuestionsJSON, err := json.Marshal(payload.CategoryQuestions)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "category_questions format tidak valid"})
+		return
+	}
+
+	// 🔥 PERBAIKAN: INSERT dengan total_questions dan category_questions
+	var id int
+	err = config.DB.QueryRow(context.Background(), `
+		INSERT INTO olimpiade (mentor_id, class_level, nama, tanggal, lokasi, total_questions, category_questions)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id
+	`, mentorID, payload.ClassLevel, payload.Nama, tanggal, payload.Lokasi, payload.TotalQuestions, categoryQuestionsJSON).Scan(&id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Olimpiade berhasil dibuat",
+		"id":      id,
+		"data": gin.H{
+			"id":                 id,
+			"mentor_id":          mentorID,
+			"class_level":        payload.ClassLevel,
+			"nama":               payload.Nama,
+			"tanggal":            formatDate(tanggal),
+			"lokasi":             payload.Lokasi,
+			"total_questions":    payload.TotalQuestions,
+			"category_questions": payload.CategoryQuestions,
+		},
+	})
+}
+
+func UpdateOlimpiadeHandler(c *gin.Context) {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	olimpiadeID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || olimpiadeID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id olimpiade tidak valid"})
+		return
+	}
+
+	var payload olimpiadePayload
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "request tidak valid", "details": err.Error()})
+		return
+	}
+
+	mentorID, err := resolveMentorID(userID, payload.MentorID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	tanggal, err := parseDateOrNil(payload.Tanggal)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 🔥 PERBAIKAN: Ubah category_questions ke JSON
+	categoryQuestionsJSON, err := json.Marshal(payload.CategoryQuestions)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "category_questions format tidak valid"})
+		return
+	}
+
+	// 🔥 PERBAIKAN: UPDATE dengan total_questions dan category_questions
+	cmd, err := config.DB.Exec(context.Background(), `
+		UPDATE olimpiade
+		SET class_level = $1,
+		    nama = $2,
+		    tanggal = $3,
+		    lokasi = $4,
+		    total_questions = $5,
+		    category_questions = $6
+		WHERE id = $7 AND mentor_id = $8
+	`, payload.ClassLevel, payload.Nama, tanggal, payload.Lokasi, payload.TotalQuestions, categoryQuestionsJSON, olimpiadeID, mentorID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if cmd.RowsAffected() == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Olimpiade tidak ditemukan"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Olimpiade berhasil diupdate"})
+}
+
+func DeleteOlimpiadeHandler(c *gin.Context) {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	olimpiadeID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || olimpiadeID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id olimpiade tidak valid"})
+		return
+	}
+
+	mentorID, err := resolveMentorID(userID, 0)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	cmd, err := config.DB.Exec(context.Background(), `
+		DELETE FROM olimpiade WHERE id = $1 AND mentor_id = $2
+	`, olimpiadeID, mentorID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if cmd.RowsAffected() == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Olimpiade tidak ditemukan"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Olimpiade berhasil dihapus"})
+}
+
+// ==================== PESERTA OLIMPIADE HANDLERS ====================
+
+func GetPesertaOlimpiadeHandler(c *gin.Context) {
+	olimpiadeID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || olimpiadeID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id olimpiade tidak valid"})
+		return
+	}
+
+	rows, err := config.DB.Query(context.Background(), `
+		SELECT id, siswa_id, olimpiade_id
+		FROM peserta_olimpiade
+		WHERE olimpiade_id = $1
+		ORDER BY id DESC
+	`, olimpiadeID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	items := make([]gin.H, 0)
+	for rows.Next() {
+		var id, siswaID, olimpiadeIDRow int
+		if err := rows.Scan(&id, &siswaID, &olimpiadeIDRow); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		items = append(items, gin.H{
+			"id":           id,
+			"siswa_id":     siswaID,
+			"olimpiade_id": olimpiadeIDRow,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": items})
+}
+
+func CreatePesertaOlimpiadeHandler(c *gin.Context) {
+	olimpiadeID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || olimpiadeID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id olimpiade tidak valid"})
+		return
+	}
+
+	var payload struct {
+		SiswaID int `json:"siswa_id"`
+	}
+
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "request tidak valid", "details": err.Error()})
+		return
+	}
+
+	if payload.SiswaID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "siswa_id wajib diisi"})
+		return
+	}
+
+	var id int
+	err = config.DB.QueryRow(context.Background(), `
+		INSERT INTO peserta_olimpiade (siswa_id, olimpiade_id)
+		VALUES ($1, $2)
+		RETURNING id
+	`, payload.SiswaID, olimpiadeID).Scan(&id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Peserta olimpiade berhasil ditambahkan", "id": id})
+}
+
+// ==================== HASIL TRYOUT HANDLERS ====================
 
 func GetHasilTryoutByTryoutHandler(c *gin.Context) {
 	tryoutID, err := strconv.Atoi(c.Param("id"))
@@ -485,6 +786,8 @@ func CreateHasilTryoutHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Hasil tryout berhasil dibuat", "id": id})
 }
 
+// ==================== EVALUASI HANDLERS ====================
+
 func GetEvaluasiHandler(c *gin.Context) {
 	siswaIDParam := c.Query("siswa_id")
 	query := `SELECT id, siswa_id, nilai, catatan FROM evaluasi`
@@ -556,251 +859,4 @@ func CreateEvaluasiHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Evaluasi berhasil dibuat", "id": id})
-}
-
-func GetOlimpiadeHandler(c *gin.Context) {
-	userID, err := getUserIDFromContext(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		return
-	}
-
-	mentorID, err := resolveMentorID(userID, 0)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, mentor_id, class_level, nama, tanggal, lokasi
-		FROM olimpiade
-		WHERE mentor_id = $1
-		ORDER BY id DESC
-	`, mentorID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	defer rows.Close()
-
-	items := make([]gin.H, 0)
-	for rows.Next() {
-		var id, mentorIDRow int
-		var classLevel string
-		var nama, lokasi string
-		var tanggal *time.Time
-		if err := rows.Scan(&id, &mentorIDRow, &classLevel, &nama, &tanggal, &lokasi); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		items = append(items, gin.H{
-			"id":          id,
-			"mentor_id":   mentorIDRow,
-			"class_level": classLevel,
-			"nama":        nama,
-			"tanggal":     formatDate(tanggal),
-			"lokasi":      lokasi,
-		})
-	}
-
-	c.JSON(http.StatusOK, gin.H{"data": items})
-}
-
-func CreateOlimpiadeHandler(c *gin.Context) {
-	userID, err := getUserIDFromContext(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		return
-	}
-
-	var payload olimpiadePayload
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "request tidak valid", "details": err.Error()})
-		return
-	}
-
-	mentorID, err := resolveMentorID(userID, payload.MentorID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	tanggal, err := parseDateOrNil(payload.Tanggal)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	var id int
-	err = config.DB.QueryRow(context.Background(), `
-		INSERT INTO olimpiade (mentor_id, class_level, nama, tanggal, lokasi)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id
-	`, mentorID, payload.ClassLevel, payload.Nama, tanggal, payload.Lokasi).Scan(&id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "Olimpiade berhasil dibuat", "id": id})
-}
-
-func UpdateOlimpiadeHandler(c *gin.Context) {
-	userID, err := getUserIDFromContext(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		return
-	}
-
-	olimpiadeID, err := strconv.Atoi(c.Param("id"))
-	if err != nil || olimpiadeID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id olimpiade tidak valid"})
-		return
-	}
-
-	var payload olimpiadePayload
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "request tidak valid", "details": err.Error()})
-		return
-	}
-
-	mentorID, err := resolveMentorID(userID, payload.MentorID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	tanggal, err := parseDateOrNil(payload.Tanggal)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	cmd, err := config.DB.Exec(context.Background(), `
-		UPDATE olimpiade
-		SET class_level = $1,
-		    nama = $2,
-		    tanggal = $3,
-		    lokasi = $4
-		WHERE id = $5 AND mentor_id = $6
-	`, payload.ClassLevel, payload.Nama, tanggal, payload.Lokasi, olimpiadeID, mentorID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if cmd.RowsAffected() == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Olimpiade tidak ditemukan"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Olimpiade berhasil diupdate"})
-}
-
-func DeleteOlimpiadeHandler(c *gin.Context) {
-	userID, err := getUserIDFromContext(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		return
-	}
-
-	olimpiadeID, err := strconv.Atoi(c.Param("id"))
-	if err != nil || olimpiadeID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id olimpiade tidak valid"})
-		return
-	}
-
-	mentorID, err := resolveMentorID(userID, 0)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	cmd, err := config.DB.Exec(context.Background(), `
-		DELETE FROM olimpiade WHERE id = $1 AND mentor_id = $2
-	`, olimpiadeID, mentorID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if cmd.RowsAffected() == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Olimpiade tidak ditemukan"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Olimpiade berhasil dihapus"})
-}
-
-func GetPesertaOlimpiadeHandler(c *gin.Context) {
-	olimpiadeID, err := strconv.Atoi(c.Param("id"))
-	if err != nil || olimpiadeID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id olimpiade tidak valid"})
-		return
-	}
-
-	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, siswa_id, olimpiade_id
-		FROM peserta_olimpiade
-		WHERE olimpiade_id = $1
-		ORDER BY id DESC
-	`, olimpiadeID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	defer rows.Close()
-
-	items := make([]gin.H, 0)
-	for rows.Next() {
-		var id, siswaID, olimpiadeIDRow int
-		if err := rows.Scan(&id, &siswaID, &olimpiadeIDRow); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		items = append(items, gin.H{
-			"id":           id,
-			"siswa_id":     siswaID,
-			"olimpiade_id": olimpiadeIDRow,
-		})
-	}
-
-	c.JSON(http.StatusOK, gin.H{"data": items})
-}
-
-func CreatePesertaOlimpiadeHandler(c *gin.Context) {
-	olimpiadeID, err := strconv.Atoi(c.Param("id"))
-	if err != nil || olimpiadeID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id olimpiade tidak valid"})
-		return
-	}
-
-	var payload struct {
-		SiswaID int `json:"siswa_id"`
-	}
-
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "request tidak valid", "details": err.Error()})
-		return
-	}
-
-	if payload.SiswaID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "siswa_id wajib diisi"})
-		return
-	}
-
-	var id int
-	err = config.DB.QueryRow(context.Background(), `
-		INSERT INTO peserta_olimpiade (siswa_id, olimpiade_id)
-		VALUES ($1, $2)
-		RETURNING id
-	`, payload.SiswaID, olimpiadeID).Scan(&id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "Peserta olimpiade berhasil ditambahkan", "id": id})
 }
