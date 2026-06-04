@@ -68,8 +68,7 @@ class MentorCompetitionService {
           }
         }
 
-        // 🔥 PERBAIKAN: Langsung ambil total_questions dari response API
-        // Tidak perlu panggil getTotalSoalOlimpiade lagi karena backend sudah mengirimkan total_questions
+        // Ambil total_questions dari response API
         int totalQuestions = row['total_questions'] ?? 0;
         
         print('📊 ID: ${row['id']}, Total Soal dari response: $totalQuestions');
@@ -79,10 +78,10 @@ class MentorCompetitionService {
           'type': type,
           'class_level': row['class_level'],
           'title': row['judul'] ?? row['nama'],
-          'subject': row['lokasi'] ?? '-',
-          'totalQuestions': totalQuestions,  // 🔥 PAKAI totalQuestions dari response
-          'soal_terbuat': row['soal_terbuat'] ?? 0, // 🔥 TAMBAHKAN SOAL TERBUAT
-          'durationLabel': row['durasi'] ?? (type == 'olimpiade' ? '120' : '-'),
+          'subject': '-', // 🔥 SUBJEK DI SET MENJADI '-'
+          'totalQuestions': totalQuestions,
+          'soal_terbuat': row['soal_terbuat'] ?? 0,
+          'durationLabel': row['durasi']?.toString() ?? (type == 'olimpiade' ? '120' : '60'),
           'scheduleLabel': row['tanggal'] ?? '',
           'isPublished': true,
           'createdAt': row['tanggal'] ?? DateTime.now().toIso8601String(),
@@ -108,7 +107,6 @@ class MentorCompetitionService {
     int? id,
     required String classLevel,
     required String title,
-    required String subject,
     required String scheduleLabel,
     required String durationLabel,
     required int totalQuestions,
@@ -122,7 +120,11 @@ class MentorCompetitionService {
       print('========== CREATE OR UPDATE ==========');
       print('Type: $type');
       print('Is Update: $isUpdate');
+      print('Title: $title');
+      print('Schedule: $scheduleLabel');
+      print('Duration: $durationLabel');
       print('Total Questions: $totalQuestions');
+      print('Class Level: $classLevel');
       print('=======================================');
 
       final body = type == 'olimpiade'
@@ -130,8 +132,7 @@ class MentorCompetitionService {
               'class_level': classLevel,
               'nama': title,
               'tanggal': scheduleLabel,
-              'lokasi': subject,
-              'total_questions': totalQuestions,  // 🔥 PASTIKAN INI DIKIRIM
+              'total_questions': totalQuestions,
               'category_questions': categoryQuestions,
             }
           : {

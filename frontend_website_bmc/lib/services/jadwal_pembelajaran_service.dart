@@ -11,12 +11,12 @@ class JadwalService {
   static String? _activeAdminBaseUrl;
   static String? _activePublicBaseUrl;
 
-  // Get token
+  // ==================== AUTH & HEADERS ====================
+
   static Future<String> _getToken() async {
     return AppSession.getToken();
   }
 
-  // Get headers
   static Future<Map<String, String>> _getHeaders() async {
     final token = await _getToken();
     return {
@@ -25,10 +25,11 @@ class JadwalService {
     };
   }
 
-  // Get public headers (no token needed)
   static Map<String, String> _getPublicHeaders() {
     return {"Content-Type": "application/json"};
   }
+
+  // ==================== BASE URL CANDIDATES ====================
 
   static List<String> _candidateAdminBaseUrls() {
     final urls = <String>[
@@ -88,6 +89,8 @@ class JadwalService {
     return urls.toSet().toList();
   }
 
+  // ==================== REQUEST WITH FALLBACK ====================
+
   static Future<http.Response> _requestAdminWithFallback(
     Future<http.Response> Function(String baseUrl) request,
   ) async {
@@ -95,9 +98,7 @@ class JadwalService {
 
     for (final baseUrl in _candidateAdminBaseUrls()) {
       try {
-        final response = await request(
-          baseUrl,
-        ).timeout(const Duration(seconds: 15));
+        final response = await request(baseUrl).timeout(const Duration(seconds: 15));
         _activeAdminBaseUrl = baseUrl;
         return response;
       } catch (e) {
@@ -116,9 +117,7 @@ class JadwalService {
 
     for (final baseUrl in _candidatePublicBaseUrls()) {
       try {
-        final response = await request(
-          baseUrl,
-        ).timeout(const Duration(seconds: 15));
+        final response = await request(baseUrl).timeout(const Duration(seconds: 15));
         _activePublicBaseUrl = baseUrl;
         return response;
       } catch (e) {
@@ -130,14 +129,14 @@ class JadwalService {
     throw Exception('All public API base URLs failed. Last error: $lastError');
   }
 
+  // ==================== HELPER ====================
+
   static List<Map<String, dynamic>> _parseListResponse(String body) {
     final decoded = jsonDecode(body);
     if (decoded is List) {
       return decoded
           .whereType<Map>()
-          .map(
-            (item) => Map<String, dynamic>.from(item.cast<String, dynamic>()),
-          )
+          .map((item) => Map<String, dynamic>.from(item.cast<String, dynamic>()))
           .toList();
     }
 
@@ -146,9 +145,7 @@ class JadwalService {
       if (data is List) {
         return data
             .whereType<Map>()
-            .map(
-              (item) => Map<String, dynamic>.from(item.cast<String, dynamic>()),
-            )
+            .map((item) => Map<String, dynamic>.from(item.cast<String, dynamic>()))
             .toList();
       }
     }
@@ -156,10 +153,8 @@ class JadwalService {
     return [];
   }
 
-  // Create jadwal
-  static Future<Map<String, dynamic>> createJadwal(
-    Map<String, dynamic> data,
-  ) async {
+  // ==================== CREATE JADWAL (ADMIN) ====================
+  static Future<Map<String, dynamic>> createJadwal(Map<String, dynamic> data) async {
     try {
       final headers = await _getHeaders();
 
@@ -177,25 +172,33 @@ class JadwalService {
       print("🔥 RESPONSE: ${response.body}");
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final result = jsonDecode(response.body);
+        return {
+          "success": true,
+          "status": "success",
+          "message": result['message'] ?? "Jadwal berhasil dibuat",
+          "data": result['data'],
+        };
       } else {
         return {
+          "success": false,
           "status": "error",
           "message": "Failed to create jadwal: ${response.statusCode}",
           "detail": response.body,
         };
       }
     } catch (e) {
-      print("❌ ERROR: $e");
+      print("❌ ERROR createJadwal: $e");
       return {
+        "success": false,
         "status": "error",
-        "message": "API Error",
+        "message": "API Error: ${e.toString()}",
         "detail": e.toString(),
       };
     }
   }
 
-  // Get all jadwal
+  // ==================== GET ALL JADWAL (ADMIN) ====================
   static Future<List<Map<String, dynamic>>> getJadwalList({
     int? paketId,
     int? mentorId,
@@ -204,17 +207,9 @@ class JadwalService {
     try {
       Map<String, String> queryParams = {};
 
-      if (paketId != null) {
-        queryParams['paket_id'] = paketId.toString();
-      }
-
-      if (mentorId != null) {
-        queryParams['mentor_id'] = mentorId.toString();
-      }
-
-      if (hari != null && hari.isNotEmpty) {
-        queryParams['hari'] = hari;
-      }
+      if (paketId != null) queryParams['paket_id'] = paketId.toString();
+      if (mentorId != null) queryParams['mentor_id'] = mentorId.toString();
+      if (hari != null && hari.isNotEmpty) queryParams['hari'] = hari;
 
       final headers = await _getHeaders();
 
@@ -228,24 +223,22 @@ class JadwalService {
       );
 
       if (response.statusCode == 200) {
-        final list = _parseListResponse(response.body);
-        return list;
+        return _parseListResponse(response.body);
       }
       return [];
     } catch (e) {
-      print("❌ ERROR: $e");
+      print("❌ ERROR getJadwalList: $e");
       return [];
     }
   }
 
-  // Get jadwal detail
+  // ==================== GET JADWAL BY ID (ADMIN) ====================
   static Future<Map<String, dynamic>> getJadwalDetail(int id) async {
     try {
       final headers = await _getHeaders();
 
       final response = await _requestAdminWithFallback(
-        (baseUrl) =>
-            http.get(Uri.parse('$baseUrl/jadwal/$id'), headers: headers),
+        (baseUrl) => http.get(Uri.parse('$baseUrl/jadwal/$id'), headers: headers),
       );
 
       if (response.statusCode == 200) {
@@ -254,16 +247,13 @@ class JadwalService {
       }
       return {};
     } catch (e) {
-      print("❌ ERROR: $e");
+      print("❌ ERROR getJadwalDetail: $e");
       return {};
     }
   }
 
-  // Update jadwal
-  static Future<Map<String, dynamic>> updateJadwal(
-    int id,
-    Map<String, dynamic> data,
-  ) async {
+  // ==================== UPDATE JADWAL (ADMIN) ====================
+  static Future<Map<String, dynamic>> updateJadwal(int id, Map<String, dynamic> data) async {
     try {
       final headers = await _getHeaders();
 
@@ -276,75 +266,87 @@ class JadwalService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final result = jsonDecode(response.body);
+        return {
+          "success": true,
+          "status": "success",
+          "message": result['message'] ?? "Jadwal berhasil diupdate",
+          "data": result['data'],
+        };
       } else {
         return {
+          "success": false,
           "status": "error",
-          "message": "Failed to update jadwal",
+          "message": "Failed to update jadwal: ${response.statusCode}",
           "detail": response.body,
         };
       }
     } catch (e) {
-      print("❌ ERROR: $e");
+      print("❌ ERROR updateJadwal: $e");
       return {
+        "success": false,
         "status": "error",
-        "message": "API Error",
+        "message": "API Error: ${e.toString()}",
         "detail": e.toString(),
       };
     }
   }
 
-  // Delete jadwal
+  // ==================== DELETE JADWAL (ADMIN) ====================
   static Future<Map<String, dynamic>> deleteJadwal(int id) async {
     try {
       final headers = await _getHeaders();
 
       final response = await _requestAdminWithFallback(
-        (baseUrl) =>
-            http.delete(Uri.parse('$baseUrl/jadwal/$id'), headers: headers),
+        (baseUrl) => http.delete(Uri.parse('$baseUrl/jadwal/$id'), headers: headers),
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final result = jsonDecode(response.body);
+        return {
+          "success": true,
+          "status": "success",
+          "message": result['message'] ?? "Jadwal berhasil dihapus",
+        };
       } else {
         return {
+          "success": false,
           "status": "error",
-          "message": "Failed to delete jadwal",
+          "message": "Failed to delete jadwal: ${response.statusCode}",
           "detail": response.body,
         };
       }
     } catch (e) {
-      print("❌ ERROR: $e");
+      print("❌ ERROR deleteJadwal: $e");
       return {
+        "success": false,
         "status": "error",
-        "message": "API Error",
+        "message": "API Error: ${e.toString()}",
         "detail": e.toString(),
       };
     }
   }
 
-  // Get paket list (for dropdown)
+  // ==================== GET PAKET LIST (ADMIN) ====================
   static Future<List<Map<String, dynamic>>> getPaketList() async {
     try {
       final headers = await _getHeaders();
 
       final response = await _requestAdminWithFallback(
-        (baseUrl) =>
-            http.get(Uri.parse('$baseUrl/paket-les'), headers: headers),
+        (baseUrl) => http.get(Uri.parse('$baseUrl/paket-les'), headers: headers),
       );
 
       if (response.statusCode == 200) {
-        final list = _parseListResponse(response.body);
-        return list;
+        return _parseListResponse(response.body);
       }
       return [];
     } catch (e) {
-      print("❌ ERROR: $e");
+      print("❌ ERROR getPaketList: $e");
       return [];
     }
   }
 
-  // Get mentor list (for dropdown)
+  // ==================== GET MENTOR LIST (ADMIN) ====================
   static Future<List<Map<String, dynamic>>> getMentorList() async {
     try {
       final headers = await _getHeaders();
@@ -357,58 +359,52 @@ class JadwalService {
       );
 
       if (response.statusCode == 200) {
-        final list = _parseListResponse(response.body);
-        return list;
+        return _parseListResponse(response.body);
       }
       return [];
     } catch (e) {
-      print("❌ ERROR: $e");
+      print("❌ ERROR getMentorList: $e");
       return [];
     }
   }
 
-  // Get jadwal by hari (public, for students)
+  // ==================== GET JADWAL BY HARI (PUBLIC - FOR STUDENTS) ====================
   static Future<List<Map<String, dynamic>>> getJadwalByHari(String hari) async {
     try {
       final headers = _getPublicHeaders();
 
       final response = await _requestPublicWithFallback(
         (baseUrl) => http.get(
-          Uri.parse(
-            '$baseUrl/jadwal-by-hari',
-          ).replace(queryParameters: {'hari': hari}),
+          Uri.parse('$baseUrl/jadwal-by-hari').replace(queryParameters: {'hari': hari}),
           headers: headers,
         ),
       );
 
       if (response.statusCode == 200) {
-        final list = _parseListResponse(response.body);
-        return list;
+        return _parseListResponse(response.body);
       }
       return [];
     } catch (e) {
-      print("❌ ERROR: $e");
+      print("❌ ERROR getJadwalByHari: $e");
       return [];
     }
   }
 
-  // Get mentor jadwal (protected, for mentor dashboard)
+  // ==================== GET MENTOR JADWAL (MENTOR VIEW) ====================
   static Future<List<Map<String, dynamic>>> getMentorJadwalList() async {
     try {
       final headers = await _getHeaders();
 
       final response = await _requestPublicWithFallback(
-        (baseUrl) =>
-            http.get(Uri.parse('$baseUrl/mentor/jadwal'), headers: headers),
+        (baseUrl) => http.get(Uri.parse('$baseUrl/mentor/jadwal'), headers: headers),
       );
 
       if (response.statusCode == 200) {
-        final list = _parseListResponse(response.body);
-        return list;
+        return _parseListResponse(response.body);
       }
       return [];
     } catch (e) {
-      print("❌ ERROR: $e");
+      print("❌ ERROR getMentorJadwalList: $e");
       return [];
     }
   }
