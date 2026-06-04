@@ -32,9 +32,33 @@ class _MentorProfileScreenState extends State<MentorProfileScreen> {
   }
 
   Future<void> _logout() async {
-    await AuthService.logout();
-    if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Konfirmasi Keluar', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: const Text('Apakah Anda yakin ingin keluar dari akun mentor?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Keluar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await AuthService.logout();
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    }
   }
 
   Future<void> _copyEmail() async {
@@ -321,9 +345,9 @@ class _MentorProfileScreenState extends State<MentorProfileScreen> {
               color: const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.person_outline,
-              color: Color(0xFF1D4ED8),
+            child: Icon(
+              icon,
+              color: const Color(0xFF1D4ED8),
               size: 20,
             ),
           ),

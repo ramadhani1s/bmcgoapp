@@ -26,6 +26,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   String _activeMenuTitle = 'Dashboard';
   bool _loadingDashboardCards = true;
   List<Map<String, dynamic>> _recentSchedules = [];
+  List<Map<String, dynamic>> _paketList = [];
   List<MentorCompetitionItem> _recentTryouts = [];
   List<MentorCompetitionItem> _recentOlimpiades = [];
   final String _selectedClass = 'Semua Kelas';
@@ -94,22 +95,34 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     if (mentorId == null) return;
 
     setState(() => _loadingDashboardCards = true);
-    final schedules = await _safeLoad(
-      JadwalService.getMentorJadwalList(),
-      <Map<String, dynamic>>[],
-    );
-    final tryouts = await _safeLoad(
-      MentorCompetitionService.getByType('tryout'),
-      <MentorCompetitionItem>[],
-    );
-    final olimpiades = await _safeLoad(
-      MentorCompetitionService.getByType('olimpiade'),
-      <MentorCompetitionItem>[],
-    );
+    final results = await Future.wait([
+      _safeLoad(
+        JadwalService.getMentorJadwalList(),
+        <Map<String, dynamic>>[],
+      ),
+      _safeLoad(
+        JadwalService.getPaketList(),
+        <Map<String, dynamic>>[],
+      ),
+      _safeLoad(
+        MentorCompetitionService.getByType('tryout'),
+        <MentorCompetitionItem>[],
+      ),
+      _safeLoad(
+        MentorCompetitionService.getByType('olimpiade'),
+        <MentorCompetitionItem>[],
+      ),
+    ]);
+
+    final schedules = results[0] as List<Map<String, dynamic>>;
+    final pakets = results[1] as List<Map<String, dynamic>>;
+    final tryouts = results[2] as List<MentorCompetitionItem>;
+    final olimpiades = results[3] as List<MentorCompetitionItem>;
 
     if (!mounted) return;
     setState(() {
       _recentSchedules = schedules.take(3).toList();
+      _paketList = pakets;
       _recentTryouts = tryouts.take(3).toList();
       _recentOlimpiades = olimpiades.take(2).toList();
       _loadingDashboardCards = false;
@@ -144,22 +157,63 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     return fallback;
   }
 
+  String _timeToString(dynamic value) {
+    if (value == null) return '';
+    final text = value.toString();
+    if (text.isEmpty) return '';
+
+    if (text.contains('T')) {
+      final parsed = DateTime.tryParse(text);
+      if (parsed != null) {
+        return '${parsed.hour.toString().padLeft(2, '0')}:${parsed.minute.toString().padLeft(2, '0')}';
+      }
+    }
+
+    final parts = text.split(':');
+    if (parts.length >= 2) {
+      return '${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}';
+    }
+
+    return text;
+  }
+
+  String _packageLabel(Map<String, dynamic> paket) {
+    return (paket['nama_paket'] ?? paket['nama'] ?? 'Paket').toString();
+  }
+
+  Map<String, dynamic>? _findPaketById(int? id) {
+    if (id == null) return null;
+    for (final paket in _paketList) {
+      if (paket['id'] == id) return paket;
+    }
+    return null;
+  }
+
+  String _resolveKelas(int? paketId) {
+    if (paketId == null) return 'Kelas';
+    final paket = _findPaketById(paketId);
+    if (paket == null) return 'Kelas';
+    return _packageLabel(paket);
+  }
+
   String _formatScheduleTime(Map<String, dynamic> item) {
-    final start = _pickValue(item, [
+    final rawStart = _pickValue(item, [
       'jam_mulai',
       'start_time',
       'jamAwal',
       'time_start',
     ]);
-    final end = _pickValue(item, [
+    final rawEnd = _pickValue(item, [
       'jam_selesai',
       'end_time',
       'jamAkhir',
       'time_end',
     ]);
-    if (start == '-' && end == '-') {
+    if (rawStart == '-' && rawEnd == '-') {
       return _pickValue(item, ['jam', 'waktu'], fallback: 'Jadwal tersedia');
     }
+    final start = rawStart == '-' ? '-' : _timeToString(rawStart);
+    final end = rawEnd == '-' ? '-' : _timeToString(rawEnd);
     return '$start${end == '-' ? '' : ' - $end'}';
   }
 
@@ -731,11 +785,8 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     final filtered = _selectedClass == 'Semua Kelas'
         ? _recentSchedules
         : _recentSchedules.where((item) {
-            final kelas = _pickValue(item, [
-              'kelas',
-              'class_level',
-              'class_name',
-            ], fallback: 'Kelas');
+            final paketId = item['paket_id'] as int?;
+            final kelas = _resolveKelas(paketId);
             return kelas == _selectedClass;
           }).toList();
 
@@ -936,11 +987,8 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       'judul',
       'nama',
     ], fallback: 'Jadwal');
-    final kelas = _pickValue(item, [
-      'kelas',
-      'class_level',
-      'class_name',
-    ], fallback: 'Kelas');
+    final paketId = item['paket_id'] as int?;
+    final kelas = _resolveKelas(paketId);
     final ruang = _pickValue(item, ['ruang', 'room'], fallback: 'Ruang');
     final time = _formatScheduleTime(item);
 
