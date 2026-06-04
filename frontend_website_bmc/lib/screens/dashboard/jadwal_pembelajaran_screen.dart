@@ -102,6 +102,14 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         jadwalList = results[2];
         isLoading = false;
       });
+      
+      // Debug: Cetak data paketList
+      print('========== DATA PAKET LIST ==========');
+      for (var paket in paketList) {
+        print('ID: ${paket['id']}, Nama: ${paket['nama_paket'] ?? paket['nama']}, Kelas: ${paket['class_level']}');
+      }
+      print('======================================');
+      
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -204,7 +212,9 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   Map<String, dynamic>? _findPaketById(int? id) {
     if (id == null) return null;
     for (final paket in paketList) {
-      if (paket['id'] == id) return paket;
+      if (paket['id'] == id) {
+        return paket;
+      }
     }
     return null;
   }
@@ -222,14 +232,55 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     return mentor == null ? 'Mentor #$mentorId' : _mentorLabel(mentor);
   }
 
+  // 🔥 PERBAIKAN: Method untuk mendapatkan nama kelas (menjadi "Kelas X" bukan "Paket #")
   String _resolveKelas(int paketId) {
+    // Cari di paketList berdasarkan paket_id
     final paket = _findPaketById(paketId);
-    if (paket == null) return '-';
-    final title = _packageLabel(paket);
-    if (title.toLowerCase().contains('kelas')) {
-      return title;
+    
+    if (paket != null) {
+      // Prioritas 1: Ambil dari field class_level
+      final classLevel = paket['class_level']?.toString();
+      if (classLevel != null && classLevel.isNotEmpty && classLevel != 'null') {
+        if (classLevel.contains('Kelas')) {
+          return classLevel;
+        }
+        if (classLevel.contains('IPA') || classLevel.contains('IPS')) {
+          return 'Kelas $classLevel';
+        }
+        return 'Kelas $classLevel';
+      }
+      
+      // Prioritas 2: Ambil dari nama_paket
+      final title = _packageLabel(paket);
+      if (title.toLowerCase().contains('kelas')) {
+        if (title.toLowerCase().startsWith('kelas')) {
+          return title;
+        }
+        return 'Kelas $title';
+      }
+      
+      // Prioritas 3: Format dari ID paket
+      return 'Kelas ${paket['id']}';
     }
-    return title;
+    
+    // 🔥 Jika paket tidak ditemukan, cari dari data jadwal
+    for (var jadwal in jadwalList) {
+      if (jadwal['paket_id'] == paketId) {
+        final classFromJadwal = jadwal['class_level']?.toString();
+        if (classFromJadwal != null && classFromJadwal.isNotEmpty && classFromJadwal != 'null') {
+          if (classFromJadwal.contains('Kelas')) {
+            return classFromJadwal;
+          }
+          if (classFromJadwal.contains('IPA') || classFromJadwal.contains('IPS')) {
+            return 'Kelas $classFromJadwal';
+          }
+          return 'Kelas $classFromJadwal';
+        }
+      }
+    }
+    
+    // Default: Tampilkan sebagai Kelas dengan ID paket
+    return 'Kelas $paketId';
   }
 
   bool _isSuccessResponse(dynamic result) {
@@ -348,6 +399,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     return jadwalList.where((jadwal) => jadwal['hari'] == hariIni).length;
   }
 
+  // ==================== _buildRow (DIPERBAIKI) ====================
   DataRow _buildRow(Map<String, dynamic> jadwal, int index) {
     final paketId = jadwal['paket_id'] as int?;
     final mentorId = jadwal['mentor_id'] as int?;
@@ -361,68 +413,96 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       const Color(0xFF8B6EF6),
     ][index % 4];
 
-    return DataRow(
-      cells: [
-        DataCell(
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEAF1FF),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              (jadwal['hari'] ?? '-').toString(),
-              style: const TextStyle(
-                color: Color(0xFF2C63FF),
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-              ),
-            ),
+    // DataCell untuk hari
+    final hariCell = DataCell(
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAF1FF),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          (jadwal['hari'] ?? '-').toString(),
+          style: const TextStyle(
+            color: Color(0xFF2C63FF),
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
           ),
         ),
-        DataCell(Text('$jamMulai - $jamSelesai')),
-        DataCell(
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: warnaChip.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              _resolveKelas(paketId ?? 0),
-              style: TextStyle(
-                color: warnaChip,
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ),
-        DataCell(Text((jadwal['mata_pelajaran'] ?? '-').toString())),
-        DataCell(Text(_resolveMentorName(mentorId ?? 0))),
-        DataCell(Text((jadwal['ruang'] ?? '-').toString())),
-        if (!widget.mentorView)
-          DataCell(
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit_rounded, color: Colors.blue),
-                  onPressed: () => _createOrUpdateJadwal(existing: jadwal),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.delete_outline_rounded,
-                    color: Colors.red,
-                  ),
-                  onPressed: () => _showDeleteDialog(jadwal['id'] as int),
-                ),
-              ],
-            ),
-          )
-        else
-          const DataCell(Text('Lihat saja')),
-      ],
+      ),
     );
+
+    // DataCell untuk waktu
+    final waktuCell = DataCell(Text('$jamMulai - $jamSelesai'));
+
+    // 🔥 DataCell untuk kelas (menggunakan _resolveKelas yang sudah diperbaiki)
+    final kelasCell = DataCell(
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: warnaChip.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          _resolveKelas(paketId ?? 0),
+          style: TextStyle(
+            color: warnaChip,
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+
+    // DataCell untuk mata pelajaran
+    final mapelCell = DataCell(Text((jadwal['mata_pelajaran'] ?? '-').toString()));
+
+    // DataCell untuk mentor
+    final mentorCell = DataCell(Text(_resolveMentorName(mentorId ?? 0)));
+
+    // DataCell untuk ruang
+    final ruangCell = DataCell(Text((jadwal['ruang'] ?? '-').toString()));
+
+    if (widget.mentorView) {
+      // Mentor View: 6 kolom (TANPA AKSI)
+      return DataRow(
+        cells: [
+          hariCell,
+          waktuCell,
+          kelasCell,
+          mapelCell,
+          mentorCell,
+          ruangCell,
+        ],
+      );
+    } else {
+      // Admin View: 7 kolom (DENGAN AKSI)
+      final aksiCell = DataCell(
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit_rounded, color: Colors.blue),
+              onPressed: () => _createOrUpdateJadwal(existing: jadwal),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+              onPressed: () => _showDeleteDialog(jadwal['id'] as int),
+            ),
+          ],
+        ),
+      );
+      return DataRow(
+        cells: [
+          hariCell,
+          waktuCell,
+          kelasCell,
+          mapelCell,
+          mentorCell,
+          ruangCell,
+          aksiCell,
+        ],
+      );
+    }
   }
 
   String _monthName(int month) {
@@ -462,7 +542,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title and Button Row (Consistent with Paket Les style)
+            // Title and Button Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -923,7 +1003,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
       text: existing?['ruang']?.toString() ?? '',
     );
 
-    // Initialize class safely
     var existingClass = existing?['class_level']?.toString() ?? '';
     if (existingClass.isNotEmpty) {
       if (existingClass == 'Kelas 10') existingClass = '10 IPA';
@@ -937,7 +1016,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
       _selectedClass = '10 IPA';
     }
 
-    // Initialize subject safely
     final existingMapel = existing?['mata_pelajaran']?.toString() ?? '';
     if (existingMapel.isNotEmpty) {
       if (!_mataPelajaranOptions.contains(existingMapel)) {
