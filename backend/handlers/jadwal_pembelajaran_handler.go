@@ -363,6 +363,17 @@ func UpdateJadwal(c *gin.Context) {
 func DeleteJadwal(c *gin.Context) {
 	id := c.Param("id")
 
+	// Delete referencing absensi records first to avoid FK constraint violation
+	_, err := config.DB.Exec(context.Background(), `DELETE FROM absensi WHERE jadwal_id = $1`, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Gagal hapus absensi terkait",
+			"detail":  err.Error(),
+		})
+		return
+	}
+
 	result, err := config.DB.Exec(context.Background(), `DELETE FROM jadwal WHERE id = $1`, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

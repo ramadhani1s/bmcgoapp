@@ -59,7 +59,8 @@ class MateriService {
     required String title,
     required String description,
     required PlatformFile file,
-    String classLevel = 'Kelas 12',
+    String classLevel = '12 IPA IPS',
+    String subject = 'Matematika',
   }) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
@@ -67,6 +68,7 @@ class MateriService {
       request.fields['title'] = title;
       request.fields['description'] = description;
       request.fields['class_level'] = classLevel;
+      request.fields['subject'] = subject;
 
       if (file.bytes != null) {
         request.files.add(

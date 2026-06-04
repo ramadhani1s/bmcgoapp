@@ -1,117 +1,109 @@
 import 'package:flutter/material.dart';
-import 'package:frontend_mobile_bmc/models/soal_model.dart';
-import 'option_tile.dart';
 
 class QuestionCard extends StatelessWidget {
+  final String question;
+  final int questionNumber;
+  final int totalQuestions;
+  final double progress;
+
   const QuestionCard({
     super.key,
-    required this.number,
     required this.question,
-    required this.selectedAnswer,
-    required this.submitted,
-    required this.onSelectAnswer,
-    required this.accentColor,
-    required this.borderColor,
+    required this.questionNumber,
+    required this.totalQuestions,
+    required this.progress,
   });
-
-  final int number;
-  final SoalModel question;
-  final String? selectedAnswer;
-  final bool submitted;
-  final void Function(String questionId, String answerKey) onSelectAnswer;
-  final Color accentColor;
-  final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
-    final options = question.pilihan.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Progress text
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDBEAFE),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    '$number',
-                    style: TextStyle(
-                      color: accentColor,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+              Text(
+                'Soal $questionNumber dari $totalQuestions',
+                style: const TextStyle(
+                  color: Color(0xFF8D90A3),
+                  fontSize: 14,
                 ),
               ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Soal Latihan',
-                  style: TextStyle(
-                    color: Color(0xFF111827),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
+              Text(
+                '${(progress * 100).toStringAsFixed(0)}%',
+                style: const TextStyle(
+                  color: Color(0xFFFF6B35),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            question.pertanyaan,
-            style: const TextStyle(
-              color: Color(0xFF111827),
-              fontSize: 14.5,
-              fontWeight: FontWeight.w600,
-              height: 1.4,
+          const SizedBox(height: 8),
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              backgroundColor: const Color(0xFFFFE0CC),
+              valueColor: const AlwaysStoppedAnimation(Color(0xFFFF6B35)),
             ),
           ),
-          const SizedBox(height: 12),
-          for (final option in options) ...[
-            OptionTile(
-              choiceKey: option.key,
-              text: option.value,
-              selected: (selectedAnswer?.toUpperCase() ?? '') == option.key.toUpperCase(),
-              submittedCorrect: submitted && (selectedAnswer?.toUpperCase() ?? '') == question.kunciJawaban.toUpperCase(),
-              onTap: () => onSelectAnswer(question.id, option.key),
-              accentColor: accentColor,
-              borderColor: borderColor,
-            ),
-            const SizedBox(height: 8),
-          ],
-          if (submitted) ...[
-            const SizedBox(height: 4),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFBBF7D0)),
-              ),
-              child: Text(
-                (selectedAnswer?.toUpperCase() ?? '') == question.kunciJawaban.toUpperCase()
-                    ? 'Benar'
-                    : 'Salah, jawaban benar: ${question.kunciJawaban}',
-                style: const TextStyle(
-                  color: Color(0xFF166534),
-                  fontWeight: FontWeight.w700,
+          const SizedBox(height: 24),
+          // Question number badge
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0EB),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: Text(
+                    '$questionNumber',
+                    style: const TextStyle(
+                      color: Color(0xFFFF6B35),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
+              const Text(
+                'Soal',
+                style: TextStyle(
+                  color: Color(0xFF8D90A3),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Question text
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF0EB),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
+            child: Text(
+              question,
+              style: const TextStyle(
+                color: Color(0xFF1A1A2E),
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
+            ),
+          ),
         ],
       ),
     );

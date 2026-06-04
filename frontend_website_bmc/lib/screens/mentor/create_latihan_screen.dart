@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
+import '../../services/materi_service.dart';
+import '../../models/materi_pembelajaran.dart';
 
 import '../../models/soal_latihan.dart';
 import '../../services/latihan_soal_service.dart';
+import 'mengelola_soal_screen.dart';
 
 class CreateLatihanScreen extends StatefulWidget {
   final String mapel;
+  final int? materiId;
 
-  const CreateLatihanScreen({super.key, required this.mapel});
+  const CreateLatihanScreen({super.key, required this.mapel, this.materiId});
 
   @override
   State<CreateLatihanScreen> createState() => _CreateLatihanScreenState();
@@ -20,15 +25,14 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
 
   final List<String> _mapelOptions = const [
     'Matematika',
+    'Bahasa Indonesia',
+    'Bahasa Inggris',
     'Fisika',
     'Kimia',
     'Biologi',
-    'Bahasa Indonesia',
-    'Bahasa Inggris',
+    'Sosiologi',
     'Ekonomi',
     'Geografi',
-    'Sosiologi',
-    'Sejarah',
   ];
 
   final List<String> _classOptions = const [
@@ -38,11 +42,16 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
     'Kelas 11 IPS',
     'Kelas 12 IPA',
     'Kelas 12 IPS',
+
   ];
 
   String? _selectedMapel;
   String? _selectedClass = 'Kelas 12 IPA';
   bool _isSubmitting = false;
+
+  List<MateriPembelajaran> _materiList = [];
+  bool _isLoadingMateri = true;
+  int? _selectedMateriId;
 
   @override
   void initState() {
@@ -50,6 +59,32 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
     _selectedMapel = _mapelOptions.contains(widget.mapel)
         ? widget.mapel
         : _mapelOptions.first;
+    _selectedMateriId = widget.materiId;
+    _loadMateri();
+  }
+
+  Future<void> _loadMateri() async {
+    try {
+      final user = await AuthService.getCurrentUser();
+      if (user != null) {
+        final data = await MateriService.getMateri(user.id);
+        if (mounted) {
+          setState(() {
+            _materiList = data;
+            // If we don't have a pre-selected materi but we have options, select the first one
+            if (_selectedMateriId == null && data.isNotEmpty) {
+              _selectedMateriId = data.first.id;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to load materi: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMateri = false);
+      }
+    }
   }
 
   @override
@@ -68,6 +103,16 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
 
   Future<void> _publish() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    if (_selectedMateriId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Materi Pembelajaran wajib dipilih'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isSubmitting = true);
     final jumlah = _parseJumlahSoal();
@@ -91,13 +136,29 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
       pilihanD: '',
       jawaban: 'A',
       pembahasan: '',
+      materiId: _selectedMateriId,
     );
 
     setState(() => _isSubmitting = false);
     if (!mounted) return;
 
     if (res['success'] == true) {
-      Navigator.pop(context, true);
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (ctx) => MengelolaSoalScreen(
+            mapel: _selectedMapel!,
+            latihanTitle: _judulController.text.trim(),
+            targetSoal: jumlah,
+            kelas: _selectedClass ?? 'Kelas 10',
+            materiId: _selectedMateriId,
+            durasi: durasi,
+          ),
+        ),
+      );
+      if (result == true) {
+        Navigator.pop(context, true);
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -234,6 +295,47 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                                             base: fieldBorder,
                                           ),
                                         ),
+                                        const SizedBox(height: 10),
+
+                                        // Materi Pembelajaran
+                                        if (_isLoadingMateri)
+                                          const Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 8),
+                                            child: Center(child: CircularProgressIndicator()),
+                                          )
+                                        else
+                                          DropdownButtonFormField<int>(
+                                            value: _selectedMateriId,
+                                            hint: const Text('Pilih Materi Pembelajaran'),
+                                            dropdownColor: Colors.white,
+                                            isExpanded: true,
+                                            style: const TextStyle(
+                                              color: Color(0xFF111827),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            validator: (v) =>
+                                                v == null
+                                                    ? 'Materi Pembelajaran wajib dipilih'
+                                                    : null,
+                                            items: _materiList.map((materi) {
+                                              return DropdownMenuItem<int>(
+                                                value: materi.id,
+                                                child: Text(
+                                                  materi.title,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              );
+                                            }).toList(),
+                                            onChanged: (v) {
+                                              if (v == null) return;
+                                              setState(() => _selectedMateriId = v);
+                                            },
+                                            decoration: _fieldDecoration(
+                                              label: 'Materi Pembelajaran',
+                                              base: fieldBorder,
+                                            ),
+                                          ),
                                         const SizedBox(height: 10),
 
                                         // Durasi

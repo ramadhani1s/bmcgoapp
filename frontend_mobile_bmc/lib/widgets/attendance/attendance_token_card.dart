@@ -7,11 +7,21 @@ class AttendanceTokenCard extends StatelessWidget {
     required this.controller,
     required this.isSubmitting,
     required this.onSubmit,
+    this.activeSession,
+    required this.remainingTime,
   });
 
   final TextEditingController controller;
   final bool isSubmitting;
   final VoidCallback onSubmit;
+  final Map<String, dynamic>? activeSession;
+  final Duration remainingTime;
+
+  String _formatDuration(Duration d) {
+    final minutes = d.inMinutes.toString().padLeft(2, '0');
+    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,30 +103,91 @@ class AttendanceTokenCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3D9),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.access_time_rounded,
-                  size: 18,
-                  color: Color(0xFFF97316),
+          if (activeSession != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: remainingTime == Duration.zero ? const Color(0xFFFEE2E2) : const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: remainingTime == Duration.zero ? const Color(0xFFFCA5A5) : const Color(0xFF6EE7B7),
                 ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Token berlaku 10-15 menit sejak dibuat mentor',
-                    style: TextStyle(color: Color(0xFFF97316), height: 1.35),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.class_rounded,
+                        size: 18,
+                        color: remainingTime == Duration.zero ? Colors.red : Colors.green,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Sesi: ${activeSession!['class_name']}${activeSession!['subject'].toString().isNotEmpty ? ' - ${activeSession!['subject']}' : ''}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: remainingTime == Duration.zero ? Colors.red.shade800 : Colors.green.shade800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 18,
+                        color: remainingTime == Duration.zero ? Colors.red : Colors.green,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        remainingTime == Duration.zero
+                            ? 'Waktu Absensi Habis'
+                            : 'Sisa Waktu Absensi: ${_formatDuration(remainingTime)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: remainingTime == Duration.zero ? Colors.red : Colors.green.shade800,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
+          ] else ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 18,
+                    color: Color(0xFF6B7280),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Tidak ada sesi absensi aktif dari mentor saat ini.',
+                      style: TextStyle(color: Color(0xFF6B7280), height: 1.35, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,

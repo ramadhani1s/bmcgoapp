@@ -402,9 +402,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         DataCell(Text((jadwal['mata_pelajaran'] ?? '-').toString())),
         DataCell(Text(_resolveMentorName(mentorId ?? 0))),
         DataCell(Text((jadwal['ruang'] ?? '-').toString())),
-        DataCell(
-          Text((jadwal['jumlah_siswa'] ?? jadwal['siswa'] ?? '-').toString()),
-        ),
         if (!widget.mentorView)
           DataCell(
             Row(
@@ -429,6 +426,25 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     );
   }
 
+  String _monthName(int month) {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return months[month - 1];
+  }
+
+  String _dayName(DateTime date) {
+    const days = [
+      'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'
+    ];
+    return days[date.weekday - 1];
+  }
+
+  String _formatIndoDate(DateTime date) {
+    return '${_dayName(date)}, ${date.day} ${_monthName(date.month)} ${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -438,344 +454,382 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     }
 
     return RefreshIndicator(
-          onRefresh: _loadInitialData,
-          child: Container(
-            decoration: const BoxDecoration(color: Color(0xFFF8FAFC)),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-                child: Column(
-
-                
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: _headerBlue,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _headerBlue.withValues(alpha: 0.15),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+      onRefresh: _loadInitialData,
+      child: Container(
+        decoration: const BoxDecoration(color: Color(0xFFF8FAFC)),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+          child: Column(
+            children: [
+              // Header Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: _headerBlue,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _headerBlue.withValues(alpha: 0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.mentorView
-                                    ? 'Jadwal Mengajar Saya'
-                                    : 'Kelola Jadwal Pembelajaran',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                widget.mentorView
-                                    ? 'Jadwal yang ditetapkan admin untuk mentor yang sedang login'
-                                    : 'Jadwal utama yang berlaku setiap minggu secara berkelanjutan',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        const Icon(
-                          Icons.calendar_month,
-                          color: Colors.white,
-                          size: 64,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  if (!widget.mentorView)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _createOrUpdateJadwal(),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Tambah Jadwal'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatCard(
-                          title: 'Total Jadwal Mingguan',
-                          value: jadwalList.length.toString(),
-                          subtitle: 'Kelas aktif per minggu',
-                          color: const Color(0xFF2563EB),
-                          backgroundColor: const Color(0xFFDCEBFF),
-                          icon: Icons.calendar_month_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: _StatCard(
-                          title: 'Jadwal Hari Ini',
-                          value: _countJadwalHariIni().toString(),
-                          subtitle: 'Contoh: Hari Senin',
-                          color: const Color(0xFF16A34A),
-                          backgroundColor: const Color(0xFFE0F4E8),
-                          icon: Icons.schedule_rounded,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE6EDF7)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: selectedHari.isEmpty
-                                ? null
-                                : selectedHari,
-                            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                            dropdownColor: Colors.white,
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.mentorView
+                                ? 'Jadwal Mengajar Saya'
+                                : 'Kelola Jadwal Pembelajaran',
                             style: const TextStyle(
-                              color: Color(0xFF111827),
-                              fontWeight: FontWeight.w600,
-                            ),
-                            items: [
-                              const DropdownMenuItem<String>(
-                                value: '',
-                                child: Text('Semua Hari'),
-                              ),
-                              ...hariList.map(
-                                (hari) => DropdownMenuItem<String>(
-                                  value: hari,
-                                  child: Text(hari),
-                                ),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              setState(() => selectedHari = value ?? '');
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'Filter Hari',
-                              prefixIcon: const Icon(
-                                Icons.event_outlined,
-                                size: 18,
-                                color: Color(0xFF2563EB),
-                              ),
-                              filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE5E7EB),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE5E7EB),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF2563EB),
-                                  width: 1.4,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 14,
-                              ),
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                        if (!widget.mentorView) ...[
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: DropdownButtonFormField<int?>(
-                              initialValue: selectedMentorFilterId,
-                              icon: const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                              ),
-                              dropdownColor: Colors.white,
-                              style: const TextStyle(
-                                color: Color(0xFF111827),
-                                fontWeight: FontWeight.w600,
-                              ),
-                              items: [
-                                const DropdownMenuItem<int?>(
-                                  value: null,
-                                  child: Text('Semua Mentor'),
-                                ),
-                                ...mentorList.map(
-                                  (mentor) => DropdownMenuItem<int?>(
-                                    value: mentor['id'] as int,
-                                    child: Text(_mentorLabel(mentor)),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() => selectedMentorFilterId = value);
-                              },
-                              decoration: InputDecoration(
-                                labelText: 'Filter Mentor',
-                                prefixIcon: const Icon(
-                                  Icons.person_search_outlined,
-                                  size: 18,
-                                  color: Color(0xFF2563EB),
-                                ),
-                                filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFE5E7EB),
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFE5E7EB),
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFF2563EB),
-                                    width: 1.4,
-                                  ),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 14,
-                                ),
-                              ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.mentorView
+                                ? 'Jadwal yang ditetapkan admin untuk mentor yang sedang login'
+                                : 'Jadwal utama yang berlaku setiap minggu secara berkelanjutan',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 14,
                             ),
                           ),
                         ],
-                      ],
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    const Icon(
+                      Icons.calendar_month,
+                      color: Colors.white,
+                      size: 64,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              
+              // Tombol Tambah Jadwal
+              if (!widget.mentorView)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _createOrUpdateJadwal(),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Tambah Jadwal'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE6EDF7)),
+                ),
+              const SizedBox(height: 20),
+              
+              // Stat Cards
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Total Jadwal Mingguan',
+                      value: jadwalList.length.toString(),
+                      subtitle: 'Kelas aktif per minggu',
+                      color: const Color(0xFF2563EB),
+                      backgroundColor: const Color(0xFFDCEBFF),
+                      icon: Icons.calendar_month_rounded,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 16,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: _headerBlue,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(18),
-                              topRight: Radius.circular(18),
-                            ),
-                          ),
-                          child: const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Jadwal Utama (Berlaku Setiap Minggu)',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Jadwal ini digunakan secara berkelanjutan hingga ada perubahan',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
-                            columnSpacing: 45,
-                            horizontalMargin: 19,
-                            columns: [
-                              const DataColumn(label: Text('HARI')),
-                              const DataColumn(label: Text('WAKTU')),
-                              const DataColumn(label: Text('KELAS')),
-                              const DataColumn(label: Text('MATA PELAJARAN')),
-                              const DataColumn(label: Text('MENTOR')),
-                              const DataColumn(label: Text('RUANG')),
-                              const DataColumn(label: Text('SISWA')),
-                              if (!widget.mentorView)
-                                const DataColumn(label: Text('AKSI')),
-                            ],
-                            rows: _filteredRows
-                                .asMap()
-                                .entries
-                                .map(
-                                  (entry) => _buildRow(entry.value, entry.key),
-                                )
-                                .toList(),
-                          ),
-                        ),
-                        if (_filteredRows.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Center(
-                              child: Text(
-                                'Belum ada jadwal yang sesuai filter.',
-                                style: TextStyle(color: Colors.grey.shade600),
-                              ),
-                            ),
-                          ),
-                      ],
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Jadwal Hari Ini',
+                      value: _countJadwalHariIni().toString(),
+                      subtitle: _formatIndoDate(DateTime.now()),
+                      color: const Color(0xFF16A34A),
+                      backgroundColor: const Color(0xFFE0F4E8),
+                      icon: Icons.schedule_rounded,
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
+              
+              // Filter Section
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE6EDF7)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedHari.isEmpty ? null : selectedHari,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                        dropdownColor: Colors.white,
+                        style: const TextStyle(
+                          color: Color(0xFF111827),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: '',
+                            child: Text('Semua Hari'),
+                          ),
+                          ...hariList.map(
+                            (hari) => DropdownMenuItem<String>(
+                              value: hari,
+                              child: Text(hari),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() => selectedHari = value ?? '');
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Filter Hari',
+                          prefixIcon: const Icon(
+                            Icons.event_outlined,
+                            size: 18,
+                            color: Color(0xFF2563EB),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE5E7EB),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE5E7EB),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF2563EB),
+                              width: 1.4,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (!widget.mentorView) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonFormField<int?>(
+                          value: selectedMentorFilterId,
+                          icon: const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                          ),
+                          dropdownColor: Colors.white,
+                          style: const TextStyle(
+                            color: Color(0xFF111827),
+                            fontWeight: FontWeight.w600,
+                          ),
+                          items: [
+                            const DropdownMenuItem<int?>(
+                              value: null,
+                              child: Text('Semua Mentor'),
+                            ),
+                            ...mentorList.map(
+                              (mentor) => DropdownMenuItem<int?>(
+                                value: mentor['id'] as int,
+                                child: Text(_mentorLabel(mentor)),
+                              ),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() => selectedMentorFilterId = value);
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Filter Mentor',
+                            prefixIcon: const Icon(
+                              Icons.person_search_outlined,
+                              size: 18,
+                              color: Color(0xFF2563EB),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2563EB),
+                                width: 1.4,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-            ),
-        );
+              const SizedBox(height: 20),
+              
+              // TABLE SECTION - DIPERBAIKI AGAR FULL WIDTH
+              Container(
+                width: double.infinity, // Memastikan container full width
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE6EDF7)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Table Header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 16,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: _headerBlue,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(18),
+                          topRight: Radius.circular(18),
+                        ),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Jadwal Utama (Berlaku Setiap Minggu)',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Jadwal ini digunakan secara berkelanjutan hingga ada perubahan',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // TABLE - DIBUAT RESPONSIVE DAN FULL WIDTH
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Hitung lebar minimal tabel berdasarkan konten
+                        final double screenWidth = constraints.maxWidth;
+                        
+                        // Tentukan lebar kolom secara proporsional
+                        final double hariWidth = 80.0;
+                        final double waktuWidth = 120.0;
+                        final double kelasWidth = 140.0;
+                        final double mapelWidth = 140.0;
+                        final double mentorWidth = 120.0;
+                        final double ruangWidth = 80.0;
+                        final double aksiWidth = widget.mentorView ? 0 : 100.0;
+                        
+                        final double totalWidth = hariWidth + waktuWidth + kelasWidth + mapelWidth + mentorWidth + ruangWidth + aksiWidth;
+                        
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const ClampingScrollPhysics(),
+                          child: SizedBox(
+                            width: totalWidth > screenWidth ? totalWidth : screenWidth,
+                            child: DataTable(
+                              columnSpacing: 12, // Kurangi jarak antar kolom
+                              horizontalMargin: 16,
+                              headingRowHeight: 48,
+                              dataRowMaxHeight: 56,
+                              dataRowMinHeight: 48,
+                              headingTextStyle: const TextStyle(
+                                color: Color(0xFF475569),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                letterSpacing: 0.5,
+                              ),
+                              columns: [
+                                const DataColumn(label: SizedBox(width: 70, child: Text('HARI', overflow: TextOverflow.visible))),
+                                const DataColumn(label: SizedBox(width: 110, child: Text('WAKTU', overflow: TextOverflow.visible))),
+                                const DataColumn(label: SizedBox(width: 130, child: Text('KELAS', overflow: TextOverflow.visible))),
+                                const DataColumn(label: SizedBox(width: 130, child: Text('MATA PELAJARAN', overflow: TextOverflow.visible))),
+                                const DataColumn(label: SizedBox(width: 110, child: Text('MENTOR', overflow: TextOverflow.visible))),
+                                const DataColumn(label: SizedBox(width: 70, child: Text('RUANG', overflow: TextOverflow.visible))),
+                                if (!widget.mentorView)
+                                  const DataColumn(label: SizedBox(width: 90, child: Text('AKSI', overflow: TextOverflow.visible))),
+                              ],
+                              rows: _filteredRows
+                                  .asMap()
+                                  .entries
+                                  .map(
+                                    (entry) => _buildRow(entry.value, entry.key),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    
+                    if (_filteredRows.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: Text(
+                            'Belum ada jadwal yang sesuai filter.',
+                            style: TextStyle(color: Colors.grey.shade600),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -797,8 +851,7 @@ class _StatCard extends StatelessWidget {
   });
 
   @override
-    Widget build(BuildContext context) {
-     print("JADWAL SCREEN BUILD");
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -911,15 +964,23 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
     _ruangController = TextEditingController(
       text: existing?['ruang']?.toString() ?? '',
     );
-    // Try to infer class from paket if available
-    if (existing != null && existingPaketIdRaw != null) {
+    _selectedClass = 'Kelas 12';
+    final existingClass = existing?['class_level']?.toString();
+    if (existingClass != null &&
+        ['Kelas 10', 'Kelas 11', 'Kelas 12'].contains(existingClass)) {
+      _selectedClass = existingClass;
+    } else if (existing != null && existingPaketIdRaw != null) {
       final paket = widget.paketList.firstWhere(
         (p) => p['id'] == existingPaketIdRaw,
         orElse: () => {},
       );
-      final title = (paket['nama_paket'] ?? paket['nama'] ?? '').toString();
-      if (title.toLowerCase().contains('kelas')) {
-        _selectedClass = title;
+      final title = (paket['nama_paket'] ?? paket['nama'] ?? '').toString().toLowerCase();
+      if (title.contains('kelas 10') || title.contains('10')) {
+        _selectedClass = 'Kelas 10';
+      } else if (title.contains('kelas 11') || title.contains('11')) {
+        _selectedClass = 'Kelas 11';
+      } else if (title.contains('kelas 12') || title.contains('12')) {
+        _selectedClass = 'Kelas 12';
       }
     }
   }

@@ -1,87 +1,65 @@
 import 'package:flutter/material.dart';
 
 class SubmitCard extends StatelessWidget {
+  final int score;
+  final int totalQuestions;
+
   const SubmitCard({
     super.key,
-    required this.submitted,
-    required this.isSubmitting,
     required this.score,
-    required this.questionsLength,
-    required this.onSubmit,
-    required this.onRetry,
-    required this.accentColor,
-    required this.borderColor,
+    required this.totalQuestions,
   });
-
-  final bool submitted;
-  final bool isSubmitting;
-  final int score;
-  final int questionsLength;
-  final VoidCallback onSubmit;
-  final VoidCallback onRetry;
-  final Color accentColor;
-  final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
+        color: const Color(0xFFFFF0EB),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            submitted ? 'Hasil Latihan' : 'Selesaikan Latihan',
-            style: const TextStyle(
-              color: Color(0xFF111827),
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6B35),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            submitted ? 'Skor kamu: $score dari $questionsLength' : 'Pastikan semua soal sudah dijawab sebelum dikirim.',
-            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: submitted || isSubmitting ? null : onSubmit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accentColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            child: const Center(
+              child: Icon(
+                Icons.assignment_turned_in,
+                color: Colors.white,
+                size: 28,
               ),
-              child: isSubmitting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(submitted ? 'Sudah Dikirim' : 'Kirim Jawaban'),
             ),
           ),
-          const SizedBox(height: 10),
-          OutlinedButton(
-            onPressed: onRetry,
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: borderColor),
-              foregroundColor: const Color(0xFF111827),
-              minimumSize: const Size.fromHeight(44),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Skor Latihan Soal',
+                  style: TextStyle(
+                    color: Color(0xFF8D90A3),
+                    fontSize: 12,
+                  ),
+                ),
+                Text(
+                  '$score / $totalQuestions Benar',
+                  style: const TextStyle(
+                    color: Color(0xFF1A1A2E),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            child: const Text('Ulangi Latihan'),
           ),
+          const Icon(Icons.chevron_right, color: Color(0xFF8D90A3)),
         ],
       ),
     );

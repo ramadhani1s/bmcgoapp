@@ -377,6 +377,12 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     return '$day/$month/$year $hour:$minute';
   }
 
+  String _formatDuration(Duration d) {
+    final minutes = d.inMinutes.toString().padLeft(2, '0');
+    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   int _readUnixSeconds(dynamic unixValue, {String? fallbackIso}) {
     final fromUnix = int.tryParse((unixValue ?? '').toString());
     if (fromUnix != null && fromUnix > 0) {
@@ -595,6 +601,30 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                 letterSpacing: 8,
                 color: AppColors.textPrimary,
               ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.timer_outlined,
+                  color: _hadirRemaining == Duration.zero ? Colors.red : AppColors.accentBlue,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _hadirRemaining == Duration.zero
+                      ? 'Waktu Absensi Habis'
+                      : 'Sisa Waktu Absensi: ${_formatDuration(_hadirRemaining)}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: _hadirRemaining == Duration.zero ? Colors.red : AppColors.accentBlue,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),

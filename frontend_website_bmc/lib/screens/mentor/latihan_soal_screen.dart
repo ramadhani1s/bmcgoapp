@@ -10,9 +10,11 @@ import '../../services/latihan_soal_service.dart';
 import '../../widgets/mentor_sidebar_shell.dart';
 import 'create_latihan_screen.dart';
 import 'mengelola_soal_screen.dart';
+import '../../models/materi_pembelajaran.dart';
 
 class LatihanSoalScreen extends StatefulWidget {
-  const LatihanSoalScreen({super.key});
+  final MateriPembelajaran? materi;
+  const LatihanSoalScreen({super.key, this.materi});
 
   @override
   State<LatihanSoalScreen> createState() => _LatihanSoalScreenState();
@@ -25,20 +27,25 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
 
   final List<String> _mapelOptions = const [
     'Matematika',
+    'Bahasa Indonesia',
+    'Bahasa Inggris',
     'Fisika',
     'Kimia',
     'Biologi',
-    'Bahasa Indonesia',
-    'Bahasa Inggris',
+    'Sosiologi',
     'Ekonomi',
     'Geografi',
-    'Sosiologi',
+    'Geografi',
     'Sejarah',
   ];
 
+  String? _selectedMapel;
   String _selectedClass = 'Semua Kelas';
   final List<String> _classOptions = const [
     'Semua Kelas',
+    '10 IPA IPS',
+    '11 IPA IPS',
+    '12 IPA IPS',
     'Kelas 10 IPA',
     'Kelas 10 IPS',
     'Kelas 11 IPA',
@@ -52,6 +59,14 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.materi != null) {
+      _selectedMapel = _mapelOptions.contains(widget.materi!.subject)
+          ? widget.materi!.subject
+          : _mapelOptions.first;
+      _selectedClass = _classOptions.contains(widget.materi!.classLevel)
+          ? widget.materi!.classLevel
+          : 'Semua Kelas';
+    }
     _loadItems();
   }
 
@@ -145,7 +160,10 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       PageRouteBuilder<bool?>(
         opaque: false,
         pageBuilder: (ctx, animation, secondaryAnimation) =>
-            CreateLatihanScreen(mapel: _mapelOptions.first),
+            CreateLatihanScreen(
+              mapel: _selectedMapel ?? _mapelOptions.first,
+              materiId: widget.materi?.id,
+            ),
         transitionsBuilder: (ctx, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
@@ -161,6 +179,9 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     }
   }
 
+
+
+  // _deleteItem removed — unused after refactor
   Future<void> _openEditLatihanDialog(
     String oldTitle,
     String mapel,
@@ -418,24 +439,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     return map;
   }
 
-  List<SoalLatihan> _filteredItems() {
-    final query = _searchController.text.trim().toLowerCase();
-    return _items.where((item) {
-      final matchesSearch = query.isEmpty ||
-          item.pertanyaan.toLowerCase().contains(query) ||
-          item.pilihanA.toLowerCase().contains(query) ||
-          item.pilihanB.toLowerCase().contains(query) ||
-          item.pilihanC.toLowerCase().contains(query) ||
-          item.pilihanD.toLowerCase().contains(query) ||
-          item.mapel.toLowerCase().contains(query) ||
-          item.latihanTitle.toLowerCase().contains(query);
 
-      final matchesClass = _selectedClass == 'Semua Kelas' ||
-          item.pertanyaan.contains('[$_selectedClass]');
-
-      return matchesSearch && matchesClass;
-    }).toList();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1127,4 +1131,69 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       ),
     );
   }
+
+  Map<String, List<SoalLatihan>> _groupByMapel(List<SoalLatihan> items) {
+    final map = <String, List<SoalLatihan>>{};
+    for (final item in items) {
+      final parsed = _parseStoredQuestion(item.pertanyaan);
+      map.putIfAbsent(parsed.mapel, () => <SoalLatihan>[]).add(item);
+    }
+    return map;
+  }
+
+  List<SoalLatihan> _filteredItems() {
+    final query = _searchController.text.trim().toLowerCase();
+    return _items.where((item) {
+      final parsed = _parseStoredQuestion(item.pertanyaan);
+      final matchesSearch =
+          query.isEmpty ||
+          item.pertanyaan.toLowerCase().contains(query) ||
+          item.pilihanA.toLowerCase().contains(query) ||
+          item.pilihanB.toLowerCase().contains(query) ||
+          item.pilihanC.toLowerCase().contains(query) ||
+          item.pilihanD.toLowerCase().contains(query) ||
+          parsed.mapel.toLowerCase().contains(query);
+      final matchesClass =
+          _selectedClass == 'Semua Kelas' ||
+          item.pertanyaan.contains('[$_selectedClass]');
+      final matchesMateri =
+          widget.materi == null || item.materiId == widget.materi!.id;
+
+      return matchesSearch && matchesClass && matchesMateri;
+    }).toList();
+  }
+
+  String _buildStoredQuestion(String text, String mapel) {
+    return '[${mapel.trim()}] ${text.trim()}';
+  }
+
+  _ParsedQuestion _parseStoredQuestion(String raw) {
+    final trimmed = raw.trim();
+    final tagMatches = RegExp(
+      r'\[(.+?)\]',
+    ).allMatches(trimmed).map((m) => m.group(1)?.trim() ?? '').toList();
+    if (tagMatches.isEmpty) {
+      return _ParsedQuestion(mapel: _mapelOptions.first, questionText: trimmed);
+    }
+
+    // Last tag treated as mapel, others could be kelas or metadata
+    final mapel = tagMatches.isNotEmpty ? tagMatches.last : _mapelOptions.first;
+    // Remove all leading tags from question text
+    final questionText = trimmed
+        .replaceFirst(RegExp(r'^(?:\s*\[(?:.+?)\])*'), '')
+        .trim();
+
+    return _ParsedQuestion(
+      mapel: mapel.isEmpty ? _mapelOptions.first : mapel,
+      questionText: questionText,
+    );
+  }
 }
+
+class _ParsedQuestion {
+  final String mapel;
+  final String questionText;
+
+  const _ParsedQuestion({required this.mapel, required this.questionText});
+}
+

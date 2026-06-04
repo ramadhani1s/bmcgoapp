@@ -1042,7 +1042,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
   }
 
   // ==================================================
-  // MAIN UI
+  // MAIN UI - DIPERBAIKI BAGIAN TABELNYA
   // ==================================================
   Widget _buildMentorTableCard() {
     return Container(
@@ -1095,187 +1095,246 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                 ),
               ),
             )
-          : SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Theme(
-                data: Theme.of(
-                  context,
-                ).copyWith(dividerColor: const Color(0xFFD6E4FF)),
-                child: DataTable(
-                  horizontalMargin: 20,
-                  columnSpacing: 50,
-                  headingRowHeight: 58,
-                  dataRowMinHeight: 78,
-                  dataRowMaxHeight: 78,
-                  headingRowColor: WidgetStateProperty.all(
-                    const Color(0xFFEFF4FF),
-                  ),
-
-                  headingTextStyle: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1E3A8A),
-                    fontSize: 14,
-                    letterSpacing: 0.2,
-                  ),
-
-                  columns: const [
-                    DataColumn(
-                      label: Expanded(child: Center(child: Text("Mentor"))),
-                    ),
-
-                    DataColumn(
-                      label: Expanded(child: Center(child: Text("Email"))),
-                    ),
-
-                    DataColumn(
-                      label: Expanded(child: Center(child: Text("Password"))),
-                    ),
-
-                    DataColumn(
-                      label: Expanded(
-                        child: Center(child: Text("Mata Pelajaran")),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                // Hitung lebar layar yang tersedia
+                final double availableWidth = constraints.maxWidth;
+                
+                // Tentukan lebar minimal untuk setiap kolom agar rapi
+                final double mentorWidth = 150.0;
+                final double emailWidth = 200.0;
+                final double passwordWidth = 130.0;
+                final double mapelWidth = 140.0;
+                final double statusWidth = 100.0;
+                final double aksiWidth = 120.0;
+                
+                final double totalNeededWidth = mentorWidth + emailWidth + passwordWidth + mapelWidth + statusWidth + aksiWidth;
+                
+                // Jika total lebar yang dibutuhkan lebih kecil dari layar, gunakan lebar layar
+                // Jika lebih besar, gunakan scroll horizontal
+                final double tableWidth = totalNeededWidth > availableWidth ? totalNeededWidth : availableWidth;
+                
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const ClampingScrollPhysics(),
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Theme(
+                      data: Theme.of(context).copyWith(dividerColor: const Color(0xFFD6E4FF)),
+                      child: DataTable(
+                        horizontalMargin: 12,
+                        columnSpacing: 8,
+                        headingRowHeight: 58,
+                        dataRowMinHeight: 68,
+                        dataRowMaxHeight: 68,
+                        headingRowColor: WidgetStateProperty.all(
+                          const Color(0xFFEFF4FF),
+                        ),
+                        headingTextStyle: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1E3A8A),
+                          fontSize: 13,
+                        ),
+                        columns: [
+                          DataColumn(
+                            label: SizedBox(
+                              width: mentorWidth,
+                              child: const Center(child: Text("Mentor")),
+                            ),
+                          ),
+                          DataColumn(
+                            label: SizedBox(
+                              width: emailWidth,
+                              child: const Center(child: Text("Email")),
+                            ),
+                          ),
+                          DataColumn(
+                            label: SizedBox(
+                              width: passwordWidth,
+                              child: const Center(child: Text("Password")),
+                            ),
+                          ),
+                          DataColumn(
+                            label: SizedBox(
+                              width: mapelWidth,
+                              child: const Center(child: Text("Mata Pelajaran")),
+                            ),
+                          ),
+                          DataColumn(
+                            label: SizedBox(
+                              width: statusWidth,
+                              child: const Center(child: Text("Status")),
+                            ),
+                          ),
+                          DataColumn(
+                            label: SizedBox(
+                              width: aksiWidth,
+                              child: const Center(child: Text("Aksi")),
+                            ),
+                          ),
+                        ],
+                        rows: _filteredMentors.map((mentor) {
+                          final visible = _showPassword[mentor.mentorId] ?? false;
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Center(
+                                  child: Text(
+                                    mentor.namaMentor,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF1F2937),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Center(
+                                  child: Text(
+                                    mentor.email,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF374151),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Center(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        visible ? mentor.password : "••••••••",
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          letterSpacing: 2,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      IconButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _showPassword[mentor.mentorId] = !visible;
+                                          });
+                                        },
+                                        icon: Icon(
+                                          visible
+                                              ? Icons.visibility_off_outlined
+                                              : Icons.visibility_outlined,
+                                          size: 18,
+                                          color: const Color(0xFF6B7280),
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0FDF4),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      mentor.mataPelajaran,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF16A34A),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: mentor.status.toLowerCase() == 'aktif'
+                                          ? const Color(0xFFDCFCE7)
+                                          : const Color(0xFFFEE2E2),
+                                      borderRadius: BorderRadius.circular(100),
+                                    ),
+                                    child: Text(
+                                      mentor.status,
+                                      style: TextStyle(
+                                        color: mentor.status.toLowerCase() == 'aktif'
+                                            ? const Color(0xFF16A34A)
+                                            : const Color(0xFFDC2626),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Center(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        onPressed: () => _showEditDialog(mentor),
+                                        icon: const Icon(
+                                          Icons.edit_outlined,
+                                          color: Color(0xFF2563EB),
+                                          size: 20,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        onPressed: () => _deactivateMentor(mentor),
+                                        icon: const Icon(
+                                          Icons.block_outlined,
+                                          color: Color(0xFFF59E0B),
+                                          size: 20,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        onPressed: () => _hardDeleteMentor(mentor),
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Color(0xFFDC2626),
+                                          size: 20,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
                       ),
                     ),
-
-                    DataColumn(
-                      label: Expanded(child: Center(child: Text("Status"))),
-                    ),
-
-                    DataColumn(
-                      label: Expanded(child: Center(child: Text("Aksi"))),
-                    ),
-                  ],
-                  rows: _filteredMentors.map((mentor) {
-                    final visible = _showPassword[mentor.mentorId] ?? false;
-
-                    return DataRow(
-                      cells: [
-                        DataCell(
-                          Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  mentor.namaMentor,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w400,
-                                    color: Color(0xFF1F2937),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Center(
-                            child: Text(
-                              mentor.email,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Color(0xFF374151)),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  visible ? mentor.password : "••••••••",
-                                  style: const TextStyle(letterSpacing: 2),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _showPassword[mentor.mentorId] = !visible;
-                                    });
-                                  },
-                                  icon: Icon(
-                                    visible
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
-                                    size: 20,
-                                    color: const Color(0xFF6B7280),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Center(
-                            child: Text(
-                              mentor.mataPelajaran,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: mentor.status.toLowerCase() == 'aktif'
-                                    ? const Color(0xFFDCFCE7)
-                                    : const Color(0xFFFEE2E2),
-                                borderRadius: BorderRadius.circular(100),
-                              ),
-                              child: Text(
-                                mentor.status,
-                                style: TextStyle(
-                                  color: mentor.status.toLowerCase() == 'aktif'
-                                      ? const Color(0xFF16A34A)
-                                      : const Color(0xFFDC2626),
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed: () => _showEditDialog(mentor),
-                                  icon: const Icon(
-                                    Icons.edit_outlined,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => _deactivateMentor(mentor),
-                                  icon: const Icon(
-                                    Icons.block_outlined,
-                                    color: Color(0xFFF59E0B),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => _hardDeleteMentor(mentor),
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    color: Color(0xFFDC2626),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ),
+                  ),
+                );
+              },
             ),
     );
   }
@@ -1291,129 +1350,129 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
       padding: const EdgeInsets.all(24),
       child: SingleChildScrollView(
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Kelola Mentor',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.4,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Kelola Mentor',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.4,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Buat dan atur data mentor bimbingan',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textMuted,
+                    const SizedBox(height: 6),
+                    Text(
+                      'Buat dan atur data mentor bimbingan',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textMuted,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-
-              ElevatedButton.icon(
-                onPressed: _showCreateDialog,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Tambah Mentor'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
+                  ],
                 ),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 24),
-
-          Row(
-            children: [
-              _buildStatCard(
-                'Total Mentor',
-                _mentors.length.toString(),
-                AppColors.primary,
-                AppColors.blueLightBg,
-                Icons.groups_2_rounded,
-              ),
-
-              const SizedBox(width: 14),
-
-              _buildStatCard(
-                'Mentor Aktif',
-                activeMentor.toString(),
-                AppColors.success,
-                AppColors.successBg,
-                Icons.verified_rounded,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.softBorder),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      icon: Icon(Icons.search, color: AppColors.textMuted),
-                      hintText: 'Cari mentor...',
+                ElevatedButton.icon(
+                  onPressed: _showCreateDialog,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Tambah Mentor'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accentBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
                     ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
                   ),
                 ),
-              ),
+              ],
+            ),
 
-              const SizedBox(width: 16),
+            const SizedBox(height: 24),
 
-              ElevatedButton.icon(
-                onPressed: _mentors.isEmpty ? null : _exportAllMentorExcel,
-                icon: const Icon(Icons.download_rounded),
-                label: const Text("Export Excel"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 13,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+            Row(
+              children: [
+                _buildStatCard(
+                  'Total Mentor',
+                  _mentors.length.toString(),
+                  AppColors.primary,
+                  AppColors.blueLightBg,
+                  Icons.groups_2_rounded,
+                ),
+
+                const SizedBox(width: 14),
+
+                _buildStatCard(
+                  'Mentor Aktif',
+                  activeMentor.toString(),
+                  AppColors.success,
+                  AppColors.successBg,
+                  Icons.verified_rounded,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.softBorder),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        icon: Icon(Icons.search, color: AppColors.textMuted),
+                        hintText: 'Cari mentor...',
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 24),
+                const SizedBox(width: 16),
 
-          tableSection,
-        ],
-      ),
+                ElevatedButton.icon(
+                  onPressed: _mentors.isEmpty ? null : _exportAllMentorExcel,
+                  icon: const Icon(Icons.download_rounded),
+                  label: const Text("Export Excel"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 13,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            tableSection,
+          ],
+        ),
       ),
     );
   }
@@ -1493,7 +1552,6 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
       body: Row(
         children: [
           _buildSidebar(),
-
           Expanded(child: _buildMainContent(useExpandedTable: true)),
         ],
       ),

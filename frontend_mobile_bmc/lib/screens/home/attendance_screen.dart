@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/services/attendance_service.dart';
 import 'package:frontend_mobile_bmc/widgets/attendance/attendance_filter_card.dart';
@@ -20,17 +21,79 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   List<dynamic> _history = const [];
   String _selectedClass = 'Semua Kelas';
   DateTime? _selectedDate;
+  Timer? _countdownTimer;
+  Timer? _refreshTimer;
+  Map<String, dynamic>? _activeSession;
+  Duration _remainingTime = Duration.zero;
 
   @override
   void initState() {
     super.initState();
     _loadHistory();
+    _loadActiveSession();
+    _startTimers();
   }
 
   @override
   void dispose() {
     _tokenController.dispose();
+    _countdownTimer?.cancel();
+    _refreshTimer?.cancel();
     super.dispose();
+  }
+
+  void _startTimers() {
+    _countdownTimer?.cancel();
+    _refreshTimer?.cancel();
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateCountdown();
+    });
+
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _loadActiveSession();
+    });
+  }
+
+  void _updateCountdown() {
+    final active = _activeSession;
+    if (active == null) {
+      if (_remainingTime != Duration.zero) {
+        setState(() {
+          _remainingTime = Duration.zero;
+        });
+      }
+      return;
+    }
+
+    final nowMillis = DateTime.now().millisecondsSinceEpoch;
+    final deadlineUnix = active['hadir_deadline_unix'] as int? ?? 0;
+    final remaining = Duration(
+      milliseconds: (deadlineUnix * 1000) - nowMillis,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _remainingTime = remaining.isNegative ? Duration.zero : remaining;
+    });
+  }
+
+  Future<void> _loadActiveSession() async {
+    final response = await AttendanceService.getActiveSessionForSiswa();
+    if (!mounted) return;
+
+    if (response['success'] == true && response['session'] != null) {
+      setState(() {
+        _activeSession = response['session'] as Map<String, dynamic>;
+      });
+      _updateCountdown();
+    } else {
+      setState(() {
+        _activeSession = null;
+        _remainingTime = Duration.zero;
+      });
+    }
   }
 
   Future<void> _loadHistory() async {
@@ -201,6 +264,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 controller: _tokenController,
                 isSubmitting: _isSubmitting,
                 onSubmit: _submitToken,
+                activeSession: _activeSession,
+                remainingTime: _remainingTime,
               ),
               if (_latestResult != null) ...[
                 const SizedBox(height: 14),

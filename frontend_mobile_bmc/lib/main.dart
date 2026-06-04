@@ -59,6 +59,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       title: 'Bimbel Bintang Muda Center',
+      initialRoute: '/splash',
 
       theme: ThemeData(
         useMaterial3: true,
@@ -70,6 +71,7 @@ class MyApp extends StatelessWidget {
 
       
           routes: {
+            '/': (context) => const SplashScreen(),
             '/splash': (context) => const SplashScreen(),
             '/onboarding': (context) => const OnboardingScreen(),
             '/entry': (context) => const AuthEntryScreen(),
@@ -103,8 +105,8 @@ class MyApp extends StatelessWidget {
               final args = settings.arguments as Map<String, dynamic>;
               return MaterialPageRoute(
                 builder: (context) => LatihanDariMateriScreen(
-                  subject: args['subject'] as String,
                   materiTitle: args['materi_title'] as String,
+                  materiId: args['materi_id'] as int,
                 ),
               );
             }

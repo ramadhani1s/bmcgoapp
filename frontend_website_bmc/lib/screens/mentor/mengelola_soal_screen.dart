@@ -14,6 +14,7 @@ class MengelolaSoalScreen extends StatefulWidget {
   final String latihanTitle;
   final int targetSoal;
   final String? kelas;
+  final int? materiId;
   final int? durasi;
 
   const MengelolaSoalScreen({
@@ -22,6 +23,8 @@ class MengelolaSoalScreen extends StatefulWidget {
     required this.latihanTitle,
     this.targetSoal = 5,
     this.kelas,
+ 
+    this.materiId,
     this.durasi = 30,
   });
 
@@ -72,6 +75,7 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
       });
     }
   }
+
 
   void _clearForm() {
     _questionController.clear();
