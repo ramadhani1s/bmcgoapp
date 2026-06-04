@@ -13,8 +13,9 @@ func PaymentRoutes(r *gin.Engine) {
 
 	payment := r.Group("/payment")
 	{
-		// Public routes (notification dari Midtrans)
+		// Public routes
 		payment.POST("/notification", handlers.PaymentNotification)
+		payment.GET("/success", handlers.PaymentSuccessPage)
 
 		// Protected routes (perlu authentication)
 		payment.Use(middleware.AuthMiddleware())

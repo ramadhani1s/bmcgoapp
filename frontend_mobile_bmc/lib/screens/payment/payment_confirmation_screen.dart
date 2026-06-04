@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:frontend_mobile_bmc/models/payment_model.dart';
 import 'package:frontend_mobile_bmc/core/session/app_session.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentConfirmationScreen extends StatefulWidget {
   final int packageId;
@@ -35,10 +36,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
   String _statusMessage = 'Belum ada transaksi';
   String? _currentTransactionId;
   String? _paymentType;
-  String? _virtualAccountBank;
-  String? _virtualAccountNumber;
-  String? _billKey;
-  String? _billerCode;
+  String? _paymentUrl;
   bool _isPollingStatus = false;
   bool _finalDialogShown = false;
 
@@ -107,14 +105,23 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
 
       _currentTransactionId = transactionResponse.transactionId;
       _paymentType = transactionResponse.paymentType;
-      _virtualAccountBank = transactionResponse.virtualAccountBank;
-      _virtualAccountNumber = transactionResponse.virtualAccountNumber;
-      _billKey = transactionResponse.billKey;
-      _billerCode = transactionResponse.billerCode;
+      _paymentUrl = transactionResponse.redirectUrl;
 
       setState(() {
-        _statusMessage = 'Transaksi dibuat. Silakan transfer ke VA di bawah ini.';
+        _statusMessage = 'Menunggu pembayaran diselesaikan...';
       });
+
+      if (_paymentUrl != null && _paymentUrl!.isNotEmpty) {
+        final Uri url = Uri.parse(_paymentUrl!);
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url, mode: LaunchMode.inAppWebView);
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tidak dapat membuka halaman pembayaran')),
+          );
+        }
+      }
 
       unawaited(_startStatusPolling(transactionResponse.transactionId));
 
@@ -135,13 +142,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
     }
   }
 
-  Future<void> _copyText(String text) async {
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Nomor disalin')),
-    );
-  }
+
 
   Future<void> _startStatusPolling(String transactionId) async {
     if (_isPollingStatus) {
@@ -405,73 +406,50 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                         ],
                       ),
                     ),
-                    if ((_virtualAccountNumber ?? '').isNotEmpty || (_billKey ?? '').isNotEmpty || (_billerCode ?? '').isNotEmpty)
+                    if (_paymentUrl != null && _paymentUrl!.isNotEmpty)
                       _sectionCard(
-                        title: _paymentType == null || _paymentType!.isEmpty
-                            ? 'Nomor Pembayaran'
-                            : 'Nomor Pembayaran (${_paymentType!.replaceAll('_', ' ')})',
-                        icon: Icons.account_balance_outlined,
+                        title: 'Pembayaran Midtrans',
+                        icon: Icons.open_in_new,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              _virtualAccountNumber != null && _virtualAccountNumber!.isNotEmpty
-                                  ? (_virtualAccountBank == null || _virtualAccountBank!.isEmpty
-                                      ? 'Transfer ke rekening virtual account berikut:'
-                                      : 'Transfer ke ${_virtualAccountBank!.toUpperCase()} Virtual Account berikut:')
-                                  : 'Gunakan detail pembayaran berikut:',
-                              style: const TextStyle(
+                            const Text(
+                              'Silakan selesaikan pembayaran melalui halaman Midtrans.',
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF4A4A4A),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            if ((_virtualAccountNumber ?? '').isNotEmpty)
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF2F7FF),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFB7D3FF)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: SelectableText(
-                                        _virtualAccountNumber!,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 0.8,
-                                          color: Color(0xFF17324D),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    TextButton.icon(
-                                      onPressed: () => _copyText(_virtualAccountNumber!),
-                                      icon: const Icon(Icons.copy_rounded, size: 18),
-                                      label: const Text('Copy'),
-                                    ),
-                                  ],
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final Uri url = Uri.parse(_paymentUrl!);
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(url, mode: LaunchMode.inAppWebView);
+                                  }
+                                },
+                                icon: const Icon(Icons.payment, size: 18),
+                                label: const Text('Buka Halaman Pembayaran'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: _blueHeader,
+                                  side: const BorderSide(color: _blueHeader),
                                 ),
                               ),
-                            if ((_billKey ?? '').isNotEmpty || (_billerCode ?? '').isNotEmpty) ...[
-                              const SizedBox(height: 10),
-                              Text(
-                                'Biller code: ${_billerCode ?? '-'}',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF5A5A5A)),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Bill key: ${_billKey ?? '-'}',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF5A5A5A)),
-                              ),
-                            ],
+                            ),
                             const SizedBox(height: 10),
                             const Text(
-                              'Setelah transfer berhasil, status akan berubah otomatis di halaman ini.',
+                              '💡 Tips: Setelah selesai membayar, abaikan tombol "Back to Merchant" dan langsung tekan tanda X (Silang) di sudut layar untuk kembali.',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFFD58B00),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Status pembayaran akan diperbarui otomatis di halaman ini.',
                               style: TextStyle(fontSize: 11.5, color: Color(0xFF6A6A6A)),
                             ),
                           ],
