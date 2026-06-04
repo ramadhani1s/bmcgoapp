@@ -12,6 +12,7 @@ import '../screens/dashboard/verifikasi_pendaftaran_screen.dart';
 import '../screens/dashboard/admin_dashboard.dart';
 import '../screens/dashboard/admin_kelola_absensi_screen.dart';
 import '../screens/dashboard/admin_kelola_alumni_screen.dart';
+import '../screens/dashboard/admin_profile_screen.dart';
 import '../services/auth_service.dart';
 
 class AppRoutes {
@@ -21,6 +22,7 @@ class AppRoutes {
   static const String mentorDashboard = '/mentor-dashboard';
   static const String mentorAttendance = '/mentor-attendance';
   static const String mentorProfile = '/mentor-profile';
+  static const String adminProfile = '/admin-profile';
   static const String mentorManagement = '/mentor-management';
   static const String mentorExercise = '/mentor-exercise';
   static const String mentorTryout = '/mentor-tryout';
@@ -72,6 +74,9 @@ class AppRoutes {
 
       case mentorProfile:
         return InstantPageRoute(child: const MentorProfileScreen(), settings: settings);
+
+      case adminProfile:
+        return MaterialPageRoute(builder: (_) => const AdminProfileScreen());
 
       case mentorManagement:
         return InstantPageRoute(
