@@ -15,7 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/coreapi"
-	"github.com/midtrans/midtrans-go/snap"
 )
 
 // PaymentRequest struct untuk menerima data pembayaran
@@ -30,10 +29,15 @@ type PaymentRequest struct {
 
 // PaymentResponse struct untuk response pembayaran
 type PaymentResponse struct {
-	Token         string `json:"token"`
-	RedirectURL   string `json:"redirect_url"`
-	TransactionID string `json:"transaction_id"`
-	Status        string `json:"status"`
+	Token                string `json:"token,omitempty"`
+	RedirectURL          string `json:"redirect_url,omitempty"`
+	TransactionID        string `json:"transaction_id"`
+	Status               string `json:"status"`
+	PaymentType          string `json:"payment_type,omitempty"`
+	VirtualAccountBank   string `json:"virtual_account_bank,omitempty"`
+	VirtualAccountNumber string `json:"virtual_account_number,omitempty"`
+	BillKey              string `json:"bill_key,omitempty"`
+	BillerCode           string `json:"biller_code,omitempty"`
 }
 
 type PaymentHistoryItem struct {
@@ -89,6 +93,51 @@ func getCurrentPhone(ctx *gin.Context, userID int) string {
 		return "08123456789"
 	}
 	return phone
+}
+
+func resolveBankTransferBank() midtrans.Bank {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("MIDTRANS_VA_BANK"))) {
+	case "mandiri":
+		return midtrans.BankMandiri
+	case "bni":
+		return midtrans.BankBni
+	case "bri":
+		return midtrans.BankBri
+	case "permata":
+		return midtrans.BankPermata
+	case "maybank":
+		return midtrans.BankMaybank
+	default:
+		return midtrans.BankBca
+	}
+}
+
+func extractPaymentDetails(resp *coreapi.ChargeResponse) (bank string, vaNumber string, billKey string, billerCode string) {
+	if resp == nil {
+		return "", "", "", ""
+	}
+
+	bank = strings.TrimSpace(resp.Bank)
+	if bank == "" {
+		bank = strings.TrimSpace(resp.PaymentType)
+	}
+
+	vaNumber = strings.TrimSpace(resp.PermataVaNumber)
+	if vaNumber == "" {
+		for _, item := range resp.VaNumbers {
+			if strings.TrimSpace(item.VANumber) != "" {
+				vaNumber = strings.TrimSpace(item.VANumber)
+				if bank == "" {
+					bank = strings.TrimSpace(item.Bank)
+				}
+				break
+			}
+		}
+	}
+
+	billKey = strings.TrimSpace(resp.BillKey)
+	billerCode = strings.TrimSpace(resp.BillerCode)
+	return
 }
 
 func savePaymentTransaction(ctx *gin.Context, transactionID string, userID int, req PaymentRequest, amount int64, status string, paymentType string) {
@@ -172,23 +221,53 @@ func CreateTransaction(c *gin.Context) {
 
 	transactionID := fmt.Sprintf("BMC-%d-%s-%d", userIDInt, req.PackageID, time.Now().UnixMilli())
 
-	snapReq := &snap.Request{
-		TransactionDetails: midtrans.TransactionDetails{OrderID: transactionID, GrossAmt: amount},
-		CustomerDetail:     &midtrans.CustomerDetails{FName: req.CustomerName, Email: req.CustomerEmail, Phone: req.CustomerPhone},
+	chargeReq := &coreapi.ChargeReq{
+		PaymentType: coreapi.PaymentTypeBankTransfer,
+		TransactionDetails: midtrans.TransactionDetails{
+			OrderID:  transactionID,
+			GrossAmt: amount,
+		},
+		CustomerDetails: &midtrans.CustomerDetails{
+			FName: req.CustomerName,
+			Email: req.CustomerEmail,
+			Phone: req.CustomerPhone,
+		},
 		Items: &[]midtrans.ItemDetails{{
-			ID: req.PackageID, Price: amount, Qty: 1, Name: req.PackageTitle,
+			ID:    req.PackageID,
+			Name:  req.PackageTitle,
+			Price: amount,
+			Qty:   1,
 		}},
+		BankTransfer: &coreapi.BankTransferDetails{
+			Bank: resolveBankTransferBank(),
+		},
 	}
 
-	snapResp, midtransErr := snap.CreateTransaction(snapReq)
+	client := coreapi.Client{}
+	client.New(midtrans.ServerKey, midtrans.Sandbox)
+	chargeResp, midtransErr := client.ChargeTransaction(chargeReq)
 	if midtransErr != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create transaction", "error": midtransErr.Error()})
 		return
 	}
 
-	savePaymentTransaction(c, transactionID, userIDInt, req, amount, "pending", "")
+	status := normalizeStatus(chargeResp.TransactionStatus)
+	if status == "" {
+		status = "pending"
+	}
+	savePaymentTransaction(c, transactionID, userIDInt, req, amount, status, chargeResp.PaymentType)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Transaction created successfully", "data": PaymentResponse{Token: snapResp.Token, RedirectURL: snapResp.RedirectURL, TransactionID: transactionID, Status: "pending"}})
+	bank, vaNumber, billKey, billerCode := extractPaymentDetails(chargeResp)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Transaction created successfully", "data": PaymentResponse{
+		TransactionID:        transactionID,
+		Status:               status,
+		PaymentType:          chargeResp.PaymentType,
+		VirtualAccountBank:   bank,
+		VirtualAccountNumber: vaNumber,
+		BillKey:              billKey,
+		BillerCode:           billerCode,
+	}})
 }
 
 // CheckPaymentStatus mengecek status pembayaran

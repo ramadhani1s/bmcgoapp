@@ -35,6 +35,7 @@ class LatihanSoalService {
     required String pilihanD,
     required String jawaban,
     String pembahasan = '',
+    int? materiId,
   }) async {
     try {
       final headers = await AuthService.getAuthHeaders();
@@ -50,6 +51,7 @@ class LatihanSoalService {
               'pilihan_d': pilihanD,
               'jawaban': jawaban,
               'pembahasan': pembahasan,
+              if (materiId != null) 'materi_id': materiId,
             }),
           )
           .timeout(const Duration(seconds: 15));
@@ -92,6 +94,7 @@ class LatihanSoalService {
     required String pilihanD,
     required String jawaban,
     String pembahasan = '',
+    int? materiId,
   }) async {
     try {
       final headers = await AuthService.getAuthHeaders();
@@ -107,6 +110,7 @@ class LatihanSoalService {
               'pilihan_d': pilihanD,
               'jawaban': jawaban,
               'pembahasan': pembahasan,
+              if (materiId != null) 'materi_id': materiId,
             }),
           )
           .timeout(const Duration(seconds: 15));

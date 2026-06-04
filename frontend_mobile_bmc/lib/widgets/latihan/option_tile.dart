@@ -1,79 +1,139 @@
 import 'package:flutter/material.dart';
 
 class OptionTile extends StatelessWidget {
+  final String optionKey; // A, B, C, D
+  final String optionValue;
+  final bool isSelected;
+  final bool isSubmitted;
+  final String? correctAnswer;
+  final VoidCallback onTap;
+
   const OptionTile({
     super.key,
-    required this.choiceKey,
-    required this.text,
-    required this.selected,
-    required this.submittedCorrect,
+    required this.optionKey,
+    required this.optionValue,
+    required this.isSelected,
+    required this.isSubmitted,
+    this.correctAnswer,
     required this.onTap,
-    required this.accentColor,
-    required this.borderColor,
   });
 
-  final String choiceKey;
-  final String text;
-  final bool selected;
-  final bool submittedCorrect;
-  final VoidCallback onTap;
-  final Color accentColor;
-  final Color borderColor;
+  Color _getBackgroundColor() {
+    if (!isSubmitted) {
+      return isSelected ? const Color(0xFFFFF0EB) : Colors.white;
+    }
+    
+    final isCorrect = correctAnswer == optionKey;
+    if (isCorrect) return const Color(0xFFE8F5E9);
+    if (isSelected && !isCorrect) return const Color(0xFFFFEBEE);
+    return Colors.white;
+  }
+
+  Color _getBorderColor() {
+    if (!isSubmitted) {
+      return isSelected ? const Color(0xFFFF6B35) : const Color(0xFFE8E8ED);
+    }
+    
+    final isCorrect = correctAnswer == optionKey;
+    if (isCorrect) return const Color(0xFF4CAF50);
+    if (isSelected && !isCorrect) return const Color(0xFFF44336);
+    return const Color(0xFFE8E8ED);
+  }
+
+  Color _getIconColor() {
+    if (!isSubmitted) {
+      return isSelected ? Colors.white : const Color(0xFF8D90A3);
+    }
+    
+    final isCorrect = correctAnswer == optionKey;
+    if (isCorrect) return Colors.white;
+    if (isSelected && !isCorrect) return Colors.white;
+    return const Color(0xFF8D90A3);
+  }
+
+  Color _getBoxColor() {
+    if (!isSubmitted) {
+      return isSelected ? const Color(0xFFFF6B35) : Colors.white;
+    }
+    
+    final isCorrect = correctAnswer == optionKey;
+    if (isCorrect) return const Color(0xFF4CAF50);
+    if (isSelected && !isCorrect) return const Color(0xFFF44336);
+    return Colors.white;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEFF6FF) : const Color(0xFFF9FAFB),
+          color: _getBackgroundColor(),
+          border: Border.all(color: _getBorderColor(), width: 1.5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? accentColor : borderColor,
-            width: selected ? 1.4 : 1,
-          ),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 26,
-              height: 26,
-              alignment: Alignment.center,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
-                color: selected ? accentColor : Colors.white,
+                color: _getBoxColor(),
+                border: Border.all(color: _getBorderColor()),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                choiceKey,
-                style: TextStyle(
-                  color: selected ? Colors.white : Colors.black,
-                  fontWeight: FontWeight.w800,
-                ),
+              child: Center(
+                child: _buildIcon(),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
-                text,
+                optionValue,
                 style: const TextStyle(
-                  color: Color(0xFF111827),
-                  fontSize: 13.5,
-                  height: 1.45,
+                  color: Color(0xFF1A1A2E),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-            if (submittedCorrect)
-              const Icon(
-                Icons.check_circle,
-                color: Color(0xFF16A34A),
-                size: 18,
-              ),
+            if (isSubmitted && correctAnswer == optionKey)
+              const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 20),
+            if (isSubmitted && isSelected && correctAnswer != optionKey)
+              const Icon(Icons.cancel, color: Color(0xFFF44336), size: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildIcon() {
+    if (!isSubmitted) {
+      return Text(
+        optionKey,
+        style: TextStyle(
+          color: _getIconColor(),
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+        ),
+      );
+    }
+    
+    final isCorrect = correctAnswer == optionKey;
+    if (isCorrect) {
+      return const Icon(Icons.check, color: Colors.white, size: 16);
+    }
+    if (isSelected && !isCorrect) {
+      return const Icon(Icons.close, color: Colors.white, size: 16);
+    }
+    return Text(
+      optionKey,
+      style: const TextStyle(
+        color: Color(0xFF8D90A3),
+        fontWeight: FontWeight.w700,
+        fontSize: 14,
       ),
     );
   }

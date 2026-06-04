@@ -74,8 +74,8 @@ class _MateriDetailScreenState extends State<MateriDetailScreen> {
       context,
       '/latihan-dari-materi',
       arguments: {
-        'subject': subject,
         'materi_title': widget.materi['title'] as String? ?? 'Latihan Soal',
+        'materi_id': widget.materi['id'] ?? 0,
       },
     );
   }

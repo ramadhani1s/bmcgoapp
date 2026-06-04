@@ -2,6 +2,7 @@ class MateriPembelajaran {
   final int id;
   final int mentorId;
   final String classLevel;
+  final String subject;
   final String title;
   final String description;
   final String filePath;
@@ -14,6 +15,7 @@ class MateriPembelajaran {
     required this.id,
     required this.mentorId,
     required this.classLevel,
+    required this.subject,
     required this.title,
     required this.description,
     required this.filePath,
@@ -37,6 +39,7 @@ class MateriPembelajaran {
       id: json['id'] ?? 0,
       mentorId: json['mentor_id'] ?? 0,
       classLevel: kelas,
+      subject: json['subject'] ?? 'Umum',
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       filePath: json['file_path'] ?? '',

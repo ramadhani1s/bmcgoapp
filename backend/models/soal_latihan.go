@@ -12,4 +12,5 @@ type SoalLatihan struct {
 	Pembahasan string `json:"pembahasan"`
 	Subject    string `json:"subject"`
 	LatihanID  *int   `json:"latihan_id"`
+	MateriID   *int   `json:"materi_id"`
 }

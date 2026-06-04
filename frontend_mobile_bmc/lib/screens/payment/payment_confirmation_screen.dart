@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:midtrans_sdk/midtrans_sdk.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend_mobile_bmc/models/payment_model.dart';
 import 'package:frontend_mobile_bmc/core/session/app_session.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
@@ -33,36 +33,19 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   String _statusMessage = 'Belum ada transaksi';
-  MidtransSDK? _midtransSDK;
   String? _currentTransactionId;
+  String? _paymentType;
+  String? _virtualAccountBank;
+  String? _virtualAccountNumber;
+  String? _billKey;
+  String? _billerCode;
   bool _isPollingStatus = false;
   bool _finalDialogShown = false;
 
   @override
   void initState() {
     super.initState();
-    _initMidtrans();
   }
-
-  // ✅ INIT MIDTRANS (FIXED)
- Future<void> _initMidtrans() async {
-  try {
-    debugPrint("MIDTRANS INIT START");
-
-    _midtransSDK = await MidtransSDK.init(
-      config: MidtransConfig(
-        clientKey: "Mid-client-oGUyoloFZJXYlklg",
-        merchantBaseUrl: PaymentService.baseUrl,
-      ),
-    );
-
-    debugPrint("MIDTRANS INIT SUCCESS");
-  } catch (e, s) {
-    debugPrint("MIDTRANS INIT ERROR");
-    debugPrint(e.toString());
-    debugPrint(s.toString());
-  }
-}
 
 
   Future<Map<String, String>> _getUserData() async {
@@ -99,13 +82,6 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
 
   // ✅ START PAYMENT (FIXED SAFE)
   Future<void> _startPayment() async {
-    if (_midtransSDK == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Midtrans belum siap")));
-      return;
-    }
-
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -128,15 +104,19 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       );
 
       if (!mounted) return;
+
       _currentTransactionId = transactionResponse.transactionId;
+      _paymentType = transactionResponse.paymentType;
+      _virtualAccountBank = transactionResponse.virtualAccountBank;
+      _virtualAccountNumber = transactionResponse.virtualAccountNumber;
+      _billKey = transactionResponse.billKey;
+      _billerCode = transactionResponse.billerCode;
+
       setState(() {
-        _statusMessage = 'Transaksi dibuat. Memulai Midtrans...';
+        _statusMessage = 'Transaksi dibuat. Silakan transfer ke VA di bawah ini.';
       });
 
-      await _midtransSDK!.startPaymentUiFlow(token: transactionResponse.token);
-
-      if (!mounted) return;
-      await _startStatusPolling(transactionResponse.transactionId);
+      unawaited(_startStatusPolling(transactionResponse.transactionId));
 
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -155,40 +135,12 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
     }
   }
 
-  // ✅ HANDLE RESULT (FIXED)
-  // ignore: unused_element
-  Future<void> _onTransactionFinished(TransactionResult result) async {
-    final transactionId = result.transactionId ?? _currentTransactionId;
-
-    if (transactionId == null) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Transaction ID tidak ditemukan.';
-      });
-      return;
-    }
-
-    final status = (result.status ?? '').toLowerCase();
-    
-    if (status == 'success' ||
-        status == 'settlement' ||
-        status == 'capture' ||
-        status == 'pending') {
-      try {
-        await PaymentService.finishTransaction(transactionId, status);
-      } catch (e) {
-        debugPrint('ERROR finishTransaction from callback: $e');
-      }
-    }
-
+  Future<void> _copyText(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    setState(() {
-      _statusMessage = 'Midtrans: ${_humanStatus(status)}. Menyinkronkan status...';
-      _isLoading = false;
-    });
-
-    await _startStatusPolling(transactionId);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Nomor disalin')),
+    );
   }
 
   Future<void> _startStatusPolling(String transactionId) async {
@@ -198,7 +150,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
 
     _isPollingStatus = true;
     try {
-      for (var attempt = 0; attempt < 8 && mounted; attempt++) {
+      while (mounted) {
         final paymentStatus = await PaymentService.checkPaymentStatus(
           transactionId,
         );
@@ -243,14 +195,12 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
 
         await Future.delayed(const Duration(seconds: 2));
       }
-
+    } finally {
       if (mounted) {
         setState(() {
-          _statusMessage = 'Masih menunggu konfirmasi Midtrans.';
           _isLoading = false;
         });
       }
-    } finally {
       _isPollingStatus = false;
     }
   }
@@ -293,7 +243,6 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
 
   @override
   void dispose() {
-    _midtransSDK?.removeTransactionFinishedCallback();
     super.dispose();
   }
 
@@ -456,6 +405,78 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                         ],
                       ),
                     ),
+                    if ((_virtualAccountNumber ?? '').isNotEmpty || (_billKey ?? '').isNotEmpty || (_billerCode ?? '').isNotEmpty)
+                      _sectionCard(
+                        title: _paymentType == null || _paymentType!.isEmpty
+                            ? 'Nomor Pembayaran'
+                            : 'Nomor Pembayaran (${_paymentType!.replaceAll('_', ' ')})',
+                        icon: Icons.account_balance_outlined,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _virtualAccountNumber != null && _virtualAccountNumber!.isNotEmpty
+                                  ? (_virtualAccountBank == null || _virtualAccountBank!.isEmpty
+                                      ? 'Transfer ke rekening virtual account berikut:'
+                                      : 'Transfer ke ${_virtualAccountBank!.toUpperCase()} Virtual Account berikut:')
+                                  : 'Gunakan detail pembayaran berikut:',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF4A4A4A),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if ((_virtualAccountNumber ?? '').isNotEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF2F7FF),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFB7D3FF)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: SelectableText(
+                                        _virtualAccountNumber!,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.8,
+                                          color: Color(0xFF17324D),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    TextButton.icon(
+                                      onPressed: () => _copyText(_virtualAccountNumber!),
+                                      icon: const Icon(Icons.copy_rounded, size: 18),
+                                      label: const Text('Copy'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            if ((_billKey ?? '').isNotEmpty || (_billerCode ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              Text(
+                                'Biller code: ${_billerCode ?? '-'}',
+                                style: const TextStyle(fontSize: 12, color: Color(0xFF5A5A5A)),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Bill key: ${_billKey ?? '-'}',
+                                style: const TextStyle(fontSize: 12, color: Color(0xFF5A5A5A)),
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            const Text(
+                              'Setelah transfer berhasil, status akan berubah otomatis di halaman ini.',
+                              style: TextStyle(fontSize: 11.5, color: Color(0xFF6A6A6A)),
+                            ),
+                          ],
+                        ),
+                      ),
                     _sectionCard(
                       title: 'Status Pembayaran',
                       icon: Icons.info_outline,

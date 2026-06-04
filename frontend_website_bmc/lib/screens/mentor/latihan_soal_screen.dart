@@ -10,9 +10,11 @@ import '../../services/latihan_soal_service.dart';
 import '../../widgets/mentor_sidebar_shell.dart';
 import 'create_latihan_screen.dart';
 import 'mengelola_soal_screen.dart';
+import '../../models/materi_pembelajaran.dart';
 
 class LatihanSoalScreen extends StatefulWidget {
-  const LatihanSoalScreen({super.key});
+  final MateriPembelajaran? materi;
+  const LatihanSoalScreen({super.key, this.materi});
 
   @override
   State<LatihanSoalScreen> createState() => _LatihanSoalScreenState();
@@ -25,20 +27,28 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
 
   final List<String> _mapelOptions = const [
     'Matematika',
+    'Bahasa Indonesia',
+    'Bahasa Inggris',
     'Fisika',
     'Kimia',
     'Biologi',
+    'Sosiologi',
+    'Ekonomi',
+    'Geografi',
     'Bahasa Indonesia',
     'Bahasa Inggris',
     'Ekonomi',
     'Geografi',
     'Sosiologi',
     'Sejarah',
-  ];
+      ];
 
   String _selectedClass = 'Semua Kelas';
   final List<String> _classOptions = const [
     'Semua Kelas',
+    '10 IPA IPS',
+    '11 IPA IPS',
+    '12 IPA IPS',
     'Kelas 10 IPA',
     'Kelas 10 IPS',
     'Kelas 11 IPA',
@@ -52,6 +62,14 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.materi != null) {
+      _selectedMapel = _mapelOptions.contains(widget.materi!.subject)
+          ? widget.materi!.subject
+          : _mapelOptions.first;
+      _selectedClass = _classOptions.contains(widget.materi!.classLevel)
+          ? widget.materi!.classLevel
+          : 'Semua Kelas';
+    }
     _loadItems();
   }
 
@@ -145,6 +163,11 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       PageRouteBuilder<bool?>(
         opaque: false,
         pageBuilder: (ctx, animation, secondaryAnimation) =>
+            CreateLatihanScreen(
+              mapel: _selectedMapel,
+              materiId: widget.materi?.id,
+            ),
+
             CreateLatihanScreen(mapel: _mapelOptions.first),
         transitionsBuilder: (ctx, animation, secondaryAnimation, child) {
           return FadeTransition(
@@ -161,6 +184,131 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
     }
   }
 
+  void _openEditForm(SoalLatihan item) {
+    final parsed = _parseStoredQuestion(item.pertanyaan);
+
+    _syncDraftCount(1);
+    final draft = _drafts.first;
+    draft.questionController.text = parsed.questionText;
+    draft.optionAController.text = item.pilihanA;
+    draft.optionBController.text = item.pilihanB;
+    draft.optionCController.text = item.pilihanC;
+    draft.optionDController.text = item.pilihanD;
+    draft.selectedAnswer = item.jawaban.toUpperCase();
+
+    setState(() {
+      _showForm = true;
+      _editingItem = item;
+      _selectedMapel = _mapelOptions.contains(parsed.mapel)
+          ? parsed.mapel
+          : _mapelOptions.first;
+      _jumlahSoalController.text = '1';
+    });
+  }
+
+  void _closeForm() {
+    setState(() {
+      _showForm = false;
+      _editingItem = null;
+    });
+  }
+
+  Future<void> _submitForm() async {
+    if (_drafts.isEmpty) {
+      _showMessage('Tambahkan minimal 1 soal', isError: true);
+      return;
+    }
+
+    for (int i = 0; i < _drafts.length; i++) {
+      final draft = _drafts[i];
+      if (!draft.isComplete) {
+        _showMessage('Soal ${i + 1} belum lengkap', isError: true);
+        return;
+      }
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      Map<String, dynamic> response = <String, dynamic>{
+        'success': true,
+        'message': 'Soal berhasil disimpan',
+      };
+
+      if (_editingItem == null) {
+        for (int i = 0; i < _drafts.length; i++) {
+          final draft = _drafts[i];
+          final result = await LatihanSoalService.createSoalLatihan(
+            pertanyaan: _buildStoredQuestion(
+              draft.questionController.text.trim(),
+              _selectedMapel,
+            ),
+            pilihanA: draft.optionAController.text.trim(),
+            pilihanB: draft.optionBController.text.trim(),
+            pilihanC: draft.optionCController.text.trim(),
+            pilihanD: draft.optionDController.text.trim(),
+            jawaban: draft.selectedAnswer,
+            pembahasan: draft.pembahasanController.text.trim(),
+            materiId: widget.materi?.id,
+          );
+
+          if (result['success'] != true) {
+            response = {
+              'success': false,
+              'message': 'Gagal simpan Soal ${i + 1}: ${result['message']}',
+            };
+            break;
+          }
+        }
+      } else {
+        final draft = _drafts.first;
+        response = await LatihanSoalService.updateSoalLatihan(
+          soalId: _editingItem!.id,
+          pertanyaan: _buildStoredQuestion(
+            draft.questionController.text.trim(),
+            _selectedMapel,
+          ),
+          pilihanA: draft.optionAController.text.trim(),
+          pilihanB: draft.optionBController.text.trim(),
+          pilihanC: draft.optionCController.text.trim(),
+          pilihanD: draft.optionDController.text.trim(),
+          jawaban: draft.selectedAnswer,
+          pembahasan: draft.pembahasanController.text.trim(),
+          materiId: widget.materi?.id ?? _editingItem!.materiId,
+        );
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isSubmitting = false;
+      });
+
+      if (response['success'] != true) {
+        _showMessage(
+          response['message'] ?? 'Gagal menyimpan soal',
+          isError: true,
+        );
+        return;
+      }
+
+      _showMessage(response['message'] ?? 'Soal berhasil disimpan');
+      _closeForm();
+      await _loadItems();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      _showMessage('Error: ${e.toString()}', isError: true);
+    }
+  }
+
+  // _deleteItem removed — unused after refactor
+
+  Future<void> _deleteLatihanByMapel(
   Future<void> _openEditLatihanDialog(
     String oldTitle,
     String mapel,
@@ -1126,5 +1274,173 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildOptionInput(
+    String key,
+    TextEditingController controller,
+    _QuestionDraft draft,
+  ) {
+    final isAnswer = draft.selectedAnswer == key;
+
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: 'Opsi $key',
+              filled: true,
+              fillColor: const Color(0xFFF3F4F6),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: Color(0xFF2563EB),
+                  width: 1.4,
+                ),
+              ),
+              isDense: true,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        ChoiceChip(
+          label: Text(isAnswer ? 'Kunci $key' : 'Set $key'),
+          selected: isAnswer,
+          onSelected: (_) {
+            setState(() {
+              draft.selectedAnswer = key;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Map<String, List<SoalLatihan>> _groupByMapel(List<SoalLatihan> items) {
+    final map = <String, List<SoalLatihan>>{};
+    for (final item in items) {
+      final parsed = _parseStoredQuestion(item.pertanyaan);
+      map.putIfAbsent(parsed.mapel, () => <SoalLatihan>[]).add(item);
+    }
+    return map;
+  }
+
+  List<SoalLatihan> _filteredItems() {
+    final query = _searchController.text.trim().toLowerCase();
+    return _items.where((item) {
+      final parsed = _parseStoredQuestion(item.pertanyaan);
+      final matchesSearch =
+          query.isEmpty ||
+          item.pertanyaan.toLowerCase().contains(query) ||
+          item.pilihanA.toLowerCase().contains(query) ||
+          item.pilihanB.toLowerCase().contains(query) ||
+          item.pilihanC.toLowerCase().contains(query) ||
+          item.pilihanD.toLowerCase().contains(query) ||
+          parsed.mapel.toLowerCase().contains(query);
+      final matchesStatus =
+          _selectedStatusFilter.isEmpty ||
+          (_selectedStatusFilter == 'Dipublikasi' ? true : true);
+      final matchesMapel =
+          _selectedMapelFilter.isEmpty || parsed.mapel == _selectedMapelFilter;
+      final matchesClass =
+          _selectedClass == 'Semua Kelas' ||
+          item.pertanyaan.contains('[$_selectedClass]');
+      final matchesMateri =
+          widget.materi == null || item.materiId == widget.materi!.id;
+
+      return matchesSearch && matchesStatus && matchesMapel && matchesClass && matchesMateri;
+    }).toList();
+  }
+
+  String _buildStoredQuestion(String text, String mapel) {
+    return '[${mapel.trim()}] ${text.trim()}';
+  }
+
+  void _syncDraftCount(int requested) {
+    final target = requested.clamp(1, 20);
+
+    while (_drafts.length < target) {
+      _drafts.add(_QuestionDraft());
+    }
+
+    while (_drafts.length > target) {
+      final removed = _drafts.removeLast();
+      removed.dispose();
+    }
+  }
+
+  _ParsedQuestion _parseStoredQuestion(String raw) {
+    final trimmed = raw.trim();
+    final tagMatches = RegExp(
+      r'\[(.+?)\]',
+    ).allMatches(trimmed).map((m) => m.group(1)?.trim() ?? '').toList();
+    if (tagMatches.isEmpty) {
+      return _ParsedQuestion(mapel: _mapelOptions.first, questionText: trimmed);
+    }
+
+    // Last tag treated as mapel, others could be kelas or metadata
+    final mapel = tagMatches.isNotEmpty ? tagMatches.last : _mapelOptions.first;
+    // Remove all leading tags from question text
+    final questionText = trimmed
+        .replaceFirst(RegExp(r'^(?:\s*\[(?:.+?)\])*'), '')
+        .trim();
+
+    return _ParsedQuestion(
+      mapel: mapel.isEmpty ? _mapelOptions.first : mapel,
+      questionText: questionText,
+    );
+  }
+}
+
+class _ParsedQuestion {
+  final String mapel;
+  final String questionText;
+
+  const _ParsedQuestion({required this.mapel, required this.questionText});
+}
+
+class _QuestionDraft {
+  final TextEditingController questionController = TextEditingController();
+  final TextEditingController optionAController = TextEditingController();
+  final TextEditingController optionBController = TextEditingController();
+  final TextEditingController optionCController = TextEditingController();
+  final TextEditingController optionDController = TextEditingController();
+  final TextEditingController pembahasanController = TextEditingController();
+  String selectedAnswer = 'A';
+
+  bool get isComplete {
+    return questionController.text.trim().isNotEmpty &&
+        optionAController.text.trim().isNotEmpty &&
+        optionBController.text.trim().isNotEmpty &&
+        optionCController.text.trim().isNotEmpty &&
+        optionDController.text.trim().isNotEmpty;
+  }
+
+  void reset() {
+    questionController.clear();
+    optionAController.clear();
+    optionBController.clear();
+    optionCController.clear();
+    optionDController.clear();
+    pembahasanController.clear();
+    selectedAnswer = 'A';
+  }
+
+  void dispose() {
+    questionController.dispose();
+    optionAController.dispose();
+    optionBController.dispose();
+    optionCController.dispose();
+    optionDController.dispose();
+    pembahasanController.dispose();
   }
 }
