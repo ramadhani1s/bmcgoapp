@@ -82,6 +82,10 @@ func ProtectedRoutes(r *gin.Engine) {
 	// Upload route for admin (image uploads)
 	admin.POST("/upload", handlers.UploadFileHandler)
 
+	// Admin attendance list
+	admin.GET("/absensi", handlers.GetAdminAttendanceSessionsHandler)
+	admin.POST("/absensi/reset", handlers.ResetAllAttendanceHandler)
+
 	// ================= MENTOR ONLY =================
 	mentor := auth.Group("/mentor")
 	mentor.Use(middleware.RoleMiddleware(2)) // 2 = mentor

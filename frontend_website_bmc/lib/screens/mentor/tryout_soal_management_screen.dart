@@ -10,7 +10,7 @@ import '../dashboard/mentor_olimpiade_screen.dart';
 import '../mentor/materi_pembelajaran_screen.dart';
 import '../../services/soal_kompetisi_service.dart';
 import '../../widgets/mentor_sidebar_shell.dart';
-import '../../widgets/soal_overview_card.dart';
+
 
 class TryoutSoalManagementScreen extends StatefulWidget {
   final MentorCompetitionItem tryout;
@@ -48,6 +48,17 @@ class _TryoutSoalManagementScreenState
     'Penalaran Matematika',
     'Literasi Bahasa Indonesia',
   ];
+
+  bool get _isFull =>
+      _soalList.length >= (widget.tryout.totalQuestions > 0 ? widget.tryout.totalQuestions : 0);
+
+  double get _progressValue {
+    final total = widget.tryout.totalQuestions;
+    if (total <= 0) return 0.0;
+    return (_soalList.length / total).clamp(0.0, 1.0);
+  }
+
+  int get _progressPercent => (_progressValue * 100).round();
 
   @override
   void initState() {
@@ -94,135 +105,131 @@ class _TryoutSoalManagementScreenState
   }
 
   Future<void> _submitSoal() async {
-  if (_pertanyaanController.text.trim().isEmpty) {
-    _showSnackbar('Pertanyaan harus diisi', isError: true);
-    return;
-  }
-
-  if (_pilihanAController.text.trim().isEmpty ||
-      _pilihanBController.text.trim().isEmpty ||
-      _pilihanCController.text.trim().isEmpty ||
-      _pilihanDController.text.trim().isEmpty) {
-    _showSnackbar('Pilihan A-D harus diisi', isError: true);
-    return;
-  }
-
-  setState(() => _isSubmitting = true);
-
-  try {
-    Map<String, dynamic> response;
-
-    // Guard: ensure kompetisi id is valid before sending
-    if (widget.tryout.id <= 0) {
-      setState(() => _isSubmitting = false);
-      _showSnackbar(
-        'ID tryout tidak valid. Tidak dapat menyimpan soal.',
-        isError: true,
-      );
+    if (_pertanyaanController.text.trim().isEmpty) {
+      _showSnackbar('Pertanyaan harus diisi', isError: true);
       return;
     }
 
-    if (_editingItem == null) {
-      // Debug: print payload for server troubleshooting
-      if (kDebugMode) {
-        debugPrint(
-          'createSoal payload: kompetisi_id=${widget.tryout.id}, pertanyaan=${_pertanyaanController.text.trim()}, jawaban=$_selectedJawaban, kategori=$_selectedKategori',
+    if (_pilihanAController.text.trim().isEmpty ||
+        _pilihanBController.text.trim().isEmpty ||
+        _pilihanCController.text.trim().isEmpty ||
+        _pilihanDController.text.trim().isEmpty) {
+      _showSnackbar('Pilihan A-D harus diisi', isError: true);
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      Map<String, dynamic> response;
+
+      if (widget.tryout.id <= 0) {
+        setState(() => _isSubmitting = false);
+        _showSnackbar(
+          'ID tryout tidak valid. Tidak dapat menyimpan soal.',
+          isError: true,
+        );
+        return;
+      }
+
+      if (_editingItem == null) {
+        if (kDebugMode) {
+          debugPrint(
+            'createSoal payload: kompetisi_id=${widget.tryout.id}, '
+            'pertanyaan=${_pertanyaanController.text.trim()}, '
+            'jawaban=$_selectedJawaban, kategori=$_selectedKategori',
+          );
+        }
+
+        response = await SoalKompetisiService.createSoal(
+          kompetisiId: widget.tryout.id,
+          tipe: 'tryout',
+          pertanyaan: _pertanyaanController.text.trim(),
+          pilihanA: _pilihanAController.text.trim(),
+          pilihanB: _pilihanBController.text.trim(),
+          pilihanC: _pilihanCController.text.trim(),
+          pilihanD: _pilihanDController.text.trim(),
+          pilihanE: _pilihanEController.text.trim(),
+          jawaban: _selectedJawaban,
+          pembahasan: _pembahasanController.text.trim(),
+          kategori: _selectedKategori,
+        );
+      } else {
+        response = await SoalKompetisiService.updateSoal(
+          soalId: _editingItem!.id,
+          tipe: 'tryout',
+          pertanyaan: _pertanyaanController.text.trim(),
+          pilihanA: _pilihanAController.text.trim(),
+          pilihanB: _pilihanBController.text.trim(),
+          pilihanC: _pilihanCController.text.trim(),
+          pilihanD: _pilihanDController.text.trim(),
+          pilihanE: _pilihanEController.text.trim(),
+          jawaban: _selectedJawaban,
+          pembahasan: _pembahasanController.text.trim(),
+          kategori: _selectedKategori,
         );
       }
 
-      // ✅ PERBAIKAN: Gunakan 'kategori:' (tanpa petik)
-      response = await SoalKompetisiService.createSoal(
-        kompetisiId: widget.tryout.id,
-        tipe: 'tryout',
-        pertanyaan: _pertanyaanController.text.trim(),
-        pilihanA: _pilihanAController.text.trim(),
-        pilihanB: _pilihanBController.text.trim(),
-        pilihanC: _pilihanCController.text.trim(),
-        pilihanD: _pilihanDController.text.trim(),
-        pilihanE: _pilihanEController.text.trim(),
-        jawaban: _selectedJawaban,
-        pembahasan: _pembahasanController.text.trim(),
-        kategori: _selectedKategori,  // ✅ Perbaikan di sini!
-      );
-    } else {
-      response = await SoalKompetisiService.updateSoal(
-        soalId: _editingItem!.id,
-        tipe: 'tryout',
-        pertanyaan: _pertanyaanController.text.trim(),
-        pilihanA: _pilihanAController.text.trim(),
-        pilihanB: _pilihanBController.text.trim(),
-        pilihanC: _pilihanCController.text.trim(),
-        pilihanD: _pilihanDController.text.trim(),
-        pilihanE: _pilihanEController.text.trim(),
-        jawaban: _selectedJawaban,
-        pembahasan: _pembahasanController.text.trim(),
-        kategori: _selectedKategori,
-      );
-    }
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
 
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
+      if (response['success'] == true) {
+        _showSnackbar(response['message'] ?? 'Soal berhasil disimpan');
+        _clearForm();
+        await _loadSoal();
+      } else {
+        if (kDebugMode) debugPrint('createSoal failed: ${response.toString()}');
 
-    if (response['success'] == true) {
-      _showSnackbar(response['message'] ?? 'Soal berhasil disimpan');
-      _clearForm();
-      await _loadSoal();
-    } else {
-      // Log full response for debugging
-      if (kDebugMode) debugPrint('createSoal failed: ${response.toString()}');
+        String userMsg = response['message'] ?? 'Gagal menyimpan soal';
+        String? details;
+        if (response.containsKey('details') && response['details'] != null) {
+          details = response['details'].toString();
+          final snippet =
+              details.length > 200 ? '${details.substring(0, 200)}...' : details;
+          userMsg = '$userMsg: $snippet';
+        }
 
-      // Build concise user-facing message
-      String userMsg = response['message'] ?? 'Gagal menyimpan soal';
-      String? details;
-      if (response.containsKey('details') && response['details'] != null) {
-        details = response['details'].toString();
-        final snippet = details.length > 200
-            ? '${details.substring(0, 200)}...'
-            : details;
-        userMsg = '$userMsg: $snippet';
-      }
+        _showSnackbar(userMsg, isError: true);
 
-      _showSnackbar(userMsg, isError: true);
-
-      // If server provided details, show them in a dialog for copying/debugging
-      if (details != null && mounted) {
-        await showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-            title: const Text(
-              'Detail respons server',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
+        if (details != null && mounted) {
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
               ),
-            ),
-            content: SingleChildScrollView(child: SelectableText(details!)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF6B7280),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+              title: const Text(
+                'Detail respons server',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
                 ),
-                child: const Text('Tutup'),
               ),
-            ],
-          ),
-        );
+              content: SingleChildScrollView(child: SelectableText(details!)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF6B7280),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: const Text('Tutup'),
+                ),
+              ],
+            ),
+          );
+        }
       }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      _showSnackbar('Error: ${e.toString()}', isError: true);
     }
-  } catch (e) {
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-    _showSnackbar('Error: ${e.toString()}', isError: true);
   }
-}
+
   Future<void> _deleteSoal(SoalKompetisi soal) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -291,10 +298,12 @@ class _TryoutSoalManagementScreenState
       _pilihanDController.text = soal.pilihanD;
       _pilihanEController.text = soal.pilihanE;
       _pembahasanController.text = soal.pembahasan;
-      _selectedJawaban = const ['A', 'B', 'C', 'D', 'E'].contains(soal.jawaban) ? soal.jawaban : 'A';
-      _selectedKategori = soal.kategori.isEmpty
-          ? 'Penalaran Umum'
-          : soal.kategori;
+      _selectedJawaban =
+          const ['A', 'B', 'C', 'D', 'E'].contains(soal.jawaban)
+              ? soal.jawaban
+              : 'A';
+      _selectedKategori =
+          soal.kategori.isEmpty ? 'Penalaran Umum' : soal.kategori;
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -331,13 +340,11 @@ class _TryoutSoalManagementScreenState
             ),
           ],
         ),
-        backgroundColor: isError
-            ? const Color(0xFFEF4444)
-            : const Color(0xFF10B981),
+        backgroundColor:
+            isError ? const Color(0xFFEF4444) : const Color(0xFF10B981),
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
-        elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
@@ -366,37 +373,25 @@ class _TryoutSoalManagementScreenState
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(15, 23, 42, 0.18),
-                  blurRadius: 30,
-                  offset: Offset(0, 18),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
+                    color: const Color(0xFF2563EB),
                     child: Row(
                       children: [
                         Container(
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.16),
-                            borderRadius: BorderRadius.circular(14),
+                            color: Colors.white.withAlpha(41),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
                             Icons.edit_outlined,
@@ -413,17 +408,16 @@ class _TryoutSoalManagementScreenState
                                 'Edit Try Out',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              SizedBox(height: 2),
                               Text(
-                                'Ubah metadata Try Out. Pastikan ukuran, warna dan radius sesuai.',
+                                'Ubah metadata Try Out.',
                                 style: TextStyle(
                                   color: Colors.white70,
-                                  fontSize: 12.5,
-                                  height: 1.3,
+                                  fontSize: 12,
                                 ),
                               ),
                             ],
@@ -446,7 +440,7 @@ class _TryoutSoalManagementScreenState
                           decoration: InputDecoration(
                             labelText: 'Judul Try Out',
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
+                            fillColor: const Color(0xFFF9FAFB),
                             border: fieldBorder,
                             enabledBorder: fieldBorder,
                             focusedBorder: OutlineInputBorder(
@@ -466,7 +460,7 @@ class _TryoutSoalManagementScreenState
                           decoration: InputDecoration(
                             labelText: 'Durasi (menit)',
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
+                            fillColor: const Color(0xFFF9FAFB),
                             border: fieldBorder,
                             enabledBorder: fieldBorder,
                             focusedBorder: OutlineInputBorder(
@@ -508,7 +502,7 @@ class _TryoutSoalManagementScreenState
                                   vertical: 12,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: const Text('Simpan'),
@@ -555,11 +549,9 @@ class _TryoutSoalManagementScreenState
           ),
           ElevatedButton(
             onPressed: () {
-              // For now, just show success message and pop to previous screen
-              // In production, you would call an API to delete the tryout
               _showSnackbar('Try Out berhasil dihapus');
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Return to previous screen
+              Navigator.pop(context);
+              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
@@ -577,7 +569,6 @@ class _TryoutSoalManagementScreenState
   }
 
   int _extractDurasiMenit(String durationLabel) {
-    // Extract numeric value from duration label (e.g., "150 menit" -> 150)
     final regex = RegExp(r'(\d+)');
     final match = regex.firstMatch(durationLabel);
     return match != null ? int.tryParse(match.group(1) ?? '150') ?? 150 : 150;
@@ -586,857 +577,10 @@ class _TryoutSoalManagementScreenState
   Map<String, int> _countByKategori() {
     final counts = <String, int>{};
     for (final soal in _soalList) {
-      final kategori = soal.kategori.isEmpty ? 'Penalaran Umum' : soal.kategori;
-      counts[kategori] = (counts[kategori] ?? 0) + 1;
+      final k = soal.kategori.isEmpty ? 'Penalaran Umum' : soal.kategori;
+      counts[k] = (counts[k] ?? 0) + 1;
     }
     return counts;
-  }
-
- void _onSidebarMenuTap(String title) {
-  if (title == 'Dashboard') {
-    Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
-    return;
-  }
-  if (title == 'Jadwal Mengajar') {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
-      ),
-    );
-    return;
-  }
-  if (title == 'Absensi Kelas') {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const MentorAttendanceScreen(),
-      ),
-    );
-    return;
-  }
-  if (title == 'Soal Latihan') {
-    Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
-    return;
-  }
-  if (title == 'Try Out') {
-    // Tetap di halaman Try Out
-    return;
-  }
-  if (title == 'Materi Pembelajaran') {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const MateriPembelajaranScreen(initialClass: null),
-      ),
-    );
-    return;
-  }
-  if (title == 'Olimpiade Akademik') {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const MentorOlimpiadeScreen(),
-      ),
-    );
-    return;
-  }
-}
-
-  @override
-  Widget build(BuildContext context) {
-    final counts = _countByKategori();
-
-    return MentorSidebarShell(
-      activeMenuTitle: 'Try Out',
-      onMenuTap: _onSidebarMenuTap,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF3F4F6),
-        appBar: AppBar(
-          title: const Text('Kelola Soal Try Out'),
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF1F2937),
-          elevation: 1,
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(12),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 920),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Overview Card
-                        SoalOverviewCard(
-                          title: widget.tryout.title,
-                          status: (_soalList.length >= widget.tryout.totalQuestions && widget.tryout.totalQuestions > 0)
-                              ? 'Dipublikasikan'
-                              : 'Draft',
-                          tanggal: widget.tryout.createdAt,
-                          durasiMenit: _extractDurasiMenit(
-                            widget.tryout.durationLabel,
-                          ),
-                          soalTerbuat: _soalList.length,
-                          totalSoal: widget.tryout.totalQuestions,
-                          kategoriProgress: {
-                            'PU': _countByKategori()['Penalaran Umum'] ?? 0,
-                            'PPU':
-                                _countByKategori()['Pemahaman dan Penulisan Umum'] ??
-                                0,
-                            'PBM':
-                                _countByKategori()['Pengetahuan dan Pemahaman Bacaan Matematika'] ??
-                                0,
-                            'PK':
-                                _countByKategori()['Pengetahuan Kuantitatif'] ??
-                                0,
-                            'PM':
-                                _countByKategori()['Penalaran Matematika'] ?? 0,
-                            'Literasi':
-                                _countByKategori()['Literasi Bahasa Indonesia'] ??
-                                0,
-                          },
-                          onKelolaSoal: () {
-                            // Already in soal management screen
-                          },
-                          onEdit: () => _showEditDialog(),
-                          onDelete: () => _showDeleteConfirmation(),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Kategori Navigation
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: _kategoriOptions.map((kategori) {
-                              final shortName = _getShortKategori(kategori);
-                              final count = counts[kategori] ?? 0;
-                              final isSelected = _selectedKategori == kategori;
-
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(
-                                      () => _selectedKategori = kategori,
-                                    );
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? const Color(0xFF2563EB)
-                                          : Colors.white,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? const Color(0xFF2563EB)
-                                            : const Color(0xFFE5E7EB),
-                                      ),
-                                      boxShadow: isSelected
-                                          ? [
-                                              BoxShadow(
-                                                color: const Color(
-                                                  0xFF2563EB,
-                                                ).withValues(alpha: 0.15),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 4),
-                                              ),
-                                            ]
-                                          : [],
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          shortName,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            color: isSelected
-                                                ? Colors.white
-                                                : const Color(0xFF374151),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          '$count',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: isSelected
-                                                ? Colors.white.withValues(
-                                                    alpha: 0.9,
-                                                  )
-                                                : const Color(0xFF6B7280),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Form Card (simplified to match Olimpiade style)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _editingItem == null
-                                    ? 'Tambah Soal Baru'
-                                    : 'Edit Soal',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16,
-                                  color: Color(0xFF1F2937),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-
-                              // Pertanyaan
-                              const Text(
-                                'Pertanyaan',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: Color(0xFF374151),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: _pertanyaanController,
-                                maxLines: 4,
-                                decoration: InputDecoration(
-                                  hintText: 'Masukkan pertanyaan soal...',
-                                  filled: true,
-                                  fillColor: const Color(0xFFF3F4F6),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFD1D5DB),
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFD1D5DB),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFF2563EB),
-                                      width: 1.4,
-                                    ),
-                                  ),
-                                  contentPadding: const EdgeInsets.all(12),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Pilihan Jawaban
-                              const Text(
-                                'Pilihan Jawaban',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: Color(0xFF374151),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              _buildPilihanInput('A', _pilihanAController),
-                              const SizedBox(height: 8),
-                              _buildPilihanInput('B', _pilihanBController),
-                              const SizedBox(height: 8),
-                              _buildPilihanInput('C', _pilihanCController),
-                              const SizedBox(height: 8),
-                              _buildPilihanInput('D', _pilihanDController),
-                              const SizedBox(height: 8),
-                              _buildPilihanInput('E', _pilihanEController),
-                              const SizedBox(height: 12),
-
-                              // Jawaban Benar
-                              const Text(
-                                'Jawaban Benar',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: Color(0xFF374151),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              DropdownButtonFormField<String>(
-                                value: _selectedJawaban,
-                                dropdownColor: Colors.white,
-                                icon: const Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: Color(0xFF6B7280),
-                                  size: 20,
-                                ),
-                                items: ['A', 'B', 'C', 'D', 'E']
-                                    .map(
-                                      (e) => DropdownMenuItem(
-                                        value: e,
-                                        child: Text(e),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    setState(() => _selectedJawaban = value);
-                                  }
-                                },
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: const Color(0xFFF3F4F6),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFD1D5DB),
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFD1D5DB),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFF2563EB),
-                                      width: 1.4,
-                                    ),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 12,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Pembahasan
-                              const Text(
-                                'Pembahasan (Opsional)',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: Color(0xFF374151),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: _pembahasanController,
-                                maxLines: 4,
-                                decoration: InputDecoration(
-                                  hintText:
-                                      'Masukkan penjelasan untuk siswa...',
-                                  filled: true,
-                                  fillColor: const Color(0xFFF3F4F6),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFD1D5DB),
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFD1D5DB),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFF2563EB),
-                                      width: 1.4,
-                                    ),
-                                  ),
-                                  contentPadding: const EdgeInsets.all(12),
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-
-                              // Action Buttons
-                              Row(
-                                children: [
-                                  if (_editingItem != null)
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: _isSubmitting
-                                            ? null
-                                            : () => _clearForm(),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: const Color(
-                                            0xFF64748B,
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 12,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                        ),
-                                        child: const Text('Batal Edit'),
-                                      ),
-                                    ),
-                                  if (_editingItem != null)
-                                    const SizedBox(width: 8),
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: _isSubmitting
-                                          ? null
-                                          : _submitSoal,
-                                      icon: const Icon(Icons.add, size: 16, color: Colors.white),
-                                      label: Text(
-                                        _editingItem == null
-                                            ? 'Tambah Soal'
-                                            : 'Simpan Perubahan',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(
-                                          0xFF2563EB,
-                                        ),
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 18,
-                                          vertical: 14,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        elevation: 0,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Daftar Soal Section
-                        Text(
-                          'Daftar Soal (${_kategoriOptions[_kategoriOptions.indexOf(_selectedKategori)]})',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Soal Cards
-                        if (_soalList.isEmpty)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(40),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFFE5E7EB),
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.assignment_outlined,
-                                  size: 48,
-                                  color: const Color(0xFFD1D5DB),
-                                ),
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'Belum ada soal',
-                                  style: TextStyle(
-                                    color: Color(0xFF6B7280),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Mulai dengan menambahkan soal baru di form atas',
-                                  style: TextStyle(
-                                    color: Color(0xFF9CA3AF),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _soalList.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 16),
-                            itemBuilder: (context, index) {
-                              final soal = _soalList[index];
-                              return _buildSoalCard(soal, index + 1);
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildPilihanInput(String label, TextEditingController controller) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFF3F4F6), Color(0xFFE5E7EB)],
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-                color: Color(0xFF1F2937),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: 'Pilihan $label',
-              filled: true,
-              fillColor: const Color(0xFFF3F4F6),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Color(0xFF2563EB),
-                  width: 1.4,
-                ),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
-              isDense: true,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSoalCard(SoalKompetisi soal, int nomer) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 240),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Main content
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header row: Number, Kategori, Actions
-                Row(
-                  children: [
-                    // Number badge
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF2563EB), Color(0xFF1E40AF)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFF2563EB,
-                            ).withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$nomer',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 18,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // Kategori badge
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDEEBFF),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              soal.kategori.isEmpty
-                                  ? 'Penalaran Umum'
-                                  : soal.kategori,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF1E3A8A),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDEEBFF),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              'Kunci: ${soal.jawaban}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF2563EB),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Actions
-                    PopupMenuButton(
-                      icon: const Icon(
-                        Icons.more_vert,
-                        color: Color(0xFF6B7280),
-                        size: 24,
-                      ),
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.edit,
-                                size: 18,
-                                color: Color(0xFF2563EB),
-                              ),
-                              SizedBox(width: 10),
-                              Text('Edit', style: TextStyle(fontSize: 14)),
-                            ],
-                          ),
-                          onTap: () => _editSoal(soal),
-                        ),
-                        PopupMenuItem(
-                          child: const Row(
-                            children: [
-                              Icon(Icons.delete, size: 18, color: Colors.red),
-                              SizedBox(width: 10),
-                              Text(
-                                'Hapus',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ],
-                          ),
-                          onTap: () => _deleteSoal(soal),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // Pertanyaan
-                Text(
-                  soal.pertanyaan,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1F2937),
-                    height: 1.5,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
-
-                // Detail row: Total pilihan
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.check_circle_outline,
-                      size: 16,
-                      color: Color(0xFF6B7280),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '5 Pilihan Jawaban',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    if (soal.pembahasan.isNotEmpty) ...[
-                      const Icon(
-                        Icons.lightbulb_outline,
-                        size: 16,
-                        color: Color(0xFFCA8A04),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Ada Pembahasan',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFCA8A04),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Pembahasan section
-          if (soal.pembahasan.isNotEmpty) ...[
-            Container(height: 1, color: const Color(0xFFE5E7EB)),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(14),
-                  bottomRight: Radius.circular(14),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFCA8A04),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(
-                          Icons.lightbulb,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Pembahasan',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF92400E),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    soal.pembahasan,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF78350F),
-                      height: 1.5,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
   }
 
   String _getShortKategori(String kategori) {
@@ -1449,5 +593,834 @@ class _TryoutSoalManagementScreenState
       'Literasi Bahasa Indonesia': 'LI',
     };
     return mapping[kategori] ?? 'XX';
+  }
+
+  void _onSidebarMenuTap(String title) {
+    if (title == 'Dashboard') {
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
+      return;
+    }
+    if (title == 'Jadwal Mengajar') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
+        ),
+      );
+      return;
+    }
+    if (title == 'Absensi Kelas') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
+      );
+      return;
+    }
+    if (title == 'Soal Latihan') {
+      Navigator.pushReplacementNamed(context, AppRoutes.mentorExercise);
+      return;
+    }
+    if (title == 'Try Out') {
+      return;
+    }
+    if (title == 'Materi Pembelajaran') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MateriPembelajaranScreen(initialClass: null),
+        ),
+      );
+      return;
+    }
+    if (title == 'Olimpiade Akademik') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
+      );
+      return;
+    }
+  }
+
+  // ─── WIDGETS (sama persis style olimpiade) ───────────────────────────────
+
+  Widget _buildPilihanInput(String label, TextEditingController controller) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'Pilihan $label',
+                hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSoalCard(SoalKompetisi soal, int nomer) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: Colors.blue.shade100,
+            child: Text(
+              '$nomer',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  soal.pertanyaan,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _getShortKategori(
+                          soal.kategori.isEmpty
+                              ? 'Penalaran Umum'
+                              : soal.kategori,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF4338CA),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Kunci: ${soal.jawaban}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit, color: Colors.blue),
+            onPressed: () => _editSoal(soal),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () => _deleteSoal(soal),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final totalQuestions = widget.tryout.totalQuestions;
+    final counts = _countByKategori();
+
+    return MentorSidebarShell(
+      activeMenuTitle: 'Try Out',
+      onMenuTap: _onSidebarMenuTap,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF3F4F6),
+        appBar: AppBar(
+          title: const Text('Kelola Soal Try Out'),
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF1F2937),
+          elevation: 1,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadSoal,
+              tooltip: 'Refresh',
+            ),
+          ],
+        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── PROGRESS CARD (sama persis olimpiade) ─────────────
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: _isFull
+                            ? const Color(0xFFFEF2F2)
+                            : const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _isFull
+                              ? const Color(0xFFFEE2E2)
+                              : const Color(0xFFDBEAFE),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: _isFull
+                                          ? const Color(0xFFEF4444)
+                                          : const Color(0xFF2563EB),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      _isFull
+                                          ? Icons.warning_amber_rounded
+                                          : Icons.quiz_outlined,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Progress Pembuatan Soal',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                      color: Color(0xFF1F2937),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _isFull
+                                      ? const Color(0xFFEF4444)
+                                      : const Color(0xFF2563EB),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Text(
+                                  '$_progressPercent%',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: LinearProgressIndicator(
+                              value: _progressValue,
+                              minHeight: 10,
+                              backgroundColor: Colors.white,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                _isFull
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFF2563EB),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.check_circle_outline,
+                                      size: 14,
+                                      color: Color(0xFF10B981),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        '${_soalList.length} soal terbuat',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFF4B5563),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Flexible(
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.flag_outlined,
+                                      size: 14,
+                                      color: Color(0xFFF59E0B),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        'Target: $totalQuestions soal',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFF4B5563),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_isFull) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFFFEE2E2),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: Color(0xFFEF4444),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Batas maksimal $totalQuestions soal sudah tercapai. Hapus beberapa soal untuk menambah.',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFFEF4444),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    // ── KATEGORI TABS ─────────────────────────────────────
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _kategoriOptions.map((kategori) {
+                          final shortName = _getShortKategori(kategori);
+                          final count = counts[kategori] ?? 0;
+                          final isSelected = _selectedKategori == kategori;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 10),
+                            child: GestureDetector(
+                              onTap: () =>
+                                  setState(() => _selectedKategori = kategori),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(0xFF2563EB)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? const Color(0xFF2563EB)
+                                        : const Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      shortName,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : const Color(0xFF374151),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '$count',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: isSelected
+                                            ? Colors.white.withAlpha(230)
+                                            : const Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── FORM TAMBAH / EDIT SOAL (sama persis olimpiade) ───
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header biru
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF2563EB),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                topRight: Radius.circular(20),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha(51),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    _editingItem == null
+                                        ? Icons.add_task
+                                        : Icons.edit_note,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _editingItem == null
+                                        ? 'Tambah Soal Baru'
+                                        : 'Edit Soal',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                if (_editingItem != null)
+                                  GestureDetector(
+                                    onTap: () => setState(_clearForm),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withAlpha(51),
+                                        borderRadius:
+                                            BorderRadius.circular(20),
+                                      ),
+                                      child: const Text(
+                                        'Batal Edit',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Kategori
+                                const Text(
+                                  'Kategori Soal',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF9FAFB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5E7EB),
+                                    ),
+                                  ),
+                                  child: DropdownButtonFormField<String>(
+                                    value: _selectedKategori,
+                                    items: _kategoriOptions
+                                        .map(
+                                          (k) => DropdownMenuItem(
+                                            value: k,
+                                            child: Text(
+                                              k,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        setState(
+                                          () => _selectedKategori = value,
+                                        );
+                                      }
+                                    },
+                                    decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Pertanyaan
+                                const Text(
+                                  'Pertanyaan',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF9FAFB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5E7EB),
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _pertanyaanController,
+                                    maxLines: 4,
+                                    decoration: const InputDecoration(
+                                      hintText:
+                                          'Tulis pertanyaan soal di sini...',
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.all(14),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Pilihan Jawaban
+                                const Text(
+                                  'Pilihan Jawaban',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildPilihanInput('A', _pilihanAController),
+                                _buildPilihanInput('B', _pilihanBController),
+                                _buildPilihanInput('C', _pilihanCController),
+                                _buildPilihanInput('D', _pilihanDController),
+                                _buildPilihanInput('E', _pilihanEController),
+                                const SizedBox(height: 20),
+
+                                // Jawaban Benar
+                                const Text(
+                                  'Jawaban Benar',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF9FAFB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5E7EB),
+                                    ),
+                                  ),
+                                  child: DropdownButtonFormField<String>(
+                                    value: _selectedJawaban,
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'A',
+                                        child: Text('A'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'B',
+                                        child: Text('B'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'C',
+                                        child: Text('C'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'D',
+                                        child: Text('D'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'E',
+                                        child: Text('E'),
+                                      ),
+                                    ],
+                                    onChanged: (value) => setState(
+                                      () => _selectedJawaban = value!,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Pembahasan
+                                const Text(
+                                  'Pembahasan (Opsional)',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF9FAFB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5E7EB),
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _pembahasanController,
+                                    maxLines: 3,
+                                    decoration: const InputDecoration(
+                                      hintText:
+                                          'Tambahkan pembahasan untuk siswa...',
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.all(14),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+
+                                // Tombol aksi
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed:
+                                        _isSubmitting ? null : _submitSoal,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          const Color(0xFF2563EB),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                    child: _isSubmitting
+                                        ? const SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                _editingItem == null
+                                                    ? Icons.add
+                                                    : Icons.save,
+                                                size: 18,
+                                                color: Colors.white,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                _editingItem == null
+                                                    ? 'Tambah Soal'
+                                                    : 'Simpan Perubahan',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ── DAFTAR SOAL ───────────────────────────────────────
+                    Text(
+                      'Daftar Soal — $_selectedKategori (${counts[_selectedKategori] ?? 0})',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Builder(
+                      builder: (_) {
+                        final filtered = _soalList
+                            .where(
+                              (s) =>
+                                  (s.kategori.isEmpty
+                                      ? 'Penalaran Umum'
+                                      : s.kategori) ==
+                                  _selectedKategori,
+                            )
+                            .toList();
+
+                        if (filtered.isEmpty) {
+                          return Container(
+                            padding: const EdgeInsets.all(40),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.assignment_outlined,
+                                  size: 40,
+                                  color: Colors.grey.shade300,
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Belum ada soal untuk kategori ini',
+                                  style: TextStyle(
+                                    color: Color(0xFF6B7280),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) =>
+                              _buildSoalCard(filtered[index], index + 1),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
   }
 }

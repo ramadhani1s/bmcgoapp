@@ -1,4 +1,5 @@
 class Absensi {
+  final int id;
   final String tanggal;
   final String jam;
   final String kelas;
@@ -7,6 +8,7 @@ class Absensi {
   final String status;
 
   Absensi({
+    required this.id,
     required this.tanggal,
     required this.jam,
     required this.kelas,
@@ -17,6 +19,7 @@ class Absensi {
 
   factory Absensi.fromJson(Map<String, dynamic> json) {
     return Absensi(
+      id: json['id'] ?? 0,
       tanggal: json['tanggal'] ?? '',
       jam: json['jam'] ?? '',
       kelas: json['kelas'] ?? '',

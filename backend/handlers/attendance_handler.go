@@ -747,3 +747,110 @@ func GetActiveAttendanceSessionForSiswaHandler(c *gin.Context) {
 		"server_time_unix": time.Now().UTC().Unix(),
 	})
 }
+
+func GetAdminAttendanceSessionsHandler(c *gin.Context) {
+	// Count total sessions
+	var totalSesi int
+	_ = config.DB.QueryRow(context.Background(), `SELECT COUNT(*) FROM attendance_sessions`).Scan(&totalSesi)
+
+	// Count total hadir
+	var totalHadir int
+	_ = config.DB.QueryRow(context.Background(), `SELECT COUNT(*) FROM attendance_records WHERE status = 'hadir'`).Scan(&totalHadir)
+
+	// Count total tidak hadir
+	var totalTidakHadir int
+	_ = config.DB.QueryRow(context.Background(), `SELECT COUNT(*) FROM attendance_records WHERE status = 'tidak_hadir'`).Scan(&totalTidakHadir)
+
+	// Set custom HTTP response headers
+	c.Writer.Header().Set("x-total-sesi", fmt.Sprintf("%d", totalSesi))
+	c.Writer.Header().Set("x-total-hadir", fmt.Sprintf("%d", totalHadir))
+	c.Writer.Header().Set("x-total-tidak-hadir", fmt.Sprintf("%d", totalTidakHadir))
+
+	rows, err := config.DB.Query(
+		context.Background(),
+		`SELECT s.id, s.started_at, s.class_name, COALESCE(s.subject, ''), COALESCE(u.nama, ''), s.status,
+		        (SELECT COUNT(*) FROM attendance_records ar WHERE ar.session_id = s.id AND ar.status = 'hadir') AS hadir_count
+		 FROM attendance_sessions s
+		 JOIN users u ON u.id = s.mentor_id
+		 ORDER BY s.started_at DESC`,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Gagal mengambil data absensi admin: " + err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	list := make([]gin.H, 0)
+	for rows.Next() {
+		var sessionID, hadirCount int
+		var startedAt time.Time
+		var className, subject, mentorName, status string
+		if err := rows.Scan(&sessionID, &startedAt, &className, &subject, &mentorName, &status, &hadirCount); err != nil {
+			c.JSON(500, gin.H{"error": "Gagal membaca baris absensi: " + err.Error()})
+			return
+		}
+
+		// Map status: 'Hadir' if session is completed OR if at least one student checked in
+		displayStatus := "Tidak Hadir"
+		if status == "selesai" || hadirCount > 0 {
+			displayStatus = "Hadir"
+		}
+
+		// Format tanggal and jam
+		localStartedAt := startedAt.Local()
+		tanggalStr := localStartedAt.Format("02/01/2006")
+		jamStr := localStartedAt.Format("15:04")
+
+		list = append(list, gin.H{
+			"id":      sessionID,
+			"tanggal": tanggalStr,
+			"jam":     jamStr,
+			"kelas":   className,
+			"mapel":   subject,
+			"mentor":  mentorName,
+			"status":  displayStatus,
+		})
+	}
+
+	c.JSON(200, list)
+}
+
+// ResetAllAttendanceHandler resets all attendance sessions, records, and legacy absensi data
+func ResetAllAttendanceHandler(c *gin.Context) {
+	tx, err := config.DB.Begin(context.Background())
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Gagal memulai transaksi: " + err.Error()})
+		return
+	}
+	defer tx.Rollback(context.Background())
+
+	// 1. Delete all records from legacy table
+	_, err = tx.Exec(context.Background(), `DELETE FROM absensi`)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Gagal menghapus data legacy absensi: " + err.Error()})
+		return
+	}
+
+	// 2. Delete all records from attendance_records
+	_, err = tx.Exec(context.Background(), `DELETE FROM attendance_records`)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Gagal menghapus catatan kehadiran siswa: " + err.Error()})
+		return
+	}
+
+	// 3. Delete all records from attendance_sessions
+	_, err = tx.Exec(context.Background(), `DELETE FROM attendance_sessions`)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Gagal menghapus sesi absensi: " + err.Error()})
+		return
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Gagal menyelesaikan transaksi: " + err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Semua data absensi berhasil diriset"})
+}
+
