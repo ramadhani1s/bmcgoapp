@@ -16,6 +16,7 @@ import 'package:frontend_mobile_bmc/screens/siswa/latihan_dari_materi_screen.dar
 import 'package:frontend_mobile_bmc/screens/siswa/pengumuman_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/olimpiade_screen.dart';
 import 'package:frontend_mobile_bmc/screens/tryout/tryout_list_screen.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/alumni_screen.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -58,7 +59,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      title: 'Bimbel Bintang Muda Center',
+      title: 'BMC GROWUP',
       initialRoute: '/splash',
 
       theme: ThemeData(
@@ -91,8 +92,8 @@ class MyApp extends StatelessWidget {
                 const PengumumanScreen(),
             '/olimpiade': (context) =>
                 const OlimpiadeScreen(),
-            '/mentor-tryout': (context) =>
-                const TryOutListScreen(),
+            '/mentor-tryout': (context) => const TryOutListScreen(),
+            '/alumni': (context) => const AlumniScreen(),
           },
 
           onGenerateRoute: (settings) {

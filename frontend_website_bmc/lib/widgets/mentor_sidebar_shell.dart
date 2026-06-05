@@ -81,13 +81,26 @@ class MentorSidebarShell extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 const Expanded(
-                  child: Text(
-                    'BMC Mentor',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                      height: 1.0,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'BMC GROWUP',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
+                      Text(
+                        'Mentor Portal',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

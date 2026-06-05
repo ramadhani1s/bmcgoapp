@@ -233,54 +233,36 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   }
 
   // 🔥 PERBAIKAN: Method untuk mendapatkan nama kelas (menjadi "Kelas X" bukan "Paket #")
-  String _resolveKelas(int paketId) {
-    // Cari di paketList berdasarkan paket_id
-    final paket = _findPaketById(paketId);
-    
-    if (paket != null) {
-      // Prioritas 1: Ambil dari field class_level
-      final classLevel = paket['class_level']?.toString();
-      if (classLevel != null && classLevel.isNotEmpty && classLevel != 'null') {
-        if (classLevel.contains('Kelas')) {
-          return classLevel;
-        }
-        if (classLevel.contains('IPA') || classLevel.contains('IPS')) {
-          return 'Kelas $classLevel';
-        }
-        return 'Kelas $classLevel';
+  String _resolveKelasFromJadwal(Map<String, dynamic> j) {
+    // 1. Ambil langsung dari field class_level milik jadwal
+    final classLevel = j['class_level']?.toString();
+    if (classLevel != null && classLevel.isNotEmpty && classLevel != 'null') {
+      if (classLevel.contains('Kelas')) {
+        return classLevel;
       }
-      
-      // Prioritas 2: Ambil dari nama_paket
-      final title = _packageLabel(paket);
-      if (title.toLowerCase().contains('kelas')) {
-        if (title.toLowerCase().startsWith('kelas')) {
-          return title;
-        }
-        return 'Kelas $title';
-      }
-      
-      // Prioritas 3: Format dari ID paket
-      return 'Kelas ${paket['id']}';
+      return 'Kelas $classLevel';
     }
-    
-    // 🔥 Jika paket tidak ditemukan, cari dari data jadwal
-    for (var jadwal in jadwalList) {
-      if (jadwal['paket_id'] == paketId) {
-        final classFromJadwal = jadwal['class_level']?.toString();
-        if (classFromJadwal != null && classFromJadwal.isNotEmpty && classFromJadwal != 'null') {
-          if (classFromJadwal.contains('Kelas')) {
-            return classFromJadwal;
-          }
-          if (classFromJadwal.contains('IPA') || classFromJadwal.contains('IPS')) {
-            return 'Kelas $classFromJadwal';
-          }
-          return 'Kelas $classFromJadwal';
+
+    // 2. Fallback: Cari di paketList berdasarkan paket_id
+    final paketId = j['paket_id'] as int?;
+    if (paketId != null) {
+      final paket = _findPaketById(paketId);
+      if (paket != null) {
+        final pkgClass = paket['class_level']?.toString();
+        if (pkgClass != null && pkgClass.isNotEmpty && pkgClass != 'null') {
+          if (pkgClass.contains('Kelas')) return pkgClass;
+          return 'Kelas $pkgClass';
         }
+        final title = _packageLabel(paket);
+        if (title.toLowerCase().contains('kelas')) {
+          return title.toLowerCase().startsWith('kelas') ? title : 'Kelas $title';
+        }
+        return 'Kelas ${paket['id']}';
       }
+      return 'Kelas $paketId';
     }
-    
-    // Default: Tampilkan sebagai Kelas dengan ID paket
-    return 'Kelas $paketId';
+
+    return '-';
   }
 
   bool _isSuccessResponse(dynamic result) {
@@ -444,7 +426,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
-          _resolveKelas(paketId ?? 0),
+          _resolveKelasFromJadwal(jadwal),
           style: TextStyle(
             color: warnaChip,
             fontWeight: FontWeight.w700,
