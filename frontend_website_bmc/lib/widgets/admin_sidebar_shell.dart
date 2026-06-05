@@ -73,7 +73,7 @@ class AdminSidebarShell extends StatelessWidget {
                 SizedBox(
                   width: 34,
                   height: 34,
-                  child: Image.asset('assets/images/BMC .png'),
+                  child: Image.asset('assets/images/BMC.png'),
                 ),
                 const SizedBox(width: 8),
                 const Expanded(
