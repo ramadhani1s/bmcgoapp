@@ -103,7 +103,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         isLoading = false;
       });
       
-      // Debug: Cetak data paketList
       print('========== DATA PAKET LIST ==========');
       for (var paket in paketList) {
         print('ID: ${paket['id']}, Nama: ${paket['nama_paket'] ?? paket['nama']}, Kelas: ${paket['class_level']}');
@@ -232,9 +231,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     return mentor == null ? 'Mentor #$mentorId' : _mentorLabel(mentor);
   }
 
-  // 🔥 PERBAIKAN: Method untuk mendapatkan nama kelas (menjadi "Kelas X" bukan "Paket #")
   String _resolveKelasFromJadwal(Map<String, dynamic> j) {
-    // 1. Ambil langsung dari field class_level milik jadwal
     final classLevel = j['class_level']?.toString();
     if (classLevel != null && classLevel.isNotEmpty && classLevel != 'null') {
       if (classLevel.contains('Kelas')) {
@@ -243,7 +240,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       return 'Kelas $classLevel';
     }
 
-    // 2. Fallback: Cari di paketList berdasarkan paket_id
     final paketId = j['paket_id'] as int?;
     if (paketId != null) {
       final paket = _findPaketById(paketId);
@@ -381,7 +377,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     return jadwalList.where((jadwal) => jadwal['hari'] == hariIni).length;
   }
 
-  // ==================== _buildRow (DIPERBAIKI) ====================
   DataRow _buildRow(Map<String, dynamic> jadwal, int index) {
     final paketId = jadwal['paket_id'] as int?;
     final mentorId = jadwal['mentor_id'] as int?;
@@ -395,7 +390,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       const Color(0xFF8B6EF6),
     ][index % 4];
 
-    // DataCell untuk hari
     final hariCell = DataCell(
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -414,10 +408,8 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       ),
     );
 
-    // DataCell untuk waktu
     final waktuCell = DataCell(Text('$jamMulai - $jamSelesai'));
 
-    // 🔥 DataCell untuk kelas (menggunakan _resolveKelas yang sudah diperbaiki)
     final kelasCell = DataCell(
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -436,17 +428,11 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
       ),
     );
 
-    // DataCell untuk mata pelajaran
     final mapelCell = DataCell(Text((jadwal['mata_pelajaran'] ?? '-').toString()));
-
-    // DataCell untuk mentor
     final mentorCell = DataCell(Text(_resolveMentorName(mentorId ?? 0)));
-
-    // DataCell untuk ruang
     final ruangCell = DataCell(Text((jadwal['ruang'] ?? '-').toString()));
 
     if (widget.mentorView) {
-      // Mentor View: 6 kolom (TANPA AKSI)
       return DataRow(
         cells: [
           hariCell,
@@ -458,7 +444,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         ],
       );
     } else {
-      // Admin View: 7 kolom (DENGAN AKSI)
       final aksiCell = DataCell(
         Row(
           children: [
@@ -524,73 +509,96 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title and Button Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.mentorView
-                            ? 'Jadwal Mengajar Saya'
-                            : 'Kelola Jadwal Pembelajaran',
-                        style: const TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                          letterSpacing: -0.4,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        widget.mentorView
-                            ? 'Jadwal yang ditetapkan admin untuk mentor yang sedang login'
-                            : 'Jadwal utama yang berlaku setiap minggu secara berkelanjutan',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
+            // ==================== HEADER BANNER GRADIENT BIRU ====================
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                if (!widget.mentorView) ...[
-                  const SizedBox(width: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => _createOrUpdateJadwal(),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Tambah Jadwal'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2563EB).withOpacity(0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
-              ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.mentorView
+                              ? 'Jadwal Mengajar Saya'
+                              : 'Kelola Jadwal Pembelajaran',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.mentorView
+                              ? 'Jadwal yang ditetapkan admin untuk mentor yang sedang login'
+                              : 'Jadwal utama yang berlaku setiap minggu secara berkelanjutan',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Icon(
+                    widget.mentorView ? Icons.calendar_month : Icons.edit_calendar,
+                    color: Colors.white,
+                    size: 64,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
 
-            // Stat Cards
+            // ==================== TOMBOL TAMBAH JADWAL ====================
+            if (!widget.mentorView)
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  onPressed: () => _createOrUpdateJadwal(),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Tambah Jadwal'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 20),
+
+            // ==================== STAT CARDS ====================
             Row(
               children: [
                 Expanded(
                   child: _StatCard(
-                    title: 'Total Jadwal Mingguan',
+                    title: 'Total Jadwal',
                     value: jadwalList.length.toString(),
                     subtitle: 'Kelas aktif per minggu',
                     color: const Color(0xFF2563EB),
-                    backgroundColor: const Color(0xFFDCEBFF),
+                    backgroundColor: const Color(0xFFEFF6FF),
                     icon: Icons.calendar_month_rounded,
                   ),
                 ),
@@ -600,8 +608,8 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                     title: 'Jadwal Hari Ini',
                     value: _countJadwalHariIni().toString(),
                     subtitle: _formatIndoDate(DateTime.now()),
-                    color: const Color(0xFF16A34A),
-                    backgroundColor: const Color(0xFFE0F4E8),
+                    color: const Color(0xFF10B981),
+                    backgroundColor: const Color(0xFFECFDF5),
                     icon: Icons.schedule_rounded,
                   ),
                 ),
@@ -609,7 +617,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Filter Section
+            // ==================== FILTER SECTION ====================
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -648,7 +656,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
             ),
             const SizedBox(height: 20),
 
-            // TABLE SECTION
+            // ==================== TABLE SECTION ====================
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -659,15 +667,16 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Table Header
+                  // Table Header dengan gradient biru
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 16,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                     decoration: const BoxDecoration(
-                      color: Color(0xFF2563EB),
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(18),
                         topRight: Radius.circular(18),
@@ -782,7 +791,6 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     );
   }
 
-  // SAFE DROPDOWN DENGAN MATERIAL WRAPPER
   Widget _buildSafeDropdown<T>({
     required T? value,
     required String hint,
@@ -851,56 +859,67 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withOpacity(0.18)),
+        gradient: LinearGradient(
+          colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
                   value,
                   style: TextStyle(
                     color: color,
-                    fontSize: 32,
+                    fontSize: 28,
                     fontWeight: FontWeight.w800,
                     height: 1,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF4B5563),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: const TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 11.5,
+                    fontSize: 10,
+                    color: Color(0xFF9CA3AF),
                   ),
                 ),
               ],
             ),
-          ),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: color, size: 24),
           ),
         ],
       ),
@@ -1159,7 +1178,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
               decoration: const BoxDecoration(
@@ -1222,7 +1240,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                 ],
               ),
             ),
-            // Body Form
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
               child: SingleChildScrollView(
@@ -1231,7 +1248,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Paket Les
                       _buildSafeFormDropdown<int>(
                         value: _selectedPaketId,
                         hint: 'Pilih Paket Les',
@@ -1240,8 +1256,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                         onChanged: (v) => setState(() => _selectedPaketId = v),
                       ),
                       const SizedBox(height: 12),
-
-                      // Mentor
                       _buildSafeFormDropdown<int>(
                         value: _selectedMentorId,
                         hint: 'Pilih Mentor',
@@ -1250,8 +1264,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                         onChanged: (v) => setState(() => _selectedMentorId = v),
                       ),
                       const SizedBox(height: 12),
-
-                      // Hari
                       _buildSafeFormDropdown<String>(
                         value: _selectedHariValue,
                         hint: 'Pilih Hari',
@@ -1260,8 +1272,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                         onChanged: (v) => setState(() => _selectedHariValue = v),
                       ),
                       const SizedBox(height: 12),
-
-                      // Jam Mulai
                       TextFormField(
                         controller: _jamMulaiController,
                         readOnly: true,
@@ -1278,8 +1288,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                         ),
                       ),
                       const SizedBox(height: 12),
-
-                      // Jam Selesai
                       TextFormField(
                         controller: _jamSelesaiController,
                         readOnly: true,
@@ -1296,8 +1304,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                         ),
                       ),
                       const SizedBox(height: 12),
-
-                      // Kelas
                       _buildSafeFormDropdown<String>(
                         value: _selectedClass,
                         hint: 'Pilih Kelas',
@@ -1306,8 +1312,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                         onChanged: (v) => setState(() => _selectedClass = v ?? _selectedClass),
                       ),
                       const SizedBox(height: 12),
-
-                      // Mata Pelajaran
                       _buildSafeFormDropdown<String>(
                         value: _selectedMataPelajaran,
                         hint: 'Pilih Mata Pelajaran',
@@ -1316,8 +1320,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                         onChanged: (v) => setState(() => _selectedMataPelajaran = v ?? _selectedMataPelajaran),
                       ),
                       const SizedBox(height: 12),
-
-                      // Ruang
                       TextFormField(
                         controller: _ruangController,
                         validator: (v) => v == null || v.isEmpty ? 'Ruang wajib diisi' : null,
@@ -1336,7 +1338,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                 ),
               ),
             ),
-            // Footer Buttons
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
               child: Row(
