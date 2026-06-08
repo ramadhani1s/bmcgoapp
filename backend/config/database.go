@@ -13,9 +13,11 @@ var DB *pgxpool.Pool
 func ConnectDB() {
 	// WAJIB baca dari environment variable
 	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		log.Fatal("DATABASE_URL is not set. Please add it in Railway Variables.")
-	}
+if dsn == "" {
+    // Fallback untuk local development
+    dsn = "postgresql://postgres:root@localhost:5432/bmcgo_db"
+    log.Println("Using default local database URL")
+}
 
 	log.Println("Connecting to database with DATABASE_URL")
 
