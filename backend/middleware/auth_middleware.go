@@ -15,8 +15,20 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		authHeader := c.GetHeader("Authorization")
+		var rawToken string
 
-		if authHeader == "" {
+		if authHeader != "" {
+			// format: Bearer TOKEN
+			tokenString := strings.Split(authHeader, " ")
+			if len(tokenString) == 2 {
+				rawToken = tokenString[1]
+			}
+		} else {
+			// fallback check query parameter
+			rawToken = c.Query("token")
+		}
+
+		if rawToken == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Token tidak ditemukan",
 			})
@@ -24,17 +36,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// format: Bearer TOKEN
-		tokenString := strings.Split(authHeader, " ")
-		if len(tokenString) != 2 {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Format token salah",
-			})
-			c.Abort()
-			return
-		}
-
-		token, err := jwt.Parse(tokenString[1], func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(rawToken, func(token *jwt.Token) (interface{}, error) {
 			return SECRET_KEY, nil
 		})
 

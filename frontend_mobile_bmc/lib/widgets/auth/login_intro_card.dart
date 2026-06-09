@@ -13,18 +13,11 @@ class LoginIntroCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Center(
-          child: Container(
-            width: 92,
-            height: 92,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F0E5),
-              borderRadius: BorderRadius.circular(2),
-            ),
-            child: Image.asset(
-              'assets/images/bmc_logo.png',
-              fit: BoxFit.contain,
-            ),
+          child: Image.asset(
+            'assets/images/bmc_logo.png',
+            width: 140,
+            height: 140,
+            fit: BoxFit.contain,
           ),
         ),
         const SizedBox(height: 12),

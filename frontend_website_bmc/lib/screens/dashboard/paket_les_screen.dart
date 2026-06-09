@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/paket_les_service.dart';
 
@@ -437,7 +437,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                                   Expanded(
                                     flex: 2,
                                     child: _buildTextField(
-                                      'Nama Paket *',
+                                      'Nama Paket',
                                       namaController,
                                       hint: 'Nama paket les...',
                                     ),
@@ -456,7 +456,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                                 children: [
                                   Expanded(
                                     child: _buildTextField(
-                                      'Harga Awal *',
+                                      'Harga Awal',
                                       hargaController,
                                       hint: '0',
                                       isNumber: true,
@@ -792,7 +792,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                                   Expanded(
                                     flex: 2,
                                     child: _buildTextField(
-                                      'Nama Paket *',
+                                      'Nama Paket',
                                       namaController,
                                       hint: 'Nama paket les...',
                                     ),
@@ -811,7 +811,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                                 children: [
                                   Expanded(
                                     child: _buildTextField(
-                                      'Harga Awal *',
+                                      'Harga Awal',
                                       hargaController,
                                       hint: '0',
                                       isNumber: true,
@@ -1110,23 +1110,96 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Hapus Paket"),
-        content: Text("Yakin ingin menghapus paket '${paket['nama_paket']}'?"),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        title: const Text(
+          'Hapus Paket Les?',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Apakah Anda yakin ingin menghapus paket les "${paket['nama_paket']}"?',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.warning, color: Color(0xFFDC2626), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aksi ini tidak bisa dibatalkan. Data kelas dan jadwal terkait juga dapat terpengaruh.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF991B1B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Batal"),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4B5563),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            child: const Text('Batal'),
           ),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               _deletePaket(paket['id']);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: const Color(0xFFEF4444),
               foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            child: const Text("Ya, Hapus"),
+            child: const Text('Hapus'),
           ),
         ],
       ),

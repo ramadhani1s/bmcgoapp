@@ -10,7 +10,7 @@ import '../screens/dashboard/mentor_tryout_screen.dart';
 import '../screens/dashboard/paket_les_screen.dart';
 import '../screens/dashboard/verifikasi_pendaftaran_screen.dart';
 import '../screens/dashboard/admin_dashboard.dart';
-import '../screens/dashboard/admin_kelola_absensi_screen.dart';
+import '../screens/dashboard/admin_laporan_absensi_screen.dart';
 import '../screens/dashboard/admin_kelola_alumni_screen.dart';
 import '../screens/mentor/materi_pembelajaran_screen.dart';
 import '../screens/mentor/latihan_soal_screen.dart';
@@ -42,7 +42,7 @@ class AppRoutes {
 
   static const String paketLes = '/paket-les';
   static const String soalLatihanManagement = '/soal-latihan-management';
-  static const String adminKelolaAbsensi = '/admin-kelola-absensi';
+  static const String adminLaporanAbsensi = '/admin-laporan-absensi';
   static const String adminKelolaAlumni = '/admin-kelola-alumni';
 
 
@@ -59,9 +59,9 @@ class AppRoutes {
           builder: (_) => AdminDashboard(initialMenuTitle: initialMenuTitle),
         );
 
-      case adminKelolaAbsensi:
+      case adminLaporanAbsensi:
         return MaterialPageRoute(
-          builder: (_) => const AdminKelolaAbsensiScreen(),
+          builder: (_) => const AdminLaporanAbsensiScreen(),
         );
 
       case adminKelolaAlumni:

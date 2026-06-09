@@ -17,7 +17,6 @@ class ReadOnlyProfileView extends StatelessWidget {
     required this.motherJob,
     required this.motherPhone,
     required this.motherAddress,
-    required this.signatureFileName,
   });
 
   final String nama;
@@ -34,7 +33,6 @@ class ReadOnlyProfileView extends StatelessWidget {
   final String motherJob;
   final String motherPhone;
   final String motherAddress;
-  final String signatureFileName;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +117,6 @@ class ReadOnlyProfileView extends StatelessWidget {
               infoRow('Pekerjaan ibu', motherJob),
               infoRow('WhatsApp ibu', motherPhone),
               infoRow('Alamat ibu', motherAddress),
-              infoRow('File tanda tangan', signatureFileName),
             ],
           ),
         ),

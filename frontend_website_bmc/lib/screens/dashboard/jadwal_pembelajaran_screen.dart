@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../models/user.dart';
+import '../../services/auth_service.dart';
 import '../../routes/app_routes.dart';
 import '../../services/jadwal_pembelajaran_service.dart';
 import '../../widgets/mentor_sidebar_shell.dart';
@@ -44,11 +46,13 @@ String _extractResultMessageDynamic(dynamic result) {
 class JadwalPembelajaranScreen extends StatefulWidget {
   final bool mentorView;
   final bool embeddedInDashboard;
+  final int? initialEditJadwalId;
 
   const JadwalPembelajaranScreen({
     super.key,
     this.mentorView = false,
     this.embeddedInDashboard = false,
+    this.initialEditJadwalId,
   });
 
   @override
@@ -66,6 +70,8 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   bool isLoading = true;
   String selectedHari = '';
   int? selectedMentorFilterId;
+  bool _hasTriggeredInitialEdit = false;
+  User? _currentUser;
 
   static const List<String> hariList = [
     'Senin',
@@ -86,6 +92,13 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   Future<void> _loadInitialData() async {
     setState(() => isLoading = true);
     try {
+      final user = await AuthService.getCurrentUser();
+      if (mounted) {
+        setState(() {
+          _currentUser = user;
+        });
+      }
+
       final results = await Future.wait([
         JadwalService.getPaketList(),
         JadwalService.getMentorList(),
@@ -102,6 +115,24 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         jadwalList = results[2];
         isLoading = false;
       });
+
+      if (widget.initialEditJadwalId != null && !_hasTriggeredInitialEdit) {
+        _hasTriggeredInitialEdit = true;
+        final targetId = widget.initialEditJadwalId;
+        final target = jadwalList.firstWhere(
+          (j) {
+            final idRaw = j['id'];
+            final id = idRaw is int ? idRaw : int.tryParse(idRaw?.toString() ?? '');
+            return id == targetId;
+          },
+          orElse: () => <String, dynamic>{},
+        );
+        if (target.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _createOrUpdateJadwal(existing: target);
+          });
+        }
+      }
       
       print('========== DATA PAKET LIST ==========');
       for (var paket in paketList) {
@@ -227,6 +258,12 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   }
 
   String _resolveMentorName(int mentorId) {
+    if (widget.mentorView) {
+      if (_currentUser != null && _currentUser!.nama.isNotEmpty) {
+        return _currentUser!.nama;
+      }
+      return 'Mentor';
+    }
     final mentor = _findMentorById(mentorId);
     return mentor == null ? 'Mentor #$mentorId' : _mentorLabel(mentor);
   }
@@ -326,23 +363,93 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Jadwal'),
-        content: const Text('Apakah Anda yakin ingin menghapus jadwal ini?'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        title: const Text(
+          'Hapus Jadwal?',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Apakah Anda yakin ingin menghapus jadwal pembelajaran ini?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.warning, color: Color(0xFFDC2626), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aksi ini tidak bisa dibatalkan. Data absensi dan rekaman kehadiran terkait juga akan dihapus secara permanen dari sistem.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF991B1B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4B5563),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             child: const Text('Batal'),
           ),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: const Color(0xFFEF4444),
               foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
               ),
             ),
-            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
+            child: const Text('Hapus'),
           ),
         ],
       ),
@@ -383,12 +490,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     final jamMulai = _timeToString(jadwal['jam_mulai']);
     final jamSelesai = _timeToString(jadwal['jam_selesai']);
 
-    final warnaChip = [
-      const Color(0xFF4C7DFF),
-      const Color(0xFF1CB58A),
-      const Color(0xFFF2A44B),
-      const Color(0xFF8B6EF6),
-    ][index % 4];
+    const warnaChip = Color(0xFF2563EB);
 
     final hariCell = DataCell(
       Container(
@@ -412,14 +514,14 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
 
     final kelasCell = DataCell(
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: warnaChip.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(999),
+          color: const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
           _resolveKelasFromJadwal(jadwal),
-          style: TextStyle(
+          style: const TextStyle(
             color: warnaChip,
             fontWeight: FontWeight.w700,
             fontSize: 12,
@@ -509,85 +611,57 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ==================== HEADER BANNER GRADIENT BIRU ====================
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2563EB).withOpacity(0.15),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            // ==================== HEADER INLINE ROW ====================
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.mentorView
+                            ? 'Jadwal Mengajar Saya'
+                            : 'Kelola Jadwal Pembelajaran',
+                        style: const TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.mentorView
+                            ? 'Jadwal yang ditetapkan admin untuk mentor yang sedang login'
+                            : 'Jadwal utama yang berlaku setiap minggu secara berkelanjutan',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.mentorView
-                              ? 'Jadwal Mengajar Saya'
-                              : 'Kelola Jadwal Pembelajaran',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          widget.mentorView
-                              ? 'Jadwal yang ditetapkan admin untuk mentor yang sedang login'
-                              : 'Jadwal utama yang berlaku setiap minggu secara berkelanjutan',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                ),
+                if (!widget.mentorView)
+                  ElevatedButton.icon(
+                    onPressed: () => _createOrUpdateJadwal(),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Tambah Jadwal'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
                     ),
                   ),
-                  const SizedBox(width: 24),
-                  Icon(
-                    widget.mentorView ? Icons.calendar_month : Icons.edit_calendar,
-                    color: Colors.white,
-                    size: 64,
-                  ),
-                ],
-              ),
+              ],
             ),
             const SizedBox(height: 24),
-
-            // ==================== TOMBOL TAMBAH JADWAL ====================
-            if (!widget.mentorView)
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton.icon(
-                  onPressed: () => _createOrUpdateJadwal(),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Tambah Jadwal'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 20),
 
             // ==================== STAT CARDS ====================
             Row(
@@ -798,6 +872,48 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
     List<T>? values,
     required void Function(T?) onChanged,
   }) {
+    String displayLabel = hint;
+    if (value != null) {
+      if (values != null && values.isNotEmpty) {
+        final idx = values.indexOf(value);
+        if (idx >= 0 && idx < items.length) {
+          displayLabel = items[idx];
+        }
+      } else {
+        displayLabel = value.toString();
+      }
+    }
+
+    final popupItems = (values != null && values.isNotEmpty)
+        ? List.generate(items.length, (index) {
+            return PopupMenuItem<T>(
+              value: values[index],
+              height: 38,
+              child: Text(
+                items[index],
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF374151),
+                ),
+              ),
+            );
+          })
+        : items.map((item) {
+            return PopupMenuItem<T>(
+              value: item as T,
+              height: 38,
+              child: Text(
+                item,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF374151),
+                ),
+              ),
+            );
+          }).toList();
+
     return Material(
       type: MaterialType.transparency,
       child: Container(
@@ -807,27 +923,45 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<T>(
-            value: value,
-            isExpanded: true,
-            hint: Text(hint),
-            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-            items: (values != null && values.isNotEmpty)
-                ? List.generate(items.length, (index) {
-                    return DropdownMenuItem<T>(
-                      value: values[index],
-                      child: Text(items[index]),
-                    );
-                  })
-                : items.map((item) {
-                    return DropdownMenuItem<T>(
-                      value: item as T,
-                      child: Text(item),
-                    );
-                  }).toList(),
-            onChanged: onChanged,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            hoverColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+          ),
+          child: PopupMenuButton<T>(
+            tooltip: '',
+            offset: const Offset(0, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            color: Colors.white,
+            onSelected: onChanged,
+            itemBuilder: (BuildContext context) => popupItems,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      displayLabel,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF374151),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Color(0xFF6B7280),
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -1132,6 +1266,14 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
     required List<String> labels,
     required void Function(T?) onChanged,
   }) {
+    String displayLabel = hint;
+    if (value != null) {
+      final idx = items.indexOf(value);
+      if (idx >= 0 && idx < labels.length) {
+        displayLabel = labels[idx];
+      }
+    }
+
     return Material(
       type: MaterialType.transparency,
       child: Container(
@@ -1140,20 +1282,60 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<T>(
-            value: value,
-            isExpanded: true,
-            hint: Text(hint),
-            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-            items: List.generate(items.length, (index) {
-              return DropdownMenuItem<T>(
-                value: items[index],
-                child: Text(labels[index]),
-              );
-            }).toList(),
-            onChanged: onChanged,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            hoverColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+          ),
+          child: PopupMenuButton<T>(
+            tooltip: '',
+            offset: const Offset(0, 48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            color: Colors.white,
+            onSelected: onChanged,
+            itemBuilder: (BuildContext context) {
+              return List.generate(items.length, (index) {
+                return PopupMenuItem<T>(
+                  value: items[index],
+                  height: 38,
+                  child: Text(
+                    labels[index],
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF374151),
+                    ),
+                  ),
+                );
+              }).toList();
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      displayLabel,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF374151),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Color(0xFF6B7280),
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -1168,13 +1350,18 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
       borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
     );
 
+    final screenHeight = MediaQuery.of(context).size.height;
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       contentPadding: EdgeInsets.zero,
-      content: SizedBox(
-        width: 500,
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          minWidth: 500,
+          maxWidth: 500,
+          maxHeight: screenHeight * 0.85,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1240,9 +1427,9 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+            Flexible(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -1283,6 +1470,11 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                           filled: true,
                           fillColor: const Color(0xFFF8FAFC),
                           border: fieldBorder,
+                          enabledBorder: fieldBorder,
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                          ),
                           prefixIcon: const Icon(Icons.access_time_rounded, size: 18, color: Color(0xFF2563EB)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                         ),
@@ -1299,6 +1491,11 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                           filled: true,
                           fillColor: const Color(0xFFF8FAFC),
                           border: fieldBorder,
+                          enabledBorder: fieldBorder,
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                          ),
                           prefixIcon: const Icon(Icons.access_time_rounded, size: 18, color: Color(0xFF2563EB)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                         ),
@@ -1329,6 +1526,11 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                           filled: true,
                           fillColor: const Color(0xFFF8FAFC),
                           border: fieldBorder,
+                          enabledBorder: fieldBorder,
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                          ),
                           prefixIcon: const Icon(Icons.meeting_room_outlined, size: 18, color: Color(0xFF2563EB)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                         ),

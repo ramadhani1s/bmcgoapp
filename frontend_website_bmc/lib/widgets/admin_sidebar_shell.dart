@@ -26,7 +26,7 @@ class AdminSidebarShell extends StatelessWidget {
     _SidebarMenuItem(title: 'Kelola Mentor', icon: Icons.groups_2_outlined),
     _SidebarMenuItem(title: 'Kelola Jadwal', icon: Icons.event_note_outlined),
     _SidebarMenuItem(
-      title: 'Kelola Absensi',
+      title: 'Laporan Absensi',
       icon: Icons.assignment_turned_in_outlined,
     ),
     _SidebarMenuItem(title: 'Kelola Pengumuman', icon: Icons.campaign_outlined),
@@ -78,7 +78,7 @@ class AdminSidebarShell extends StatelessWidget {
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'BMC Admin',
+                    'BMC GrowUp',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 15,

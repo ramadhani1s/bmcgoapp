@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_mobile_bmc/core/session/app_session.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -37,12 +38,22 @@ class _SplashScreenState extends State<SplashScreen>
     _animationController.forward();
   }
 
-  void _navigateToNextScreen() {
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/onboarding');
-      }
-    });
+  Future<void> _navigateToNextScreen() async {
+    // Tunggu animasi splash selesai (3 detik)
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+
+    // Cek apakah user sudah login
+    final token = await AppSession.getAuthToken();
+    if (!mounted) return;
+
+    if (token != null && token.isNotEmpty) {
+      // Sudah login → langsung dashboard
+      Navigator.of(context).pushReplacementNamed('/dashboard');
+    } else {
+      // Belum login → onboarding
+      Navigator.of(context).pushReplacementNamed('/onboarding');
+    }
   }
 
   @override
@@ -72,13 +83,13 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
-            Positioned(
+            const Positioned(
               left: 0,
               right: 0,
               bottom: 36,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Text(
                     'versi 1.0.0',
                     style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),

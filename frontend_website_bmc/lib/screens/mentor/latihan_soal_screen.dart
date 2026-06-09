@@ -234,48 +234,144 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: selectedMapel,
-                        dropdownColor: Colors.white,
-                        icon: const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: Color(0xFF6B7280),
-                          size: 20,
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Mata Pelajaran',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6B7280),
+                          ),
                         ),
-                        items: _mapelOptions
-                            .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                            .toList(),
-                        onChanged: (v) => setState(() => selectedMapel = v!),
-                        decoration: InputDecoration(
-                          labelText: 'Mata Pelajaran',
-                          border: fieldBorder,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                        ),
+                        child: Theme(
+                          data: Theme.of(context).copyWith(
+                            hoverColor: Colors.transparent,
+                            splashColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                          ),
+                          child: PopupMenuButton<String>(
+                            tooltip: '',
+                            offset: const Offset(0, 48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            color: Colors.white,
+                            onSelected: (v) => setState(() => selectedMapel = v),
+                            itemBuilder: (context) {
+                              return _mapelOptions.map((m) {
+                                return PopupMenuItem<String>(
+                                  value: m,
+                                  height: 38,
+                                  child: Text(m),
+                                );
+                              }).toList();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    selectedMapel,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF111827),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: Color(0xFF6B7280),
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: selectedClass,
-                        dropdownColor: Colors.white,
-                        icon: const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: Color(0xFF6B7280),
-                          size: 20,
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Kelas',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6B7280),
+                          ),
                         ),
-                        items: const [
-                          'Kelas 10 IPA',
-                          'Kelas 10 IPS',
-                          'Kelas 11 IPA',
-                          'Kelas 11 IPS',
-                          'Kelas 12 IPA',
-                          'Kelas 12 IPS'
-                        ]
-                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                            .toList(),
-                        onChanged: (v) => setState(() => selectedClass = v!),
-                        decoration: InputDecoration(
-                          labelText: 'Kelas',
-                          border: fieldBorder,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                        ),
+                        child: Theme(
+                          data: Theme.of(context).copyWith(
+                            hoverColor: Colors.transparent,
+                            splashColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                          ),
+                          child: PopupMenuButton<String>(
+                            tooltip: '',
+                            offset: const Offset(0, 48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            color: Colors.white,
+                            onSelected: (v) => setState(() => selectedClass = v),
+                            itemBuilder: (context) {
+                              return const [
+                                'Kelas 10 IPA',
+                                'Kelas 10 IPS',
+                                'Kelas 11 IPA',
+                                'Kelas 11 IPS',
+                                'Kelas 12 IPA',
+                                'Kelas 12 IPS'
+                              ].map((c) {
+                                return PopupMenuItem<String>(
+                                  value: c,
+                                  height: 38,
+                                  child: Text(c),
+                                );
+                              }).toList();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    selectedClass,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF111827),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: Color(0xFF6B7280),
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -383,28 +479,91 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
           ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
           title: const Text(
-            'Hapus Latihan?',
-            style: TextStyle(fontWeight: FontWeight.w800),
+            'Hapus Latihan Soal?',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1F2937),
+            ),
           ),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus "$title"? Semua soal di dalamnya akan dihapus permanen.',
-            style: const TextStyle(color: Color(0xFF6B7280), height: 1.4),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Apakah Anda yakin ingin menghapus latihan soal "$title"?',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF4B5563),
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFCA5A5)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Icon(Icons.warning, color: Color(0xFFDC2626), size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Aksi ini tidak bisa dibatalkan. Semua soal dan riwayat nilai siswa pada latihan ini akan dihapus selamanya dari sistem.',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: Color(0xFF991B1B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Batal', style: TextStyle(color: Color(0xFF6B7280))),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF4B5563),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              child: const Text('Batal'),
             ),
+            const SizedBox(width: 8),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFEF4444),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               child: const Text('Hapus'),
             ),
@@ -710,29 +869,79 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
           ),
         );
 
-        final classField = DropdownButtonFormField<String>(
-          value: _selectedClass,
-          dropdownColor: Colors.white,
-          icon: const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: Color(0xFF6B7280),
-            size: 20,
+        final classField = Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
-          items: _classOptions
-              .map(
-                (value) => DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              hoverColor: Colors.transparent,
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+            ),
+            child: PopupMenuButton<String>(
+              tooltip: '',
+              offset: const Offset(0, 44),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              color: Colors.white,
+              onSelected: (val) {
+                if (val != null) {
+                  setState(() {
+                    _selectedClass = val;
+                  });
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                return _classOptions.map((c) {
+                  return PopupMenuItem<String>(
+                    value: c,
+                    height: 38,
+                    child: Text(
+                      c,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF374151),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  );
+                }).toList();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Icon(
+                      Icons.class_outlined,
+                      size: 18,
+                      color: Color(0xFF2563EB),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _selectedClass,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF374151),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF6B7280),
+                      size: 20,
+                    ),
+                  ],
                 ),
-              )
-              .toList(),
-          onChanged: (value) =>
-              setState(() => _selectedClass = value ?? 'Semua Kelas'),
-          decoration: inputDecoration(
-            prefixIcon: const Icon(
-              Icons.class_outlined,
-              size: 18,
-              color: Color(0xFF2563EB),
+              ),
             ),
           ),
         );

@@ -15,7 +15,6 @@ class ConfirmationView extends StatelessWidget {
     required this.motherName,
     required this.motherJob,
     required this.motherPhone,
-    required this.signatureFileName,
   });
 
   final String nama;
@@ -30,7 +29,6 @@ class ConfirmationView extends StatelessWidget {
   final String motherName;
   final String motherJob;
   final String motherPhone;
-  final String signatureFileName;
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +103,6 @@ class ConfirmationView extends StatelessWidget {
               infoRow('Ibu', motherName),
               infoRow('Pekerjaan ibu', motherJob),
               infoRow('WhatsApp ibu', motherPhone),
-              infoRow('File tanda tangan', signatureFileName),
             ],
           ),
         ),

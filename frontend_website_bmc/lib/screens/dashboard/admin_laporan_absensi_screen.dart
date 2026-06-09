@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../routes/app_routes.dart';
-import '../../models/admin_kelola_absensi.dart';
-import '../../services/admin_kelola_absensi_service.dart';
+import '../../models/admin_laporan_absensi.dart';
+import '../../services/admin_laporan_absensi_service.dart';
+import '../../services/auth_service.dart';
 
-class AdminKelolaAbsensiScreen extends StatefulWidget {
-  const AdminKelolaAbsensiScreen({super.key});
+class AdminLaporanAbsensiScreen extends StatefulWidget {
+  const AdminLaporanAbsensiScreen({super.key});
 
   @override
-  State<AdminKelolaAbsensiScreen> createState() =>
-      _AdminKelolaAbsensiScreenState();
+  State<AdminLaporanAbsensiScreen> createState() =>
+      _AdminLaporanAbsensiScreenState();
 }
 
-class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
+class _AdminLaporanAbsensiScreenState extends State<AdminLaporanAbsensiScreen> {
   late Future<Map<String, dynamic>> futureData;
 
   String selectedKelas = "Semua Kelas";
@@ -68,15 +70,12 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
             filteredList = filteredList.where((e) => e.kelas.toLowerCase().contains(selectedKelas.toLowerCase()) || e.kelas.toLowerCase() == selectedKelas.toLowerCase()).toList();
           }
           if (selectedStatus != "Semua Status") {
-            if (selectedStatus == "Hadir") {
-              filteredList = filteredList.where((e) => e.status == "Hadir").toList();
-            } else if (selectedStatus == "Tidak Hadir") {
-              filteredList = filteredList.where((e) => e.status == "Tidak Hadir").toList();
-            }
+            filteredList = filteredList.where((e) => e.status.toLowerCase() == selectedStatus.toLowerCase()).toList();
           }
           if (searchQuery.isNotEmpty) {
             final query = searchQuery.toLowerCase();
             filteredList = filteredList.where((e) =>
+              e.siswa.toLowerCase().contains(query) ||
               e.kelas.toLowerCase().contains(query) ||
               e.mapel.toLowerCase().contains(query) ||
               e.mentor.toLowerCase().contains(query) ||
@@ -92,7 +91,7 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                 children: [
                   // ================= TITLE =================
                   const Text(
-                    "Kelola Absensi",
+                    "Laporan Absensi",
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w800,
@@ -112,10 +111,10 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                   Row(
                     children: [
                       _statCard(
-                        "Total Sesi",
+                        "Total Absensi",
                         totalSesi,
                         Colors.blue,
-                        Icons.calendar_today,
+                        Icons.assignment_outlined,
                       ),
                       _statCard(
                         "Total Hadir",
@@ -124,7 +123,7 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                         Icons.check_circle,
                       ),
                       _statCard(
-                        "Tidak Hadir",
+                        "Total Tidak Hadir",
                         totalTidakHadir,
                         Colors.red,
                         Icons.cancel,
@@ -146,7 +145,7 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                           },
                           decoration: InputDecoration(
                             hintText:
-                                "Cari berdasarkan kelas, mata pelajaran, mentor, atau tanggal...",
+                                "Cari berdasarkan nama siswa, kelas, mata pelajaran, mentor, atau tanggal...",
                             prefixIcon: const Icon(
                               Icons.search,
                               size: 24,
@@ -301,20 +300,18 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                           decoration: const BoxDecoration(
                             color: Color(0xFFF8FAFC),
                           ),
-
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
                               vertical: 16,
                             ),
-
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: const [
                                 Expanded(
                                   flex: 2,
                                   child: Text(
-                                    "TANGGAL & JADWAL",
+                                    "TANGGAL & JAM",
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       color: Color(0xFF334155),
@@ -322,7 +319,17 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                                     ),
                                   ),
                                 ),
-
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    "SISWA",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF334155),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
                                 Expanded(
                                   child: Text(
                                     "KELAS",
@@ -333,7 +340,6 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                                     ),
                                   ),
                                 ),
-
                                 Expanded(
                                   flex: 2,
                                   child: Text(
@@ -345,7 +351,6 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                                     ),
                                   ),
                                 ),
-
                                 Expanded(
                                   flex: 2,
                                   child: Text(
@@ -357,10 +362,21 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                                     ),
                                   ),
                                 ),
-
                                 Expanded(
                                   child: Text(
                                     "STATUS",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF334155),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    "LAPORAN",
+                                    textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       color: Color(0xFF334155),
@@ -394,7 +410,7 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                                 ),
                                 child: Row(
                                   children: [
-                                    // TANGGAL
+                                    // TANGGAL & JAM
                                     Expanded(
                                       flex: 2,
                                       child: Column(
@@ -418,27 +434,37 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                                       ),
                                     ),
 
+                                    // SISWA
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        item.siswa,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+
                                     // KELAS
                                     Expanded(
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.blue.withValues(
-                                            alpha: 0.1,
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
                                           ),
-                                          borderRadius: BorderRadius.circular(
-                                            10,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFEFF6FF),
+                                            borderRadius: BorderRadius.circular(10),
                                           ),
-                                        ),
-                                        child: Text(
-                                          item.kelas,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            color: Colors.blue,
-                                            fontWeight: FontWeight.w600,
+                                          child: Text(
+                                            item.kelas,
+                                            style: const TextStyle(
+                                              color: Color(0xFF2563EB),
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -456,14 +482,10 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                                           horizontal: 10,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: item.status == "Hadir"
-                                              ? const Color(0xFFDCFCE7) // Soft Green
-                                              : const Color(0xFFFEE2E2), // Soft Red
+                                          color: _getStatusBgColor(item.status),
                                           borderRadius: BorderRadius.circular(20),
                                           border: Border.all(
-                                            color: item.status == "Hadir"
-                                                ? const Color(0xFFBBF7D0)
-                                                : const Color(0xFFFCA5A5),
+                                            color: _getStatusBorderColor(item.status),
                                             width: 1,
                                           ),
                                         ),
@@ -471,12 +493,27 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
                                           item.status,
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
-                                            color: item.status == "Hadir"
-                                                ? const Color(0xFF166534)
-                                                : const Color(0xFF991B1B),
+                                            color: _getStatusTextColor(item.status),
                                             fontWeight: FontWeight.w700,
                                             fontSize: 11,
                                           ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    // DOWNLOAD ACTION
+                                    Expanded(
+                                      child: Center(
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.picture_as_pdf_rounded,
+                                            color: Color(0xFFDC2626),
+                                            size: 20,
+                                          ),
+                                          tooltip: "Unduh Laporan PDF",
+                                          onPressed: () {
+                                            _downloadLaporanPDF(item.siswaId);
+                                          },
                                         ),
                                       ),
                                     ),
@@ -557,32 +594,67 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
     required Function(String?) onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-
+      width: 160,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-
-      child: DropdownButton<String>(
-        value: items.contains(value) ? value : null,
-        underline: const SizedBox(),
-
-        icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF6B7280)),
-
-        style: const TextStyle(
-          fontSize: 14,
-          color: Color(0xFF374151),
-          fontWeight: FontWeight.w500,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          hoverColor: Colors.transparent,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
         ),
-
-        items: items.map((item) {
-          return DropdownMenuItem<String>(value: item, child: Text(item));
-        }).toList(),
-
-        onChanged: onChanged,
+        child: PopupMenuButton<String>(
+          tooltip: '',
+          offset: const Offset(0, 40),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          color: Colors.white,
+          onSelected: onChanged,
+          itemBuilder: (BuildContext context) {
+            return items.map((item) {
+              return PopupMenuItem<String>(
+                value: item,
+                height: 38,
+                child: Text(
+                  item,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF374151),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              );
+            }).toList();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    value ?? '',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF374151),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFF6B7280),
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -688,6 +760,38 @@ class _AdminKelolaAbsensiScreenState extends State<AdminKelolaAbsensiScreen> {
           ),
         );
       }
+    }
+  }
+
+  Color _getStatusBgColor(String status) {
+    if (status == "Hadir") return const Color(0xFFDCFCE7);
+    if (status == "Terlambat") return const Color(0xFFFEF3C7);
+    return const Color(0xFFFEE2E2);
+  }
+
+  Color _getStatusBorderColor(String status) {
+    if (status == "Hadir") return const Color(0xFFBBF7D0);
+    if (status == "Terlambat") return const Color(0xFFFDE68A);
+    return const Color(0xFFFCA5A5);
+  }
+
+  Color _getStatusTextColor(String status) {
+    if (status == "Hadir") return const Color(0xFF166534);
+    if (status == "Terlambat") return const Color(0xFFD97706);
+    return const Color(0xFF991B1B);
+  }
+
+  Future<void> _downloadLaporanPDF(int siswaId) async {
+    final token = await AuthService.getToken();
+    final url = Uri.parse('${AuthService.baseUrl}/api/admin/absensi/download-pdf/$siswaId?token=$token');
+    
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal mengunduh laporan PDF')),
+      );
     }
   }
 }

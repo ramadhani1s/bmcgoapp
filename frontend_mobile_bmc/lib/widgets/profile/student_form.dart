@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class StudentForm extends StatelessWidget {
   const StudentForm({
@@ -54,8 +55,16 @@ class StudentForm extends StatelessWidget {
           TextFormField(
             controller: whatsappController,
             keyboardType: TextInputType.phone,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: inputDecoration('No. WhatsApp siswa', Icons.phone_outlined),
-            validator: (v) => requiredValidator(v, 'No. WhatsApp siswa'),
+            validator: (v) {
+              final req = requiredValidator(v, 'No. WhatsApp siswa');
+              if (req != null) return req;
+              if (!RegExp(r'^[0-9]+$').hasMatch(v!.trim())) {
+                return 'Nomor WhatsApp harus berupa angka';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 12),
           TextFormField(

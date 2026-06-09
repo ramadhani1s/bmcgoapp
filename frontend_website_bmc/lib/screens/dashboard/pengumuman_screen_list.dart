@@ -162,7 +162,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Judul Pengumuman *',
+                                'Judul Pengumuman',
                                 style: TextStyle(
                                   color: _textDark,
                                   fontWeight: FontWeight.w700,
@@ -205,7 +205,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
                               ),
                               const SizedBox(height: 16),
                               const Text(
-                                'Isi Pengumuman *',
+                                'Isi Pengumuman',
                                 style: TextStyle(
                                   color: _textDark,
                                   fontWeight: FontWeight.w700,
@@ -453,7 +453,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Judul Pengumuman *',
+                                'Judul Pengumuman',
                                 style: TextStyle(
                                   color: _textDark,
                                   fontWeight: FontWeight.w700,
@@ -496,7 +496,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
                               ),
                               const SizedBox(height: 16),
                               const Text(
-                                'Isi Pengumuman *',
+                                'Isi Pengumuman',
                                 style: TextStyle(
                                   color: _textDark,
                                   fontWeight: FontWeight.w700,
@@ -829,22 +829,92 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Pengumuman'),
-        content: Text('Apakah Anda yakin ingin menghapus "$judul"?'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        title: const Text(
+          'Hapus Pengumuman?',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Apakah Anda yakin ingin menghapus pengumuman "$judul"?',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.warning, color: Color(0xFFDC2626), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aksi ini tidak bisa dibatalkan. Pengumuman yang dihapus tidak akan dapat diakses kembali oleh siswa atau mentor.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF991B1B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4B5563),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
               ),
             ),
+            child: const Text('Batal'),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             child: const Text('Hapus'),
           ),
         ],

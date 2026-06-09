@@ -107,6 +107,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
     }
     String? selectedFotoUrl = alumni?.foto;
     bool isSaving = false;
+    bool isUploadingFoto = false;
 
     final result = await showDialog<dynamic>(
       context: context,
@@ -194,350 +195,356 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
             }
           }
 
-          return Dialog(
+          final screenHeight = MediaQuery.of(ctx).size.height;
+          return AlertDialog(
             insetPadding: const EdgeInsets.symmetric(
               horizontal: 24,
-              vertical: 32,
+              vertical: 24,
             ),
-            backgroundColor: Colors.transparent,
-            child: ConstrainedBox(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+            contentPadding: EdgeInsets.zero,
+            content: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: 700,
-                maxHeight: MediaQuery.of(ctx).size.height * 0.9,
+                minWidth: 600,
+                maxWidth: 600,
+                maxHeight: screenHeight * 0.85,
               ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color.fromRGBO(15, 23, 42, 0.18),
-                      blurRadius: 30,
-                      offset: Offset(0, 18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Styled Header (Gradient Biru)
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(28),
+                        topRight: Radius.circular(28),
+                      ),
                     ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(32, 28, 20, 24),
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Color(0xFF1A3FA8),
-                              Color(0xFF2F57D0),
-                              Color(0xFF4B73F5),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(41),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.school_outlined,
+                            color: Colors.white,
+                            size: 22,
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    alumni == null
-                                        ? 'Tambah Profil Alumni'
-                                        : 'Edit Profil Alumni',
-                                    style: titleStyle,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    alumni == null
-                                        ? 'Isi detail alumni untuk ditampilkan pada halaman alumni'
-                                        : 'Perbarui data alumni',
-                                    style: bodyFont.copyWith(
-                                      color: Colors.white.withAlpha(184),
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                alumni == null ? 'Tambah Profil Alumni' : 'Edit Profil Alumni',
+                                style: titleStyle,
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              style: IconButton.styleFrom(
-                                backgroundColor: Colors.white.withAlpha(38),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                              const SizedBox(height: 4),
+                              Text(
+                                alumni == null
+                                    ? 'Isi detail alumni untuk ditampilkan pada halaman alumni'
+                                    : 'Perbarui data alumni yang sudah terdaftar.',
+                                style: bodyFont.copyWith(
+                                  color: Colors.white.withAlpha(184),
+                                  fontSize: 12,
+                                  height: 1.3,
                                 ),
                               ),
-                              icon: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      Flexible(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(32, 32, 32, 24),
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _fieldWithLabel(
-                                        font: bodyFont,
-                                        label: 'Nama Alumni',
-                                        requiredField: true,
-                                        child: TextField(
-                                          controller: namaController,
-                                          style: bodyFont.copyWith(
-                                            fontSize: 14,
-                                            color: const Color(0xFF111827),
-                                          ),
-                                          decoration: inputDecoration.copyWith(
-                                            hintText: 'Masukkan nama lengkap',
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 24),
-                                    Expanded(
-                                      child: _fieldWithLabel(
-                                        font: bodyFont,
-                                        label: 'Sekolah',
-                                        requiredField: true,
-                                        child: TextField(
-                                          controller: sekolahController,
-                                          style: bodyFont.copyWith(
-                                            fontSize: 14,
-                                            color: const Color(0xFF111827),
-                                          ),
-                                          decoration: inputDecoration.copyWith(
-                                            hintText: 'Nama sekolah asal',
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                _fieldWithLabel(
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(Icons.close, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Form Content (Scrollable & Responsive)
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _fieldWithLabel(
                                   font: bodyFont,
-                                  label: 'Tahun Lulus',
-                                  child: DropdownButtonFormField<int>(
-                                    initialValue: tahunOptions.contains(selectedTahun)
-                                      ? selectedTahun
-                                      : tahunOptions.first,
-                                    decoration: inputDecoration,
-                                    style: bodyFont.copyWith(
-                                      fontSize: 14,
-                                      color: const Color(0xFF111827),
-                                    ),
-                                    items: tahunOptions
-                                        .map(
-                                          (year) => DropdownMenuItem<int>(
-                                            value: year,
-                                            child: Text('$year'),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (value) {
-                                      if (value == null) return;
-                                      setStateDialog(
-                                        () => selectedTahun = value,
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                                _fieldWithLabel(
-                                  font: bodyFont,
-                                  label: 'Foto',
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF8FAFC),
-                                      border: Border.all(
-                                        color: const Color(0xFFD1D5DB),
-                                      ),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 60,
-                                          height: 60,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFE2E8F0),
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.image_outlined,
-                                            color: Color(0xFF64748B),
-                                            size: 28,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                (selectedFotoUrl?.isEmpty ??
-                                                        true)
-                                                    ? 'Belum ada foto'
-                                                    : 'Foto sudah dipilih',
-                                                style: bodyFont.copyWith(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: const Color(
-                                                    0xFF334155,
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'JPG atau PNG. Disarankan ukuran foto wajah yang jelas.',
-                                                style: bodyFont.copyWith(
-                                                  fontSize: 12,
-                                                  color: const Color(
-                                                    0xFF64748B,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        ElevatedButton(
-                                          onPressed: () async {
-                                            final url = await pickAndUpload();
-                                            if (!ctx.mounted) return;
-                                            if (url != null && url.isNotEmpty) {
-                                              setStateDialog(() {
-                                                selectedFotoUrl = url;
-                                              });
-                                              messenger.showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    'Foto berhasil diupload',
-                                                  ),
-                                                  backgroundColor: Colors.green,
-                                                ),
-                                              );
-                                            } else {
-                                              messenger.showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    'Gagal upload foto',
-                                                  ),
-                                                  backgroundColor: Colors.red,
-                                                ),
-                                              );
-                                            }
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFF22C55E,
-                                            ),
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 18,
-                                              vertical: 11,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(9),
-                                            ),
-                                            elevation: 0,
-                                          ),
-                                          child: const Text('Upload Foto'),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                                _fieldWithLabel(
-                                  font: bodyFont,
-                                  label: 'Prestasi',
+                                  label: 'Nama Alumni',
+                                  requiredField: true,
                                   child: TextField(
-                                    controller: prestasiController,
-                                    maxLines: 4,
+                                    controller: namaController,
                                     style: bodyFont.copyWith(
                                       fontSize: 14,
                                       color: const Color(0xFF111827),
                                     ),
                                     decoration: inputDecoration.copyWith(
-                                      hintText:
-                                          'Tuliskan prestasi atau pencapaian alumni...',
-                                      alignLabelWithHint: true,
+                                      hintText: 'Masukkan nama lengkap',
                                     ),
                                   ),
                                 ),
-                              ],
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _fieldWithLabel(
+                                  font: bodyFont,
+                                  label: 'Sekolah',
+                                  requiredField: true,
+                                  child: TextField(
+                                    controller: sekolahController,
+                                    style: bodyFont.copyWith(
+                                      fontSize: 14,
+                                      color: const Color(0xFF111827),
+                                    ),
+                                    decoration: inputDecoration.copyWith(
+                                      hintText: 'Nama sekolah asal',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _fieldWithLabel(
+                            font: bodyFont,
+                            label: 'Tahun Lulus',
+                            child: Container(
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFD1D5DB)),
+                              ),
+                              child: Theme(
+                                data: Theme.of(context).copyWith(
+                                  hoverColor: Colors.transparent,
+                                  splashColor: Colors.transparent,
+                                  highlightColor: Colors.transparent,
+                                ),
+                                child: PopupMenuButton<int>(
+                                  tooltip: '',
+                                  offset: const Offset(0, 44),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  color: Colors.white,
+                                  onSelected: (value) {
+                                    setStateDialog(() {
+                                      selectedTahun = value;
+                                    });
+                                  },
+                                  itemBuilder: (BuildContext context) {
+                                    return tahunOptions.map((year) {
+                                      return PopupMenuItem<int>(
+                                        value: year,
+                                        height: 38,
+                                        child: Text(
+                                          '$year',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF374151),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList();
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          '$selectedTahun',
+                                          style: bodyFont.copyWith(
+                                            fontSize: 14,
+                                            color: const Color(0xFF111827),
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          color: Color(0xFF6B7280),
+                                          size: 20,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            OutlinedButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF374151),
-                                side: const BorderSide(
-                                  color: Color(0xFFD1D5DB),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 22,
-                                  vertical: 11,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                          const SizedBox(height: 16),
+                          _fieldWithLabel(
+                            font: bodyFont,
+                            label: 'Foto',
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: isUploadingFoto
+                                    ? null
+                                    : () async {
+                                        setStateDialog(() {
+                                          isUploadingFoto = true;
+                                        });
+                                        try {
+                                          final url = await pickAndUpload();
+                                          if (url != null) {
+                                            setStateDialog(() {
+                                              selectedFotoUrl = url;
+                                            });
+                                          }
+                                        } finally {
+                                          setStateDialog(() {
+                                            isUploadingFoto = false;
+                                          });
+                                        }
+                                      },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    border: Border.all(
+                                      color: const Color(0xFFD1D5DB),
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE2E8F0),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: isUploadingFoto
+                                            ? const Center(
+                                                child: SizedBox(
+                                                  width: 24,
+                                                  height: 24,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2.5,
+                                                    color: Color(0xFF2563EB),
+                                                  ),
+                                                ),
+                                              )
+                                            : (selectedFotoUrl != null && selectedFotoUrl!.isNotEmpty)
+                                                ? ClipRRect(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    child: Image.network(
+                                                      selectedFotoUrl!,
+                                                      width: 60,
+                                                      height: 60,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context, error, stackTrace) {
+                                                        return const Icon(
+                                                          Icons.broken_image_outlined,
+                                                          color: Colors.red,
+                                                          size: 28,
+                                                        );
+                                                      },
+                                                    ),
+                                                  )
+                                                : const Icon(
+                                                    Icons.image_outlined,
+                                                    color: Color(0xFF64748B),
+                                                    size: 28,
+                                                  ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              isUploadingFoto
+                                                  ? 'Sedang Mengunggah...'
+                                                  : (selectedFotoUrl?.isEmpty ?? true)
+                                                      ? 'Klik untuk unggah foto'
+                                                      : 'Foto Berhasil Diunggah! ✓',
+                                              style: bodyFont.copyWith(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                color: isUploadingFoto
+                                                    ? const Color(0xFF2563EB)
+                                                    : (selectedFotoUrl?.isEmpty ?? true)
+                                                        ? const Color(0xFF334155)
+                                                        : Colors.green,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'JPG atau PNG. Disarankan ukuran foto wajah yang jelas.',
+                                              style: bodyFont.copyWith(
+                                                fontSize: 12,
+                                                color: const Color(0xFF64748B),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              child: const Text('Batal'),
                             ),
-                            const SizedBox(width: 10),
-                            ElevatedButton(
-                              onPressed: isSaving
-                                  ? null
-                                  : () => submit(setStateDialog),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2F57D0),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 26,
-                                  vertical: 11,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: Text(
-                                alumni == null
-                                    ? 'Tambah Alumni'
-                                    : 'Simpan Perubahan',
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFD8E1EE)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: const Text('Batal'),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: isSaving ? null : () => submit(setStateDialog),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2563EB),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: isSaving
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
+                              : const Text('Simpan'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -1066,41 +1073,77 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
         const SizedBox(width: 12),
         Container(
           width: 200,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          height: 54,
           decoration: BoxDecoration(
             border: Border.all(color: const Color(0xFFE5E7EB)),
             borderRadius: BorderRadius.circular(14),
             color: Colors.white,
           ),
-          child: Builder(builder: (_) {
-            final items = _buildYearFilterOptions()
-                .map((tahun) => DropdownMenuItem(
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              hoverColor: Colors.transparent,
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+            ),
+            child: Builder(builder: (_) {
+              final options = _buildYearFilterOptions();
+              final hasSelected = options.contains(_selectedTahun);
+              final displayValue = hasSelected ? _selectedTahun : 'Semua Tahun';
+
+              return PopupMenuButton<String>(
+                tooltip: '',
+                offset: const Offset(0, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                color: Colors.white,
+                onSelected: (value) {
+                  setState(() => _selectedTahun = value);
+                  _applyFilters();
+                },
+                itemBuilder: (BuildContext context) {
+                  return options.map((tahun) {
+                    return PopupMenuItem<String>(
                       value: tahun,
+                      height: 38,
                       child: Text(
                         tahun,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
+                          color: Color(0xFF374151),
                         ),
                       ),
-                    ))
-                .toList();
-            final hasSelected = items.any((it) => it.value == _selectedTahun);
-
-            return DropdownButton<String>(
-              value: hasSelected ? _selectedTahun : null,
-              isExpanded: true,
-              underline: const SizedBox(),
-              icon: const Icon(Icons.expand_more, color: Color(0xFF6B7280)),
-              items: items,
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _selectedTahun = value);
-                  _applyFilters();
-                }
-              },
-            );
-          }),
+                    );
+                  }).toList();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          displayValue,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF374151),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF6B7280),
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
         ),
       ],
     );
@@ -1116,18 +1159,93 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Hapus Alumni'),
-        content: Text(
-          'Yakin ingin menghapus ${alumni.nama} dari daftar alumni?',
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        title: const Text(
+          'Hapus Data Alumni?',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Apakah Anda yakin ingin menghapus data alumni "${alumni.nama}"?',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.warning, color: Color(0xFFDC2626), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aksi ini tidak bisa dibatalkan. Seluruh data prestasi dan profil alumni ini akan dihapus secara permanen dari sistem.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF991B1B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4B5563),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             child: const Text('Batal'),
           ),
-          TextButton(
+          const SizedBox(width: 8),
+          ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            child: const Text('Hapus'),
           ),
         ],
       ),
@@ -1171,14 +1289,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF374151),
                 ),
-            children: [
-              TextSpan(text: label),
-              if (requiredField)
-                const TextSpan(
-                  text: ' *',
-                  style: TextStyle(color: Color(0xFFE53E3E)),
-                ),
-            ],
+            text: label,
           ),
         ),
         const SizedBox(height: 8),

@@ -2,8 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../routes/app_routes.dart';
 import '../../services/attendance_service.dart';
+import '../../services/jadwal_pembelajaran_service.dart';
+import '../../services/auth_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/mentor_sidebar_shell.dart';
 import 'jadwal_pembelajaran_screen.dart';
@@ -28,12 +32,16 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
   Duration _hadirRemaining = Duration.zero;
   Duration _terlambatRemaining = Duration.zero;
 
+  List<String> _mentorClasses = [];
+  List<String> _mentorSubjects = [];
+
   // use shared AppColors
 
   @override
   void initState() {
     super.initState();
     _loadActiveSession();
+    _loadMentorSchedules();
     _startTimers();
   }
 
@@ -185,81 +193,264 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     });
   }
 
-  Future<void> _startAttendance() async {
-    final classController = TextEditingController();
-    final subjectController = TextEditingController();
+  Future<void> _loadMentorSchedules() async {
+    try {
+      final res = await JadwalService.getMentorJadwalList();
+      final classes = <String>{};
+      final subjects = <String>{};
+      for (final s in res) {
+        final classLevel = s['class_level']?.toString();
+        if (classLevel != null && classLevel.isNotEmpty && classLevel != 'null') {
+          classes.add(classLevel.trim());
+        }
+        final mapel = s['mata_pelajaran']?.toString();
+        if (mapel != null && mapel.isNotEmpty && mapel != 'null') {
+          subjects.add(mapel.trim());
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _mentorClasses = classes.toList()..sort();
+          _mentorSubjects = subjects.toList()..sort();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading mentor schedules: $e');
+    }
+  }
 
-    final proceed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          title: const Text(
-            'Mulai Absensi Kelas',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
-            ),
-          ),
-          content: SizedBox(
-            width: 420,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: classController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nama Kelas',
-                    hintText: 'Contoh: Kelas 12 IPA A',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: subjectController,
-                  decoration: const InputDecoration(
-                    labelText: 'Mata Pelajaran (opsional)',
-                    hintText: 'Contoh: Matematika',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF6B7280),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accentBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Mulai'),
-            ),
-          ],
-        );
-      },
+  Future<void> _startAttendance() async {
+    final classController = TextEditingController(
+      text: _mentorClasses.isNotEmpty ? _mentorClasses.first : '',
+    );
+    final subjectController = TextEditingController(
+      text: _mentorSubjects.isNotEmpty ? _mentorSubjects.first : '',
     );
 
-    if (proceed != true) {
+    final resultData = await showDialog<Map<String, String>>(
+      context: context,
+      barrierColor: Colors.black.withAlpha(107),
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setStateDialog) {
+          final titleStyle = GoogleFonts.plusJakartaSans(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          );
+          final labelFont = GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF374151),
+          );
+
+          final screenHeight = MediaQuery.of(ctx).size.height;
+
+          return AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 24,
+            ),
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+            contentPadding: EdgeInsets.zero,
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: 460,
+                maxWidth: 460,
+                maxHeight: screenHeight * 0.85,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Styled Header (Gradient Biru)
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(28),
+                        topRight: Radius.circular(28),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(41),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.play_circle_outline_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Mulai Absensi Kelas',
+                                style: titleStyle,
+                              ),
+                              Text(
+                                'Atur detail sesi absensi baru Anda',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white.withAlpha(200),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Fields Container
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Label Kelas
+                        Text('Nama Kelas', style: labelFont),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: classController,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            color: const Color(0xFF111827),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan nama kelas (e.g. 10 IPA)',
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Label Mapel
+                        Text('Mata Pelajaran', style: labelFont),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: subjectController,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            color: const Color(0xFF111827),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan mata pelajaran (e.g. Matematika)',
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Actions / Footer Buttons
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF374151),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 22,
+                              vertical: 14,
+                            ),
+                            side: const BorderSide(color: Color(0xFFD8E1EE)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text('Batal'),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () {
+                            final cls = classController.text.trim();
+                            final subj = subjectController.text.trim();
+                            if (cls.isEmpty) {
+                              ScaffoldMessenger.of(dialogCtx).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Nama kelas wajib diisi'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+                            Navigator.of(ctx).pop({
+                              'class_name': cls,
+                              'subject': subj,
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2563EB),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text('Mulai'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    if (resultData == null) {
       return;
     }
 
@@ -268,8 +459,8 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
     });
 
     final result = await AttendanceService.startSession(
-      className: classController.text,
-      subject: subjectController.text,
+      className: resultData['class_name']!,
+      subject: resultData['subject']!,
     );
 
     if (!mounted) {
@@ -709,11 +900,13 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                         DataColumn(label: Text('Email')),
                         DataColumn(label: Text('Status')),
                         DataColumn(label: Text('Waktu Input')),
+                        DataColumn(label: Text('Laporan')),
                       ],
                       rows: _records.map((item) {
                         final status = (item['status'] ?? '-').toString();
+                        final siswaId = item['siswa_id'];
                         return DataRow(
-                          cells: [
+                           cells: [
                             DataCell(Text((item['nama'] ?? '-').toString())),
                             DataCell(Text((item['email'] ?? '-').toString())),
                             DataCell(
@@ -739,6 +932,21 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
                               ),
                             ),
                             DataCell(Text(_formatDate(item['submitted_at']))),
+                            DataCell(
+                              Center(
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.picture_as_pdf_rounded,
+                                    color: Color(0xFFDC2626),
+                                    size: 20,
+                                  ),
+                                  tooltip: "Unduh Laporan PDF",
+                                  onPressed: () {
+                                    _downloadStudentPDF(siswaId);
+                                  },
+                                ),
+                              ),
+                            ),
                           ],
                         );
                       }).toList(),
@@ -748,6 +956,35 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
               },
             ),
     );
+  }
+
+  Future<void> _downloadStudentPDF(dynamic siswaId) async {
+    if (siswaId == null) return;
+    try {
+      final token = await AuthService.getToken();
+      final url = Uri.parse('${AuthService.baseUrl}/api/mentor/absensi/download-pdf/$siswaId?token=$token');
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Gagal mengunduh PDF"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Terjadi kesalahan: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override

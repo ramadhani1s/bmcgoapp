@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/services/auth_service.dart';
 import 'package:frontend_mobile_bmc/core/session/app_session.dart';
 import 'package:frontend_mobile_bmc/widgets/auth/bmc_text_field.dart';
@@ -217,8 +217,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ? null
                                           : _handleLogin,
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: _primaryColor,
-                                        disabledBackgroundColor: _primaryColor,
+                                        backgroundColor: const Color(0xFFFF7070),
+                                        disabledBackgroundColor: const Color(0x99FF7070),
                                         elevation: 0,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
