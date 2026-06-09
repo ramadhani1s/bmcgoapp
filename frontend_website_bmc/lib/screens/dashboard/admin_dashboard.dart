@@ -513,14 +513,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
       }
     });
 
-    if (item.title == 'Dashboard') {
+    if (item.title == 'Beranda') {
       _loadSummary();
       _loadTodaySchedules();
     }
   }
 
   List<_SideMenuItem> get _menuItems => const [
-    _SideMenuItem('Dashboard', Icons.grid_view_rounded),
+    _SideMenuItem('Beranda', Icons.grid_view_rounded),
     _SideMenuItem('Verifikasi Pendaftaran', Icons.fact_check_outlined),
     _SideMenuItem('Kelola Mentor', Icons.groups_2_outlined),
     _SideMenuItem('Kelola Jadwal', Icons.event_note_outlined),
@@ -950,28 +950,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ],
             ),
           ),
-          const SizedBox(width: 16),
-          Stack(
-            children: [
-              const Icon(
-                Icons.notifications_none_rounded,
-                color: Color(0xFF7D8797),
-                size: 22,
-              ),
-              Positioned(
-                right: 1,
-                top: 2,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF4057),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
+         
           const SizedBox(width: 16),
           MouseRegion(
             cursor: SystemMouseCursors.click,

@@ -157,29 +157,30 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/BMC .png',
+                'assets/images/BMC .png', 
                 width: compact ? 88 : 170,
                 height: compact ? 88 : 170,
                 fit: BoxFit.contain,
               ),
-              SizedBox(height: compact ? 12 : 24),
+              SizedBox(height: compact ? 16 : 28),
               Text(
-                'Portal Admin & Mentor\nBintang Muda Center',
+                'Bintang Muda Center',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: compact ? 26 : 50,
+                  fontSize: compact ? 22 : 34,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2937),
-                  height: 1.18,
+                  color: const Color(0xFF1F2937),
+                  height: 1.2,
+                  letterSpacing: -0.3,
                 ),
               ),
-              SizedBox(height: compact ? 8 : 24),
+              SizedBox(height: compact ? 12 : 20),
               Text(
                 'Selamat datang di sistem manajemen Bimbingan Belajar\nBintang Muda Center. Kelola semua aspek operasional\ndengan mudah.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: compact ? 12 : 14,
-                  color: Color(0xFF4B5563),
+                  color: const Color(0xFF4B5563),
                   height: 1.45,
                 ),
               ),
@@ -224,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
             TextFormField(
               controller: _passwordController,
               obscureText: !_isPasswordVisible,
-              decoration: _inputDecoration('Password', Icons.lock_outline)
+              decoration: _inputDecoration('Kata Sandi', Icons.lock_outline)
                   .copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -242,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Password tidak boleh kosong';
+                  return 'Kata sandi tidak boleh kosong';
                 }
                 return null;
               },

@@ -23,7 +23,7 @@ class MentorDashboard extends StatefulWidget {
 
 class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   User? _currentUser;
-  String _activeMenuTitle = 'Dashboard';
+  String _activeMenuTitle = 'Beranda';
   bool _loadingDashboardCards = true;
   List<Map<String, dynamic>> _recentSchedules = [];
   List<Map<String, dynamic>> _paketList = [];
@@ -36,7 +36,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   static const Color _sidebarActive = Color(0xFF2A58F2);
 
   final List<_SidebarMenuItem> _menuItems = const [
-    _SidebarMenuItem(title: 'Dashboard', icon: Icons.home_outlined),
+    _SidebarMenuItem(title: 'Beranda', icon: Icons.home_outlined),
     _SidebarMenuItem(
       title: 'Jadwal Mengajar',
       icon: Icons.calendar_month_outlined,
@@ -76,8 +76,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
 
   @override
   void didPopNext() {
-    // Called when the top route has been popped and this route shows again.
-    setState(() => _activeMenuTitle = 'Dashboard');
+    setState(() => _activeMenuTitle = 'Beranda');
     _loadStats();
     _loadDashboardCards();
   }
@@ -130,16 +129,12 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Future<void> _loadStats() async {
-    // Stats are no longer displayed on the dashboard; keep method for
-    // compatibility but avoid storing unused fields.
     try {
       await LatihanManagementService.getLatihan();
       await LatihanSoalService.getSoalLatihan();
       await MentorCompetitionService.getByType('tryout');
       await MentorCompetitionService.getByType('olimpiade');
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) {}
   }
 
   String _pickValue(
@@ -221,22 +216,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     final start = rawStart == '-' ? '-' : _timeToString(rawStart);
     final end = rawEnd == '-' ? '-' : _timeToString(rawEnd);
     return '$start${end == '-' ? '' : ' - $end'}';
-  }
-
-  void _showNotifications() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Notifikasi'),
-        content: const Text('Tidak ada notifikasi baru.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tutup'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _openProfilePage() async {
@@ -419,42 +398,58 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     return '$day, ${now.day} $month ${now.year}';
   }
 
+  // ==================== PERBAIKAN UTAMA: _onMenuTap ====================
   Future<void> _onMenuTap(String title) async {
-    setState(() => _activeMenuTitle = title);
-    if (title == 'Dashboard') return;
+    // 🔥 PERBAIKAN: Jika memilih Beranda
+    if (title == 'Beranda') {
+      // Jika sudah di halaman Beranda, tidak perlu lakukan apa-apa
+      if (_activeMenuTitle == 'Beranda') return;
+      
+      // Update state
+      setState(() => _activeMenuTitle = 'Beranda');
+      
+      // Kembalikan ke halaman dashboard (pop semua halaman di stack)
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      return;
+    }
 
+    setState(() => _activeMenuTitle = title);
     final navigator = Navigator.of(context);
 
     if (title == 'Jadwal Mengajar') {
       await navigator.push(
-        InstantPageRoute(
-          child: const JadwalPembelajaranScreen(mentorView: true),
+        MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
         ),
       );
       await _loadStats();
+      setState(() => _activeMenuTitle = 'Beranda');
       return;
     }
     if (title == 'Absensi Kelas') {
       await navigator.push(
-        InstantPageRoute(child: const MentorAttendanceScreen()),
+        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
       );
       await _loadStats();
+      setState(() => _activeMenuTitle = 'Beranda');
       return;
     }
     if (title == 'Soal Latihan') {
       await navigator.pushNamed(AppRoutes.mentorExercise);
       await _loadStats();
+      setState(() => _activeMenuTitle = 'Beranda');
       return;
     }
     if (title == 'Try Out') {
       await navigator.pushNamed(AppRoutes.mentorTryout);
       await _loadStats();
+      setState(() => _activeMenuTitle = 'Beranda');
       return;
     }
     if (title == 'Materi Pembelajaran') {
       await navigator.push(
-        InstantPageRoute(
-          child: MateriPembelajaranScreen(
+        MaterialPageRoute(
+          builder: (_) => MateriPembelajaranScreen(
             initialClass: _selectedClass == 'Semua Kelas'
                 ? null
                 : _selectedClass,
@@ -462,13 +457,16 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
         ),
       );
       await _loadStats();
+      setState(() => _activeMenuTitle = 'Beranda');
       return;
     }
     if (title == 'Olimpiade Akademik') {
       await navigator.push(
-        InstantPageRoute(child: const MentorOlimpiadeScreen()),
+        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
       );
       await _loadStats();
+      setState(() => _activeMenuTitle = 'Beranda');
+      return;
     }
   }
 
@@ -547,7 +545,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Dashboard Mentor',
+                'Beranda Mentor',
                 style: TextStyle(
                   color: Color(0xFF1F3C88),
                   fontWeight: FontWeight.w900,
@@ -555,7 +553,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   height: 1.0,
                 ),
               ),
-
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -571,52 +568,9 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
           ),
         ),
         const SizedBox(width: 12),
-        _buildNotificationButton(),
-        const SizedBox(width: 10),
         GestureDetector(
           onTap: _openProfilePage,
           child: _buildProfileButton(displayName),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTopActionButton(IconData icon, {required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Icon(icon, size: 18, color: const Color(0xFF475569)),
-      ),
-    );
-  }
-
-  Widget _buildNotificationButton() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        _buildTopActionButton(
-          Icons.notifications_none,
-          onTap: _showNotifications,
-        ),
-        Positioned(
-          right: 7,
-          top: 7,
-          child: Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEF4444),
-              shape: BoxShape.circle,
-            ),
-          ),
         ),
       ],
     );
@@ -976,55 +930,9 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               child: Center(child: CircularProgressIndicator()),
             )
           else if (_recentSchedules.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 22),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(
-                      Icons.event_busy_outlined,
-                      size: 46,
-                      color: Color(0xFFD1D5DB),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Belum ada jadwal mengajar.',
-                      style: TextStyle(
-                        color: Color(0xFF8B909A),
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            )
+            _buildEmptyScheduleState()
           else if (filtered.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 22),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(
-                      Icons.event_busy_outlined,
-                      size: 46,
-                      color: Color(0xFFD1D5DB),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Belum ada jadwal mengajar.',
-                      style: TextStyle(
-                        color: Color(0xFF8B909A),
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            )
+            _buildEmptyScheduleState()
           else
             Column(
               children: filtered
@@ -1032,6 +940,33 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   .toList(),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyScheduleState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 22),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(
+              Icons.event_busy_outlined,
+              size: 46,
+              color: Color(0xFFD1D5DB),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Belum ada jadwal mengajar.',
+              style: TextStyle(
+                color: Color(0xFF8B909A),
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1274,68 +1209,6 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     );
   }
 
-  // ignore: unused_element
-  List<String> _availableClasses() {
-    // Normalize values: trim and deduplicate to avoid duplicate menu items
-    final normalized = <String>{};
-
-    for (final item in _recentSchedules) {
-      final raw = _pickValue(item, [
-        'kelas',
-        'class_level',
-        'class_name',
-      ], fallback: '');
-      final kelas = raw.trim();
-      if (kelas.isNotEmpty) normalized.add(kelas);
-    }
-
-    for (final t in _recentTryouts) {
-      final kelas = t.classLevel.trim();
-      if (kelas.isNotEmpty) normalized.add(kelas);
-    }
-
-    for (final o in _recentOlimpiades) {
-      final kelas = o.classLevel.trim();
-      if (kelas.isNotEmpty) normalized.add(kelas);
-    }
-
-    // Ensure the default option exists and keep it at top
-    normalized.removeWhere((s) => s.trim().isEmpty);
-    final list = normalized.toList()..sort();
-    list.removeWhere((s) => s == 'Semua Kelas');
-    return ['Semua Kelas', ...list];
-  }
-
-  Widget _buildHeaderChip({
-    required IconData icon,
-    required String label,
-    required Color backgroundColor,
-    required Color foregroundColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: foregroundColor),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: foregroundColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCompetitionRow(MentorCompetitionItem item) {
     final statusLabel = item.isPublished ? 'Publik' : 'Draft';
     final badgeColor = item.isPublished
@@ -1526,6 +1399,36 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderChip({
+    required IconData icon,
+    required String label,
+    required Color backgroundColor,
+    required Color foregroundColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: foregroundColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: foregroundColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),

@@ -18,7 +18,7 @@ class AdminSidebarShell extends StatelessWidget {
   static const Color _sidebarActive = AppColors.primary;
 
   static const List<_SidebarMenuItem> _menuItems = [
-    _SidebarMenuItem(title: 'Dashboard', icon: Icons.grid_view_rounded),
+    _SidebarMenuItem(title: 'Beranda', icon: Icons.grid_view_rounded),
     _SidebarMenuItem(
       title: 'Verifikasi Pendaftaran',
       icon: Icons.fact_check_outlined,

@@ -20,7 +20,7 @@ class MentorSidebarShell extends StatelessWidget {
   static const Color _sidebarActive = Color(0xFF2A58F2);
 
   static const List<_SidebarMenuItem> _menuItems = [
-    _SidebarMenuItem(title: 'Dashboard', icon: Icons.home_outlined),
+    _SidebarMenuItem(title: 'Beranda', icon: Icons.home_outlined),
     _SidebarMenuItem(
       title: 'Jadwal Mengajar',
       icon: Icons.calendar_month_outlined,
