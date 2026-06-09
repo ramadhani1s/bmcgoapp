@@ -17,34 +17,22 @@ func CreateJadwal(c *gin.Context) {
 	var req models.CreateJadwalRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": "Invalid request data",
-			"detail":  err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid request data", "detail": err.Error()})
 		return
 	}
 
-	// Validate required fields
-	if req.PaketID <= 0 || req.MentorID <= 0 || req.JamMulai == "" || req.JamSelesai == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": "paket_id, mentor_id, jam_mulai, jam_selesai wajib",
-		})
+	// Validate all required fields
+	if req.PaketID <= 0 || req.MentorID <= 0 || req.ClassLevel == "" || req.MataPelajaran == "" || req.Hari == "" || req.JamMulai == "" || req.JamSelesai == "" || req.Ruang == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Semua field wajib diisi (paket_id, mentor_id, class_level, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang)"})
 		return
 	}
 
 	// Parse jam
 	jamMulai, err := time.Parse("15:04", req.JamMulai)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": "Format jam_mulai harus HH:MM",
-			"detail":  err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Format jam_mulai harus HH:MM", "detail": err.Error()})
 		return
 	}
-
 	jamSelesai, err := time.Parse("15:04", req.JamSelesai)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -57,12 +45,12 @@ func CreateJadwal(c *gin.Context) {
 
 	var jadwalID int
 
-	// Insert into database
+	// Insert using formatted time strings (HH:MM)
 	err = config.DB.QueryRow(context.Background(), `
 		INSERT INTO jadwal (paket_id, mentor_id, class_level, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
-	`, req.PaketID, req.MentorID, req.ClassLevel, req.MataPelajaran, req.Hari, jamMulai, jamSelesai, req.Ruang).Scan(&jadwalID)
+	`, req.PaketID, req.MentorID, req.ClassLevel, req.MataPelajaran, req.Hari, jamMulai.Format("15:04"), jamSelesai.Format("15:04"), req.Ruang).Scan(&jadwalID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
