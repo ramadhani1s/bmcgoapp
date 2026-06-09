@@ -13,66 +13,78 @@ import (
 
 // GET semua olimpiade untuk siswa
 func GetOlimpiadeSiswa(c *gin.Context) {
-	status := c.Query("status")
+	status := c.Query("status") // "tersedia" atau "selesai"
+
+	userID, _ := c.Get("user_id")
+	
+	// Cari siswa_id
+	var siswaID int
+	err := config.DB.QueryRow(context.Background(),
+		`SELECT id FROM siswa WHERE user_id = $1`, userID,
+	).Scan(&siswaID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menemukan data siswa"})
+		return
+	}
 
 	query := `
 		SELECT 
-			o.id, o.nama, o.mata_pelajaran, o.deskripsi,
-			o.tanggal_mulai, o.tanggal_selesai, o.durasi,
-			o.total_soal, o.status,
-			COALESCE(m.nama_mentor, 'Mentor BMC') AS mentor_nama
+			o.id, o.nama, o.class_level, o.lokasi, o.tanggal,
+			o.total_questions, o.category_questions,
+			COALESCE(m.nama_mentor, 'Mentor BMC') AS mentor_nama,
+			po.skor, po.ranking, po.jawaban_benar, po.jawaban_salah, po.tidak_dijawab,
+			CASE WHEN po.selesai = true THEN 'selesai' ELSE 'tersedia' END as status_pengerjaan
 		FROM olimpiade o
 		LEFT JOIN mentor m ON m.id = o.mentor_id
+		LEFT JOIN peserta_olimpiade po ON po.olimpiade_id = o.id AND po.siswa_id = $1
 	`
-
-	var rows interface{}
-	var err error
-
-	if status != "" && status != "semua" {
-		query += " WHERE o.status = $1 ORDER BY o.tanggal_mulai DESC"
-		rows, err = config.DB.Query(context.Background(), query, status)
+	
+	if status == "selesai" {
+		query += " WHERE po.selesai = true ORDER BY o.tanggal DESC"
+	} else if status == "tersedia" {
+		query += " WHERE (po.id IS NULL OR po.selesai = false) ORDER BY o.tanggal DESC"
 	} else {
-		query += " ORDER BY o.tanggal_mulai DESC"
-		rows, err = config.DB.Query(context.Background(), query)
+		query += " ORDER BY o.tanggal DESC"
 	}
 
+	rows, err := config.DB.Query(context.Background(), query, siswaID)
 	if err != nil {
 		log.Println("Gagal query olimpiade:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil olimpiade"})
 		return
 	}
+	defer rows.Close()
 
 	type OlimpiadeItem struct {
-		ID             int       `json:"id"`
-		Nama           string    `json:"nama"`
-		MataPelajaran  string    `json:"mata_pelajaran"`
-		Deskripsi      string    `json:"deskripsi"`
-		TanggalMulai   time.Time `json:"tanggal_mulai"`
-		TanggalSelesai time.Time `json:"tanggal_selesai"`
-		Durasi         int       `json:"durasi"`
-		TotalSoal      int       `json:"total_soal"`
-		Status         string    `json:"status"`
-		MentorNama     string    `json:"mentor_nama"`
+		ID                int       `json:"id"`
+		Nama              string    `json:"nama"`
+		ClassLevel        string    `json:"class_level"`
+		Lokasi            string    `json:"lokasi"`
+		Tanggal           *time.Time `json:"tanggal"`
+		TotalQuestions    int       `json:"total_questions"`
+		CategoryQuestions string    `json:"category_questions"`
+		MentorNama        string    `json:"mentor_nama"`
+		Skor              *int      `json:"skor"`
+		Ranking           *int      `json:"ranking"`
+		JawabanBenar      *int      `json:"jawaban_benar"`
+		JawabanSalah      *int      `json:"jawaban_salah"`
+		TidakDijawab      *int      `json:"tidak_dijawab"`
+		Status            string    `json:"status"`
 	}
 
-	pgxRows := rows.(interface {
-		Next() bool
-		Scan(...any) error
-		Close()
-	})
-	defer pgxRows.Close()
-
 	var list []OlimpiadeItem
-	for pgxRows.Next() {
+	for rows.Next() {
 		var item OlimpiadeItem
-		if err := pgxRows.Scan(
-			&item.ID, &item.Nama, &item.MataPelajaran, &item.Deskripsi,
-			&item.TanggalMulai, &item.TanggalSelesai, &item.Durasi,
-			&item.TotalSoal, &item.Status, &item.MentorNama,
+		var catQuestions []byte
+		if err := rows.Scan(
+			&item.ID, &item.Nama, &item.ClassLevel, &item.Lokasi, &item.Tanggal,
+			&item.TotalQuestions, &catQuestions, &item.MentorNama,
+			&item.Skor, &item.Ranking, &item.JawabanBenar, &item.JawabanSalah, &item.TidakDijawab, &item.Status,
 		); err != nil {
 			log.Println("Gagal scan:", err)
 			continue
 		}
+		item.CategoryQuestions = string(catQuestions)
 		list = append(list, item)
 	}
 
@@ -86,18 +98,23 @@ func GetOlimpiadeSiswa(c *gin.Context) {
 // GET soal olimpiade
 func GetSoalOlimpiade(c *gin.Context) {
 	olimpiadeIDStr := c.Param("id")
+	review := c.Query("review") == "true"
+	
 	olimpiadeID, err := strconv.Atoi(olimpiadeIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
-	rows, err := config.DB.Query(context.Background(), `
+	query := `
 		SELECT id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, pilihan_e
-		FROM soal_olimpiade
-		WHERE olimpiade_id = $1
-		ORDER BY id
-	`, olimpiadeID)
+	`
+	if review {
+		query += `, jawaban, pembahasan`
+	}
+	query += ` FROM olimpiade_soal WHERE kompetisi_id = $1 ORDER BY id`
+
+	rows, err := config.DB.Query(context.Background(), query, olimpiadeID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil soal"})
@@ -113,13 +130,21 @@ func GetSoalOlimpiade(c *gin.Context) {
 		PilihanC   string `json:"pilihan_c"`
 		PilihanD   string `json:"pilihan_d"`
 		PilihanE   string `json:"pilihan_e"`
+		Jawaban    string `json:"jawaban,omitempty"`
+		Pembahasan string `json:"pembahasan,omitempty"`
 	}
 
 	var soalList []SoalItem
 	for rows.Next() {
 		var s SoalItem
-		if err := rows.Scan(&s.ID, &s.Pertanyaan, &s.PilihanA, &s.PilihanB, &s.PilihanC, &s.PilihanD, &s.PilihanE); err != nil {
-			continue
+		if review {
+			if err := rows.Scan(&s.ID, &s.Pertanyaan, &s.PilihanA, &s.PilihanB, &s.PilihanC, &s.PilihanD, &s.PilihanE, &s.Jawaban, &s.Pembahasan); err != nil {
+				continue
+			}
+		} else {
+			if err := rows.Scan(&s.ID, &s.Pertanyaan, &s.PilihanA, &s.PilihanB, &s.PilihanC, &s.PilihanD, &s.PilihanE); err != nil {
+				continue
+			}
 		}
 		soalList = append(soalList, s)
 	}
@@ -153,7 +178,7 @@ func SubmitOlimpiade(c *gin.Context) {
 
 	// Ambil semua soal beserta jawaban benar
 	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, jawaban FROM soal_olimpiade WHERE olimpiade_id = $1
+		SELECT id, jawaban FROM olimpiade_soal WHERE kompetisi_id = $1
 	`, olimpiadeID)
 
 	if err != nil {

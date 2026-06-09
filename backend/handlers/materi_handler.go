@@ -244,7 +244,7 @@ func GetAllMateri(c *gin.Context) {
 			SELECT 
 				lm.id, lm.mentor_id, lm.title, lm.description, 
 				lm.file_path, lm.file_type, lm.file_size, lm.subject,
-				COALESCE(m.nama, u.nama, 'Mentor') AS mentor_name,
+				COALESCE(m.nama_mentor, u.nama, 'Mentor') AS mentor_name,
 				lm.created_at, lm.updated_at
 			FROM learning_materials lm
 			LEFT JOIN mentor m ON m.id = lm.mentor_id
@@ -257,7 +257,7 @@ func GetAllMateri(c *gin.Context) {
 			SELECT 
 				lm.id, lm.mentor_id, lm.title, lm.description, 
 				lm.file_path, lm.file_type, lm.file_size, lm.subject,
-				COALESCE(m.nama, u.nama, 'Mentor') AS mentor_name,
+				COALESCE(m.nama_mentor, u.nama, 'Mentor') AS mentor_name,
 				lm.created_at, lm.updated_at
 			FROM learning_materials lm
 			LEFT JOIN mentor m ON m.id = lm.mentor_id

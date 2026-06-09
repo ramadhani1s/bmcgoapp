@@ -168,9 +168,11 @@ class _MateriScreenState extends State<MateriScreen> {
         final title = (item['title'] ?? '').toString().toLowerCase();
         final mentor = (item['mentor_name'] ?? '').toString().toLowerCase();
         final subject = (item['subject'] ?? '').toString().toLowerCase();
+        final classLevel = (item['class_level'] ?? '').toString().toLowerCase();
         return title.contains(query) ||
             mentor.contains(query) ||
-            subject.contains(query);
+            subject.contains(query) ||
+            classLevel.contains(query);
       }).toList();
     });
   }

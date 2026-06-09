@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Anda dapat menambahkan domain lain bila diperlukan -->
+        <!-- <domain includeSubdomains="true">your‑api‑domain.com</domain> -->
+    </domain-config>
+</network-security-config>
