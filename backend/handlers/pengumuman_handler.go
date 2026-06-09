@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -98,68 +97,45 @@ func resolveAdminID(userID int) (int, error) {
 
 // ================= SISWA =================
 
-// GetPengumuman - siswa lihat pengumuman dengan filter kategori
+// GetPengumuman - siswa lihat semua pengumuman
 func GetPengumuman(c *gin.Context) {
-	kategori := c.Query("kategori")
-
-	type PengumumanItem struct {
-		ID        int       `json:"id"`
-		Judul     string    `json:"judul"`
-		Isi       string    `json:"isi"`
-		Kategori  string    `json:"kategori"`
-		CreatedAt time.Time `json:"created_at"`
-		AdminNama string    `json:"admin_nama"`
-	}
-
-	var rows interface{}
-	var err error
-
-	if kategori != "" && kategori != "Semua" {
-		rows, err = config.DB.Query(context.Background(), `
-			SELECT p.id, p.judul, p.isi, p.kategori, p.created_at,
-				COALESCE(a.nama, 'Admin BMC') AS admin_nama
-			FROM pengumuman p
-			LEFT JOIN admin a ON a.id = p.admin_id
-			WHERE p.kategori = $1
-			ORDER BY p.created_at DESC
-		`, kategori)
-	} else {
-		rows, err = config.DB.Query(context.Background(), `
-			SELECT p.id, p.judul, p.isi, p.kategori, p.created_at,
-				COALESCE(a.nama, 'Admin BMC') AS admin_nama
-			FROM pengumuman p
-			LEFT JOIN admin a ON a.id = p.admin_id
-			ORDER BY p.created_at DESC
-		`)
-	}
-
+	rows, err := config.DB.Query(context.Background(), `
+		SELECT id, admin_id, judul, isi, created_at
+		FROM pengumuman
+		ORDER BY created_at DESC
+	`)
 	if err != nil {
-		log.Println("Gagal query pengumuman:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil pengumuman"})
+		log.Printf("[GetPengumuman] DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Gagal mengambil pengumuman",
+			"detail":  err.Error(),
+		})
 		return
 	}
+	defer rows.Close()
 
-	pgxRows := rows.(interface {
-		Next() bool
-		Scan(...any) error
-		Close()
-	})
-	defer pgxRows.Close()
-
-	var list []PengumumanItem
-	for pgxRows.Next() {
-		var item PengumumanItem
-		if err := pgxRows.Scan(&item.ID, &item.Judul, &item.Isi, &item.Kategori, &item.CreatedAt, &item.AdminNama); err != nil {
+	var list []models.Pengumuman
+	for rows.Next() {
+		var p models.Pengumuman
+		if err := rows.Scan(&p.ID, &p.AdminID, &p.Judul, &p.Isi, &p.CreatedAt); err != nil {
+			log.Printf("[GetPengumuman] Scan error: %v", err)
 			continue
 		}
-		list = append(list, item)
+		list = append(list, p)
 	}
 
 	if list == nil {
-		list = []PengumumanItem{}
+		list = []models.Pengumuman{}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OK", "data": list})
+	log.Printf("[GetPengumuman] Returning %d pengumuman", len(list))
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "OK",
+		"data":    list,
+	})
 }
 
 // ================= PUBLIC =================

@@ -9,7 +9,7 @@ import 'paket_les_screen.dart';
 import 'jadwal_pembelajaran_screen.dart';
 import 'verifikasi_pendaftaran_screen.dart';
 import 'pengumuman_screen.dart';
-import 'admin_kelola_absensi_screen.dart';
+import 'admin_laporan_absensi_screen.dart';
 import 'admin_kelola_alumni_screen.dart';
 import '../mentor_management_screen.dart';
 import '../../models/payment_verification_item.dart';
@@ -43,6 +43,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   String _searchQuery = '';
   List<_ScheduleRow> _todayScheduleRows = [];
   int _todayScheduleCount = 0;
+  int? _initialEditJadwalId;
 
   @override
   void initState() {
@@ -229,7 +230,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
           }
         }
 
+        final rawId = jadwal['id'];
+        final parsedId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '') ?? 0;
         return _ScheduleRow(
+          id: parsedId,
           time: '$start - $end',
           className: resolveClassName(jadwal),
           subject: (jadwal['mata_pelajaran'] ?? '-').toString(),
@@ -252,6 +256,117 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
+  Future<void> _deleteTodaySchedule(int id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        title: const Text(
+          'Hapus Jadwal?',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Apakah Anda yakin ingin menghapus jadwal pembelajaran ini?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.warning, color: Color(0xFFDC2626), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aksi ini tidak bisa dibatalkan. Data absensi dan rekaman kehadiran terkait juga akan dihapus secara permanen dari sistem.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF991B1B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4B5563),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            child: const Text('Batal'),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final result = await JadwalService.deleteJadwal(id);
+      if (mounted) {
+        final success = result['success'] == true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? (success ? 'Jadwal berhasil dihapus' : 'Gagal menghapus jadwal')),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+        _loadTodaySchedules();
+      }
+    }
+  }
+
   Future<void> _logout() async {
     await AuthService.logout();
     if (mounted) {
@@ -263,24 +378,124 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Konfirmasi Keluar'),
-        content: const Text(
-          'Apakah Anda yakin ingin keluar dari halaman admin?',
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
+        titlePadding: EdgeInsets.zero,
+        contentPadding: EdgeInsets.zero,
+        actionsPadding: EdgeInsets.zero,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFEE2E2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.logout_rounded,
+                      color: Color(0xFFEF4444),
+                      size: 32,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+                child: Column(
+                  children: const [
+                    Text(
+                      'Keluar dari Halaman Admin?',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1F2937),
+                        letterSpacing: -0.3,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Apakah Anda yakin ingin keluar dari halaman admin? Anda harus login kembali untuk mengakses panel kontrol.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF4B5563),
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          foregroundColor: const Color(0xFF4B5563),
+                        ),
+                        child: const Text(
+                          'Batal',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF4444),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          'Keluar',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Ya'),
-          ),
-        ],
+        ),
       ),
     );
 
@@ -293,23 +508,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
     setState(() {
       _selectedMenuIndex = index;
       _selectedMenuTitle = item.title;
+      if (item.title != 'Kelola Jadwal') {
+        _initialEditJadwalId = null;
+      }
     });
 
-    if (item.title == 'Dashboard') {
+    if (item.title == 'Beranda') {
       _loadSummary();
       _loadTodaySchedules();
     }
   }
 
   List<_SideMenuItem> get _menuItems => const [
-    _SideMenuItem('Dashboard', Icons.grid_view_rounded),
+    _SideMenuItem('Beranda', Icons.grid_view_rounded),
     _SideMenuItem('Verifikasi Pendaftaran', Icons.fact_check_outlined),
     _SideMenuItem('Kelola Mentor', Icons.groups_2_outlined),
     _SideMenuItem('Kelola Jadwal', Icons.event_note_outlined),
     _SideMenuItem(
-      'Kelola Absensi',
+      'Laporan Absensi',
       Icons.assignment_turned_in_outlined,
-      route: '/admin-kelola-absensi',
+      route: '/admin-laporan-absensi',
     ),
     _SideMenuItem('Kelola Pengumuman', Icons.campaign_outlined),
     _SideMenuItem(
@@ -431,8 +649,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             embeddedInDashboard: true,
                           )
                         else if (_selectedMenuTitle == 'Kelola Jadwal')
-                          const JadwalPembelajaranScreen(
+                          JadwalPembelajaranScreen(
                             embeddedInDashboard: true,
+                            initialEditJadwalId: _initialEditJadwalId,
                           )
                         else if (_selectedMenuTitle == 'Kelola Paket Les')
                           const PaketLesScreen()
@@ -440,8 +659,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           PengumumanScreen()
                         else if (_selectedMenuTitle == 'Verifikasi Pendaftaran')
                           const VerifikasiPendaftaranScreen()
-                        else if (_selectedMenuTitle == 'Kelola Absensi')
-                          const AdminKelolaAbsensiScreen()
+                        else if (_selectedMenuTitle == 'Laporan Absensi')
+                          const AdminLaporanAbsensiScreen()
                         else if (_selectedMenuTitle == 'Kelola Profil Alumni')
                           const AdminKelolaAlumniScreen(
                             embeddedInDashboard: true,
@@ -567,7 +786,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'BMC GROWUP',
+                        'BMC GrowUp',
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 18,
@@ -731,28 +950,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ],
             ),
           ),
-          const SizedBox(width: 16),
-          Stack(
-            children: [
-              const Icon(
-                Icons.notifications_none_rounded,
-                color: Color(0xFF7D8797),
-                size: 22,
-              ),
-              Positioned(
-                right: 1,
-                top: 2,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF4057),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
+         
           const SizedBox(width: 16),
           MouseRegion(
             cursor: SystemMouseCursors.click,
@@ -1320,7 +1518,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     message: 'Belum ada jadwal belajar untuk hari ini.',
                   )
                 else
-                  for (final row in _scheduleRows) _ScheduleItemRow(row: row),
+                  for (final row in _scheduleRows)
+                    _ScheduleItemRow(
+                      row: row,
+                       onEdit: () {
+                        setState(() {
+                          _initialEditJadwalId = row.id;
+                        });
+                        final index = _menuItems.indexWhere(
+                          (item) => item.title == 'Kelola Jadwal',
+                        );
+                        if (index >= 0) {
+                          _onMenuTap(index, _menuItems[index]);
+                        }
+                      },
+                      onDelete: () => _deleteTodaySchedule(row.id),
+                    ),
               ],
             ),
           ),
@@ -1402,6 +1615,7 @@ class _EmptyTableRow extends StatelessWidget {
 
 class _ScheduleRow {
   const _ScheduleRow({
+    required this.id,
     required this.time,
     required this.className,
     required this.subject,
@@ -1410,6 +1624,7 @@ class _ScheduleRow {
     required this.status,
   });
 
+  final int id;
   final String time;
   final String className;
   final String subject;
@@ -1538,9 +1753,15 @@ class _PendingItemRow extends StatelessWidget {
 }
 
 class _ScheduleItemRow extends StatelessWidget {
-  const _ScheduleItemRow({required this.row});
+  const _ScheduleItemRow({
+    required this.row,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final _ScheduleRow row;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -1562,13 +1783,13 @@ class _ScheduleItemRow extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE9F0FF),
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   row.className,
                   style: const TextStyle(
-                    color: Color(0xFF325CCF),
+                    color: Color(0xFF2563EB),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1615,12 +1836,24 @@ class _ScheduleItemRow extends StatelessWidget {
               ),
             ),
           ),
-          const Expanded(
+          Expanded(
             child: Row(
               children: [
-                Icon(Icons.edit_outlined, size: 14, color: Color(0xFF4F82FF)),
-                SizedBox(width: 8),
-                Icon(Icons.delete_outline, size: 14, color: Color(0xFFEF4444)),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 14, color: Color(0xFF4F82FF)),
+                  onPressed: onEdit,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Edit',
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 14, color: Color(0xFFEF4444)),
+                  onPressed: onDelete,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Hapus',
+                ),
               ],
             ),
           ),

@@ -172,14 +172,92 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text('Hapus Soal?', style: TextStyle(fontWeight: FontWeight.w800)),
-        content: const Text('Soal ini akan dihapus secara permanen.'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        title: const Text(
+          'Hapus Soal?',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Apakah Anda yakin ingin menghapus soal ini?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.warning, color: Color(0xFFDC2626), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aksi ini tidak bisa dibatalkan. Butir soal beserta pilihan jawabannya akan dihapus secara permanen dari sistem.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF991B1B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4B5563),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            child: const Text('Batal'),
+          ),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             child: const Text('Hapus'),
           ),
         ],
@@ -630,23 +708,56 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
                                 const Text('Jawaban Benar', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                                 const SizedBox(height: 8),
                                 Container(
+                                  height: 48,
                                   decoration: BoxDecoration(
                                     border: Border.all(color: Colors.grey.shade300),
                                     borderRadius: BorderRadius.circular(12),
+                                    color: Colors.white,
                                   ),
-                                  child: DropdownButtonFormField<String>(
-                                    value: _selectedAnswer,
-                                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF6B7280)),
-                                    items: const [
-                                      DropdownMenuItem(value: 'A', child: Text('A')),
-                                      DropdownMenuItem(value: 'B', child: Text('B')),
-                                      DropdownMenuItem(value: 'C', child: Text('C')),
-                                      DropdownMenuItem(value: 'D', child: Text('D')),
-                                    ],
-                                    onChanged: (value) => setState(() => _selectedAnswer = value!),
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  child: Theme(
+                                    data: Theme.of(context).copyWith(
+                                      hoverColor: Colors.transparent,
+                                      splashColor: Colors.transparent,
+                                      highlightColor: Colors.transparent,
+                                    ),
+                                    child: PopupMenuButton<String>(
+                                      tooltip: '',
+                                      offset: const Offset(0, 48),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      color: Colors.white,
+                                      onSelected: (value) => setState(() => _selectedAnswer = value),
+                                      itemBuilder: (context) {
+                                        return ['A', 'B', 'C', 'D'].map((val) {
+                                          return PopupMenuItem<String>(
+                                            value: val,
+                                            height: 38,
+                                            child: Text(val),
+                                          );
+                                        }).toList();
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              _selectedAnswer,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Color(0xFF111827),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const Icon(
+                                              Icons.keyboard_arrow_down_rounded,
+                                              color: Color(0xFF6B7280),
+                                              size: 20,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -771,16 +882,71 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
                 decoration: const InputDecoration(labelText: 'Pilihan D', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _selectedAnswer,
-                items: const [
-                  DropdownMenuItem(value: 'A', child: Text('A')),
-                  DropdownMenuItem(value: 'B', child: Text('B')),
-                  DropdownMenuItem(value: 'C', child: Text('C')),
-                  DropdownMenuItem(value: 'D', child: Text('D')),
-                ],
-                onChanged: (value) => setState(() => _selectedAnswer = value!),
-                decoration: const InputDecoration(labelText: 'Jawaban Benar', border: OutlineInputBorder()),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Jawaban Benar',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    hoverColor: Colors.transparent,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                  ),
+                  child: PopupMenuButton<String>(
+                    tooltip: '',
+                    offset: const Offset(0, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    color: Colors.white,
+                    onSelected: (value) => setState(() => _selectedAnswer = value),
+                    itemBuilder: (context) {
+                      return ['A', 'B', 'C', 'D'].map((val) {
+                        return PopupMenuItem<String>(
+                          value: val,
+                          height: 38,
+                          child: Text(val),
+                        );
+                      }).toList();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _selectedAnswer,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF111827),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: Color(0xFF6B7280),
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(

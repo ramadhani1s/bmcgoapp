@@ -57,13 +57,11 @@ class AppSession {
     );
   }
 
-  static Future<String> getAuthToken() async {
+  // ✅ FIXED: return null kalau token tidak ada, bukan throw Exception
+  static Future<String?> getAuthToken() async {
     final prefs = await _prefs();
     final token = prefs.getString(_authTokenKey)?.trim() ?? '';
-    if (token.isEmpty) {
-      throw Exception('Sesi login tidak ditemukan. Silakan login ulang.');
-    }
-    return token;
+    return token.isEmpty ? null : token;
   }
 
   static Future<String> getUserName() async {

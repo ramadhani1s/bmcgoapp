@@ -5,13 +5,16 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"bmcgoapp-backend/config"
-
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
+	"github.com/jung-kurt/gofpdf/v2"
 )
 
 const attendanceTokenChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -79,13 +82,37 @@ func resolveSiswaDatabaseID(userID int) (int, error) {
 	return 0, fmt.Errorf("siswa tidak ditemukan")
 }
 
-func resolveJadwalIDForAttendance(mentorUserID int, subject string) (int, error) {
+func resolveJadwalIDForAttendance(mentorUserID int, subject string, className string) (int, error) {
 	mentorID, err := resolveMentorDatabaseID(mentorUserID)
 	if err != nil {
 		return 0, err
 	}
 
 	trimmedSubject := strings.TrimSpace(subject)
+	trimmedClass := strings.TrimSpace(className)
+
+	// Try matching both subject and class_level
+	if trimmedSubject != "" && trimmedClass != "" {
+		var jadwalID int
+		err = config.DB.QueryRow(
+			context.Background(),
+			`SELECT id
+			 FROM jadwal
+			 WHERE mentor_id = $1
+			   AND LOWER(COALESCE(mata_pelajaran, '')) = LOWER($2)
+			   AND LOWER(COALESCE(class_level, '')) = LOWER($3)
+			 ORDER BY id DESC
+			 LIMIT 1`,
+			mentorID,
+			trimmedSubject,
+			trimmedClass,
+		).Scan(&jadwalID)
+		if err == nil {
+			return jadwalID, nil
+		}
+	}
+
+	// Fallback 1: match subject only
 	if trimmedSubject != "" {
 		var jadwalID int
 		err = config.DB.QueryRow(
@@ -104,6 +131,26 @@ func resolveJadwalIDForAttendance(mentorUserID int, subject string) (int, error)
 		}
 	}
 
+	// Fallback 2: match class only
+	if trimmedClass != "" {
+		var jadwalID int
+		err = config.DB.QueryRow(
+			context.Background(),
+			`SELECT id
+			 FROM jadwal
+			 WHERE mentor_id = $1
+			   AND LOWER(COALESCE(class_level, '')) = LOWER($2)
+			 ORDER BY id DESC
+			 LIMIT 1`,
+			mentorID,
+			trimmedClass,
+		).Scan(&jadwalID)
+		if err == nil {
+			return jadwalID, nil
+		}
+	}
+
+	// Fallback 3: match last scheduled lesson for this mentor
 	var jadwalID int
 	err = config.DB.QueryRow(
 		context.Background(),
@@ -335,56 +382,142 @@ func GetAttendanceSessionSummaryHandler(c *gin.Context) {
 		return
 	}
 
-	rows, err := config.DB.Query(
+	// Get all students in the class
+	var classStudents []struct {
+		SiswaID int // s.id
+		UserID  int // s.user_id
+		Nama    string
+		Email   string
+	}
+	sRows, err := config.DB.Query(
 		context.Background(),
-		`SELECT ar.siswa_id,
+		`SELECT s.id, s.user_id, 
 		        COALESCE(NULLIF(u.nama,''), COALESCE(NULLIF(u.email,''), u.username), 'Siswa') AS nama,
-		        COALESCE(NULLIF(u.email,''), u.username) AS email,
-		        ar.status,
-		        ar.submitted_at
+		        COALESCE(NULLIF(u.email,''), u.username) AS email
+		 FROM siswa s
+		 JOIN users u ON s.user_id = u.id
+		 WHERE LOWER(TRIM(s.kelas)) = LOWER(TRIM($1))
+		 ORDER BY u.nama ASC`,
+		session.ClassName,
+	)
+	if err == nil {
+		for sRows.Next() {
+			var cs struct {
+				SiswaID int
+				UserID  int
+				Nama    string
+				Email   string
+			}
+			if err := sRows.Scan(&cs.SiswaID, &cs.UserID, &cs.Nama, &cs.Email); err == nil {
+				classStudents = append(classStudents, cs)
+			}
+		}
+		sRows.Close()
+	}
+
+	// Get checked-in records
+	type CheckInInfo struct {
+		Status      string
+		SubmittedAt time.Time
+	}
+	checkIns := make(map[int]CheckInInfo)
+	arRows, err := config.DB.Query(
+		context.Background(),
+		`SELECT ar.siswa_id, ar.status, ar.submitted_at
 		 FROM attendance_records ar
-		 LEFT JOIN users u ON u.id = ar.siswa_id
-		 WHERE ar.session_id = $1
-		 ORDER BY ar.submitted_at ASC`,
+		 WHERE ar.session_id = $1`,
 		session.ID,
 	)
-	if err != nil {
-		c.JSON(500, gin.H{"error": "Gagal membaca data absensi"})
-		return
+	if err == nil {
+		defer arRows.Close()
+		for arRows.Next() {
+			var sID int
+			var stat string
+			var subAt time.Time
+			if err := arRows.Scan(&sID, &stat, &subAt); err == nil {
+				checkIns[sID] = CheckInInfo{Status: stat, SubmittedAt: subAt}
+			}
+		}
 	}
-	defer rows.Close()
 
 	items := make([]gin.H, 0)
 	hadirCount := 0
-	terlambatCount := 0
 	tidakHadirCount := 0
 
-	for rows.Next() {
-		var siswaID int
-		var nama, email, status string
-		var submittedAt time.Time
+	if len(classStudents) > 0 {
+		for _, cs := range classStudents {
+			info, ok := checkIns[cs.UserID] // Keyed by user_id
+			status := "tidak_hadir"
+			var submittedAt time.Time
+			if ok {
+				if info.Status == "tidak hadir" {
+					status = "tidak_hadir"
+				} else {
+					status = info.Status
+				}
+				submittedAt = info.SubmittedAt
+			}
 
-		if err := rows.Scan(&siswaID, &nama, &email, &status, &submittedAt); err != nil {
-			c.JSON(500, gin.H{"error": "Gagal memproses data absensi"})
-			return
+			if status == "tidak_hadir" {
+				tidakHadirCount++
+			} else {
+				hadirCount++
+			}
+
+			items = append(items, gin.H{
+				"siswa_id":     cs.SiswaID, // s.id
+				"nama":         cs.Nama,
+				"email":        cs.Email,
+				"status":       status,
+				"submitted_at": submittedAt,
+			})
 		}
+	} else {
+		// Fallback to checked-in students if class is empty or has no students
+		for sID, info := range checkIns { // sID is user_id
+			var sDbID int // siswa.id
+			var nama, email string
+			err := config.DB.QueryRow(
+				context.Background(),
+				`SELECT s.id,
+				        COALESCE(NULLIF(u.nama,''), COALESCE(NULLIF(u.email,''), u.username), 'Siswa'),
+				        COALESCE(NULLIF(u.email,''), u.username)
+				 FROM siswa s
+				 JOIN users u ON s.user_id = u.id
+				 WHERE u.id = $1`,
+				sID,
+			).Scan(&sDbID, &nama, &email)
+			if err != nil {
+				// Fallback if not found in siswa table
+				sDbID = sID
+				_ = config.DB.QueryRow(
+					context.Background(),
+					`SELECT COALESCE(NULLIF(nama,''), COALESCE(NULLIF(email,''), username), 'Siswa'),
+					        COALESCE(NULLIF(email,''), username)
+					 FROM users WHERE id = $1`,
+					sID,
+				).Scan(&nama, &email)
+			}
 
-		switch status {
-		case "hadir":
-			hadirCount++
-		case "terlambat":
-			terlambatCount++
-		case "tidak_hadir":
-			tidakHadirCount++
+			status := info.Status
+			if status == "tidak hadir" {
+				status = "tidak_hadir"
+			}
+
+			if status == "tidak_hadir" {
+				tidakHadirCount++
+			} else {
+				hadirCount++
+			}
+
+			items = append(items, gin.H{
+				"siswa_id":     sDbID, // Return sDbID (siswa.id)
+				"nama":         nama,
+				"email":        email,
+				"status":       status,
+				"submitted_at": info.SubmittedAt,
+			})
 		}
-
-		items = append(items, gin.H{
-			"siswa_id":     siswaID,
-			"nama":         nama,
-			"email":        email,
-			"status":       status,
-			"submitted_at": submittedAt,
-		})
 	}
 
 	c.JSON(200, gin.H{
@@ -403,9 +536,8 @@ func GetAttendanceSessionSummaryHandler(c *gin.Context) {
 		},
 		"summary": gin.H{
 			"hadir":       hadirCount,
-			"terlambat":   terlambatCount,
 			"tidak_hadir": tidakHadirCount,
-			"total_masuk": hadirCount + terlambatCount + tidakHadirCount,
+			"total_masuk": hadirCount + tidakHadirCount,
 		},
 		"records": items,
 	})
@@ -477,7 +609,7 @@ func SubmitAttendanceTokenHandler(c *gin.Context) {
 		return
 	}
 
-	jadwalID, err := resolveJadwalIDForAttendance(session.MentorID, session.Subject)
+	jadwalID, err := resolveJadwalIDForAttendance(session.MentorID, session.Subject, session.ClassName)
 	if err != nil {
 		c.JSON(404, gin.H{"error": err.Error()})
 		return
@@ -554,12 +686,6 @@ func SubmitAttendanceTokenHandler(c *gin.Context) {
 	}
 
 	message := "Absensi berhasil, status kamu hadir"
-	switch attendanceStatus {
-	case "terlambat":
-		message = "Absensi tercatat, status kamu terlambat"
-	case "tidak_hadir":
-		message = "Waktu absensi habis, status kamu tidak hadir"
-	}
 
 	c.JSON(200, gin.H{
 		"message": message,
@@ -749,30 +875,41 @@ func GetActiveAttendanceSessionForSiswaHandler(c *gin.Context) {
 }
 
 func GetAdminAttendanceSessionsHandler(c *gin.Context) {
-	// Count total sessions
-	var totalSesi int
-	_ = config.DB.QueryRow(context.Background(), `SELECT COUNT(*) FROM attendance_sessions`).Scan(&totalSesi)
+	// Count total absensi records
+	var totalAbsensi int
+	_ = config.DB.QueryRow(context.Background(), `SELECT COUNT(*) FROM absensi`).Scan(&totalAbsensi)
 
 	// Count total hadir
 	var totalHadir int
-	_ = config.DB.QueryRow(context.Background(), `SELECT COUNT(*) FROM attendance_records WHERE status = 'hadir'`).Scan(&totalHadir)
+	_ = config.DB.QueryRow(context.Background(), `SELECT COUNT(*) FROM absensi WHERE status = 'hadir'`).Scan(&totalHadir)
 
 	// Count total tidak hadir
 	var totalTidakHadir int
-	_ = config.DB.QueryRow(context.Background(), `SELECT COUNT(*) FROM attendance_records WHERE status = 'tidak_hadir'`).Scan(&totalTidakHadir)
+	_ = config.DB.QueryRow(context.Background(), `SELECT COUNT(*) FROM absensi WHERE status = 'tidak hadir'`).Scan(&totalTidakHadir)
 
 	// Set custom HTTP response headers
-	c.Writer.Header().Set("x-total-sesi", fmt.Sprintf("%d", totalSesi))
+	c.Writer.Header().Set("x-total-sesi", fmt.Sprintf("%d", totalAbsensi))
 	c.Writer.Header().Set("x-total-hadir", fmt.Sprintf("%d", totalHadir))
 	c.Writer.Header().Set("x-total-tidak-hadir", fmt.Sprintf("%d", totalTidakHadir))
 
 	rows, err := config.DB.Query(
 		context.Background(),
-		`SELECT s.id, s.started_at, s.class_name, COALESCE(s.subject, ''), COALESCE(u.nama, ''), s.status,
-		        (SELECT COUNT(*) FROM attendance_records ar WHERE ar.session_id = s.id AND ar.status = 'hadir') AS hadir_count
-		 FROM attendance_sessions s
-		 JOIN users u ON u.id = s.mentor_id
-		 ORDER BY s.started_at DESC`,
+		`SELECT 
+			a.id, 
+			a.tanggal, 
+			u_siswa.nama AS nama_siswa, 
+			s.kelas AS kelas_siswa, 
+			j.mata_pelajaran, 
+			u_mentor.nama AS nama_mentor, 
+			a.status, 
+			s.id AS siswa_id
+		 FROM absensi a
+		 JOIN siswa s ON a.siswa_id = s.id
+		 JOIN users u_siswa ON s.user_id = u_siswa.id
+		 JOIN jadwal j ON a.jadwal_id = j.id
+		 JOIN mentor m ON j.mentor_id = m.id
+		 JOIN users u_mentor ON m.user_id = u_mentor.id
+		 ORDER BY a.tanggal DESC`,
 	)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Gagal mengambil data absensi admin: " + err.Error()})
@@ -782,37 +919,261 @@ func GetAdminAttendanceSessionsHandler(c *gin.Context) {
 
 	list := make([]gin.H, 0)
 	for rows.Next() {
-		var sessionID, hadirCount int
-		var startedAt time.Time
-		var className, subject, mentorName, status string
-		if err := rows.Scan(&sessionID, &startedAt, &className, &subject, &mentorName, &status, &hadirCount); err != nil {
+		var absensiID, siswaID int
+		var tanggal time.Time
+		var siswaName, kelasSiswa, subject, mentorName, statusStr string
+		if err := rows.Scan(&absensiID, &tanggal, &siswaName, &kelasSiswa, &subject, &mentorName, &statusStr, &siswaID); err != nil {
 			c.JSON(500, gin.H{"error": "Gagal membaca baris absensi: " + err.Error()})
 			return
 		}
 
-		// Map status: 'Hadir' if session is completed OR if at least one student checked in
-		displayStatus := "Tidak Hadir"
-		if status == "selesai" || hadirCount > 0 {
-			displayStatus = "Hadir"
+		displayStatus := "Hadir"
+		if statusStr == "tidak hadir" {
+			displayStatus = "Tidak Hadir"
 		}
 
 		// Format tanggal and jam
-		localStartedAt := startedAt.Local()
-		tanggalStr := localStartedAt.Format("02/01/2006")
-		jamStr := localStartedAt.Format("15:04")
+		localTime := tanggal.Local()
+		tanggalStr := localTime.Format("02/01/2006")
+		jamStr := localTime.Format("15:04")
 
 		list = append(list, gin.H{
-			"id":      sessionID,
-			"tanggal": tanggalStr,
-			"jam":     jamStr,
-			"kelas":   className,
-			"mapel":   subject,
-			"mentor":  mentorName,
-			"status":  displayStatus,
+			"id":       absensiID,
+			"tanggal":  tanggalStr,
+			"jam":      jamStr,
+			"siswa":    siswaName,
+			"kelas":    kelasSiswa,
+			"mapel":    subject,
+			"mentor":   mentorName,
+			"status":   displayStatus,
+			"siswa_id": siswaID,
 		})
 	}
 
 	c.JSON(200, list)
+}
+
+func DownloadStudentAttendancePDFHandler(c *gin.Context) {
+	siswaIDStr := c.Param("siswaId")
+	if siswaIDStr == "" {
+		siswaIDStr = c.Query("siswa_id")
+	}
+	siswaID, err := strconv.Atoi(siswaIDStr)
+	if err != nil || siswaID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID siswa tidak valid"})
+		return
+	}
+
+	// 1. Fetch Student Details
+	var studentName, studentClass, studentSchool string
+	err = config.DB.QueryRow(context.Background(), `
+		SELECT u.nama, s.kelas, s.asal_sekolah
+		FROM siswa s
+		JOIN users u ON s.user_id = u.id
+		WHERE s.id = $1
+	`, siswaID).Scan(&studentName, &studentClass, &studentSchool)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Siswa tidak ditemukan"})
+		return
+	}
+
+	// 2. Fetch Attendance Records for this Student
+	rows, err := config.DB.Query(context.Background(), `
+		SELECT a.tanggal, j.mata_pelajaran, u_mentor.nama AS nama_mentor, a.status
+		FROM absensi a
+		JOIN jadwal j ON a.jadwal_id = j.id
+		JOIN mentor m ON j.mentor_id = m.id
+		JOIN users u_mentor ON m.user_id = u_mentor.id
+		WHERE a.siswa_id = $1
+		ORDER BY a.tanggal DESC
+	`, siswaID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil riwayat absensi: " + err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	type AttendanceRow struct {
+		Tanggal string
+		Mapel   string
+		Mentor  string
+		Status  string
+	}
+
+	var records []AttendanceRow
+	hadirCount := 0
+	tidakHadirCount := 0
+
+	for rows.Next() {
+		var t time.Time
+		var mapel, mentor, status string
+		if err := rows.Scan(&t, &mapel, &mentor, &status); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca baris absensi"})
+			return
+		}
+
+		displayStatus := "HADIR"
+		if status == "tidak hadir" {
+			displayStatus = "TIDAK HADIR"
+			tidakHadirCount++
+		} else {
+			hadirCount++
+		}
+
+		records = append(records, AttendanceRow{
+			Tanggal: t.Local().Format("02/01/2006 15:04"),
+			Mapel:   mapel,
+			Mentor:  mentor,
+			Status:  displayStatus,
+		})
+	}
+
+	totalMeetings := len(records)
+	attendancePercentage := 0.0
+	if totalMeetings > 0 {
+		attendancePercentage = float64(hadirCount) / float64(totalMeetings) * 100.0
+	}
+
+	// 3. Generate PDF using gofpdf
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetMargins(15, 15, 15)
+
+	// -- Header / Kop Surat --
+	pdf.SetFillColor(240, 244, 255)
+	pdf.Rect(15, 15, 180, 28, "F")
+	
+	pdf.SetFont("Arial", "B", 16)
+	pdf.SetTextColor(30, 64, 175) // Deep Blue
+	pdf.CellFormat(180, 10, "BINTANG MUDA CENTER (BMC GROWUP)", "", 1, "C", false, 0, "")
+	
+	pdf.SetFont("Arial", "I", 10)
+	pdf.SetTextColor(75, 85, 99) // Gray
+	pdf.CellFormat(180, 6, "Laporan Rekapitulasi Absensi Siswa Resmi", "", 1, "C", false, 0, "")
+	pdf.Ln(8)
+
+	// -- Student Details Box --
+	pdf.SetDrawColor(229, 231, 235)
+	pdf.SetLineWidth(0.3)
+	pdf.SetFillColor(255, 255, 255)
+	pdf.Rect(15, 52, 180, 25, "DF")
+
+	pdf.SetFont("Arial", "B", 10)
+	pdf.SetTextColor(31, 41, 55)
+	pdf.Text(18, 58, "Informasi Siswa:")
+
+	pdf.SetFont("Arial", "", 10)
+	pdf.Text(18, 64, fmt.Sprintf("Nama Lengkap : %s", studentName))
+	pdf.Text(18, 70, fmt.Sprintf("Kelas                 : %s", studentClass))
+	pdf.Text(110, 64, fmt.Sprintf("Asal Sekolah : %s", studentSchool))
+	pdf.Text(110, 70, fmt.Sprintf("Tanggal Cetak: %s", time.Now().Local().Format("02/01/2006")))
+
+	// Crucial: Set Y position to Y=82 to cleanly position the statistics box
+	pdf.SetY(82)
+
+	// -- Statistics Row (using clean grid format) --
+	colStatWidth := 180.0 / 4.0 // 45.0 mm each
+	
+	// Headers for Stats
+	pdf.SetFont("Arial", "B", 9)
+	pdf.SetTextColor(75, 85, 99)
+	pdf.SetFillColor(243, 244, 246)
+	pdf.CellFormat(colStatWidth, 6, "TOTAL PERTEMUAN", "1", 0, "C", true, 0, "")
+	pdf.CellFormat(colStatWidth, 6, "HADIR", "1", 0, "C", true, 0, "")
+	pdf.CellFormat(colStatWidth, 6, "TIDAK HADIR", "1", 0, "C", true, 0, "")
+	pdf.CellFormat(colStatWidth, 6, "PERSENTASE", "1", 1, "C", true, 0, "") // 1 means next line
+	
+	// Values for Stats
+	pdf.SetFont("Arial", "B", 12)
+	pdf.SetFillColor(255, 255, 255)
+	
+	// Total
+	pdf.SetTextColor(17, 24, 39)
+	pdf.CellFormat(colStatWidth, 10, fmt.Sprintf("%d", totalMeetings), "1", 0, "C", false, 0, "")
+	
+	// Hadir
+	pdf.SetTextColor(16, 124, 65)
+	pdf.CellFormat(colStatWidth, 10, fmt.Sprintf("%d", hadirCount), "1", 0, "C", false, 0, "")
+	
+	// Tidak Hadir
+	pdf.SetTextColor(220, 38, 38)
+	pdf.CellFormat(colStatWidth, 10, fmt.Sprintf("%d", tidakHadirCount), "1", 0, "C", false, 0, "")
+	
+	// Persentase
+	pdf.SetTextColor(30, 64, 175)
+	pdf.CellFormat(colStatWidth, 10, fmt.Sprintf("%.1f%%", attendancePercentage), "1", 1, "C", false, 0, "")
+	
+	pdf.Ln(6)
+
+	// -- History Table Header --
+	pdf.SetFont("Arial", "B", 10)
+	pdf.SetTextColor(31, 41, 55)
+	pdf.CellFormat(180, 8, "Detail Riwayat Kehadiran Sesi", "", 1, "L", false, 0, "")
+	pdf.Ln(2)
+
+	// Table column widths
+	colWidths := []float64{12, 45, 63, 40, 20} // Total = 180
+	headers := []string{"No", "Tanggal & Jam", "Mata Pelajaran", "Mentor", "Status"}
+
+	pdf.SetFillColor(37, 99, 235) // Primary Blue
+	pdf.SetTextColor(255, 255, 255)
+	pdf.SetFont("Arial", "B", 9)
+	
+	for i, h := range headers {
+		align := "L"
+		if i == 0 || i == 4 {
+			align = "C"
+		}
+		pdf.CellFormat(colWidths[i], 8, h, "1", 0, align, true, 0, "")
+	}
+	pdf.Ln(8)
+
+	// Table Rows
+	pdf.SetTextColor(55, 65, 81)
+	pdf.SetFont("Arial", "", 8.5)
+	
+	for idx, rec := range records {
+		bg := false
+		if idx%2 == 1 {
+			bg = true
+			pdf.SetFillColor(249, 250, 251)
+		}
+		
+		statusColor := func() {
+			if rec.Status == "HADIR" {
+				pdf.SetTextColor(16, 124, 65) // Green
+			} else {
+				pdf.SetTextColor(220, 38, 38) // Red
+			}
+		}
+
+		pdf.CellFormat(colWidths[0], 7, fmt.Sprintf("%d", idx+1), "1", 0, "C", bg, 0, "")
+		pdf.CellFormat(colWidths[1], 7, rec.Tanggal, "1", 0, "L", bg, 0, "")
+		pdf.CellFormat(colWidths[2], 7, rec.Mapel, "1", 0, "L", bg, 0, "")
+		pdf.CellFormat(colWidths[3], 7, rec.Mentor, "1", 0, "L", bg, 0, "")
+		
+		statusColor()
+		pdf.SetFont("Arial", "B", 8.5)
+		pdf.CellFormat(colWidths[4], 7, rec.Status, "1", 1, "C", bg, 0, "")
+		
+		pdf.SetTextColor(55, 65, 81)
+		pdf.SetFont("Arial", "", 8.5)
+	}
+
+	// Signatures / Footer
+	pdf.Ln(10)
+	pdf.SetFont("Arial", "", 9)
+	pdf.SetTextColor(107, 114, 128)
+	pdf.CellFormat(180, 5, "* Laporan ini sah dicetak oleh sistem administrasi BMC GROWUP.", "", 1, "C", false, 0, "")
+
+	// Set content-type and headers for download
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=Laporan_Absensi_%s.pdf", strings.ReplaceAll(studentName, " ", "_")))
+	c.Header("Content-Type", "application/pdf")
+	
+	err = pdf.Output(c.Writer)
+	if err != nil {
+		log.Println("Error generating PDF output:", err)
+	}
 }
 
 // ResetAllAttendanceHandler resets all attendance sessions, records, and legacy absensi data

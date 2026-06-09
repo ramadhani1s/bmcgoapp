@@ -171,6 +171,103 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
+  Widget _buildFormDropdown<T>({
+    required String label,
+    required T? value,
+    required List<T> items,
+    required List<String> labels,
+    required void Function(T) onChanged,
+    String? hint,
+  }) {
+    String displayLabel = hint ?? 'Pilih $label';
+    if (value != null) {
+      final idx = items.indexOf(value);
+      if (idx >= 0 && idx < labels.length) {
+        displayLabel = labels[idx];
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          height: 48,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              hoverColor: Colors.transparent,
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+            ),
+            child: PopupMenuButton<T>(
+              tooltip: '',
+              offset: const Offset(0, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              color: Colors.white,
+              onSelected: onChanged,
+              itemBuilder: (BuildContext context) {
+                return List.generate(items.length, (index) {
+                  return PopupMenuItem<T>(
+                    value: items[index],
+                    height: 38,
+                    child: Text(
+                      labels[index],
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                  );
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        displayLabel,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF111827),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF6B7280),
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   InputDecoration _fieldDecoration({
     required String label,
     required OutlineInputBorder base,
@@ -268,32 +365,15 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                                         const SizedBox(height: 10),
 
                                         // Mata Pelajaran
-                                        DropdownButtonFormField<String>(
+                                        _buildFormDropdown<String>(
+                                          label: 'Mata Pelajaran',
                                           value: _selectedMapel,
-                                          hint: const Text('Pilih Mata Pelajaran'),
-                                          dropdownColor: Colors.white,
-                                          style: const TextStyle(
-                                            color: Color(0xFF111827),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          validator: (v) =>
-                                              v == null || v.isEmpty
-                                                  ? 'Mata pelajaran wajib dipilih'
-                                                  : null,
-                                          items: _mapelOptions
-                                              .map((mapel) => DropdownMenuItem(
-                                                    value: mapel,
-                                                    child: Text(mapel),
-                                                  ))
-                                              .toList(),
+                                          hint: 'Pilih Mata Pelajaran',
+                                          items: _mapelOptions,
+                                          labels: _mapelOptions,
                                           onChanged: (v) {
-                                            if (v == null) return;
                                             setState(() => _selectedMapel = v);
                                           },
-                                          decoration: _fieldDecoration(
-                                            label: 'Mata Pelajaran',
-                                            base: fieldBorder,
-                                          ),
                                         ),
                                         const SizedBox(height: 10),
 
@@ -304,37 +384,15 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                                             child: Center(child: CircularProgressIndicator()),
                                           )
                                         else
-                                          DropdownButtonFormField<int>(
+                                          _buildFormDropdown<int>(
+                                            label: 'Materi Pembelajaran',
                                             value: _selectedMateriId,
-                                            hint: const Text('Pilih Materi Pembelajaran'),
-                                            dropdownColor: Colors.white,
-                                            isExpanded: true,
-                                            style: const TextStyle(
-                                              color: Color(0xFF111827),
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                            validator: (v) =>
-                                                v == null
-                                                    ? 'Materi Pembelajaran wajib dipilih'
-                                                    : null,
-                                            items: _materiList.map((materi) {
-                                              return DropdownMenuItem<int>(
-                                                value: materi.id,
-                                                child: Text(
-                                                  materi.title,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              );
-                                            }).toList(),
+                                            hint: 'Pilih Materi Pembelajaran',
+                                            items: _materiList.map((m) => m.id).toList(),
+                                            labels: _materiList.map((m) => m.title).toList(),
                                             onChanged: (v) {
-                                              if (v == null) return;
                                               setState(() => _selectedMateriId = v);
                                             },
-                                            decoration: _fieldDecoration(
-                                              label: 'Materi Pembelajaran',
-                                              base: fieldBorder,
-                                            ),
                                           ),
                                         const SizedBox(height: 10),
 
@@ -378,32 +436,15 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
                                         const SizedBox(height: 10),
 
                                         // Kelas
-                                        DropdownButtonFormField<String>(
+                                        _buildFormDropdown<String>(
+                                          label: 'Kelas',
                                           value: _selectedClass,
-                                          hint: const Text('Pilih Kelas'),
-                                          dropdownColor: Colors.white,
-                                          style: const TextStyle(
-                                            color: Color(0xFF111827),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          validator: (v) =>
-                                              v == null || v.isEmpty
-                                                  ? 'Kelas wajib dipilih'
-                                                  : null,
-                                          items: _classOptions
-                                              .map((c) => DropdownMenuItem(
-                                                    value: c,
-                                                    child: Text(c),
-                                                  ))
-                                              .toList(),
+                                          hint: 'Pilih Kelas',
+                                          items: _classOptions,
+                                          labels: _classOptions,
                                           onChanged: (v) {
-                                            if (v == null) return;
                                             setState(() => _selectedClass = v);
                                           },
-                                          decoration: _fieldDecoration(
-                                            label: 'Kelas',
-                                            base: fieldBorder,
-                                          ),
                                         ),
                                         const SizedBox(height: 18),
 

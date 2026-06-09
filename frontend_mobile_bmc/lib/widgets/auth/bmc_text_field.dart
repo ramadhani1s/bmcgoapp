@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class BmcTextField extends StatelessWidget {
   const BmcTextField({
@@ -12,6 +13,7 @@ class BmcTextField extends StatelessWidget {
     this.obscureText = false,
     this.minLines,
     this.maxLines = 1,
+    this.inputFormatters,
   });
 
   final TextEditingController controller;
@@ -23,6 +25,7 @@ class BmcTextField extends StatelessWidget {
   final bool obscureText;
   final int? minLines;
   final int? maxLines;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +36,7 @@ class BmcTextField extends StatelessWidget {
       minLines: minLines,
       maxLines: maxLines,
       validator: validator,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(

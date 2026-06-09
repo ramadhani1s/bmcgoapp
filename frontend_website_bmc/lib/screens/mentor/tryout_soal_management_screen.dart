@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../routes/app_routes.dart';
@@ -234,36 +234,90 @@ class _TryoutSoalManagementScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
         title: const Text(
           'Hapus Soal?',
           style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
           ),
         ),
-        content: const Text(
-          'Soal ini akan dihapus permanen.',
-          style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Apakah Anda yakin ingin menghapus soal ini?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.warning, color: Color(0xFFDC2626), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aksi ini tidak bisa dibatalkan. Butir soal beserta pilihan jawabannya akan dihapus secara permanen dari sistem.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF991B1B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF6B7280),
+              foregroundColor: const Color(0xFF4B5563),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             child: const Text('Batal'),
           ),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
               ),
             ),
             child: const Text('Hapus'),
@@ -525,28 +579,43 @@ class _TryoutSoalManagementScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         title: const Text(
-          'Hapus Try Out',
+          'Hapus Try Out?',
           style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
           ),
         ),
         content: const Text(
-          'Apakah Anda yakin ingin menghapus try out ini? Semua soal yang terkait akan dihapus juga.',
-          style: TextStyle(color: Color(0xFF6B7280), height: 1.45),
+          'Apakah Anda yakin ingin menghapus try out ini? Semua soal yang terkait akan dihapus secara permanen.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF4B5563),
+            height: 1.5,
+          ),
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF6B7280),
+              foregroundColor: const Color(0xFF4B5563),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             child: const Text('Batal'),
           ),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () {
               _showSnackbar('Try Out berhasil dihapus');
@@ -556,9 +625,13 @@ class _TryoutSoalManagementScreenState
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
               ),
             ),
             child: const Text('Hapus'),
@@ -1127,6 +1200,7 @@ class _TryoutSoalManagementScreenState
                                 ),
                                 const SizedBox(height: 8),
                                 Container(
+                                  height: 48,
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFF9FAFB),
                                     borderRadius: BorderRadius.circular(12),
@@ -1134,33 +1208,57 @@ class _TryoutSoalManagementScreenState
                                       color: const Color(0xFFE5E7EB),
                                     ),
                                   ),
-                                  child: DropdownButtonFormField<String>(
-                                    value: _selectedKategori,
-                                    items: _kategoriOptions
-                                        .map(
-                                          (k) => DropdownMenuItem(
+                                  child: Theme(
+                                    data: Theme.of(context).copyWith(
+                                      hoverColor: Colors.transparent,
+                                      splashColor: Colors.transparent,
+                                      highlightColor: Colors.transparent,
+                                    ),
+                                    child: PopupMenuButton<String>(
+                                      tooltip: '',
+                                      offset: const Offset(0, 48),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      color: Colors.white,
+                                      onSelected: (value) {
+                                        setState(() => _selectedKategori = value);
+                                      },
+                                      itemBuilder: (context) {
+                                        return _kategoriOptions.map((k) {
+                                          return PopupMenuItem<String>(
                                             value: k,
+                                            height: 38,
                                             child: Text(
                                               k,
-                                              style: const TextStyle(
-                                                fontSize: 13,
+                                              style: const TextStyle(fontSize: 13),
+                                            ),
+                                          );
+                                        }).toList();
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                _selectedKategori,
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Color(0xFF111827),
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (value) {
-                                      if (value != null) {
-                                        setState(
-                                          () => _selectedKategori = value,
-                                        );
-                                      }
-                                    },
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 12,
+                                            const Icon(
+                                              Icons.keyboard_arrow_down_rounded,
+                                              color: Color(0xFF6B7280),
+                                              size: 20,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -1223,6 +1321,7 @@ class _TryoutSoalManagementScreenState
                                 ),
                                 const SizedBox(height: 8),
                                 Container(
+                                  height: 48,
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFF9FAFB),
                                     borderRadius: BorderRadius.circular(12),
@@ -1230,38 +1329,49 @@ class _TryoutSoalManagementScreenState
                                       color: const Color(0xFFE5E7EB),
                                     ),
                                   ),
-                                  child: DropdownButtonFormField<String>(
-                                    value: _selectedJawaban,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'A',
-                                        child: Text('A'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'B',
-                                        child: Text('B'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'C',
-                                        child: Text('C'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'D',
-                                        child: Text('D'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'E',
-                                        child: Text('E'),
-                                      ),
-                                    ],
-                                    onChanged: (value) => setState(
-                                      () => _selectedJawaban = value!,
+                                  child: Theme(
+                                    data: Theme.of(context).copyWith(
+                                      hoverColor: Colors.transparent,
+                                      splashColor: Colors.transparent,
+                                      highlightColor: Colors.transparent,
                                     ),
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 12,
+                                    child: PopupMenuButton<String>(
+                                      tooltip: '',
+                                      offset: const Offset(0, 48),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      color: Colors.white,
+                                      onSelected: (value) => setState(() => _selectedJawaban = value),
+                                      itemBuilder: (context) {
+                                        return ['A', 'B', 'C', 'D', 'E'].map((val) {
+                                          return PopupMenuItem<String>(
+                                            value: val,
+                                            height: 38,
+                                            child: Text(val),
+                                          );
+                                        }).toList();
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              _selectedJawaban,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Color(0xFF111827),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const Icon(
+                                              Icons.keyboard_arrow_down_rounded,
+                                              color: Color(0xFF6B7280),
+                                              size: 20,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),

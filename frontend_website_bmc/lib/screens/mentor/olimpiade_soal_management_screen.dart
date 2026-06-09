@@ -175,16 +175,92 @@ class _OlimpiadeSoalManagementScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Soal?'),
-        content: const Text('Soal ini akan dihapus permanen.'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        title: const Text(
+          'Hapus Soal?',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Apakah Anda yakin ingin menghapus soal ini?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.warning, color: Color(0xFFDC2626), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aksi ini tidak bisa dibatalkan. Butir soal beserta pilihan jawabannya akan dihapus secara permanen dari sistem.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF991B1B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4B5563),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             child: const Text('Batal'),
           ),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             child: const Text('Hapus'),
           ),
         ],
@@ -288,20 +364,76 @@ class _OlimpiadeSoalManagementScreenState
               const SizedBox(height: 12),
               StatefulBuilder(
                 builder: (context, setDialogState) {
-                  return DropdownButtonFormField<String>(
-                    value: _selectedJawaban,
-                    items: const [
-                      DropdownMenuItem(value: 'A', child: Text('A')),
-                      DropdownMenuItem(value: 'B', child: Text('B')),
-                      DropdownMenuItem(value: 'C', child: Text('C')),
-                      DropdownMenuItem(value: 'D', child: Text('D')),
-                      DropdownMenuItem(value: 'E', child: Text('E')),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Jawaban Benar',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                        ),
+                        child: Theme(
+                          data: Theme.of(context).copyWith(
+                            hoverColor: Colors.transparent,
+                            splashColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                          ),
+                          child: PopupMenuButton<String>(
+                            tooltip: '',
+                            offset: const Offset(0, 48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            color: Colors.white,
+                            onSelected: (value) {
+                              setDialogState(() => _selectedJawaban = value);
+                              setState(() => _selectedJawaban = value);
+                            },
+                            itemBuilder: (context) {
+                              return ['A', 'B', 'C', 'D', 'E'].map((val) {
+                                return PopupMenuItem<String>(
+                                  value: val,
+                                  height: 38,
+                                  child: Text(val),
+                                );
+                              }).toList();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _selectedJawaban,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF111827),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: Color(0xFF6B7280),
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
-                    onChanged: (value) {
-                      setDialogState(() => _selectedJawaban = value!);
-                      setState(() => _selectedJawaban = value!);
-                    },
-                    decoration: const InputDecoration(labelText: 'Jawaban Benar'),
                   );
                 },
               ),
@@ -786,6 +918,7 @@ class _OlimpiadeSoalManagementScreenState
                                 ),
                                 const SizedBox(height: 8),
                                 Container(
+                                  height: 48,
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFF9FAFB),
                                     borderRadius: BorderRadius.circular(12),
@@ -793,38 +926,50 @@ class _OlimpiadeSoalManagementScreenState
                                       color: const Color(0xFFE5E7EB),
                                     ),
                                   ),
-                                  child: DropdownButtonFormField<String>(
-                                    value: _selectedJawaban,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'A',
-                                        child: Text('A'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'B',
-                                        child: Text('B'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'C',
-                                        child: Text('C'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'D',
-                                        child: Text('D'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'E',
-                                        child: Text('E'),
-                                      ),
-                                    ],
-                                    onChanged: (value) => setState(
-                                      () => _selectedJawaban = value!,
+                                  child: Theme(
+                                    data: Theme.of(context).copyWith(
+                                      hoverColor: Colors.transparent,
+                                      splashColor: Colors.transparent,
+                                      highlightColor: Colors.transparent,
                                     ),
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 12,
+                                    child: PopupMenuButton<String>(
+                                      tooltip: '',
+                                      offset: const Offset(0, 48),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      color: Colors.white,
+                                      onSelected: (value) =>
+                                          setState(() => _selectedJawaban = value),
+                                      itemBuilder: (context) {
+                                        return ['A', 'B', 'C', 'D', 'E'].map((val) {
+                                          return PopupMenuItem<String>(
+                                            value: val,
+                                            height: 38,
+                                            child: Text(val),
+                                          );
+                                        }).toList();
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              _selectedJawaban,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Color(0xFF111827),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const Icon(
+                                              Icons.keyboard_arrow_down_rounded,
+                                              color: Color(0xFF6B7280),
+                                              size: 20,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),

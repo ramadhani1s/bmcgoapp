@@ -39,7 +39,8 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
   }
 
   Future<String> _getToken() async {
-    return AppSession.getAuthToken();
+    final token = await AppSession.getAuthToken();
+return token ?? '';
   }
 
   Future<void> _fetchOlimpiade() async {
@@ -209,7 +210,8 @@ class _OlimpiadeSoalScreenState extends State<OlimpiadeSoalScreen> {
   }
 
   Future<String> _getToken() async {
-    return AppSession.getAuthToken();
+    final token = await AppSession.getAuthToken();
+return token ?? '';
   }
 
   Future<void> _fetchSoal() async {

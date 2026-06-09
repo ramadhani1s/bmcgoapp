@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      title: 'BMC GROWUP',
+      title: 'BMC GrowUp',
       initialRoute: '/splash',
 
       theme: ThemeData(

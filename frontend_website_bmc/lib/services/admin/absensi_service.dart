@@ -1,7 +1,7 @@
 import 'dart:convert';
 import '../../core/session/app_session.dart';
 import '../../core/network/api_client.dart';
-import '../../models/admin_kelola_absensi.dart';
+import '../../models/admin_laporan_absensi.dart';
 
 class AbsensiService {
   static final ApiClient _client = ApiClient(

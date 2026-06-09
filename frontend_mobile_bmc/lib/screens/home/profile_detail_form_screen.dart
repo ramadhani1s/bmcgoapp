@@ -48,7 +48,6 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
   bool _hasSavedProfile = false;
   bool _isEditMode = true;
   bool _parentAgreementChecked = true;
-  String _signatureFileName = '';
 
   static const int _totalSteps = 5;
 
@@ -133,8 +132,6 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
     _motherPhoneController.text = _readString(savedProfile, 'mother_phone');
     _motherAddressController.text = _readString(savedProfile, 'mother_address');
 
-    _signatureFileName = _readString(savedProfile, 'signature_file_name');
-
     _hasSavedProfile = savedProfile.isNotEmpty;
     _isEditMode = !_hasSavedProfile;
 
@@ -164,7 +161,7 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
       case 2:
         return 'Data Orang Tua (Ibu)';
       case 3:
-        return 'Tanda Tangan Orang Tua & Akun';
+        return 'Persetujuan Orang Tua & Akun';
       default:
         return 'Konfirmasi Data';
     }
@@ -224,15 +221,6 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
         );
         return false;
       }
-      if (_signatureFileName.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pilih file tanda tangan orang tua/wali terlebih dahulu.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return false;
-      }
     }
     return true;
   }
@@ -261,7 +249,6 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
       'mother_job': _motherJobController.text.trim(),
       'mother_phone': _motherPhoneController.text.trim(),
       'mother_address': _motherAddressController.text.trim(),
-      'signature_file_name': _signatureFileName,
       'updated_at': DateTime.now().toIso8601String(),
     };
 
@@ -332,44 +319,6 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
     setState(() {
       _step -= 1;
     });
-  }
-
-  void _mockPickSignatureFile() {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.image_outlined),
-                  title: const Text('tanda_tangan_ortu.png'),
-                  onTap: () {
-                    setState(() {
-                      _signatureFileName = 'tanda_tangan_ortu.png';
-                    });
-                    Navigator.of(context).pop();
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.picture_as_pdf_outlined),
-                  title: const Text('persetujuan_ortu.pdf'),
-                  onTap: () {
-                    setState(() {
-                      _signatureFileName = 'persetujuan_ortu.pdf';
-                    });
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   void _startEditing() {
@@ -481,8 +430,6 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
           _parentAgreementChecked = checked ?? false;
         });
       },
-      signatureFileName: _signatureFileName,
-      onPickSignature: _mockPickSignatureFile,
       accentColor: _accent,
     );
   }
@@ -501,7 +448,6 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
       motherName: _motherNameController.text.trim(),
       motherJob: _motherJobController.text.trim(),
       motherPhone: _motherPhoneController.text.trim(),
-      signatureFileName: _signatureFileName,
     );
   }
 
@@ -521,7 +467,6 @@ class _ProfileDetailFormScreenState extends State<ProfileDetailFormScreen> {
       motherJob: _motherJobController.text.trim(),
       motherPhone: _motherPhoneController.text.trim(),
       motherAddress: _motherAddressController.text.trim(),
-      signatureFileName: _signatureFileName,
     );
   }
 

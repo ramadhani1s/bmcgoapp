@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'auth_service.dart';
-import '../models/admin_kelola_absensi.dart';
+import '../models/admin_laporan_absensi.dart';
 
 class AbsensiService {
   static String get baseUrl => AuthService.baseUrl;

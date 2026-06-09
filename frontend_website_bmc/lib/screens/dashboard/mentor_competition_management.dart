@@ -136,11 +136,94 @@ class _MentorCompetitionManagementState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus data?'),
-        content: Text('Yakin hapus ${item.title}?'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        title: Text(
+          widget.type == 'tryout' ? 'Hapus Try Out?' : 'Hapus Olimpiade?',
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Apakah Anda yakin ingin menghapus "${item.title}"?',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.warning, color: Color(0xFFDC2626), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aksi ini tidak bisa dibatalkan. Semua data nilai dan soal di dalamnya akan dihapus secara permanen dari sistem.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF991B1B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Hapus')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4B5563),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            child: const Text('Batal'),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            child: const Text('Hapus'),
+          ),
         ],
       ),
     );
@@ -350,19 +433,88 @@ class _MentorCompetitionManagementState
                 ),
               ),
               const SizedBox(width: 16),
-              SizedBox(
+              Container(
                 width: 200,
-                child: DropdownButtonFormField<String>(
-                  value: _selectedClass,
-                  items: const ['Semua Kelas', 'Kelas 10 IPA', 'Kelas 10 IPS', 'Kelas 11 IPA', 'Kelas 11 IPS', 'Kelas 12 IPA', 'Kelas 12 IPS']
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                  onChanged: (value) => setState(() => _selectedClass = value ?? 'Semua Kelas'),
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.class_outlined, size: 18, color: Color(0xFF2563EB)),
-                    filled: true,
-                    fillColor: const Color(0xFFF3F4F6),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    hoverColor: Colors.transparent,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                  ),
+                  child: PopupMenuButton<String>(
+                    tooltip: '',
+                    offset: const Offset(0, 44),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    color: Colors.white,
+                    onSelected: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _selectedClass = val;
+                        });
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return const [
+                        'Semua Kelas',
+                        'Kelas 10 IPA',
+                        'Kelas 10 IPS',
+                        'Kelas 11 IPA',
+                        'Kelas 11 IPS',
+                        'Kelas 12 IPA',
+                        'Kelas 12 IPS'
+                      ].map((c) {
+                        return PopupMenuItem<String>(
+                          value: c,
+                          height: 38,
+                          child: Text(
+                            c,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF374151),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      }).toList();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Icon(
+                            Icons.class_outlined,
+                            size: 18,
+                            color: Color(0xFF2563EB),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _selectedClass,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF374151),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: Color(0xFF6B7280),
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -619,6 +771,102 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
     }
   }
 
+  Widget _buildFormDropdown<T>({
+    required String label,
+    required T? value,
+    required List<T> items,
+    required List<String> labels,
+    required void Function(T) onChanged,
+    String? hint,
+  }) {
+    String displayLabel = hint ?? 'Pilih $label';
+    if (value != null) {
+      final idx = items.indexOf(value);
+      if (idx >= 0 && idx < labels.length) {
+        displayLabel = labels[idx];
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          height: 48,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              hoverColor: Colors.transparent,
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+            ),
+            child: PopupMenuButton<T>(
+              tooltip: '',
+              offset: const Offset(0, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              color: Colors.white,
+              onSelected: onChanged,
+              itemBuilder: (BuildContext context) {
+                return List.generate(items.length, (index) {
+                  return PopupMenuItem<T>(
+                    value: items[index],
+                    height: 38,
+                    child: Text(
+                      labels[index],
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                  );
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        displayLabel,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF6B7280),
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isOlimpiade = widget.type == 'olimpiade';
@@ -759,7 +1007,8 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                     ),
                     const SizedBox(height: 10),
                     // Kelas
-                    DropdownButtonFormField<String>(
+                    _buildFormDropdown<String>(
+                      label: 'Kelas',
                       value: _selectedClass,
                       items: const [
                         'Kelas 10 IPA',
@@ -768,15 +1017,16 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
                         'Kelas 11 IPS',
                         'Kelas 12 IPA',
                         'Kelas 12 IPS'
-                      ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                      onChanged: (value) => setState(() => _selectedClass = value ?? _selectedClass),
-                      decoration: InputDecoration(
-                        labelText: 'Kelas',
-                        filled: true,
-                        fillColor: const Color(0xFFF3F4F6),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      ),
+                      ],
+                      labels: const [
+                        'Kelas 10 IPA',
+                        'Kelas 10 IPS',
+                        'Kelas 11 IPA',
+                        'Kelas 11 IPS',
+                        'Kelas 12 IPA',
+                        'Kelas 12 IPS'
+                      ],
+                      onChanged: (value) => setState(() => _selectedClass = value),
                     ),
                     const SizedBox(height: 24),
                     Row(

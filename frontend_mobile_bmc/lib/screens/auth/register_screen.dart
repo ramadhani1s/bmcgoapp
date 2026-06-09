@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend_mobile_bmc/services/auth_service.dart';
 import 'package:frontend_mobile_bmc/widgets/auth/bmc_text_field.dart';
 import 'package:frontend_mobile_bmc/screens/home/pilih_lokasi_page.dart';
@@ -160,7 +161,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: [
                       BmcTextField(
                         controller: _namaController,
-                        hint: 'Nama Lengkap Siswa *',
+                        hint: 'Nama Lengkap Siswa',
                         icon: Icons.person_outline,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
@@ -172,7 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 16),
                       BmcTextField(
                         controller: _kelasController,
-                        hint: 'Kelas *',
+                        hint: 'Kelas',
                         icon: Icons.class_outlined,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
@@ -184,7 +185,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 16),
                       BmcTextField(
                         controller: _sekolahController,
-                        hint: 'Asal Sekolah *',
+                        hint: 'Asal Sekolah',
                         icon: Icons.school_outlined,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
@@ -197,11 +198,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       BmcTextField(
                         controller: _whatsappController,
                         keyboardType: TextInputType.phone,
-                        hint: 'No. WhatsApp Siswa *',
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        hint: 'No. WhatsApp Siswa',
                         icon: Icons.phone_android_outlined,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
                             return 'Nomor WhatsApp wajib diisi';
+                          }
+                          if (!RegExp(r'^[0-9]+$').hasMatch(value!.trim())) {
+                            return 'Nomor WhatsApp harus berupa angka';
                           }
                           return null;
                         },
@@ -211,7 +216,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: _alamatController,
                         minLines: 2,
                         maxLines: 4,
-                        hint: 'Alamat Lengkap Siswa *',
+                        hint: 'Alamat Lengkap Siswa',
                         icon: Icons.location_on_outlined,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
@@ -249,7 +254,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       BmcTextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        hint: 'Email *',
+                        hint: 'Email',
                         icon: Icons.email_outlined,
                         validator: (value) {
                           if (value?.trim().isEmpty ?? true) {
@@ -265,7 +270,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       BmcTextField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
-                        hint: 'Password *',
+                        hint: 'Password',
                         icon: Icons.lock_outline,
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -295,7 +300,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleRegister,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE11D48),
+                            backgroundColor: const Color(0xFFFF7070),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),

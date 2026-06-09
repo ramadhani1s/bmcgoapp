@@ -85,6 +85,7 @@ func ProtectedRoutes(r *gin.Engine) {
 	// Admin attendance list
 	admin.GET("/absensi", handlers.GetAdminAttendanceSessionsHandler)
 	admin.POST("/absensi/reset", handlers.ResetAllAttendanceHandler)
+	admin.GET("/absensi/download-pdf/:siswaId", handlers.DownloadStudentAttendancePDFHandler)
 
 	// ================= MENTOR ONLY =================
 	mentor := auth.Group("/mentor")
@@ -132,6 +133,7 @@ func ProtectedRoutes(r *gin.Engine) {
 	mentor.GET("/attendance/active", handlers.GetActiveAttendanceSessionHandler)
 	mentor.GET("/attendance/sessions/:sessionId/summary", handlers.GetAttendanceSessionSummaryHandler)
 	mentor.GET("/attendance/rules", handlers.DebugAttendanceExplainHandler)
+	mentor.GET("/absensi/download-pdf/:siswaId", handlers.DownloadStudentAttendancePDFHandler)
 
 	// ================= SISWA ONLY =================
 	siswa := auth.Group("/siswa")
