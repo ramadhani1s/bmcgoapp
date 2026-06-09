@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io' show Platform;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';
 import '../../core/session/app_session.dart';
+import '../../widgets/latihan/soal_card.dart';
+import '../../widgets/latihan/navigation_button_row.dart';
+
 class MateriDetailScreen extends StatefulWidget {
   final Map<String, dynamic> materi;
 
@@ -23,9 +25,19 @@ class _MateriDetailScreenState extends State<MateriDetailScreen> {
   static const Color _textPrimary = Color(0xFF25273D);
   static const Color _textMuted = Color(0xFF8D90A3);
 
+  int _activeTab = 0; // 0 = Materi, 1 = Latihan Soal
+  
   bool _isLoadingLatihan = true;
   String? _errorMessage;
-  Map<String, List<Map<String, dynamic>>> _groupedQuestions = {};
+  List<Map<String, dynamic>> _questions = [];
+  
+  // Quiz State
+  bool _isSubmitting = false;
+  bool _isSubmitted = false;
+  int _currentIndex = 0;
+  Map<int, String> _answers = {};
+  int _score = 0;
+  bool _showPembahasan = true;
 
   Map<String, Map<String, dynamic>> get _subjectConfig => {
     'Matematika': {
@@ -107,7 +119,7 @@ class _MateriDetailScreenState extends State<MateriDetailScreen> {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final List<dynamic> soalList = data['data'] as List<dynamic>? ?? [];
         
-        final Map<String, List<Map<String, dynamic>>> grouped = {};
+        List<Map<String, dynamic>> loadedQuestions = [];
 
         for (final soal in soalList) {
           final String rawPertanyaan = soal['pertanyaan'] ?? '';
@@ -116,25 +128,9 @@ class _MateriDetailScreenState extends State<MateriDetailScreen> {
             continue;
           }
 
-          String title = 'Latihan Soal';
-          String cleanPertanyaan = rawPertanyaan;
-          
-          // Try to extract title from [Latihan:Title] format
-          final titleMatch = RegExp(r'\[Latihan:(.*?)\]').firstMatch(rawPertanyaan);
-          if (titleMatch != null) {
-            title = titleMatch.group(1)?.trim() ?? 'Latihan Soal';
-          } else {
-             // Fallback for older formats where the 3rd bracket was the title
-             final oldFormatMatch = RegExp(r'^\[.*?\]\[.*?\]\[(.*?)\]').firstMatch(rawPertanyaan);
-             if (oldFormatMatch != null && !oldFormatMatch.group(1)!.contains(':')) {
-                 title = oldFormatMatch.group(1)?.trim() ?? 'Latihan Soal';
-             }
-          }
+          String cleanPertanyaan = rawPertanyaan.replaceFirst(RegExp(r'^(?:\[.*?\]\s*)+'), '').trim();
 
-          // Aggressively strip ALL metadata brackets at the start of the string
-          cleanPertanyaan = rawPertanyaan.replaceFirst(RegExp(r'^(?:\[.*?\]\s*)+'), '').trim();
-
-          final formattedSoal = {
+          loadedQuestions.add({
             'pertanyaan': cleanPertanyaan,
             'pilihan_a': soal['pilihan_a'] ?? '',
             'pilihan_b': soal['pilihan_b'] ?? '',
@@ -142,14 +138,12 @@ class _MateriDetailScreenState extends State<MateriDetailScreen> {
             'pilihan_d': soal['pilihan_d'] ?? '',
             'jawaban': soal['jawaban'] ?? '',
             'pembahasan': soal['pembahasan'] ?? 'Tidak ada pembahasan',
-          };
-
-          grouped.putIfAbsent(title, () => []).add(formattedSoal);
+          });
         }
 
         if (!mounted) return;
         setState(() {
-          _groupedQuestions = grouped;
+          _questions = loadedQuestions;
           _isLoadingLatihan = false;
         });
       } else {
@@ -168,222 +162,801 @@ class _MateriDetailScreenState extends State<MateriDetailScreen> {
     }
   }
 
-  void _startPractice(String title, List<Map<String, dynamic>> questions) {
-    Navigator.pushNamed(
-      context,
-      '/latihan-dari-materi',
-      arguments: {
-        'materi_title': title,
-        'materi_id': widget.materi['id'] ?? 0,
-        'questions': questions,
-      },
-    );
-  }
-
   Future<void> _openPdf() async {
-  final filePath = widget.materi['file_path'] as String? ?? '';
+    final filePath = widget.materi['file_path'] as String? ?? '';
 
-  if (filePath.isEmpty) {
-    return;
+    if (filePath.isEmpty) {
+      return;
+    }
+
+    final uri = Uri.parse('${ApiConfig.baseUrl}$filePath');
+
+    try {
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      print('ERROR OPEN PDF: $e');
+    }
   }
 
-  final uri = Uri.parse(
-    'http://10.0.2.2:8080$filePath',
-  );
-
-  try {
-    await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
-  } catch (e) {
-    print('ERROR OPEN PDF: $e');
+  // --- Quiz Functions ---
+  void _selectAnswer(String answer) {
+    if (_isSubmitted || _answers.containsKey(_currentIndex)) return;
+    setState(() {
+      _answers[_currentIndex] = answer;
+      _showPembahasan = true;
+    });
   }
-}
+
+  void _goToPrevious() {
+    if (_currentIndex > 0) {
+      setState(() {
+        _currentIndex--;
+        _showPembahasan = _answers.containsKey(_currentIndex);
+      });
+    }
+  }
+
+  void _goToNext() {
+    if (_currentIndex < _questions.length - 1) {
+      setState(() {
+        _currentIndex++;
+        _showPembahasan = _answers.containsKey(_currentIndex);
+      });
+    }
+  }
+
+  Future<void> _submitQuiz() async {
+    final unansweredCount = _questions.length - _answers.length;
+    if (unansweredCount > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Masih ada $unansweredCount soal yang belum dijawab!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    int correctCount = 0;
+    for (int i = 0; i < _questions.length; i++) {
+      final selected = _answers[i]?.toUpperCase();
+      final correct = (_questions[i]['jawaban'] as String).toUpperCase();
+      if (selected == correct) {
+        correctCount++;
+      }
+    }
+
+    try {
+      final token = await AppSession.getAuthToken();
+      if (token != null && token.isNotEmpty) {
+        final uri = Uri.parse('${ApiConfig.baseUrl}/api/siswa/latihan/simpan-hasil');
+        await http.post(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'materi_id': widget.materi['id'] ?? 0,
+            'latihan_title': widget.materi['title'] ?? 'Latihan Soal',
+            'skor': correctCount,
+            'total_soal': _questions.length,
+          }),
+        ).timeout(const Duration(seconds: 10));
+      }
+    } catch (e) {
+      debugPrint('Gagal simpan hasil: $e');
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _score = correctCount;
+      _isSubmitted = true;
+      _isSubmitting = false;
+    });
+  }
+
+  void _resetQuiz() {
+    setState(() {
+      _currentIndex = 0;
+      _answers.clear();
+      _isSubmitted = false;
+      _score = 0;
+      _showPembahasan = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final subject = widget.materi['subject'] as String? ?? 'Umum';
     final config = _getSubjectConfig(subject);
     final title = widget.materi['title'] as String? ?? '-';
-    final description = widget.materi['description'] as String? ?? '';
     final mentorName = widget.materi['mentor_name'] as String? ?? 'Mentor';
     final fileSize = widget.materi['file_size'] as int? ?? 0;
     final fileType = (widget.materi['file_type'] as String? ?? '.pdf').toUpperCase().replaceAll('.', '');
-    
-    // DEBUG
-    print('DEBUG MateriDetail: materi keys = ${widget.materi.keys.toList()}');
-    print('DEBUG MateriDetail: file_path = ${widget.materi['file_path']}');
-    print('DEBUG MateriDetail: subject = $subject, title = $title, fileSize = $fileSize');
 
     return Scaffold(
       backgroundColor: _background,
-      appBar: AppBar(
-        backgroundColor: config['bg'] as Color,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          color: _textPrimary,
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Detail Materi',
-          style: TextStyle(
-            color: _textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+      body: Column(
+        children: [
+          // Header Background
+          Container(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 16,
+              left: 20,
+              right: 20,
+              bottom: 24,
+            ),
+            decoration: BoxDecoration(
+              color: _accent,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(32),
+                bottomRight: Radius.circular(32),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Bar
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Main Header Content
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Icon Box
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(
+                        config['icon'] as IconData,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Title & Badge
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              subject,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Footer Info
+                Row(
+                  children: [
+                    const Icon(Icons.person_outline, color: Colors.white, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Kak $mentorName',
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.description_outlined, color: Colors.white, size: 14),
+                    const SizedBox(width: 4),
+                    const Text(
+                      '12 Halaman', // Hardcoded as in mockup
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.picture_as_pdf_outlined, color: Colors.white, size: 14),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'PDF',
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
+          
+          // Tab Switcher
+          Container(
+            margin: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _activeTab = 0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _activeTab == 0 ? const Color(0xFFEBF3FF) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.menu_book_rounded,
+                            size: 18,
+                            color: _activeTab == 0 ? const Color(0xFF4B9BFF) : _textMuted,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Materi',
+                            style: TextStyle(
+                              color: _activeTab == 0 ? const Color(0xFF4B9BFF) : _textMuted,
+                              fontWeight: _activeTab == 0 ? FontWeight.w700 : FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _activeTab = 1),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _activeTab == 1 ? const Color(0xFFFFF0F4) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.quiz_rounded,
+                            size: 18,
+                            color: _activeTab == 1 ? _accent : _textMuted,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Latihan Soal',
+                            style: TextStyle(
+                              color: _activeTab == 1 ? _accent : _textMuted,
+                              fontWeight: _activeTab == 1 ? FontWeight.w700 : FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (_questions.isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _accent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                _isSubmitted ? '${_score}/${_questions.length}' : '${_answers.length}/${_questions.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Content Area
+          Expanded(
+            child: _activeTab == 0 ? _buildMateriTab(config, description: widget.materi['description'] as String? ?? '', fileSize: fileSize, fileType: fileType) : _buildLatihanTab(),
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header Background
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: config['bg'] as Color,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
+    );
+  }
+
+  Widget _buildMateriTab(Map<String, dynamic> config, {required String description, required int fileSize, required String fileType}) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // File Info
+          if (fileSize > 0)
+            GestureDetector(
+              onTap: _openPdf,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _accent.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _accent.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _accent.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.picture_as_pdf_rounded,
+                        color: _accent,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'File Materi (Tap untuk buka)',
+                            style: TextStyle(
+                              color: _textMuted,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$fileType • ${_formatFileSize(fileSize)}',
+                            style: const TextStyle(
+                              color: _textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.open_in_new_rounded,
+                      color: _accent,
+                      size: 24,
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Icon
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+            ),
+          const SizedBox(height: 24),
+          // Description
+          if (description.isNotEmpty) ...[
+            const Text(
+              'Deskripsi',
+              style: TextStyle(
+                color: _textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
+              ),
+              child: Text(
+                description,
+                style: const TextStyle(
+                  color: _textPrimary,
+                  fontSize: 14,
+                  height: 1.6,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLatihanTab() {
+    if (_isLoadingLatihan) {
+      return const Center(child: CircularProgressIndicator(color: _accent));
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text(
+            _errorMessage!,
+            style: const TextStyle(color: Colors.red),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    if (_questions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.quiz_outlined,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Belum Ada Soal',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: _textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Soal latihan untuk materi ini\nbelum tersedia',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_isSubmitted) {
+      return _buildResultView();
+    }
+
+    final currentQuestion = _questions[_currentIndex];
+    final selectedAnswer = _answers[_currentIndex];
+    
+    final List<String> options = [
+      currentQuestion['pilihan_a']?.toString() ?? '',
+      currentQuestion['pilihan_b']?.toString() ?? '',
+      currentQuestion['pilihan_c']?.toString() ?? '',
+      currentQuestion['pilihan_d']?.toString() ?? '',
+    ];
+
+    // Progress percentage
+    final double progress = (_currentIndex + 1) / _questions.length;
+
+    return Column(
+      children: [
+        // Custom Progress Indicator above Soal Card as in Mockup
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Stack(
+                  children: [
+                    Container(
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: _accent.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                     ),
-                    child: Icon(
-                      config['icon'] as IconData,
-                      color: config['color'] as Color,
-                      size: 36,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Title
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Subject Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.label_rounded,
-                          size: 14,
-                          color: config['color'] as Color,
+                    FractionallySizedBox(
+                      widthFactor: progress,
+                      child: Container(
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF9800), // Orange progress
+                          borderRadius: BorderRadius.circular(3),
                         ),
-                        const SizedBox(width: 6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${(progress * 100).toInt()}%',
+                style: const TextStyle(
+                  color: _accent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: SingleChildScrollView(
+            child: SoalCard(
+              currentSoal: _currentIndex + 1,
+              totalSoal: _questions.length,
+              soalText: currentQuestion['pertanyaan'] ?? '',
+              options: options,
+              selectedAnswer: selectedAnswer,
+              isSubmitted: selectedAnswer != null, // Show colors immediately upon selection like in modern apps, or keep it true if selected
+              correctAnswer: currentQuestion['jawaban'],
+              pembahasan: currentQuestion['pembahasan'] ?? 'Tidak ada pembahasan',
+              onAnswerSelected: _selectAnswer,
+              onTogglePembahasan: () {
+                setState(() {
+                  _showPembahasan = !_showPembahasan;
+                });
+              },
+              showPembahasan: _showPembahasan,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: NavigationButtonRow(
+            onPrevious: _goToPrevious,
+            onNext: _goToNext,
+            isPreviousEnabled: _currentIndex > 0,
+            isNextEnabled: _currentIndex < _questions.length - 1,
+            isLastQuestion: _currentIndex == _questions.length - 1,
+            isSubmitting: _isSubmitting,
+            onSubmit: _submitQuiz,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResultView() {
+    final int total = _questions.length;
+    final int correct = _score;
+    final int wrong = total - correct;
+    final int finalScore = total > 0 ? (correct / total * 100).round() : 0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  '💪',
+                  style: TextStyle(fontSize: 48),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Skor Kamu',
+                  style: TextStyle(
+                    color: Color(0xFF8D90A3),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  '$finalScore',
+                  style: const TextStyle(
+                    color: Color(0xFF25273D),
+                    fontSize: 64,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$correct dari $total jawaban benar',
+                  style: const TextStyle(
+                    color: Color(0xFF8D90A3),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildStatCard(
+                      count: correct,
+                      label: 'Benar',
+                      color: const Color(0xFF12B892),
+                      bgColor: const Color(0xFFE3FBF4),
+                    ),
+                    _buildStatCard(
+                      count: wrong,
+                      label: 'Salah',
+                      color: const Color(0xFFFF6B35),
+                      bgColor: const Color(0xFFFFF0EB),
+                    ),
+                    _buildStatCard(
+                      count: total,
+                      label: 'Total',
+                      color: const Color(0xFF4B9BFF),
+                      bgColor: const Color(0xFFEBF3FF),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _resetQuiz,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF7070),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
+                        SizedBox(width: 8),
                         Text(
-                          subject,
+                          'Kerjakan Ulang',
                           style: TextStyle(
-                            color: config['color'] as Color,
-                            fontSize: 12,
+                            color: Colors.white,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Mentor Info Card
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x0A000000),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        )
-                      ],
+          ),
+          const SizedBox(height: 32),
+          const Text(
+            'Review Jawaban',
+            style: TextStyle(
+              color: Color(0xFF25273D),
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...List.generate(total, (index) {
+            final q = _questions[index];
+            final String userAnswerOption = _answers[index] ?? '';
+            final String correctAnswerOption = q['jawaban'] ?? '';
+            final bool isCorrect = userAnswerOption.toUpperCase() == correctAnswerOption.toUpperCase();
+            
+            String userAnswerText = '';
+            if (userAnswerOption.isNotEmpty) {
+               userAnswerText = q['pilihan_${userAnswerOption.toLowerCase()}']?.toString() ?? userAnswerOption;
+            } else {
+               userAnswerText = 'Tidak dijawab';
+            }
+            String correctAnswerText = q['pilihan_${correctAnswerOption.toLowerCase()}']?.toString() ?? correctAnswerOption;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isCorrect ? const Color(0xFF12B892).withOpacity(0.5) : const Color(0xFFFF6B35).withOpacity(0.5),
+                  width: 2,
+                ),
+              ),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      width: 6,
+                      decoration: BoxDecoration(
+                        color: isCorrect ? const Color(0xFF12B892) : const Color(0xFFFF6B35),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(14),
+                          bottomLeft: Radius.circular(14),
+                        ),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: config['bg'] as Color,
-                          child: Icon(
-                            Icons.person_rounded,
-                            color: config['color'] as Color,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Pengajar',
-                                style: TextStyle(
-                                  color: _textMuted,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              Text(
-                                'Kak $mentorName',
-                                style: TextStyle(
-                                  color: _textPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // File Info
-                  if (fileSize > 0)
-                    GestureDetector(
-                      onTap: _openPdf,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: config['color'] as Color,
-                            width: 1.5,
-                          ),
-                        ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
-                              Icons.picture_as_pdf_rounded,
-                              color: config['color'] as Color,
-                              size: 24,
+                              isCorrect ? Icons.check_circle_outline_rounded : Icons.cancel_outlined,
+                              color: isCorrect ? const Color(0xFF12B892) : const Color(0xFFFF6B35),
+                              size: 20,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -391,168 +964,102 @@ class _MateriDetailScreenState extends State<MateriDetailScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'File Materi (Tap untuk buka)',
-                                    style: TextStyle(
-                                      color: _textMuted,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  Text(
-                                    '$fileType • ${_formatFileSize(fileSize)}',
-                                    style: TextStyle(
-                                      color: _textPrimary,
+                                    '${index + 1}. ${q['pertanyaan']}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF25273D),
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: 'Jawabanmu: ',
+                                          style: TextStyle(
+                                            color: isCorrect ? const Color(0xFF12B892) : const Color(0xFFFF6B35),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: userAnswerText,
+                                          style: const TextStyle(
+                                            color: Color(0xFF8D90A3),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        const TextSpan(
+                                          text: 'Jawaban benar: ',
+                                          style: TextStyle(
+                                            color: Color(0xFF12B892),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: correctAnswerText,
+                                          style: const TextStyle(
+                                            color: Color(0xFF8D90A3),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            Icon(
-                              Icons.open_in_new_rounded,
-                              color: config['color'] as Color,
-                              size: 20,
-                            ),
                           ],
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  // Description
-                  if (description.isNotEmpty) ...[
-                    Text(
-                      'Deskripsi',
-                      style: TextStyle(
-                        color: _textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        description,
-                        style: TextStyle(
-                          color: _textPrimary,
-                          fontSize: 13,
-                          height: 1.6,
                         ),
                       ),
                     ),
                   ],
-                ],
+                ),
               ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard({required int count, required String label, required Color color, required Color bgColor}) {
+    return Container(
+      width: 80,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            '$count',
+            style: TextStyle(
+              color: color,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
             ),
-            
-            // --- Daftar Latihan Soal ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Daftar Latihan Soal',
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (_isLoadingLatihan)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  else if (_errorMessage != null)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Text(
-                          _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    )
-                  else if (_groupedQuestions.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Text(
-                          'Belum ada latihan soal untuk materi ini.',
-                          style: TextStyle(color: _textMuted),
-                        ),
-                      ),
-                    )
-                  else
-                    ..._groupedQuestions.entries.map((entry) {
-                      final title = entry.key;
-                      final questions = entry.value;
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x0A000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            )
-                          ],
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(16),
-                          leading: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: _accent.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.quiz_rounded,
-                              color: _accent,
-                            ),
-                          ),
-                          title: Text(
-                            title,
-                            style: TextStyle(
-                              color: _textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                            ),
-                          ),
-                          subtitle: Text(
-                            '${questions.length} Soal',
-                            style: TextStyle(color: _textMuted, fontSize: 13),
-                          ),
-                          trailing: ElevatedButton(
-                            onPressed: () => _startPractice(title, questions),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _accent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            ),
-                            child: const Text('Mulai', style: TextStyle(color: Colors.white)),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  const SizedBox(height: 32),
-                ],
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

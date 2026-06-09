@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class OlimpiadeCard extends StatelessWidget {
   const OlimpiadeCard({
@@ -29,12 +30,6 @@ class OlimpiadeCard extends StatelessWidget {
         label = 'Sedang Berlangsung';
         icon = Icons.circle;
         break;
-      case 'terjadwal':
-        color = const Color(0xFFF39A44);
-        bg = const Color(0xFFFFF0E0);
-        label = 'Segera Dibuka';
-        icon = Icons.calendar_month_rounded;
-        break;
       case 'selesai':
         color = const Color(0xFF8D90A3);
         bg = const Color(0xFFF0F0F0);
@@ -60,6 +55,16 @@ class OlimpiadeCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatDate(dynamic dateString) {
+    if (dateString == null) return '-';
+    try {
+      final date = DateTime.parse(dateString.toString());
+      return DateFormat('dd MMM yyyy').format(date);
+    } catch (e) {
+      return dateString.toString();
+    }
   }
 
   @override
@@ -98,7 +103,7 @@ class OlimpiadeCard extends StatelessWidget {
                         style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                       ),
                       Text(
-                        olimpiade['mata_pelajaran'] as String? ?? '-',
+                        olimpiade['class_level'] as String? ?? '-',
                         style: const TextStyle(color: Color(0xFFFFE5B0), fontSize: 12.5),
                       ),
                     ],
@@ -119,7 +124,7 @@ class OlimpiadeCard extends StatelessWidget {
                     const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF8D90A3)),
                     const SizedBox(width: 6),
                     Text(
-                      '${olimpiade['tanggal_mulai'] ?? '-'} - ${olimpiade['tanggal_selesai'] ?? '-'}',
+                      _formatDate(olimpiade['tanggal']),
                       style: TextStyle(color: textMuted, fontSize: 12.5),
                     ),
                   ],
@@ -130,17 +135,17 @@ class OlimpiadeCard extends StatelessWidget {
                     const Icon(Icons.timer_rounded, size: 14, color: Color(0xFF8D90A3)),
                     const SizedBox(width: 6),
                     Text(
-                      '${olimpiade['durasi'] ?? 120} menit • ${olimpiade['total_soal'] ?? 0} soal',
+                      '120 menit • ${olimpiade['total_questions'] ?? 0} soal',
                       style: TextStyle(color: textMuted, fontSize: 12.5),
                     ),
                   ],
                 ),
-                if ((olimpiade['deskripsi'] as String? ?? '').isNotEmpty) ...[
+                if ((olimpiade['lokasi'] as String? ?? '').isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
-                    olimpiade['deskripsi'] as String,
+                    'Lokasi: ${olimpiade['lokasi']}',
                     style: TextStyle(color: textPrimary, fontSize: 13, height: 1.4),
-                    maxLines: 3,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -150,7 +155,7 @@ class OlimpiadeCard extends StatelessWidget {
                   child: Row(
                     children: [
                       Text(
-                        status == 'tersedia' ? 'Mulai Olimpiade' : status == 'terjadwal' ? 'Lihat Detail' : 'Lihat Hasil',
+                        status == 'tersedia' ? 'Mulai Olimpiade' : 'Lihat Hasil',
                         style: const TextStyle(color: Color(0xFFFF7070), fontSize: 14, fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(width: 4),
@@ -166,3 +171,4 @@ class OlimpiadeCard extends StatelessWidget {
     );
   }
 }
+

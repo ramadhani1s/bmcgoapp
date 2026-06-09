@@ -28,8 +28,7 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
 
   final List<Map<String, String>> _tabs = [
     {'label': 'Tersedia', 'value': 'tersedia'},
-    {'label': 'Terjadwal', 'value': 'terjadwal'},
-    {'label': 'Selesai', 'value': 'selesai'},
+    {'label': 'Riwayat', 'value': 'selesai'},
   ];
 
   @override
@@ -110,11 +109,14 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
                             if (status == 'tersedia') {
                               Navigator.of(context).push(MaterialPageRoute(
                                 builder: (_) => OlimpiadeSoalScreen(olimpiade: o),
-                              ));
-                            } else if (status == 'terjadwal') {
-                              // show details - keep existing behavior placeholder
+                              )).then((_) => _fetchOlimpiade());
                             } else {
-                              // lihat hasil - existing behavior placeholder
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => OlimpiadeHasilScreen(
+                                  olimpiade: o,
+                                  hasil: o, // o already contains skor, ranking, dll.
+                                ),
+                              )).then((_) => _fetchOlimpiade());
                             }
                           },
                           goldColor: _gold,
@@ -634,7 +636,7 @@ class OlimpiadeHasilScreen extends StatelessWidget {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                    onTap: () => Navigator.of(context).pop(),
                     child: Container(
                       width: 36, height: 36,
                       decoration: BoxDecoration(color: Colors.white.withOpacity(0.22), borderRadius: BorderRadius.circular(10)),
@@ -755,7 +757,7 @@ class OlimpiadeHasilScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                            onPressed: () => Navigator.of(context).pop(),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: _accent,
                               side: const BorderSide(color: _accent),
@@ -763,20 +765,6 @@ class OlimpiadeHasilScreen extends StatelessWidget {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                             child: const Text('Kembali', style: TextStyle(fontWeight: FontWeight.w700)),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.share_rounded, size: 16),
-                            label: const Text('Bagikan'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _accent,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
                           ),
                         ),
                       ],
