@@ -566,11 +566,6 @@ class _MentorCompetitionManagementState
     final progressPercent = (progressValue * 100).round();
     final isPublished = item.isPublished;
 
-    print('===== CARD DATA =====');
-    print('Title: ${item.title}');
-    print('Class: ${item.classLevel}');
-    print('=====================');
-
     return Container(
       width: 350,
       padding: const EdgeInsets.all(20),
@@ -727,14 +722,6 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     
-    print('===== SUBMIT DATA =====');
-    print('Title: ${_titleController.text.trim()}');
-    print('Schedule: ${_scheduleController.text.trim()}');
-    print('Duration: ${_durationController.text.trim()}');
-    print('Total Questions: ${_totalQuestionsController.text.trim()}');
-    print('Class: $_selectedClass');
-    print('=======================');
-    
     setState(() => _isSubmitting = true);
 
     final navigator = Navigator.of(context);
@@ -754,8 +741,6 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
 
       if (!mounted) return;
 
-      print('Response: $res');
-
       if (res['success'] == true) {
         navigator.pop(true);
       } else {
@@ -765,7 +750,6 @@ class _CompetitionFormDialogState extends State<_CompetitionFormDialog> {
         setState(() => _isSubmitting = false);
       }
     } catch (e) {
-      print('Error: $e');
       if (!mounted) return;
       setState(() => _isSubmitting = false);
       messenger.showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));

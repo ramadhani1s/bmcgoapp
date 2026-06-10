@@ -835,7 +835,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
           Expanded(
             flex: 1,
             child: Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: 16),
               child: Text(
                 'TAHUN LULUS',
                 textAlign: TextAlign.center,
@@ -850,7 +850,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
           Expanded(
             flex: 3,
             child: Padding(
-              padding: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.only(left: 16),
               child: Text(
                 'PRESTASI',
                 style: TextStyle(
@@ -944,7 +944,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
           Expanded(
             flex: 1,
             child: Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: 16),
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -967,7 +967,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
           Expanded(
             flex: 3,
             child: Padding(
-              padding: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.only(left: 16),
               child: Text(
                 (alumni.prestasi?.isNotEmpty == true) ? alumni.prestasi! : '-',
                 style: const TextStyle(
@@ -975,7 +975,7 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                   color: Color(0xFF4B5563),
                   fontStyle: FontStyle.italic,
                 ),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

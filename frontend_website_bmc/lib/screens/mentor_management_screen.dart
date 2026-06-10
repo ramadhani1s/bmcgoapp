@@ -55,6 +55,48 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
   }
 
   // ==================================================
+  // VALIDASI
+  // ==================================================
+  String? _validateNama(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return "Nama mentor tidak boleh kosong";
+    }
+    if (value.trim().length < 3) {
+      return "Nama mentor minimal 3 karakter";
+    }
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return "Email tidak boleh kosong";
+    }
+    if (!value.contains("@gmail.com")) {
+      return "Email harus menggunakan Gmail (contoh: nama@gmail.com)";
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return "Password tidak boleh kosong";
+    }
+    if (value.length < 8) {
+      return "Password minimal 8 karakter";
+    }
+    if (!RegExp(r'[a-z]').hasMatch(value)) {
+      return "Password harus mengandung huruf kecil";
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      return "Password harus mengandung huruf besar";
+    }
+    if (!RegExp(r'[0-9]').hasMatch(value)) {
+      return "Password harus mengandung angka";
+    }
+    return null;
+  }
+
+  // ==================================================
   // EXPORT ALL MENTORS TO EXCEL
   // ==================================================
   void _exportAllMentorExcel() {
@@ -190,7 +232,6 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
   // SNACKBAR
   // ==================================================
   void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   // ==================================================
@@ -203,6 +244,10 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
     String selectedMapel = _subjectOptions.first;
 
     bool hidePassword = true;
+
+    String? namaError;
+    String? emailError;
+    String? passwordError;
 
     final result = await showDialog<bool>(
       context: context,
@@ -224,6 +269,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Header
                     Container(
                       padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
                       decoration: const BoxDecoration(
@@ -284,6 +330,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                         ],
                       ),
                     ),
+                    // Body
                     Flexible(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
@@ -291,15 +338,39 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _modernField(nama, "Nama Mentor"),
+                            _modernField(
+                              nama,
+                              "Nama Mentor",
+                              errorText: namaError,
+                              onChanged: (value) {
+                                setDialog(() {
+                                  namaError = _validateNama(value);
+                                });
+                              },
+                            ),
                             const SizedBox(height: 12),
-                            _modernField(email, "Email"),
+                            _modernField(
+                              email,
+                              "Email",
+                              errorText: emailError,
+                              onChanged: (value) {
+                                setDialog(() {
+                                  emailError = _validateEmail(value);
+                                });
+                              },
+                            ),
                             const SizedBox(height: 12),
                             TextField(
                               controller: pass,
                               obscureText: hidePassword,
+                              onChanged: (value) {
+                                setDialog(() {
+                                  passwordError = _validatePassword(value);
+                                });
+                              },
                               decoration: InputDecoration(
                                 hintText: "Password",
+                                errorText: passwordError,
                                 filled: true,
                                 fillColor: const Color(0xFFF8FAFC),
                                 contentPadding: const EdgeInsets.symmetric(
@@ -312,11 +383,20 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  borderSide: BorderSide(
+                                    color: passwordError != null
+                                        ? const Color(0xFFDC2626)
+                                        : const Color(0xFFE2E8F0),
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.4),
+                                  borderSide: BorderSide(
+                                    color: passwordError != null
+                                        ? const Color(0xFFDC2626)
+                                        : const Color(0xFF2563EB),
+                                    width: 1.4,
+                                  ),
                                 ),
                                 suffixIcon: IconButton(
                                   onPressed: () {
@@ -332,6 +412,34 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                 ),
                               ),
                             ),
+                            if (passwordError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.info,
+                                          color: Color(0xFFDC2626), size: 16),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          passwordError!,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFFDC2626),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
                               initialValue: selectedMapel,
@@ -380,6 +488,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                         ),
                       ),
                     ),
+                    // Footer
                     Padding(
                       padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
                       child: Row(
@@ -389,25 +498,35 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                             onPressed: () => Navigator.pop(context, false),
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Color(0xFFD8E1EE)),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14)),
                             ),
                             child: const Text("Batal"),
                           ),
                           const SizedBox(width: 12),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context, true),
+                          ElevatedButton.icon(
+                            onPressed: (namaError == null &&
+                                    emailError == null &&
+                                    passwordError == null &&
+                                    nama.text.trim().isNotEmpty &&
+                                    email.text.trim().isNotEmpty &&
+                                    pass.text.trim().isNotEmpty)
+                                ? () => Navigator.pop(context, true)
+                                : null,
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text("Tambah Mentor"),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF2563EB),
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               elevation: 0,
                             ),
-                            child: const Text("Tambah Mentor"),
                           ),
                         ],
                       ),
@@ -432,7 +551,6 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
 
     if (res["success"] == true) {
       await _loadMentors();
-      _showSnack(res["message"] ?? "Mentor berhasil dibuat");
     } else {
       _showSnack(res["message"] ?? "Gagal membuat mentor");
     }
@@ -443,16 +561,16 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
   // ==================================================
   Future<void> _showEditDialog(Mentor mentor) async {
     final nama = TextEditingController(text: mentor.namaMentor);
-
     final email = TextEditingController(text: mentor.email);
-
     String selectedMapel = _subjectOptions.contains(mentor.mataPelajaran)
         ? mentor.mataPelajaran
         : _subjectOptions.first;
-
     final pass = TextEditingController(text: mentor.password);
-
     bool hidePassword = true;
+
+    String? namaError;
+    String? emailError;
+    String? passwordError;
 
     final result = await showDialog<bool>(
       context: context,
@@ -474,6 +592,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Header
                     Container(
                       padding: const EdgeInsets.fromLTRB(24, 18, 20, 18),
                       decoration: const BoxDecoration(
@@ -534,6 +653,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                         ],
                       ),
                     ),
+                    // Body
                     Flexible(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
@@ -541,9 +661,27 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _modernField(nama, "Nama Mentor"),
+                            _modernField(
+                              nama,
+                              "Nama Mentor",
+                              errorText: namaError,
+                              onChanged: (value) {
+                                setDialog(() {
+                                  namaError = _validateNama(value);
+                                });
+                              },
+                            ),
                             const SizedBox(height: 12),
-                            _modernField(email, "Email"),
+                            _modernField(
+                              email,
+                              "Email",
+                              errorText: emailError,
+                              onChanged: (value) {
+                                setDialog(() {
+                                  emailError = _validateEmail(value);
+                                });
+                              },
+                            ),
                             const SizedBox(height: 12),
                             TextField(
                               controller: pass,
@@ -552,6 +690,11 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
+                              onChanged: (value) {
+                                setDialog(() {
+                                  passwordError = _validatePassword(value);
+                                });
+                              },
                               decoration: InputDecoration(
                                 labelText: "Password",
                                 hintText: "Masukkan password mentor",
@@ -559,6 +702,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                   fontSize: 14,
                                   color: Color(0xFF64748B),
                                 ),
+                                errorText: passwordError,
                                 filled: true,
                                 fillColor: const Color(0xFFF8FAFC),
                                 contentPadding: const EdgeInsets.symmetric(
@@ -571,11 +715,20 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  borderSide: BorderSide(
+                                    color: passwordError != null
+                                        ? const Color(0xFFDC2626)
+                                        : const Color(0xFFE2E8F0),
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.4),
+                                  borderSide: BorderSide(
+                                    color: passwordError != null
+                                        ? const Color(0xFFDC2626)
+                                        : const Color(0xFF2563EB),
+                                    width: 1.4,
+                                  ),
                                 ),
                                 suffixIcon: IconButton(
                                   onPressed: () {
@@ -591,6 +744,34 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                 ),
                               ),
                             ),
+                            if (passwordError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.info,
+                                          color: Color(0xFFDC2626), size: 16),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          passwordError!,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFFDC2626),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
                               initialValue: selectedMapel,
@@ -628,7 +809,8 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.4),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFF2563EB), width: 1.4),
                                 ),
                               ),
                             ),
@@ -636,6 +818,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                         ),
                       ),
                     ),
+                    // Footer
                     Padding(
                       padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
                       child: Row(
@@ -645,7 +828,8 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                             onPressed: () => Navigator.pop(context, false),
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Color(0xFFD8E1EE)),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
@@ -659,23 +843,32 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
+                          ElevatedButton.icon(
+                            onPressed: (namaError == null &&
+                                    emailError == null &&
+                                    passwordError == null &&
+                                    nama.text.trim().isNotEmpty &&
+                                    email.text.trim().isNotEmpty &&
+                                    pass.text.trim().isNotEmpty)
+                                ? () => Navigator.pop(context, true)
+                                : null,
+                            icon: const Icon(Icons.save_rounded, size: 18),
+                            label: const Text(
                               "Update",
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                               ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2563EB),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 0,
                             ),
                           ),
                         ],
@@ -698,6 +891,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
       email.text.trim(),
       selectedMapel,
       password: pass.text.trim(),
+      status: mentor.status, 
     );
 
     if (res["success"] == true) {
@@ -815,6 +1009,100 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
       _loadMentors();
     }
   }
+// ==================================================
+// ACTIVATE MENTOR (Ubah Status ke Aktif)
+// ==================================================
+Future<void> _activateMentor(Mentor mentor) async {
+  final yes = await showDialog<bool>(
+    context: context,
+    builder: (_) {
+      return AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titlePadding: const EdgeInsets.fromLTRB(28, 28, 28, 12),
+        contentPadding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
+        actionsPadding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
+        title: const Text(
+          "Aktifkan Mentor",
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Yakin aktifkan ${mentor.namaMentor}?",
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline_rounded, color: Color(0xFF16A34A), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Mentor akan dapat mengakses sistem kembali setelah diaktifkan.",
+                      style: TextStyle(fontSize: 12.5, color: Color(0xFF166534), fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF6B7280),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              textStyle: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Aktifkan"),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (yes != true) return;
+
+  final res = await AuthService.updateMentor(
+    mentor.mentorId,
+    mentor.namaMentor,
+    mentor.email,
+    mentor.mataPelajaran,
+    password: mentor.password,
+    status: 'aktif',
+  );
+
+  _showSnack(res["message"] ?? "Mentor berhasil diaktifkan");
+  if (res["success"] == true) {
+    _loadMentors();
+  }
+}
+
 
   // ==================================================
   // HARD DELETE MENTOR (Permanent Delete)
@@ -846,7 +1134,8 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
             children: [
               Text(
                 "Apakah Anda yakin ingin menghapus mentor \"${mentor.namaMentor}\" secara permanen?",
-                style: const TextStyle(fontSize: 14, color: Color(0xFF4B5563), height: 1.45),
+                style: const TextStyle(
+                    fontSize: 14, color: Color(0xFF4B5563), height: 1.45),
               ),
               const SizedBox(height: 16),
               Container(
@@ -912,7 +1201,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
       final token = await AuthService.getToken();
       final response = await http.delete(
         Uri.parse(
-          "${AuthService.baseUrl}/api/mentor/${mentor.mentorId}/hard-delete",
+          "${AuthService.baseUrl}/mentor/${mentor.mentorId}/hard-delete",
         ),
         headers: {
           "Authorization": "Bearer $token",
@@ -931,33 +1220,45 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
     }
   }
 
-  Widget _modernField(TextEditingController controller, String hint) {
+  Widget _modernField(
+    TextEditingController controller,
+    String hint, {
+    String? errorText,
+    Function(String)? onChanged,
+  }) {
     return TextField(
       controller: controller,
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+        errorText: errorText,
         filled: true,
         fillColor: const Color(0xFFF8FAFC),
-
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 13,
         ),
-
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
         ),
-
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: BorderSide(
+            color: errorText != null
+                ? const Color(0xFFDC2626)
+                : const Color(0xFFE2E8F0),
+          ),
         ),
-
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.4),
+          borderSide: BorderSide(
+            color: errorText != null
+                ? const Color(0xFFDC2626)
+                : const Color(0xFF2563EB),
+            width: 1.4,
+          ),
         ),
       ),
     );
@@ -1056,9 +1357,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
               ],
             ),
           ),
-
           const SizedBox(height: 8),
-
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 14),
             child: Align(
@@ -1073,69 +1372,44 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
               ),
             ),
           ),
-
           const SizedBox(height: 8),
-
           _menuItem(
             "Dashboard",
             Icons.grid_view_rounded,
-            onTap: () {
-              navigateToAdminMenu('Dashboard');
-            },
+            onTap: () => navigateToAdminMenu('Dashboard'),
           ),
-
           _menuItem(
             "Verifikasi Pendaftaran",
             Icons.fact_check_outlined,
-            onTap: () {
-              navigateToAdminMenu('Verifikasi Pendaftaran');
-            },
+            onTap: () => navigateToAdminMenu('Verifikasi Pendaftaran'),
           ),
-
           _menuItem("Kelola Mentor", Icons.groups_2_outlined, active: true),
-
           _menuItem(
             "Kelola Jadwal",
             Icons.event_note_outlined,
-            onTap: () {
-              navigateToAdminMenu('Kelola Jadwal');
-            },
+            onTap: () => navigateToAdminMenu('Kelola Jadwal'),
           ),
-
           _menuItem(
             "Laporan Absensi",
             Icons.assignment_turned_in_outlined,
-            onTap: () {
-              navigateToAdminMenu('Laporan Absensi');
-            },
+            onTap: () => navigateToAdminMenu('Laporan Absensi'),
           ),
-
           _menuItem(
             "Kelola Pengumuman",
             Icons.campaign_outlined,
-            onTap: () {
-              navigateToAdminMenu('Kelola Pengumuman');
-            },
+            onTap: () => navigateToAdminMenu('Kelola Pengumuman'),
           ),
-
           _menuItem(
             "Kelola Paket Les",
             Icons.school_outlined,
-            onTap: () {
-              navigateToAdminMenu('Kelola Paket Les');
-            },
+            onTap: () => navigateToAdminMenu('Kelola Paket Les'),
           ),
-
           _menuItem(
             "Kelola Profil Alumni",
             Icons.badge_outlined,
-            onTap: () {
-              navigateToAdminMenu('Kelola Profil Alumni');
-            },
+            onTap: () => navigateToAdminMenu('Kelola Profil Alumni'),
           ),
-
           const Spacer(),
-
           ListTile(
             leading: const Icon(Icons.logout_rounded, size: 15),
             title: const Text("Keluar", style: TextStyle(fontSize: 12)),
@@ -1150,88 +1424,58 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
               }
             },
           ),
-
           const SizedBox(height: 12),
         ],
       ),
     );
   }
-
   // ==================================================
-  // MAIN UI - DIPERBAIKI BAGIAN TABELNYA
+  // MAIN UI
   // ==================================================
   Widget _buildTableHeader() {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF8FAFC),
-      ),
+      decoration: const BoxDecoration(color: Color(0xFFF8FAFC)),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             flex: 2,
-            child: Text(
-              'MENTOR',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF334155),
-                fontSize: 13,
-              ),
-            ),
+            child: Text('MENTOR',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF334155),
+                    fontSize: 13)),
           ),
           Expanded(
             flex: 2,
-            child: Text(
-              'EMAIL',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF334155),
-                fontSize: 13,
-              ),
-            ),
+            child: Text('EMAIL',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF334155),
+                    fontSize: 13)),
           ),
           Expanded(
             flex: 2,
-            child: Text(
-              'PASSWORD',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF334155),
-                fontSize: 13,
-              ),
-            ),
+            child: Text('MATA PELAJARAN',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF334155),
+                    fontSize: 13)),
           ),
           Expanded(
-            flex: 2,
-            child: Text(
-              'MATA PELAJARAN',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF334155),
-                fontSize: 13,
-              ),
-            ),
+            child: Text('STATUS',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF334155),
+                    fontSize: 13)),
           ),
           Expanded(
-            child: Text(
-              'STATUS',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF334155),
-                fontSize: 13,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              'AKSI',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF334155),
-                fontSize: 13,
-              ),
-            ),
+            child: Text('AKSI',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF334155),
+                    fontSize: 13)),
           ),
         ],
       ),
@@ -1254,63 +1498,24 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
             child: Text(
               mentor.namaMentor,
               style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1F2937),
-              ),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1F2937)),
             ),
           ),
           Expanded(
             flex: 2,
-            child: Text(
-              mentor.email,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF4B5563),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  visible ? mentor.password : "••••••••",
-                  style: const TextStyle(
-                    fontSize: 13,
-                    letterSpacing: 2,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _showPassword[mentor.mentorId] = !visible;
-                    });
-                  },
-                  icon: Icon(
-                    visible
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    size: 16,
-                    color: const Color(0xFF6B7280),
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
+            child: Text(mentor.email,
+                style:
+                    const TextStyle(fontSize: 13, color: Color(0xFF4B5563))),
           ),
           Expanded(
             flex: 2,
             child: Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
@@ -1318,20 +1523,17 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                 child: Text(
                   mentor.mataPelajaran,
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.blue,
-                  ),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue),
                 ),
               ),
             ),
           ),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 6,
-                horizontal: 10,
-              ),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
               decoration: BoxDecoration(
                 color: isAktif
                     ? const Color(0xFFDCFCE7)
@@ -1363,35 +1565,31 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
               children: [
                 IconButton(
                   onPressed: () => _showEditDialog(mentor),
-                  icon: const Icon(
-                    Icons.edit_outlined,
-                    color: Color(0xFF2563EB),
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.edit_outlined,
+                      color: Color(0xFF2563EB), size: 18),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   tooltip: "Edit",
                 ),
                 const SizedBox(width: 10),
                 IconButton(
-                  onPressed: () => _deactivateMentor(mentor),
-                  icon: const Icon(
-                    Icons.block_outlined,
-                    color: Color(0xFFF59E0B),
-                    size: 18,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  tooltip: "Nonaktifkan",
-                ),
+  onPressed: () => isAktif
+      ? _deactivateMentor(mentor)
+      : _activateMentor(mentor),
+  icon: Icon(
+    isAktif ? Icons.block_outlined : Icons.check_circle_outline,
+    color: isAktif ? const Color(0xFFF59E0B) : const Color(0xFF16A34A),
+    size: 18,
+  ),
+  padding: EdgeInsets.zero,
+  constraints: const BoxConstraints(),
+  tooltip: isAktif ? "Nonaktifkan" : "Aktifkan",
+),
                 const SizedBox(width: 10),
                 IconButton(
                   onPressed: () => _hardDeleteMentor(mentor),
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Color(0xFFDC2626),
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.delete_outline,
+                      color: Color(0xFFDC2626), size: 18),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   tooltip: "Hapus Permanen",
@@ -1444,18 +1642,15 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                       Text(
                         "Data Mentor",
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700),
                       ),
                       SizedBox(height: 4),
                       Text(
                         "Daftar mentor bimbingan belajar BMC",
                         style: TextStyle(
-                          color: Color(0xFFDBEAFE),
-                          fontSize: 13,
-                        ),
+                            color: Color(0xFFDBEAFE), fontSize: 13),
                       ),
                     ],
                   ),
@@ -1465,10 +1660,9 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                   const Padding(
                     padding: EdgeInsets.all(24),
                     child: Center(
-                      child: Text(
-                        "Belum ada mentor",
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
-                      ),
+                      child: Text("Belum ada mentor",
+                          style:
+                              TextStyle(color: Colors.grey, fontSize: 14)),
                     ),
                   )
                 else
@@ -1486,9 +1680,8 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
   }
 
   Widget _buildMainContent() {
-    final activeMentor = _mentors
-        .where((e) => e.status.toLowerCase() == 'aktif')
-        .length;
+    final activeMentor =
+        _mentors.where((e) => e.status.toLowerCase() == 'aktif').length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
@@ -1515,10 +1708,7 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                     SizedBox(height: 4),
                     Text(
                       'Buat dan atur data mentor bimbingan',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6B7280),
-                      ),
+                      style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                     ),
                   ],
                 ),
@@ -1530,12 +1720,9 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 12,
-                    ),
+                        horizontal: 18, vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                        borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
                   ),
                 ),
@@ -1544,18 +1731,10 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
             const SizedBox(height: 24),
             Row(
               children: [
-                _statCard(
-                  'Total Mentor',
-                  _mentors.length.toString(),
-                  const Color(0xFF2563EB),
-                  Icons.groups_2_rounded,
-                ),
-                _statCard(
-                  'Mentor Aktif',
-                  activeMentor.toString(),
-                  const Color(0xFF16A34A),
-                  Icons.verified_rounded,
-                ),
+                _statCard('Total Mentor', _mentors.length.toString(),
+                    const Color(0xFF2563EB), Icons.groups_2_rounded),
+                _statCard('Mentor Aktif', activeMentor.toString(),
+                    const Color(0xFF16A34A), Icons.verified_rounded),
               ],
             ),
             const SizedBox(height: 24),
@@ -1566,45 +1745,36 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                     controller: _searchController,
                     decoration: InputDecoration(
                       hintText: "Cari mentor...",
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        size: 24,
-                        color: Color(0xFF64748B),
-                      ),
+                      prefixIcon: const Icon(Icons.search,
+                          size: 24, color: Color(0xFF64748B)),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE5E7EB),
-                        ),
+                        borderSide:
+                            const BorderSide(color: Color(0xFFE5E7EB)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE5E7EB),
-                        ),
+                        borderSide:
+                            const BorderSide(color: Color(0xFFE5E7EB)),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 18,
-                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 18),
                       hintStyle: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF9CA3AF),
-                      ),
+                          fontSize: 15, color: Color(0xFF9CA3AF)),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: const BorderSide(
-                          color: Color(0xFF2563EB),
-                          width: 1.4,
-                        ),
+                            color: Color(0xFF2563EB), width: 1.4),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton.icon(
-                  onPressed: _mentors.isEmpty ? null : _exportAllMentorExcel,
+                  onPressed:
+                      _mentors.isEmpty ? null : _exportAllMentorExcel,
                   icon: const Icon(Icons.download_rounded),
                   label: const Text("Export Excel"),
                   style: ElevatedButton.styleFrom(
@@ -1612,12 +1782,9 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 18,
-                    ),
+                        horizontal: 20, vertical: 18),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ],
@@ -1630,13 +1797,15 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
     );
   }
 
-  Widget _statCard(String title, String value, Color color, IconData icon) {
+  Widget _statCard(
+      String title, String value, Color color, IconData icon) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: color.withOpacity(0.18)),
         ),
@@ -1646,23 +1815,17 @@ class _MentorManagementScreenState extends State<MentorManagementScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B))),
                   const SizedBox(height: 6),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                    ),
-                  ),
+                  Text(value,
+                      style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: color)),
                 ],
               ),
             ),

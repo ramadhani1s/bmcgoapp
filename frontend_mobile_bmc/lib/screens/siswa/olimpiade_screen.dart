@@ -133,10 +133,19 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
                                       builder: (_) => OlimpiadeSoalScreen(olimpiade: o),
                                     )).then((_) => _fetchOlimpiade());
                                   } else {
+                                    // Build hasil map from olimpiade data (list endpoint)
+                                    final hasilMap = <String, dynamic>{
+                                      'skor': o['skor'],
+                                      'ranking': o['ranking'],
+                                      'jawaban_benar': (o['jawaban_benar'] as num?)?.toInt() ?? 0,
+                                      'jawaban_salah': (o['jawaban_salah'] as num?)?.toInt() ?? 0,
+                                      'tidak_dijawab': (o['tidak_dijawab'] as num?)?.toInt() ?? 0,
+                                      'total_soal': (o['total_questions'] as num?)?.toInt() ?? 0,
+                                    };
                                     Navigator.of(context).push(MaterialPageRoute(
                                       builder: (_) => OlimpiadeHasilScreen(
                                         olimpiade: o,
-                                        hasil: o, // o already contains skor, ranking, dll.
+                                        hasil: hasilMap,
                                       ),
                                     )).then((_) => _fetchOlimpiade());
                                   }
@@ -721,11 +730,13 @@ class OlimpiadeHasilScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final skor = hasil['skor'] as int? ?? 0;
-    final benar = hasil['jawaban_benar'] as int? ?? 0;
-    final salah = hasil['jawaban_salah'] as int? ?? 0;
-    final tidakDijawab = hasil['tidak_dijawab'] as int? ?? 0;
-    final totalSoal = hasil['total_soal'] as int? ?? 0;
+    final skor = (hasil['skor'] as num?)?.toInt() ?? 0;
+    final benar = (hasil['jawaban_benar'] as num?)?.toInt() ?? 0;
+    final salah = (hasil['jawaban_salah'] as num?)?.toInt() ?? 0;
+    final tidakDijawab = (hasil['tidak_dijawab'] as num?)?.toInt() ?? 0;
+    final rawTotal = (hasil['total_soal'] as num?)?.toInt() ?? 0;
+    // Fallback: compute total from benar+salah+tidak if total_soal is 0
+    final totalSoal = rawTotal > 0 ? rawTotal : (benar + salah + tidakDijawab);
 
     String predikat;
     if (skor >= 90) {

@@ -42,12 +42,6 @@ class MentorCompetitionService {
           .get(Uri.parse('$_baseUrl/api/mentor/$endpoint'), headers: headers)
           .timeout(const Duration(seconds: 15));
 
-      print('========== GET BY TYPE ==========');
-      print('URL: $_baseUrl/api/mentor/$endpoint');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-      print('==================================');
-
       if (response.statusCode != 200) {
         return [];
       }
@@ -70,8 +64,6 @@ class MentorCompetitionService {
 
         // Ambil total_questions dari response API
         int totalQuestions = row['total_questions'] ?? 0;
-        
-        print('📊 ID: ${row['id']}, Total Soal dari response: $totalQuestions');
         
         items.add(MentorCompetitionItem.fromJson({
           'id': row['id'],
@@ -96,7 +88,6 @@ class MentorCompetitionService {
       filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return filtered;
     } catch (e) {
-      print('ERROR getByType: $e');
       return [];
     }
   }
@@ -116,16 +107,6 @@ class MentorCompetitionService {
       final headers = await AuthService.getAuthHeaders();
       final endpoint = type == 'olimpiade' ? 'olimpiade' : 'tryout';
       final isUpdate = id != null && id > 0;
-
-      print('========== CREATE OR UPDATE ==========');
-      print('Type: $type');
-      print('Is Update: $isUpdate');
-      print('Title: $title');
-      print('Schedule: $scheduleLabel');
-      print('Duration: $durationLabel');
-      print('Total Questions: $totalQuestions');
-      print('Class Level: $classLevel');
-      print('=======================================');
 
       final body = type == 'olimpiade'
           ? {
@@ -148,8 +129,6 @@ class MentorCompetitionService {
               'category_questions': categoryQuestions,
             };
 
-      print('Request Body: ${jsonEncode(body)}');
-
       final request = isUpdate
           ? await http.put(
               Uri.parse('$_baseUrl/api/mentor/$endpoint/$id'),
@@ -161,9 +140,6 @@ class MentorCompetitionService {
               headers: headers,
               body: jsonEncode(body),
             );
-
-      print('Response Status: ${request.statusCode}');
-      print('Response Body: ${request.body}');
 
       final data = request.body.isNotEmpty ? jsonDecode(request.body) : {};
       if (request.statusCode == 200 || request.statusCode == 201) {
@@ -178,7 +154,6 @@ class MentorCompetitionService {
         'message': _extractError(data, fallback: 'Gagal menyimpan data'),
       };
     } catch (e) {
-      print('ERROR createOrUpdate: $e');
       return {'success': false, 'message': 'Terjadi kesalahan: $e'};
     }
   }

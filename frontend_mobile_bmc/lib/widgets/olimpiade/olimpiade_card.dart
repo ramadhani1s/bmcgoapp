@@ -135,7 +135,7 @@ class OlimpiadeCard extends StatelessWidget {
                     const Icon(Icons.timer_rounded, size: 14, color: Color(0xFF8D90A3)),
                     const SizedBox(width: 6),
                     Text(
-                      '120 menit • ${olimpiade['total_questions'] ?? 0} soal',
+                      '${olimpiade['durasi'] ?? 120} menit • ${olimpiade['total_questions'] ?? 0} soal',
                       style: TextStyle(color: textMuted, fontSize: 12.5),
                     ),
                   ],

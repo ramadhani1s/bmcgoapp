@@ -219,8 +219,10 @@ class AuthService {
             body: jsonEncode({
               'nama': nama.trim(),
               'email': email.trim(),
-              if (oldPassword.trim().isNotEmpty) 'old_password': oldPassword.trim(),
-              if (newPassword.trim().isNotEmpty) 'new_password': newPassword.trim(),
+              if (oldPassword.trim().isNotEmpty)
+                'old_password': oldPassword.trim(),
+              if (newPassword.trim().isNotEmpty)
+                'new_password': newPassword.trim(),
             }),
           )
           .timeout(const Duration(seconds: 15));
@@ -354,6 +356,7 @@ class AuthService {
     String email,
     String mataPelajaran, {
     String password = '',
+    String status = '',
   }) async {
     try {
       final headers = await getAuthHeaders();
@@ -362,7 +365,7 @@ class AuthService {
         'nama_mentor': nama.trim(),
         'email': email.trim(),
         'mata_pelajaran': mataPelajaran.trim(),
-        'status': 'Aktif',
+        if (status.isNotEmpty) 'status': status,
       };
 
       if (password.trim().isNotEmpty) {
