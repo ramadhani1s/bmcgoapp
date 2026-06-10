@@ -762,24 +762,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                     color: const Color(0xFFF3CED0),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: TextField(
-                    enabled: false,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: Color(0xFFA19AA2),
-                      ),
-                      hintText: 'Cari materi, soal, jadwal, alumni...',
-                      hintStyle: const TextStyle(
-                        color: Color(0xFFA19AA2),
-                        fontSize: 14,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -936,83 +918,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   },
                                 ),
                         ),
-                        const SizedBox(height: 22),
-                _SectionTitleRow(
-                  title: 'Materi Terbaru',
-                  actionText: 'Lihat Semua',
-                  onTap: _showDynamicInfo,
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFFFD8D8)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.menu_book_rounded, color: _accent),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Materi belum tersedia',
-                              style: TextStyle(
-                                color: _textPrimary,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Materi terbaru akan tampil di sini setelah mentor mengunggah konten. Setelah belajar, siswa bisa langsung lanjut latihan 5 soal.',
-                        style: TextStyle(
-                          color: _textMuted,
-                          fontSize: 12.5,
-                          height: 1.45,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const MateriScreen(),
-                              ),
-                            ).then((_) {
-                              _loadRealProgress();
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _accent,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(Icons.play_circle_outline),
-                          label: const Text(
-                            'Mulai Latihan 5 Soal',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                        
                 const SizedBox(height: 22),
                 _SectionTitleRow(
                   title: 'Jadwal Hari Ini',
