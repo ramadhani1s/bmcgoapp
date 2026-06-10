@@ -15,7 +15,8 @@ class _TryOutListScreenState extends State<TryOutListScreen> {
   static const Color _background = Color(0xFFF7EEEF);
   
   bool _isLoading = true;
-  List<Map<String, dynamic>> _packages = [];
+  List<Map<String, dynamic>> _packagesTersedia = [];
+  List<Map<String, dynamic>> _packagesSelesai = [];
   String _tab = 'tersedia';
 
   @override
@@ -26,18 +27,22 @@ class _TryOutListScreenState extends State<TryOutListScreen> {
 
   Future<void> _fetchPackages() async {
     setState(() => _isLoading = true);
-    final list = await TryOutService.getPackages(status: _tab);
+    final tersediaList = await TryOutService.getPackages(status: 'tersedia');
+    final selesaiList = await TryOutService.getPackages(status: 'selesai');
     if (!mounted) return;
     setState(() {
-      _packages = list;
+      _packagesTersedia = tersediaList;
+      _packagesSelesai = selesaiList;
       _isLoading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    int totalSelesai = _tab == 'selesai' ? _packages.length : 0;
-    int totalTersedia = _tab == 'tersedia' ? _packages.length : 0;
+    int totalSelesai = _packagesSelesai.length;
+    int totalTersedia = _packagesTersedia.length;
+    
+    List<Map<String, dynamic>> currentPackages = _tab == 'tersedia' ? _packagesTersedia : _packagesSelesai;
 
     return Scaffold(
       backgroundColor: _background,
@@ -51,7 +56,7 @@ class _TryOutListScreenState extends State<TryOutListScreen> {
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: _accent))
-                  : _packages.isEmpty
+                  : currentPackages.isEmpty
                       ? const Center(child: Text('Tidak ada paket Try Out', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)))
                       : RefreshIndicator(
                           color: _accent,
@@ -59,11 +64,11 @@ class _TryOutListScreenState extends State<TryOutListScreen> {
                           child: ListView.separated(
                             padding: const EdgeInsets.all(16),
                             itemBuilder: (context, index) {
-                              final p = _packages[index];
+                              final p = currentPackages[index];
                               return _buildPackageCard(p);
                             },
                             separatorBuilder: (_, __) => const SizedBox(height: 16),
-                            itemCount: _packages.length,
+                            itemCount: currentPackages.length,
                           ),
                         ),
             ),
@@ -112,12 +117,10 @@ class _TryOutListScreenState extends State<TryOutListScreen> {
           ),
           const SizedBox(height: 24),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildStatItem(Icons.emoji_events_rounded, '$selesai', 'Selesai'),
-              _buildStatItem(Icons.pending_actions_rounded, '0', 'Berlangsung'),
               _buildStatItem(Icons.assignment_rounded, '$tersedia', 'Tersedia'),
-              _buildStatItem(Icons.show_chart_rounded, '-', 'Rata-rata'),
             ],
           ),
         ],
@@ -156,7 +159,6 @@ class _TryOutListScreenState extends State<TryOutListScreen> {
     return GestureDetector(
       onTap: () {
         setState(() => _tab = value);
-        _fetchPackages();
       },
       child: Column(
         children: [

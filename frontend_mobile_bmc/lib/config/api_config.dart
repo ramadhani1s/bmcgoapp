@@ -1,8 +1,14 @@
 class ApiConfig {
-  static const bool useEmulator = false;
+  // Set to true when running the app on a development device (e.g., emulator or phone
+  // connected to the same Wi‑Fi network as the backend). In that case we use the local
+  // backend address. When false the app will target the production Railway backend.
+  static const bool useEmulator = true;
 
   static String get baseUrl {
-    // Current Wi-Fi IP Address
-    return 'http://10.20.74.5:8080';
+    // Production backend URL (HTTPS, no port)
+    const prodUrl = 'https://bmcgoapp-production.up.railway.app';
+    // Development URL – adjust the IP/port if your backend runs elsewhere.
+    const devUrl = 'http://10.20.74.5:8080';
+    return useEmulator ? devUrl : prodUrl;
   }
 }

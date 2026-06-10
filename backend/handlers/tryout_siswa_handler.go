@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,7 +30,7 @@ func GetTryoutSiswa(c *gin.Context) {
 
 	query := `
 		SELECT 
-			t.id, t.paket_id, t.judul, t.tanggal, t.durasi,
+			t.id, t.paket_id, t.judul, to_char(t.tanggal, 'YYYY-MM-DD') as tanggal, t.durasi,
 			t.total_questions, t.category_questions,
 			COALESCE(m.nama_mentor, 'Mentor BMC') AS mentor_nama,
 			ht.nilai,
@@ -58,16 +57,16 @@ func GetTryoutSiswa(c *gin.Context) {
 	defer rows.Close()
 
 	type TryoutItem struct {
-		ID                int       `json:"id"`
-		PaketID           int       `json:"paket_id"`
-		Judul             string    `json:"judul"`
-		Tanggal           time.Time `json:"tanggal"`
-		Durasi            int       `json:"durasi"`
-		TotalQuestions    int       `json:"total_questions"`
-		CategoryQuestions string    `json:"category_questions"`
-		MentorNama        string    `json:"mentor_nama"`
-		Nilai             *int      `json:"nilai"`
-		Status            string    `json:"status"`
+		ID                int        `json:"id"`
+		PaketID           *int       `json:"paket_id"`
+		Judul             *string    `json:"judul"`
+		Tanggal           *string    `json:"tanggal"`
+		Durasi            *int       `json:"durasi"`
+		TotalQuestions    *int       `json:"total_questions"`
+		CategoryQuestions string     `json:"category_questions"`
+		MentorNama        *string    `json:"mentor_nama"`
+		Nilai             *int       `json:"nilai"`
+		Status            *string    `json:"status"`
 	}
 
 	var list []TryoutItem
@@ -80,7 +79,7 @@ func GetTryoutSiswa(c *gin.Context) {
 			&item.TotalQuestions, &catQuestions, &item.MentorNama,
 			&item.Nilai, &item.Status,
 		); err != nil {
-			log.Println("Gagal scan:", err)
+			log.Println("Gagal scan tryout siswa:", err)
 			continue
 		}
 		item.CategoryQuestions = string(catQuestions)

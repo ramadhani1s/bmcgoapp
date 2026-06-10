@@ -7,12 +7,16 @@ class OlimpiadeHeader extends StatelessWidget {
     required this.selected,
     required this.onTabSelected,
     required this.accentColor,
+    required this.totalSelesai,
+    required this.totalTersedia,
   });
 
   final List<Map<String, String>> tabs;
   final String selected;
   final void Function(String) onTabSelected;
   final Color accentColor;
+  final int totalSelesai;
+  final int totalTersedia;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +57,15 @@ class OlimpiadeHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildStatItem(Icons.emoji_events_rounded, '$totalSelesai', 'Selesai'),
+              _buildStatItem(Icons.assignment_rounded, '$totalTersedia', 'Tersedia'),
+            ],
+          ),
+          const SizedBox(height: 24),
           Row(
             children: tabs.map((tab) {
               final isSelected = selected == tab['value'];
@@ -84,6 +96,21 @@ class OlimpiadeHeader extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStatItem(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: Colors.white.withAlpha((0.2 * 255).round()), shape: BoxShape.circle),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+        const SizedBox(height: 8),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+      ],
     );
   }
 }

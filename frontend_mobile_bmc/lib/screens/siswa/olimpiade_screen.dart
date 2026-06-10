@@ -22,7 +22,8 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
   static const Color _textPrimary = Color(0xFF25273D);
   static const Color _gold = Color(0xFFF5A623);
 
-  List<Map<String, dynamic>> _olimpiadeList = [];
+  List<Map<String, dynamic>> _olimpiadeTersedia = [];
+  List<Map<String, dynamic>> _olimpiadeSelesai = [];
   bool _isLoading = true;
   String _selectedStatus = 'tersedia';
 
@@ -42,25 +43,27 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
 return token ?? '';
   }
 
-  Future<void> _fetchOlimpiade({String? status}) async {
+  Future<void> _fetchOlimpiade() async {
     setState(() => _isLoading = true);
     try {
       final token = await _getToken();
-      final uri = Uri.parse('${ApiConfig.baseUrl}/api/siswa/olimpiade').replace(
-        queryParameters: {'status': status ?? _selectedStatus},
+      final uriTersedia = Uri.parse('${ApiConfig.baseUrl}/api/mentor/olimpiade').replace(
+        queryParameters: {'status': 'tersedia'},
       );
-      final response = await http.get(
-        uri,
-        headers: {'Authorization': 'Bearer $token'},
-      ).timeout(const Duration(seconds: 15));
+      final uriSelesai = Uri.parse('${ApiConfig.baseUrl}/api/mentor/olimpiade').replace(
+        queryParameters: {'status': 'selesai'},
+      );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final list = (data['data'] as List<dynamic>? ?? [])
-            .whereType<Map<String, dynamic>>()
-            .toList();
+      final responseTersedia = await http.get(uriTersedia, headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 15));
+      final responseSelesai = await http.get(uriSelesai, headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 15));
+
+      if (responseTersedia.statusCode == 200 && responseSelesai.statusCode == 200) {
+        final dataTersedia = jsonDecode(responseTersedia.body) as Map<String, dynamic>;
+        final dataSelesai = jsonDecode(responseSelesai.body) as Map<String, dynamic>;
+
         setState(() {
-          _olimpiadeList = list;
+          _olimpiadeTersedia = (dataTersedia['data'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>().toList();
+          _olimpiadeSelesai = (dataSelesai['data'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>().toList();
           _isLoading = false;
         });
       } else {
@@ -68,13 +71,25 @@ return token ?? '';
       }
     } catch (e) {
       setState(() => _isLoading = false);
+      _showError('Gagal memuat data olimpiade. Silakan coba lagi.');
     }
+  }
+  
+  // Helper to display error messages
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   // date formatting moved into OlimpiadeCard
 
   @override
   Widget build(BuildContext context) {
+    int totalSelesai = _olimpiadeSelesai.length;
+    int totalTersedia = _olimpiadeTersedia.length;
+    List<Map<String, dynamic>> currentList = _selectedStatus == 'tersedia' ? _olimpiadeTersedia : _olimpiadeSelesai;
+
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(
@@ -85,24 +100,25 @@ return token ?? '';
               selected: _selectedStatus,
               onTabSelected: (value) {
                 setState(() => _selectedStatus = value);
-                _fetchOlimpiade(status: value);
               },
               accentColor: _accent,
+              totalSelesai: totalSelesai,
+              totalTersedia: totalTersedia,
             ),
             const SizedBox(height: 8),
             Expanded(child: _isLoading
                       ? const Center(child: CircularProgressIndicator(color: _accent))
-              : _olimpiadeList.isEmpty
+              : currentList.isEmpty
                 ? const OlimpiadeEmpty(accentColor: _accent)
                 : RefreshIndicator(
                     color: _accent,
                     onRefresh: () => _fetchOlimpiade(),
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                      itemCount: _olimpiadeList.length,
+                      itemCount: currentList.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        final o = _olimpiadeList[index];
+                        final o = currentList[index];
                         return OlimpiadeCard(
                           olimpiade: o,
                           onTap: () {

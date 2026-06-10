@@ -9,6 +9,7 @@ class TryOutService {
   static Future<List<Map<String, dynamic>>> getPackages({String status = 'tersedia'}) async {
     try {
       final token = await AppSession.getAuthToken();
+      print('TOKEN: ${await AppSession.getAuthToken()}');
       final res = await http.get(Uri.parse('$_base/api/siswa/tryout?status=$status'), headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 10));
       if (res.statusCode != 200) return [];
       final data = jsonDecode(res.body) as Map<String, dynamic>;

@@ -403,6 +403,10 @@ func DeleteTryoutHandler(c *gin.Context) {
 		return
 	}
 
+	// Delete related records first to avoid foreign key constraints
+	_, _ = config.DB.Exec(context.Background(), `DELETE FROM hasil_tryout WHERE tryout_id = $1`, tryoutID)
+	_, _ = config.DB.Exec(context.Background(), `DELETE FROM tryout_soal WHERE kompetisi_id = $1`, tryoutID)
+
 	cmd, err := config.DB.Exec(context.Background(), `
 		DELETE FROM tryout WHERE id = $1 AND mentor_id = $2
 	`, tryoutID, mentorID)
@@ -619,6 +623,11 @@ func DeleteOlimpiadeHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Delete related records first to avoid foreign key constraints
+	_, _ = config.DB.Exec(context.Background(), `DELETE FROM peserta_olimpiade WHERE olimpiade_id = $1`, olimpiadeID)
+	_, _ = config.DB.Exec(context.Background(), `DELETE FROM hasil_olimpiade WHERE olimpiade_id = $1`, olimpiadeID)
+	_, _ = config.DB.Exec(context.Background(), `DELETE FROM olimpiade_soal WHERE kompetisi_id = $1`, olimpiadeID)
 
 	cmd, err := config.DB.Exec(context.Background(), `
 		DELETE FROM olimpiade WHERE id = $1 AND mentor_id = $2

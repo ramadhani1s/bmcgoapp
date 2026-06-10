@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,7 +28,7 @@ func GetOlimpiadeSiswa(c *gin.Context) {
 
 	query := `
 		SELECT 
-			o.id, o.nama, o.class_level, o.lokasi, o.tanggal,
+			o.id, o.nama, o.class_level, o.lokasi, to_char(o.tanggal, 'YYYY-MM-DD') as tanggal,
 			o.total_questions, o.category_questions,
 			COALESCE(m.nama_mentor, 'Mentor BMC') AS mentor_nama,
 			po.skor, po.ranking, po.jawaban_benar, po.jawaban_salah, po.tidak_dijawab,
@@ -56,20 +55,20 @@ func GetOlimpiadeSiswa(c *gin.Context) {
 	defer rows.Close()
 
 	type OlimpiadeItem struct {
-		ID                int       `json:"id"`
-		Nama              string    `json:"nama"`
-		ClassLevel        string    `json:"class_level"`
-		Lokasi            string    `json:"lokasi"`
-		Tanggal           *time.Time `json:"tanggal"`
-		TotalQuestions    int       `json:"total_questions"`
-		CategoryQuestions string    `json:"category_questions"`
-		MentorNama        string    `json:"mentor_nama"`
-		Skor              *int      `json:"skor"`
-		Ranking           *int      `json:"ranking"`
-		JawabanBenar      *int      `json:"jawaban_benar"`
-		JawabanSalah      *int      `json:"jawaban_salah"`
-		TidakDijawab      *int      `json:"tidak_dijawab"`
-		Status            string    `json:"status"`
+		ID                int        `json:"id"`
+		Nama              *string    `json:"nama"`
+		ClassLevel        *string    `json:"class_level"`
+		Lokasi            *string    `json:"lokasi"`
+		Tanggal           *string    `json:"tanggal"`
+		TotalQuestions    *int       `json:"total_questions"`
+		CategoryQuestions string     `json:"category_questions"`
+		MentorNama        *string    `json:"mentor_nama"`
+		Skor              *int       `json:"skor"`
+		Ranking           *int       `json:"ranking"`
+		JawabanBenar      *int       `json:"jawaban_benar"`
+		JawabanSalah      *int       `json:"jawaban_salah"`
+		TidakDijawab      *int       `json:"tidak_dijawab"`
+		Status            *string    `json:"status"`
 	}
 
 	var list []OlimpiadeItem
@@ -81,7 +80,7 @@ func GetOlimpiadeSiswa(c *gin.Context) {
 			&item.TotalQuestions, &catQuestions, &item.MentorNama,
 			&item.Skor, &item.Ranking, &item.JawabanBenar, &item.JawabanSalah, &item.TidakDijawab, &item.Status,
 		); err != nil {
-			log.Println("Gagal scan:", err)
+			log.Println("Gagal scan olimpiade siswa:", err)
 			continue
 		}
 		item.CategoryQuestions = string(catQuestions)
