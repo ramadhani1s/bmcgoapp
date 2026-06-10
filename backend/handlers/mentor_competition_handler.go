@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -71,6 +72,26 @@ func resolveMentorID(userID int, providedMentorID int) (int, error) {
 	`, userID).Scan(&mentorID)
 	if err == nil {
 		return mentorID, nil
+	}
+
+	// Fallback/auto-creation: if the user exists and has a mentor role_id = 2, auto-create a mentor record.
+	var roleID int
+	var nama string
+	var email string
+	err = config.DB.QueryRow(context.Background(), `
+		SELECT role_id, nama, COALESCE(email, username) FROM users WHERE id = $1
+	`, userID).Scan(&roleID, &nama, &email)
+	if err == nil && roleID == 2 {
+		var newMentorID int
+		err = config.DB.QueryRow(context.Background(), `
+			INSERT INTO mentor (user_id, nama_mentor, mata_pelajaran, email, status)
+			VALUES ($1, $2, 'Matematika', $3, 'aktif')
+			RETURNING id
+		`, userID, nama, email).Scan(&newMentorID)
+		if err == nil {
+			log.Printf("Automatically created mentor profile (ID: %d) for User ID: %d (%s)", newMentorID, userID, email)
+			return newMentorID, nil
+		}
 	}
 
 	return 0, fmt.Errorf("mentor untuk user_id %d tidak ditemukan", userID)
@@ -729,10 +750,13 @@ func GetHasilTryoutByTryoutHandler(c *gin.Context) {
 	}
 
 	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, siswa_id, tryout_id, nilai
-		FROM hasil_tryout
-		WHERE tryout_id = $1
-		ORDER BY id DESC
+		SELECT ht.id, ht.siswa_id, ht.tryout_id, ht.nilai,
+		       COALESCE(s.nama, u.nama, 'Siswa') AS nama_siswa
+		FROM hasil_tryout ht
+		LEFT JOIN siswa s ON s.id = ht.siswa_id
+		LEFT JOIN users u ON u.id = s.user_id
+		WHERE ht.tryout_id = $1
+		ORDER BY ht.nilai DESC
 	`, tryoutID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -743,16 +767,19 @@ func GetHasilTryoutByTryoutHandler(c *gin.Context) {
 	items := make([]gin.H, 0)
 	for rows.Next() {
 		var id, siswaID, tryoutIDRow, nilai int
-		if err := rows.Scan(&id, &siswaID, &tryoutIDRow, &nilai); err != nil {
+		var namaSiswa string
+		if err := rows.Scan(&id, &siswaID, &tryoutIDRow, &nilai, &namaSiswa); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 		items = append(items, gin.H{
-			"id":        id,
-			"siswa_id":  siswaID,
-			"tryout_id": tryoutIDRow,
-			"nilai":     nilai,
+			"id":          id,
+			"siswa_id":    siswaID,
+			"tryout_id":   tryoutIDRow,
+			"nilai":       nilai,
+			"nama_siswa":  namaSiswa,
+			"status":      "selesai",
 		})
 	}
 

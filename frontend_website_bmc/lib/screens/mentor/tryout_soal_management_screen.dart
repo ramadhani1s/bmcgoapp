@@ -669,7 +669,7 @@ class _TryoutSoalManagementScreenState
   }
 
   void _onSidebarMenuTap(String title) {
-    if (title == 'Dashboard') {
+    if (title == 'Dashboard' || title == 'Beranda') {
       Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
       return;
     }
@@ -825,6 +825,29 @@ class _TryoutSoalManagementScreenState
                     ),
                   ],
                 ),
+                if (soal.pembahasan.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.lightbulb_outline, size: 13, color: Color(0xFFF59E0B)),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            soal.pembahasan,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF6B7280),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

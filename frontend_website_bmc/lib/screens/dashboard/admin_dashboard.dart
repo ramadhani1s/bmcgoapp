@@ -1063,9 +1063,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 margin: const EdgeInsets.only(right: 10),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
                 decoration: BoxDecoration(
-                  color: e.color.withValues(alpha: 0.1),
+                  color: e.color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: e.color.withValues(alpha: 0.18)),
+                  border: Border.all(color: e.color.withOpacity(0.18)),
                 ),
                 child: Row(
                   children: [
@@ -1106,7 +1106,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       width: 52,
                       height: 52,
                       decoration: BoxDecoration(
-                        color: e.color.withValues(alpha: 0.12),
+                        color: e.color.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(e.icon, color: e.color, size: 28),
@@ -1275,7 +1275,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 border: Border.all(
                                   color: _getStatusColorDashboard(
                                     item,
-                                  ).withValues(alpha: 0.35),
+                                  ).withOpacity(0.35),
                                 ),
                               ),
                               child: Text(

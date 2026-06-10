@@ -512,7 +512,7 @@ class _MentorAttendanceScreenState extends State<MentorAttendanceScreen> {
   }
 
   void _onSidebarMenuTap(String title) {
-    if (title == 'Dashboard') {
+    if (title == 'Dashboard' || title == 'Beranda') {
       Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
       return;
     }

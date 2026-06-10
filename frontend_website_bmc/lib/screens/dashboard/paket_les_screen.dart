@@ -338,7 +338,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
     _clearControllers();
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.42),
+      barrierColor: Colors.black.withOpacity(0.42),
       builder: (context) => StatefulBuilder(
         builder: (context, setStateDialog) => Dialog(
           insetPadding: const EdgeInsets.symmetric(
@@ -383,7 +383,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.16),
+                              color: Colors.white.withOpacity(0.16),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -693,7 +693,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
 
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.42),
+      barrierColor: Colors.black.withOpacity(0.42),
       builder: (context) => StatefulBuilder(
         builder: (context, setStateDialog) => Dialog(
           insetPadding: const EdgeInsets.symmetric(
@@ -738,7 +738,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.16),
+                              color: Colors.white.withOpacity(0.16),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -964,7 +964,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
                         width: 42,
                         height: 42,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
+                          color: Colors.white.withOpacity(0.16),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -1641,7 +1641,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: backgroundColor,
-          border: Border.all(color: accentColor.withValues(alpha: 0.18)),
+          border: Border.all(color: accentColor.withOpacity(0.18)),
           borderRadius: BorderRadius.circular(18),
         ),
         child: Row(
@@ -1676,7 +1676,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.14),
+                color: accentColor.withOpacity(0.14),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: accentColor, size: 24),
@@ -1720,7 +1720,7 @@ class _PaketLesScreenState extends State<PaketLesScreen> {
       label: Text(label),
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
-        side: BorderSide(color: color.withValues(alpha: 0.28)),
+        side: BorderSide(color: color.withOpacity(0.28)),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),

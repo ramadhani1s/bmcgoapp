@@ -15,7 +15,7 @@ func GetOlimpiadeSiswa(c *gin.Context) {
 	status := c.Query("status") // "tersedia" atau "selesai"
 
 	userID, _ := c.Get("user_id")
-	
+
 	// Cari siswa_id
 	var siswaID int
 	err := config.DB.QueryRow(context.Background(),
@@ -37,7 +37,7 @@ func GetOlimpiadeSiswa(c *gin.Context) {
 		LEFT JOIN mentor m ON m.id = o.mentor_id
 		LEFT JOIN peserta_olimpiade po ON po.olimpiade_id = o.id AND po.siswa_id = $1
 	`
-	
+
 	if status == "selesai" {
 		query += " WHERE po.selesai = true ORDER BY o.tanggal DESC"
 	} else if status == "tersedia" {
@@ -98,7 +98,7 @@ func GetOlimpiadeSiswa(c *gin.Context) {
 func GetSoalOlimpiade(c *gin.Context) {
 	olimpiadeIDStr := c.Param("id")
 	review := c.Query("review") == "true"
-	
+
 	olimpiadeID, err := strconv.Atoi(olimpiadeIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
@@ -258,13 +258,13 @@ func SubmitOlimpiade(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Hasil berhasil disimpan",
 		"data": gin.H{
-			"skor":           skor,
-			"ranking":        ranking,
-			"total_peserta":  totalPeserta + 1,
-			"jawaban_benar":  benar,
-			"jawaban_salah":  salah,
-			"tidak_dijawab":  tidakDijawab,
-			"total_soal":     totalSoal,
+			"skor":          skor,
+			"ranking":       ranking,
+			"total_peserta": totalPeserta + 1,
+			"jawaban_benar": benar,
+			"jawaban_salah": salah,
+			"tidak_dijawab": tidakDijawab,
+			"total_soal":    totalSoal,
 		},
 	})
 }

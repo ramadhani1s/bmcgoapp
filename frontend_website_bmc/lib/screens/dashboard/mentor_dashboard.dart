@@ -1324,7 +1324,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.12),
+              color: accentColor.withOpacity(0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: accentColor, size: 22),

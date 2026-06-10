@@ -161,7 +161,7 @@ func GetOlimpiadeSoal(kompetisiID int) ([]models.SoalKompetisi, error) {
 	rows, err := config.DB.Query(
 		context.Background(),
 		`SELECT id, kompetisi_id, 'olimpiade' as tipe, COALESCE(pertanyaan, ''), COALESCE(pilihan_a, ''), COALESCE(pilihan_b, ''), COALESCE(pilihan_c, ''), COALESCE(pilihan_d, ''), COALESCE(pilihan_e, ''), COALESCE(jawaban, ''), COALESCE(pembahasan, ''), '' as kategori 
-		FROM olimpiade_soal 
+		FROM olimpiade_soal
 		WHERE kompetisi_id = $1 
 		ORDER BY id ASC`,
 		kompetisiID,

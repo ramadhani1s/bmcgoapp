@@ -486,7 +486,7 @@ class _CreateLatihanScreenState extends State<CreateLatihanScreen> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
+              color: Colors.white.withOpacity(0.16),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.add, color: Colors.white, size: 20),

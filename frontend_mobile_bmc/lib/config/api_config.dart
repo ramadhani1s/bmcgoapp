@@ -8,7 +8,7 @@ class ApiConfig {
     // Production backend URL (HTTPS, no port)
     const prodUrl = 'https://bmcgoapp-production.up.railway.app';
     // Development URL – adjust the IP/port if your backend runs elsewhere.
-    const devUrl = 'http://10.20.74.5:8080';
+    const devUrl = 'http://10.0.2.2:8080'; // ✅ khusus emulator Android
     return useEmulator ? devUrl : prodUrl;
   }
 }

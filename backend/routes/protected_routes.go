@@ -160,6 +160,7 @@ func ProtectedRoutes(r *gin.Engine) {
 	siswa.GET("/tryout", handlers.GetTryoutSiswa)
 	siswa.GET("/tryout/:id/soal", handlers.GetSoalTryoutSiswa)
 	siswa.POST("/tryout/:id/submit", handlers.SubmitTryoutSiswa)
+	siswa.GET("/tryout/:id/pembahasan", handlers.GetSoalPembahasanTryoutSiswa)
 	siswa.GET("/alumni", handlers.GetAlumniHandler)
 
 }

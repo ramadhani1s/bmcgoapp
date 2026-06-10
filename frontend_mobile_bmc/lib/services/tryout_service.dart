@@ -46,4 +46,20 @@ class TryOutService {
       return {'success': false, 'message': e.toString()};
     }
   }
+
+  /// Ambil soal LENGKAP (dengan jawaban + pembahasan) setelah tryout selesai
+  static Future<List<Map<String, dynamic>>> getQuestionsWithPembahasan(int packageId) async {
+    try {
+      final token = await AppSession.getAuthToken();
+      final res = await http.get(
+        Uri.parse('$_base/api/siswa/tryout/$packageId/pembahasan'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 12));
+      if (res.statusCode != 200) return [];
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      return (data['data'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>().toList();
+    } catch (_) {
+      return [];
+    }
+  }
 }

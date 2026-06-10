@@ -31,7 +31,8 @@ class _TryOutResultDashboardState extends State<TryOutResultDashboard> {
 
   Future<void> _fetchQuestions() async {
     final id = widget.package['id'] as int;
-    final list = await TryOutService.getQuestions(id);
+    // Gunakan endpoint pembahasan agar jawaban & pembahasan tersedia di layar hasil
+    final list = await TryOutService.getQuestionsWithPembahasan(id);
     if (!mounted) return;
     setState(() {
       _questions = list;

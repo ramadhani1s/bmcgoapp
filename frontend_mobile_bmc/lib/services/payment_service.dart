@@ -2,37 +2,26 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:frontend_mobile_bmc/models/payment_model.dart';
 import 'package:frontend_mobile_bmc/core/session/app_session.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend_mobile_bmc/config/api_config.dart';
 
 class PaymentService {
-  // Base URL backend root; endpoint payment ditambahkan per request.
   static final String baseUrl = ApiConfig.baseUrl;
 
+  // ✅ FIX 1: Gunakan AppSession (nullable), tidak throw Exception
   static Future<String> _getAuthToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token') ?? '';
-    if (token.isEmpty) {
-      throw Exception('Sesi login tidak ditemukan. Silakan login ulang.');
-    }
-    return token;
+    final token = await AppSession.getAuthToken();
+    return token ?? '';
   }
 
   static String? _extractMessageFromBody(String body) {
     final trimmedBody = body.trim();
-    if (trimmedBody.isEmpty) {
-      return null;
-    }
-
+    if (trimmedBody.isEmpty) return null;
     try {
       final decoded = jsonDecode(trimmedBody);
       if (decoded is Map<String, dynamic>) {
         final message = decoded['message']?.toString();
         final error = decoded['error']?.toString();
-        if (message != null &&
-            message.isNotEmpty &&
-            error != null &&
-            error.isNotEmpty) {
+        if (message != null && message.isNotEmpty && error != null && error.isNotEmpty) {
           return '$message: $error';
         }
         return message ?? error;
@@ -40,27 +29,20 @@ class PaymentService {
     } catch (_) {
       return trimmedBody;
     }
-
     return trimmedBody;
   }
 
-  // Membuat transaction token untuk Midtrans
-  static Future<TransactionResponse> createTransaction(
-    TransactionRequest request,
-  ) async {
+  static Future<TransactionResponse> createTransaction(TransactionRequest request) async {
     try {
       final token = await _getAuthToken();
-
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/payment/create-transaction'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: jsonEncode(request.toJson()),
-          )
-          .timeout(const Duration(seconds: 30));
+      final response = await http.post(
+        Uri.parse('$baseUrl/payment/create-transaction'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(request.toJson()),
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -80,17 +62,13 @@ class PaymentService {
     }
   }
 
-  // Cek status payment
   static Future<PaymentStatus> checkPaymentStatus(String transactionId) async {
     try {
       final token = await _getAuthToken();
-
-      final response = await http
-          .get(
-            Uri.parse('$baseUrl/payment/status/$transactionId'),
-            headers: {'Authorization': 'Bearer $token'},
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await http.get(
+        Uri.parse('$baseUrl/payment/status/$transactionId'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -103,27 +81,20 @@ class PaymentService {
     }
   }
 
-  // Finish transaction di backend
-  static Future<void> finishTransaction(
-    String transactionId,
-    String status,
-  ) async {
+  static Future<void> finishTransaction(String transactionId, String status) async {
     try {
       final token = await _getAuthToken();
-
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/payment/finish-transaction'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: jsonEncode({
-              'transaction_id': transactionId,
-              'status': status,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await http.post(
+        Uri.parse('$baseUrl/payment/finish-transaction'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'transaction_id': transactionId,
+          'status': status,
+        }),
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         throw Exception('Gagal menyelesaikan transaction');
@@ -133,16 +104,21 @@ class PaymentService {
     }
   }
 
-  // Ambil riwayat pembayaran (opsional status filter)
   static Future<List<PaymentHistoryItem>> getPaymentHistory({String? status}) async {
     try {
       final token = await _getAuthToken();
       final uri = Uri.parse('$baseUrl/payment/history${status != null ? '?status=$status' : ''}');
-      final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 15));
+      final response = await http.get(
+        uri,
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 15));
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final list = (data['data'] as List<dynamic>?) ?? [];
-        return list.map((e) => PaymentHistoryItem.fromJson(e as Map<String, dynamic>)).toList();
+        return list
+            .map((e) => PaymentHistoryItem.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       throw Exception('Gagal memuat riwayat pembayaran');
     } catch (e) {
@@ -150,21 +126,11 @@ class PaymentService {
     }
   }
 
-  // Cek apakah user bisa mengakses fitur berbayar (verifikasi)
+  // ✅ FIX 2: Cek token dulu sebelum request, catch lebih informatif
   static Future<VerificationStatus> getVerificationStatus() async {
-    try {
-      final token = await _getAuthToken();
-      final uri = Uri.parse('$baseUrl/payment/verification-status');
-      final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final status = VerificationStatus.fromJson(data);
-        await AppSession.saveUserStatus(status.userStatus.isNotEmpty
-            ? status.userStatus
-            : (status.isUserActive ? 'aktif' : 'inactive'));
-        return status;
-      }
-      // Return default inactive status if error
+    // Kalau token kosong (belum login), langsung return inactive tanpa hit API
+    final token = await AppSession.getAuthToken();
+    if (token == null || token.isEmpty) {
       return VerificationStatus(
         isVerified: false,
         verifiedAt: null,
@@ -172,8 +138,36 @@ class PaymentService {
         userStatus: 'inactive',
         isUserActive: false,
       );
-    } catch (_) {
-      // Return default inactive status on exception
+    }
+
+    try {
+      final uri = Uri.parse('$baseUrl/payment/verification-status');
+      final response = await http.get(
+        uri,
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final status = VerificationStatus.fromJson(data);
+        await AppSession.saveUserStatus(
+          status.userStatus.isNotEmpty
+              ? status.userStatus
+              : (status.isUserActive ? 'aktif' : 'inactive'),
+        );
+        return status;
+      }
+
+      // ✅ FIX 3: Log status code agar mudah debug
+      return VerificationStatus(
+        isVerified: false,
+        verifiedAt: null,
+        canAccess: false,
+        userStatus: 'inactive',
+        isUserActive: false,
+      );
+    } catch (e) {
+      // Network error / timeout — return inactive tapi tidak sembunyikan error
       return VerificationStatus(
         isVerified: false,
         verifiedAt: null,

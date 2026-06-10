@@ -247,7 +247,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
         color: backgroundColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: color.withValues(alpha: 0.18),
+          color: color.withOpacity(0.18),
         ),
       ),
       child: Row(
@@ -280,7 +280,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
+              color: color.withOpacity(0.14),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
@@ -678,7 +678,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                        color: const Color(0xFF2563EB).withOpacity(0.15),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),

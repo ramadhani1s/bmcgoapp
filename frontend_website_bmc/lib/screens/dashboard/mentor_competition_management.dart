@@ -67,6 +67,7 @@ class _MentorCompetitionManagementState
   void _onSidebarMenuTap(String title) {
     switch (title) {
       case 'Dashboard':
+      case 'Beranda':
         Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
         break;
       case 'Jadwal Mengajar':
