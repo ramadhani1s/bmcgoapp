@@ -541,6 +541,18 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   void _onMainMenuTap(String menuKey) {
+    if (!_isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Fitur belum bisa diakses. Aktivasi akun dulu di halaman Profil.',
+          ),
+          backgroundColor: _accent,
+        ),
+      );
+      return;
+    }
+
     if (menuKey.toLowerCase() == 'try out') {
       Navigator.of(context).pushNamed('/mentor-tryout').then((_) {
         _loadRealProgress();
@@ -568,17 +580,6 @@ class _DashboardScreenState extends State<DashboardScreen>
       return;
     }
 
-    if (!_isActive) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Fitur belum bisa diakses. Aktivasi akun dulu di halaman Profil.',
-          ),
-          backgroundColor: _accent,
-        ),
-      );
-      return;
-    }
     if (menuKey.toLowerCase() == 'materi') {
       Navigator.of(
         context,
@@ -586,8 +587,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         _loadRealProgress();
       });
       return;
-    } else {
-      
     }
   }
 
@@ -1014,7 +1013,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _SectionTitleRow(
                   title: 'Profil Alumni',
                   actionText: 'Lihat Semua',
-                  onTap: () => Navigator.of(context).pushNamed('/alumni'),
+                  onTap: () {
+                    if (!_isActive) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Fitur belum bisa diakses. Aktivasi akun dulu di halaman Profil.'),
+                          backgroundColor: _accent,
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.of(context).pushNamed('/alumni');
+                  },
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -1034,7 +1044,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                                     final alumniObj = _dynamicAlumniList[index];
                                     return _AlumniPreviewCard(
                                       alumni: alumniObj,
-                                      onTap: () => _showAlumniDetails(context, alumniObj),
+                                      onTap: () {
+                                        if (!_isActive) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Fitur belum bisa diakses. Aktivasi akun dulu di halaman Profil.'),
+                                              backgroundColor: _accent,
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        _showAlumniDetails(context, alumniObj);
+                                      },
                                     );
                                   },
                                 ),
@@ -1545,6 +1566,15 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   void _showDynamicInfo() {
+    if (!_isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fitur belum bisa diakses. Aktivasi akun dulu di halaman Profil.'),
+          backgroundColor: _accent,
+        ),
+      );
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(

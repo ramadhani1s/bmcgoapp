@@ -3,6 +3,7 @@ package handlers
 import (
 	"bmcgoapp-backend/config"
 	"bmcgoapp-backend/repositories"
+	"bmcgoapp-backend/services"
 	"bmcgoapp-backend/utils"
 	"context"
 	"fmt"
@@ -582,6 +583,15 @@ func ApprovePaymentVerification(c *gin.Context) {
 		transactionID, userID, dbUserStatus, dbIsVerified, dbVerifiedByAdmin, dbVerifiedAt)
 	fmt.Println(logMsg)
 	_ = utils.LogApproval(logMsg)
+
+	// Kirim Notifikasi FCM pendaftaran disetujui
+	go func(uid int) {
+		var token string
+		errToken := config.DB.QueryRow(c.Request.Context(), `SELECT fcm_token FROM users WHERE id = $1 AND fcm_token IS NOT NULL AND fcm_token != ''`, uid).Scan(&token)
+		if errToken == nil && token != "" {
+			_ = services.SendFCMNotification(token, "Pendaftaran Disetujui! 🎉", "Akun kamu sudah aktif dan berhasil diverifikasi. Selamat belajar di BMC!")
+		}
+	}(userID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Approval pembayaran berhasil dan akun siswa telah diaktifkan",

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"bmcgoapp-backend/config"
+	"bmcgoapp-backend/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -331,6 +332,20 @@ func CreateTryoutHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Kirim Notifikasi FCM ke semua siswa secara asinkron
+	go func(judul string) {
+		rows, err := config.DB.Query(context.Background(), `SELECT fcm_token FROM users WHERE role_id = 3 AND fcm_token IS NOT NULL AND fcm_token != ''`)
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var token string
+				if err := rows.Scan(&token); err == nil && token != "" {
+					_ = services.SendFCMNotification(token, "Try Out Baru Tersedia! 📝", fmt.Sprintf("Try Out '%s' telah ditambahkan. Yuk kerjakan sekarang!", judul))
+				}
+			}
+		}
+	}(payload.Judul)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Tryout berhasil dibuat",
