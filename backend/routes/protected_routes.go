@@ -139,11 +139,7 @@ func ProtectedRoutes(r *gin.Engine) {
 	siswa := auth.Group("/siswa")
 	siswa.Use(middleware.RoleMiddleware(3)) // 3 = siswa
 
-	siswa.GET("/jadwal", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Jadwal siswa",
-		})
-	})
+	siswa.GET("/jadwal", handlers.GetJadwalList)
 
 	siswa.POST("/attendance/submit", handlers.SubmitAttendanceTokenHandler)
 	siswa.GET("/attendance/active", handlers.GetActiveAttendanceSessionForSiswaHandler)

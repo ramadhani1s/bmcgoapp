@@ -1,19 +1,22 @@
 package models
 
 import (
-	"time"
+	//"time"
 )
 
 type Jadwal struct {
-	ID            int       `json:"id"`
-	PaketID       int       `json:"paket_id"`
-	MentorID      int       `json:"mentor_id"`
-	ClassLevel    string    `json:"class_level" db:"class_level"`
-	MataPelajaran string    `json:"mata_pelajaran"`
-	Hari          string    `json:"hari"`
-	JamMulai      time.Time `json:"jam_mulai"`
-	JamSelesai    time.Time `json:"jam_selesai"`
-	Ruang         string    `json:"ruang"`
+	ID            int     `json:"id"`
+	PaketID       *int    `json:"paket_id"`
+	MentorID      *int    `json:"mentor_id"`
+	ClassLevel    *string `json:"class_level" db:"class_level"`
+	MataPelajaran *string `json:"mata_pelajaran"`
+	Hari          *string `json:"hari"`
+	JamMulai      *string `json:"jam_mulai"`
+	JamSelesai    *string `json:"jam_selesai"`
+	WaktuMulai    *string `json:"waktu_mulai"`
+	WaktuSelesai  *string `json:"waktu_selesai"`
+	Mentor        *string `json:"mentor"`
+	Ruang         *string `json:"ruang"`
 }
 
 type CreateJadwalRequest struct {

@@ -7,7 +7,7 @@ class JadwalMobileService {
   static Future<List<Map<String, dynamic>>> getJadwalByHari(String hari) async {
     try {
       final url = Uri.parse(
-        "${ApiConfig.baseUrl}/jadwal-by-hari",
+        "${ApiConfig.baseUrl}/api/jadwal-by-hari",
       ).replace(queryParameters: {'hari': hari});
 
       final response = await http.get(url);
@@ -27,7 +27,7 @@ class JadwalMobileService {
   // Get semua jadwal (public endpoint)
   static Future<List<Map<String, dynamic>>> getAllJadwal() async {
     try {
-      final url = Uri.parse("${ApiConfig.baseUrl}/jadwal");
+      final url = Uri.parse("${ApiConfig.baseUrl}/api/jadwal");
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
