@@ -51,6 +51,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // Dynamic announcement banner variables
   Map<String, dynamic>? _latestAnnouncement;
+  bool _isLoadingAnnouncement = true;
 
   // Jadwal variables
   List<Map<String, dynamic>> _jadwalList = [];
