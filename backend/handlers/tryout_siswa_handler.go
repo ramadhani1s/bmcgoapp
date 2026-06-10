@@ -318,6 +318,7 @@ func SubmitTryoutSiswa(c *gin.Context) {
 			"jawaban_salah":  salah,
 			"tidak_dijawab":  tidakDijawab,
 			"total_soal":     totalSoal,
+			"jawaban_siswa":  input.Jawaban,
 		},
 	})
 }

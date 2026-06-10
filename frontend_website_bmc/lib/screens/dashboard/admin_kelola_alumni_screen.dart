@@ -391,6 +391,23 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
                           const SizedBox(height: 16),
                           _fieldWithLabel(
                             font: bodyFont,
+                            label: 'Prestasi',
+                            child: TextField(
+                              controller: prestasiController,
+                              maxLines: 3,
+                              style: bodyFont.copyWith(
+                                fontSize: 14,
+                                color: const Color(0xFF111827),
+                              ),
+                              decoration: inputDecoration.copyWith(
+                                hintText: 'Contoh: Juara 1 Olimpiade Matematika tingkat Nasional',
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _fieldWithLabel(
+                            font: bodyFont,
                             label: 'Foto',
                             child: Material(
                               color: Colors.transparent,
@@ -817,24 +834,30 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
           ),
           Expanded(
             flex: 1,
-            child: Text(
-              'TAHUN LULUS',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF334155),
-                fontSize: 13,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Text(
+                'TAHUN LULUS',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF334155),
+                  fontSize: 13,
+                ),
               ),
             ),
           ),
           Expanded(
             flex: 3,
-            child: Text(
-              'PRESTASI',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF334155),
-                fontSize: 13,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                'PRESTASI',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF334155),
+                  fontSize: 13,
+                ),
               ),
             ),
           ),
@@ -920,19 +943,22 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
           ),
           Expanded(
             flex: 1,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F0E7),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${alumni.tahunLulus}',
-                  style: const TextStyle(
-                    color: Color(0xFF7C6A2A),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F0E7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${alumni.tahunLulus}',
+                    style: const TextStyle(
+                      color: Color(0xFF7C6A2A),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -940,15 +966,18 @@ class _AdminKelolaAlumniScreenState extends State<AdminKelolaAlumniScreen> {
           ),
           Expanded(
             flex: 3,
-            child: Text(
-              (alumni.prestasi?.isNotEmpty == true) ? alumni.prestasi! : '-',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF4B5563),
-                fontStyle: FontStyle.italic,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                (alumni.prestasi?.isNotEmpty == true) ? alumni.prestasi! : '-',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF4B5563),
+                  fontStyle: FontStyle.italic,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
           Expanded(

@@ -1321,16 +1321,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                           fontSize: 12.5,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          _buildStat('0', 'Materi'),
-                          _buildDivider(),
-                          _buildStat('0', 'Try Out'),
-                          _buildDivider(),
-                          _buildStat('0', 'Absensi'),
-                        ],
-                      ),
                       const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
@@ -1430,38 +1420,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                       onTap: () {
                         Navigator.of(context).pushNamed('/package');
                       },
-                    ),
-                    _ProfileTile(
-                      icon: Icons.shield_outlined,
-                      title: isActive
-                          ? 'Status Akun: Aktif'
-                          : 'Status Akun: Non-Aktif',
-                      color: const Color(0xFFFFF1E7),
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _buildSectionTitle('AKADEMIK'),
-                _buildTileCard(
-                  children: [
-                    _ProfileTile(
-                      icon: Icons.military_tech_outlined,
-                      title: 'Prestasi & Sertifikat',
-                      color: const Color(0xFFFFF7DD),
-                      onTap: _showDynamicInfo,
-                    ),
-                    _ProfileTile(
-                      icon: Icons.fact_check_outlined,
-                      title: 'Riwayat Kehadiran',
-                      color: const Color(0xFFEAF8ED),
-                      onTap: _showDynamicInfo,
-                    ),
-                    _ProfileTile(
-                      icon: Icons.menu_book_outlined,
-                      title: 'Transkrip Nilai',
-                      color: const Color(0xFFE7F8FD),
-                      onTap: _showDynamicInfo,
                     ),
                   ],
                 ),

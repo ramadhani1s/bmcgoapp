@@ -722,8 +722,6 @@ class OlimpiadeHasilScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skor = hasil['skor'] as int? ?? 0;
-    final ranking = hasil['ranking'] as int? ?? 0;
-    final totalPeserta = hasil['total_peserta'] as int? ?? 0;
     final benar = hasil['jawaban_benar'] as int? ?? 0;
     final salah = hasil['jawaban_salah'] as int? ?? 0;
     final tidakDijawab = hasil['tidak_dijawab'] as int? ?? 0;
@@ -819,54 +817,6 @@ class OlimpiadeHasilScreen extends StatelessWidget {
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16)),
-                      child: Column(
-                        children: [
-                          const Text('Peringkat Kamu',
-                              style: TextStyle(
-                                  color: Color(0xFF8D90A3), fontSize: 12)),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.emoji_events_rounded,
-                                  color: _gold, size: 28),
-                              const SizedBox(width: 8),
-                              Text('#$ranking',
-                                  style: const TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w800)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                                color: const Color(0xFFF0F0F0),
-                                borderRadius: BorderRadius.circular(20)),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.people_rounded,
-                                    size: 14, color: Color(0xFF8D90A3)),
-                                const SizedBox(width: 6),
-                                Text('dari $totalPeserta peserta',
-                                    style: const TextStyle(
-                                        color: Color(0xFF8D90A3),
-                                        fontSize: 13)),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                     ),

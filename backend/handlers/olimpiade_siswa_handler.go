@@ -28,15 +28,26 @@ func GetOlimpiadeSiswa(c *gin.Context) {
 
 	query := `
 		SELECT 
-			o.id, o.nama, o.class_level, o.lokasi, to_char(o.tanggal, 'YYYY-MM-DD') as tanggal,
-			o.total_questions, o.category_questions,
+			o.id,
+			o.nama,
+			o.class_level,
+			COALESCE(o.lokasi, '') AS lokasi,
+			to_char(o.tanggal, 'YYYY-MM-DD') AS tanggal,
+			COALESCE(o.total_questions, 0) AS total_questions,
+			COALESCE(o.durasi, 120) AS durasi,
 			COALESCE(m.nama_mentor, 'Mentor BMC') AS mentor_nama,
-			po.skor, po.ranking, po.jawaban_benar, po.jawaban_salah, po.tidak_dijawab,
-			CASE WHEN po.selesai = true THEN 'selesai' ELSE 'tersedia' END as status_pengerjaan
+			po.skor,
+			po.ranking,
+			po.jawaban_benar,
+			po.jawaban_salah,
+			po.tidak_dijawab,
+			CASE WHEN po.selesai = true THEN 'selesai' ELSE 'tersedia' END AS status_pengerjaan
 		FROM olimpiade o
 		LEFT JOIN mentor m ON m.id = o.mentor_id
 		LEFT JOIN peserta_olimpiade po ON po.olimpiade_id = o.id AND po.siswa_id = $1
 	`
+
+	args := []interface{}{siswaID}
 
 	if status == "selesai" {
 		query += " WHERE po.selesai = true ORDER BY o.tanggal DESC"
@@ -46,44 +57,43 @@ func GetOlimpiadeSiswa(c *gin.Context) {
 		query += " ORDER BY o.tanggal DESC"
 	}
 
-	rows, err := config.DB.Query(context.Background(), query, siswaID)
+	rows, err := config.DB.Query(context.Background(), query, args...)
 	if err != nil {
 		log.Println("Gagal query olimpiade:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil olimpiade"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil olimpiade", "detail": err.Error()})
 		return
 	}
 	defer rows.Close()
 
 	type OlimpiadeItem struct {
-		ID                int        `json:"id"`
-		Nama              *string    `json:"nama"`
-		ClassLevel        *string    `json:"class_level"`
-		Lokasi            *string    `json:"lokasi"`
-		Tanggal           *string    `json:"tanggal"`
-		TotalQuestions    *int       `json:"total_questions"`
-		CategoryQuestions string     `json:"category_questions"`
-		MentorNama        *string    `json:"mentor_nama"`
-		Skor              *int       `json:"skor"`
-		Ranking           *int       `json:"ranking"`
-		JawabanBenar      *int       `json:"jawaban_benar"`
-		JawabanSalah      *int       `json:"jawaban_salah"`
-		TidakDijawab      *int       `json:"tidak_dijawab"`
-		Status            *string    `json:"status"`
+		ID             int     `json:"id"`
+		Nama           *string `json:"nama"`
+		ClassLevel     *string `json:"class_level"`
+		Lokasi         string  `json:"lokasi"`
+		Tanggal        *string `json:"tanggal"`
+		TotalQuestions int     `json:"total_questions"`
+		Durasi         int     `json:"durasi"`
+		MentorNama     string  `json:"mentor_nama"`
+		Skor           *int    `json:"skor"`
+		Ranking        *int    `json:"ranking"`
+		JawabanBenar   *int    `json:"jawaban_benar"`
+		JawabanSalah   *int    `json:"jawaban_salah"`
+		TidakDijawab   *int    `json:"tidak_dijawab"`
+		Status         *string `json:"status"`
 	}
 
 	var list []OlimpiadeItem
 	for rows.Next() {
 		var item OlimpiadeItem
-		var catQuestions []byte
 		if err := rows.Scan(
 			&item.ID, &item.Nama, &item.ClassLevel, &item.Lokasi, &item.Tanggal,
-			&item.TotalQuestions, &catQuestions, &item.MentorNama,
-			&item.Skor, &item.Ranking, &item.JawabanBenar, &item.JawabanSalah, &item.TidakDijawab, &item.Status,
+			&item.TotalQuestions, &item.Durasi, &item.MentorNama,
+			&item.Skor, &item.Ranking, &item.JawabanBenar, &item.JawabanSalah,
+			&item.TidakDijawab, &item.Status,
 		); err != nil {
 			log.Println("Gagal scan olimpiade siswa:", err)
 			continue
 		}
-		item.CategoryQuestions = string(catQuestions)
 		list = append(list, item)
 	}
 
@@ -91,7 +101,7 @@ func GetOlimpiadeSiswa(c *gin.Context) {
 		list = []OlimpiadeItem{}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OK", "data": list})
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "OK", "data": list})
 }
 
 // GET soal olimpiade
@@ -105,18 +115,19 @@ func GetSoalOlimpiade(c *gin.Context) {
 		return
 	}
 
-	query := `
-		SELECT id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, pilihan_e
-	`
+	var query string
 	if review {
-		query += `, jawaban, pembahasan`
+		query = `SELECT id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, pilihan_e, jawaban, pembahasan
+		          FROM olimpiade_soal WHERE kompetisi_id = $1 ORDER BY id`
+	} else {
+		query = `SELECT id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, pilihan_e
+		          FROM olimpiade_soal WHERE kompetisi_id = $1 ORDER BY id`
 	}
-	query += ` FROM olimpiade_soal WHERE kompetisi_id = $1 ORDER BY id`
 
 	rows, err := config.DB.Query(context.Background(), query, olimpiadeID)
-
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil soal"})
+		log.Println("Gagal query soal olimpiade:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil soal", "detail": err.Error()})
 		return
 	}
 	defer rows.Close()
@@ -136,14 +147,17 @@ func GetSoalOlimpiade(c *gin.Context) {
 	var soalList []SoalItem
 	for rows.Next() {
 		var s SoalItem
+		var err error
 		if review {
-			if err := rows.Scan(&s.ID, &s.Pertanyaan, &s.PilihanA, &s.PilihanB, &s.PilihanC, &s.PilihanD, &s.PilihanE, &s.Jawaban, &s.Pembahasan); err != nil {
-				continue
-			}
+			err = rows.Scan(&s.ID, &s.Pertanyaan, &s.PilihanA, &s.PilihanB,
+				&s.PilihanC, &s.PilihanD, &s.PilihanE, &s.Jawaban, &s.Pembahasan)
 		} else {
-			if err := rows.Scan(&s.ID, &s.Pertanyaan, &s.PilihanA, &s.PilihanB, &s.PilihanC, &s.PilihanD, &s.PilihanE); err != nil {
-				continue
-			}
+			err = rows.Scan(&s.ID, &s.Pertanyaan, &s.PilihanA, &s.PilihanB,
+				&s.PilihanC, &s.PilihanD, &s.PilihanE)
+		}
+		if err != nil {
+			log.Println("Gagal scan soal:", err)
+			continue
 		}
 		soalList = append(soalList, s)
 	}
@@ -152,7 +166,7 @@ func GetSoalOlimpiade(c *gin.Context) {
 		soalList = []SoalItem{}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OK", "data": soalList})
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "OK", "data": soalList})
 }
 
 // POST submit jawaban olimpiade
@@ -167,19 +181,16 @@ func SubmitOlimpiade(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 
 	var input struct {
-		Jawaban map[string]string `json:"jawaban"` // soal_id -> jawaban
+		Jawaban map[string]string `json:"jawaban"`
 	}
-
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Ambil semua soal beserta jawaban benar
-	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, jawaban FROM olimpiade_soal WHERE kompetisi_id = $1
-	`, olimpiadeID)
-
+	rows, err := config.DB.Query(context.Background(),
+		`SELECT id, jawaban FROM olimpiade_soal WHERE kompetisi_id = $1`, olimpiadeID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal ambil soal"})
 		return
@@ -199,9 +210,7 @@ func SubmitOlimpiade(c *gin.Context) {
 	}
 
 	// Hitung skor
-	benar := 0
-	salah := 0
-	tidakDijawab := 0
+	benar, salah, tidakDijawab := 0, 0, 0
 	totalSoal := len(soalList)
 
 	for _, soal := range soalList {
@@ -224,24 +233,21 @@ func SubmitOlimpiade(c *gin.Context) {
 	// Cari siswa_id
 	var siswaID int
 	config.DB.QueryRow(context.Background(),
-		`SELECT id FROM siswa WHERE user_id = $1`, userID,
-	).Scan(&siswaID)
+		`SELECT id FROM siswa WHERE user_id = $1`, userID).Scan(&siswaID)
 
-	// Hitung ranking (berapa orang yang skornya lebih tinggi + 1)
+	// Hitung ranking
 	var ranking int
 	config.DB.QueryRow(context.Background(),
 		`SELECT COUNT(*) + 1 FROM peserta_olimpiade WHERE olimpiade_id = $1 AND skor > $2`,
-		olimpiadeID, skor,
-	).Scan(&ranking)
+		olimpiadeID, skor).Scan(&ranking)
 
-	// Hitung total peserta
+	// Hitung total peserta sebelum insert
 	var totalPeserta int
 	config.DB.QueryRow(context.Background(),
 		`SELECT COUNT(*) FROM peserta_olimpiade WHERE olimpiade_id = $1`,
-		olimpiadeID,
-	).Scan(&totalPeserta)
+		olimpiadeID).Scan(&totalPeserta)
 
-	// Insert atau update peserta_olimpiade
+	// Insert atau update
 	_, err = config.DB.Exec(context.Background(), `
 		INSERT INTO peserta_olimpiade (siswa_id, olimpiade_id, skor, ranking, jawaban_benar, jawaban_salah, tidak_dijawab, selesai)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, true)
@@ -256,6 +262,7 @@ func SubmitOlimpiade(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
 		"message": "Hasil berhasil disimpan",
 		"data": gin.H{
 			"skor":          skor,
