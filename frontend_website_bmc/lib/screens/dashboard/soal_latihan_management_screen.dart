@@ -207,7 +207,7 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: color.withOpacity(0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 18),
@@ -287,7 +287,7 @@ class _LatihanCreatePageState extends State<_LatihanCreatePage> {
                         width: 38,
                         height: 38,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
+                          color: Colors.white.withOpacity(0.16),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -1820,7 +1820,7 @@ class _SoalLatihanManagementScreenState
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity(0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1829,7 +1829,7 @@ class _SoalLatihanManagementScreenState
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),

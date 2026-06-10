@@ -31,7 +31,8 @@ class _TryOutResultDashboardState extends State<TryOutResultDashboard> {
 
   Future<void> _fetchQuestions() async {
     final id = widget.package['id'] as int;
-    final list = await TryOutService.getQuestions(id);
+    // Gunakan endpoint pembahasan agar jawaban & pembahasan tersedia di layar hasil
+    final list = await TryOutService.getQuestionsWithPembahasan(id);
     if (!mounted) return;
     setState(() {
       _questions = list;
@@ -45,10 +46,29 @@ class _TryOutResultDashboardState extends State<TryOutResultDashboard> {
     // If it came from the list screen (history), it might only have 'nilai'.
     final score = widget.result['skor'] ?? widget.result['nilai'] ?? widget.package['nilai'] ?? 0;
     final totalSoal = widget.result['total_soal'] ?? widget.package['total_questions'] ?? _questions.length;
-    final benar = widget.result['jawaban_benar'] ?? 0;
-    final salah = widget.result['jawaban_salah'] ?? 0;
-    final kosong = widget.result['tidak_dijawab'] ?? 0;
     final durasi = widget.package['durasi'] ?? 150;
+
+    // Hitung statistik dari data soal yang sebenarnya (sudah ada jawaban field dari endpoint pembahasan)
+    int benar = widget.result['jawaban_benar'] as int? ?? 0;
+    int salah = widget.result['jawaban_salah'] as int? ?? 0;
+    int kosong = widget.result['tidak_dijawab'] as int? ?? 0;
+
+    // Jika stats dari result masih 0 tapi sudah ada questions, hitung dari soal
+    if (benar == 0 && salah == 0 && _questions.isNotEmpty) {
+      final jawabanSiswa = widget.result['jawaban_siswa'] as Map<String, dynamic>? ?? {};
+      for (final q in _questions) {
+        final soalId = q['id']?.toString() ?? '';
+        final kunciJawaban = (q['jawaban'] as String? ?? '').toUpperCase();
+        final jawabanUser = (jawabanSiswa[soalId] as String? ?? '').toUpperCase();
+        if (jawabanUser.isEmpty) {
+          kosong++;
+        } else if (jawabanUser == kunciJawaban && kunciJawaban.isNotEmpty) {
+          benar++;
+        } else {
+          salah++;
+        }
+      }
+    }
 
     // Group questions by category
     final Map<String, List<Map<String, dynamic>>> byKategori = {};

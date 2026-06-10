@@ -48,6 +48,46 @@ func SimpanHasilLatihan(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Hasil latihan berhasil disimpan"})
 }
 
+// matchClass checks if student's kelas matches target class level flexibly
+func matchClass(studentKelas, targetClass string) bool {
+	sKelas := strings.ToLower(strings.TrimSpace(studentKelas))
+	tClass := strings.ToLower(strings.TrimSpace(targetClass))
+
+	if tClass == "" || tClass == "semua kelas" || tClass == "kelas umum" || tClass == "umum" {
+		return true
+	}
+
+	// Extract numbers (10, 11, 12)
+	has10 := strings.Contains(sKelas, "10")
+	has11 := strings.Contains(sKelas, "11")
+	has12 := strings.Contains(sKelas, "12")
+
+	tHas10 := strings.Contains(tClass, "10")
+	tHas11 := strings.Contains(tClass, "11")
+	tHas12 := strings.Contains(tClass, "12")
+
+	// If grade levels don't match, return false
+	if (tHas10 && !has10) || (tHas11 && !has11) || (tHas12 && !has12) {
+		return false
+	}
+
+	// Check track: IPA/MIPA vs IPS
+	isStudentIPA := strings.Contains(sKelas, "ipa") || strings.Contains(sKelas, "mipa")
+	isStudentIPS := strings.Contains(sKelas, "ips")
+
+	isTargetIPA := strings.Contains(tClass, "ipa") || strings.Contains(tClass, "mipa")
+	isTargetIPS := strings.Contains(tClass, "ips")
+
+	if isTargetIPA && !isStudentIPA {
+		return false
+	}
+	if isTargetIPS && !isStudentIPS {
+		return false
+	}
+
+	return true
+}
+
 // GetSiswaProgress calculates the overall progress
 func GetSiswaProgress(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -57,22 +97,20 @@ func GetSiswaProgress(c *gin.Context) {
 	}
 	siswaID := userID.(int)
 
-	// Get student's class level
+	// Get student's class level (from 'kelas' column, not 'class_level')
 	var classLevel string
-	err := config.DB.QueryRow(context.Background(), "SELECT class_level FROM siswa WHERE user_id = $1", siswaID).Scan(&classLevel)
+	err := config.DB.QueryRow(context.Background(), "SELECT kelas FROM siswa WHERE user_id = $1", siswaID).Scan(&classLevel)
 	if err != nil {
-		// fallback to empty or handle
 		classLevel = ""
 	}
 
 	// 1. Calculate Total Assigned Latihan Soal
-	// Fetch all questions for this class
+	// Fetch all questions and their material's class level
 	rows, err := config.DB.Query(context.Background(), `
-		SELECT sl.materi_id, sl.pertanyaan 
+		SELECT sl.materi_id, sl.pertanyaan, COALESCE(lm.class_level, '') 
 		FROM soal_latihan sl 
-		JOIN learning_materials lm ON sl.materi_id = lm.id 
-		WHERE lm.class_level = $1
-	`, classLevel)
+		JOIN learning_materials lm ON sl.materi_id = lm.id
+	`)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data soal", "details": err.Error()})
@@ -84,9 +122,16 @@ func GetSiswaProgress(c *gin.Context) {
 	for rows.Next() {
 		var mID int
 		var pertanyaan string
-		if err := rows.Scan(&mID, &pertanyaan); err != nil {
+		var lmClassLevel string
+		if err := rows.Scan(&mID, &pertanyaan, &lmClassLevel); err != nil {
 			continue
 		}
+
+		// Filter dynamically in memory
+		if !matchClass(classLevel, lmClassLevel) {
+			continue
+		}
+
 		if strings.Contains(pertanyaan, "[SKELETON]") {
 			continue
 		}
@@ -119,12 +164,20 @@ func GetSiswaProgress(c *gin.Context) {
 	}
 
 	// 3. Calculate Total Assigned Tryouts
-	var totalTryout int
-	err = config.DB.QueryRow(context.Background(), `
-		SELECT COUNT(*) FROM tryout WHERE class_level = $1
-	`, classLevel).Scan(&totalTryout)
-	if err != nil {
-		totalTryout = 0
+	rowsTryout, err := config.DB.Query(context.Background(), `
+		SELECT COALESCE(class_level, '') FROM tryout
+	`)
+	totalTryout := 0
+	if err == nil {
+		defer rowsTryout.Close()
+		for rowsTryout.Next() {
+			var tClassLevel string
+			if err := rowsTryout.Scan(&tClassLevel); err == nil {
+				if matchClass(classLevel, tClassLevel) {
+					totalTryout++
+				}
+			}
+		}
 	}
 
 	// 4. Calculate Completed Tryouts

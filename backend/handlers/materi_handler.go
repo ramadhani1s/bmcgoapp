@@ -76,6 +76,7 @@ func UploadMateri(c *gin.Context) {
 	if subject == "" {
 		subject = "Umum" // Default subject jika tidak dikirim
 	}
+	classLevel := c.PostForm("class_level")
 
 	// Limit upload size
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, MaxUploadSize)
@@ -116,9 +117,9 @@ func UploadMateri(c *gin.Context) {
 	filePathDB := "/uploads/materials/" + filename
 	var insertedID int
 	err = config.DB.QueryRow(context.Background(), `
-		INSERT INTO learning_materials (mentor_id, title, description, file_path, file_type, file_size, subject)
-		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id
-	`, mentorID, title, description, filePathDB, ext, file.Size, subject).Scan(&insertedID)
+		INSERT INTO learning_materials (mentor_id, title, description, file_path, file_type, file_size, subject, class_level)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
+	`, mentorID, title, description, filePathDB, ext, file.Size, subject, classLevel).Scan(&insertedID)
 
 	if err != nil {
 		log.Println("Gagal insert learning_materials ke DB:", err)
@@ -245,7 +246,7 @@ func GetAllMateri(c *gin.Context) {
 				lm.id, lm.mentor_id, lm.title, lm.description, 
 				lm.file_path, lm.file_type, lm.file_size, lm.subject,
 				COALESCE(m.nama_mentor, u.nama, 'Mentor') AS mentor_name,
-				lm.created_at, lm.updated_at
+				lm.created_at, lm.updated_at, COALESCE(lm.class_level, '')
 			FROM learning_materials lm
 			LEFT JOIN mentor m ON m.id = lm.mentor_id
 			LEFT JOIN users u ON u.id = m.user_id
@@ -258,7 +259,7 @@ func GetAllMateri(c *gin.Context) {
 				lm.id, lm.mentor_id, lm.title, lm.description, 
 				lm.file_path, lm.file_type, lm.file_size, lm.subject,
 				COALESCE(m.nama_mentor, u.nama, 'Mentor') AS mentor_name,
-				lm.created_at, lm.updated_at
+				lm.created_at, lm.updated_at, COALESCE(lm.class_level, '')
 			FROM learning_materials lm
 			LEFT JOIN mentor m ON m.id = lm.mentor_id
 			LEFT JOIN users u ON u.id = m.user_id
@@ -283,6 +284,7 @@ func GetAllMateri(c *gin.Context) {
 		FileSize    int64     `json:"file_size"`
 		Subject     string    `json:"subject"`
 		MentorName  string    `json:"mentor_name"`
+		ClassLevel  string    `json:"class_level"`
 		CreatedAt   time.Time `json:"created_at"`
 		UpdatedAt   time.Time `json:"updated_at"`
 	}
@@ -293,7 +295,7 @@ func GetAllMateri(c *gin.Context) {
 		if err := rows.Scan(
 			&m.ID, &m.MentorID, &m.Title, &m.Description,
 			&m.FilePath, &m.FileType, &m.FileSize, &m.Subject,
-			&m.MentorName, &m.CreatedAt, &m.UpdatedAt,
+			&m.MentorName, &m.CreatedAt, &m.UpdatedAt, &m.ClassLevel,
 		); err != nil {
 			log.Println("Gagal scan row:", err)
 			continue

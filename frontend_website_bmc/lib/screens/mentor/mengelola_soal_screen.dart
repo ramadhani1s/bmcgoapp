@@ -326,7 +326,7 @@ class _MengelolaSoalScreenState extends State<MengelolaSoalScreen> {
   }
 
   void _onSidebarMenuTap(String title) {
-    if (title == 'Dashboard') {
+    if (title == 'Dashboard' || title == 'Beranda') {
       Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
     } else if (title == 'Jadwal Mengajar') {
       Navigator.pushReplacement(

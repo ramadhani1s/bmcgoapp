@@ -93,7 +93,7 @@ func GetTryoutSiswa(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "OK", "data": list})
 }
 
-// GET soal try out
+// GET soal try out (untuk ujian - tanpa jawaban/pembahasan)
 func GetSoalTryoutSiswa(c *gin.Context) {
 	tryoutIDStr := c.Param("id")
 	tryoutID, err := strconv.Atoi(tryoutIDStr)
@@ -137,6 +137,86 @@ func GetSoalTryoutSiswa(c *gin.Context) {
 
 	if soalList == nil {
 		soalList = []SoalItem{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "OK", "data": soalList})
+}
+
+// GET soal try out dengan jawaban & pembahasan (untuk hasil/pembahasan - hanya setelah selesai)
+func GetSoalPembahasanTryoutSiswa(c *gin.Context) {
+	tryoutIDStr := c.Param("id")
+	tryoutID, err := strconv.Atoi(tryoutIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	userID, _ := c.Get("user_id")
+
+	// Pastikan siswa sudah mengerjakan tryout ini
+	var siswaID int
+	err = config.DB.QueryRow(context.Background(),
+		`SELECT id FROM siswa WHERE user_id = $1`, userID,
+	).Scan(&siswaID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menemukan data siswa"})
+		return
+	}
+
+	var hasilExists bool
+	err = config.DB.QueryRow(context.Background(),
+		`SELECT EXISTS(SELECT 1 FROM hasil_tryout WHERE tryout_id = $1 AND siswa_id = $2)`,
+		tryoutID, siswaID,
+	).Scan(&hasilExists)
+	if err != nil || !hasilExists {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Anda belum menyelesaikan tryout ini"})
+		return
+	}
+
+	rows, err := config.DB.Query(context.Background(), `
+		SELECT id, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, pilihan_e,
+		       COALESCE(jawaban, '') as jawaban,
+		       COALESCE(pembahasan, '') as pembahasan,
+		       COALESCE(kategori, '') as kategori
+		FROM tryout_soal
+		WHERE kompetisi_id = $1
+		ORDER BY id
+	`, tryoutID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil soal"})
+		return
+	}
+	defer rows.Close()
+
+	type SoalWithPembahasan struct {
+		ID         int    `json:"id"`
+		Pertanyaan string `json:"pertanyaan"`
+		PilihanA   string `json:"pilihan_a"`
+		PilihanB   string `json:"pilihan_b"`
+		PilihanC   string `json:"pilihan_c"`
+		PilihanD   string `json:"pilihan_d"`
+		PilihanE   string `json:"pilihan_e"`
+		Jawaban    string `json:"jawaban"`
+		Pembahasan string `json:"pembahasan"`
+		Kategori   string `json:"kategori"`
+	}
+
+	var soalList []SoalWithPembahasan
+	for rows.Next() {
+		var s SoalWithPembahasan
+		if err := rows.Scan(
+			&s.ID, &s.Pertanyaan, &s.PilihanA, &s.PilihanB, &s.PilihanC, &s.PilihanD, &s.PilihanE,
+			&s.Jawaban, &s.Pembahasan, &s.Kategori,
+		); err != nil {
+			log.Println("Gagal scan soal pembahasan:", err)
+			continue
+		}
+		soalList = append(soalList, s)
+	}
+
+	if soalList == nil {
+		soalList = []SoalWithPembahasan{}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "OK", "data": soalList})
@@ -238,6 +318,7 @@ func SubmitTryoutSiswa(c *gin.Context) {
 			"jawaban_salah":  salah,
 			"tidak_dijawab":  tidakDijawab,
 			"total_soal":     totalSoal,
+			"jawaban_siswa":  input.Jawaban,
 		},
 	})
 }

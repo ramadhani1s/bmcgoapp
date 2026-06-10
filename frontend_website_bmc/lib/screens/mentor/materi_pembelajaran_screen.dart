@@ -78,7 +78,7 @@ class _MateriPembelajaranScreenState extends State<MateriPembelajaranScreen> {
   }
 
   void _onSidebarMenuTap(String title) {
-    if (title == 'Dashboard') {
+    if (title == 'Dashboard' || title == 'Beranda') {
       Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
       return;
     }

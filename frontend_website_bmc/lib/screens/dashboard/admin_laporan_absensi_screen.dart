@@ -543,9 +543,9 @@ class _AdminLaporanAbsensiScreenState extends State<AdminLaporanAbsensiScreen> {
         margin: const EdgeInsets.only(right: 10),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
+          color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: color.withValues(alpha: 0.18)),
+          border: Border.all(color: color.withOpacity(0.18)),
         ),
         child: Row(
           children: [
@@ -577,7 +577,7 @@ class _AdminLaporanAbsensiScreenState extends State<AdminLaporanAbsensiScreen> {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
+                color: color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(icon, color: color, size: 28),

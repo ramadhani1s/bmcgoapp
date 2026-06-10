@@ -12,7 +12,7 @@ class AuthService {
   // =====================================================
   // BASE URL
   // =====================================================
-  static const String _defaultBaseUrl = 'http://localhost:8080';
+  static const String _defaultBaseUrl = 'http://127.0.0.1:8080';
 
   static String get baseUrl {
     final fromEnv = const String.fromEnvironment('API_BASE_URL').trim();

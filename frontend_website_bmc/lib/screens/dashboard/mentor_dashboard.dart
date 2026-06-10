@@ -24,7 +24,7 @@ class MentorDashboard extends StatefulWidget {
 class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   User? _currentUser;
   String _activeMenuTitle = 'Beranda';
-  bool _isProfileHovered = false;  // ← letakkan di sini
+  bool _isProfileHovered = false;
   bool _loadingDashboardCards = true;
   List<Map<String, dynamic>> _recentSchedules = [];
   List<Map<String, dynamic>> _paketList = [];
@@ -38,21 +38,12 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
 
   final List<_SidebarMenuItem> _menuItems = const [
     _SidebarMenuItem(title: 'Beranda', icon: Icons.home_outlined),
-    _SidebarMenuItem(
-      title: 'Jadwal Mengajar',
-      icon: Icons.calendar_month_outlined,
-    ),
+    _SidebarMenuItem(title: 'Jadwal Mengajar', icon: Icons.calendar_month_outlined),
     _SidebarMenuItem(title: 'Absensi Kelas', icon: Icons.fact_check_outlined),
     _SidebarMenuItem(title: 'Soal Latihan', icon: Icons.menu_book_outlined),
     _SidebarMenuItem(title: 'Try Out', icon: Icons.rocket_launch_outlined),
-    _SidebarMenuItem(
-      title: 'Materi Pembelajaran',
-      icon: Icons.video_library_outlined,
-    ),
-    _SidebarMenuItem(
-      title: 'Olimpiade Akademik',
-      icon: Icons.emoji_events_outlined,
-    ),
+    _SidebarMenuItem(title: 'Materi Pembelajaran', icon: Icons.video_library_outlined),
+    _SidebarMenuItem(title: 'Olimpiade Akademik', icon: Icons.emoji_events_outlined),
   ];
 
   @override
@@ -96,22 +87,10 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
 
     setState(() => _loadingDashboardCards = true);
     final results = await Future.wait([
-      _safeLoad(
-        JadwalService.getMentorJadwalList(),
-        <Map<String, dynamic>>[],
-      ),
-      _safeLoad(
-        JadwalService.getPaketList(),
-        <Map<String, dynamic>>[],
-      ),
-      _safeLoad(
-        MentorCompetitionService.getByType('tryout'),
-        <MentorCompetitionItem>[],
-      ),
-      _safeLoad(
-        MentorCompetitionService.getByType('olimpiade'),
-        <MentorCompetitionItem>[],
-      ),
+      _safeLoad(JadwalService.getMentorJadwalList(), <Map<String, dynamic>>[]),
+      _safeLoad(JadwalService.getPaketList(), <Map<String, dynamic>>[]),
+      _safeLoad(MentorCompetitionService.getByType('tryout'), <MentorCompetitionItem>[]),
+      _safeLoad(MentorCompetitionService.getByType('olimpiade'), <MentorCompetitionItem>[]),
     ]);
 
     final schedules = results[0] as List<Map<String, dynamic>>;
@@ -138,11 +117,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     } catch (_) {}
   }
 
-  String _pickValue(
-    Map<String, dynamic> data,
-    List<String> keys, {
-    String fallback = '-',
-  }) {
+  String _pickValue(Map<String, dynamic> data, List<String> keys, {String fallback = '-'}) {
     for (final key in keys) {
       final value = data[key];
       if (value != null) {
@@ -157,19 +132,16 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     if (value == null) return '';
     final text = value.toString();
     if (text.isEmpty) return '';
-
     if (text.contains('T')) {
       final parsed = DateTime.tryParse(text);
       if (parsed != null) {
         return '${parsed.hour.toString().padLeft(2, '0')}:${parsed.minute.toString().padLeft(2, '0')}';
       }
     }
-
     final parts = text.split(':');
     if (parts.length >= 2) {
       return '${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}';
     }
-
     return text;
   }
 
@@ -199,20 +171,8 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   String _formatScheduleTime(Map<String, dynamic> item) {
-    final rawStart = _pickValue(item, [
-      'waktu_mulai',
-      'jam_mulai',
-      'start_time',
-      'jamAwal',
-      'time_start',
-    ]);
-    final rawEnd = _pickValue(item, [
-      'waktu_selesai',
-      'jam_selesai',
-      'end_time',
-      'jamAkhir',
-      'time_end',
-    ]);
+    final rawStart = _pickValue(item, ['waktu_mulai', 'jam_mulai', 'start_time', 'jamAwal', 'time_start']);
+    final rawEnd = _pickValue(item, ['waktu_selesai', 'jam_selesai', 'end_time', 'jamAkhir', 'time_end']);
     if (rawStart == '-' && rawEnd == '-') {
       return _pickValue(item, ['jam', 'waktu'], fallback: 'Jadwal tersedia');
     }
@@ -229,9 +189,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     final user = await AuthService.getCurrentUser();
     if (!mounted) return;
     setState(() => _currentUser = user);
-    if (user != null) {
-      _loadDashboardCards();
-    }
+    if (user != null) _loadDashboardCards();
   }
 
   Future<void> _logout() async {
@@ -246,9 +204,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         titlePadding: EdgeInsets.zero,
         contentPadding: EdgeInsets.zero,
         actionsPadding: EdgeInsets.zero,
@@ -275,11 +231,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                       color: Color(0xFFFEE2E2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.logout_rounded,
-                      color: Color(0xFFEF4444),
-                      size: 32,
-                    ),
+                    child: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 32),
                   ),
                 ),
               ),
@@ -300,11 +252,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                     SizedBox(height: 10),
                     Text(
                       'Apakah Anda yakin ingin keluar dari halaman mentor? Anda harus login kembali untuk mengakses data Anda.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF4B5563),
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 14, color: Color(0xFF4B5563), height: 1.5),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -319,19 +267,11 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                         onPressed: () => Navigator.pop(ctx, false),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFE5E7EB)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           foregroundColor: const Color(0xFF4B5563),
                         ),
-                        child: const Text(
-                          'Batal',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: const Text('Batal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -342,18 +282,10 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                           backgroundColor: const Color(0xFFEF4444),
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        child: const Text(
-                          'Keluar',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: const Text('Keluar', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -364,54 +296,21 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
         ),
       ),
     );
-
-    if (shouldLogout == true) {
-      await _logout();
-    }
+    if (shouldLogout == true) await _logout();
   }
 
   String _buildFormattedDate() {
     final now = DateTime.now();
-    const dayNames = [
-      'Senin',
-      'Selasa',
-      'Rabu',
-      'Kamis',
-      'Jumat',
-      'Sabtu',
-      'Minggu',
-    ];
-    const monthNames = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-
-    final day = dayNames[now.weekday - 1];
-    final month = monthNames[now.month - 1];
-    return '$day, ${now.day} $month ${now.year}';
+    const dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    return '${dayNames[now.weekday - 1]}, ${now.day} ${monthNames[now.month - 1]} ${now.year}';
   }
 
-  // ==================== PERBAIKAN UTAMA: _onMenuTap ====================
   Future<void> _onMenuTap(String title) async {
-    // 🔥 PERBAIKAN: Jika memilih Beranda
     if (title == 'Beranda') {
-      // Jika sudah di halaman Beranda, tidak perlu lakukan apa-apa
       if (_activeMenuTitle == 'Beranda') return;
-      
-      // Update state
       setState(() => _activeMenuTitle = 'Beranda');
-      
-      // Kembalikan ke halaman dashboard (pop semua halaman di stack)
       Navigator.of(context).popUntil((route) => route.isFirst);
       return;
     }
@@ -420,67 +319,37 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
     final navigator = Navigator.of(context);
 
     if (title == 'Jadwal Mengajar') {
-      await navigator.push(
-        MaterialPageRoute(
-          builder: (_) => const JadwalPembelajaranScreen(mentorView: true),
-        ),
-      );
-      await _loadStats();
-      setState(() => _activeMenuTitle = 'Beranda');
-      return;
-    }
-    if (title == 'Absensi Kelas') {
-      await navigator.push(
-        MaterialPageRoute(builder: (_) => const MentorAttendanceScreen()),
-      );
-      await _loadStats();
-      setState(() => _activeMenuTitle = 'Beranda');
-      return;
-    }
-    if (title == 'Soal Latihan') {
+      await navigator.push(MaterialPageRoute(
+          builder: (_) => const JadwalPembelajaranScreen(mentorView: true)));
+    } else if (title == 'Absensi Kelas') {
+      await navigator.push(MaterialPageRoute(
+          builder: (_) => const MentorAttendanceScreen()));
+    } else if (title == 'Soal Latihan') {
       await navigator.pushNamed(AppRoutes.mentorExercise);
-      await _loadStats();
-      setState(() => _activeMenuTitle = 'Beranda');
-      return;
-    }
-    if (title == 'Try Out') {
+    } else if (title == 'Try Out') {
       await navigator.pushNamed(AppRoutes.mentorTryout);
-      await _loadStats();
-      setState(() => _activeMenuTitle = 'Beranda');
-      return;
-    }
-    if (title == 'Materi Pembelajaran') {
-      await navigator.push(
-        MaterialPageRoute(
+    } else if (title == 'Materi Pembelajaran') {
+      await navigator.push(MaterialPageRoute(
           builder: (_) => MateriPembelajaranScreen(
-            initialClass: _selectedClass == 'Semua Kelas'
-                ? null
-                : _selectedClass,
-          ),
-        ),
-      );
-      await _loadStats();
-      setState(() => _activeMenuTitle = 'Beranda');
-      return;
+            initialClass: _selectedClass == 'Semua Kelas' ? null : _selectedClass,
+          )));
+    } else if (title == 'Olimpiade Akademik') {
+      await navigator.push(MaterialPageRoute(
+          builder: (_) => const MentorOlimpiadeScreen()));
     }
-    if (title == 'Olimpiade Akademik') {
-      await navigator.push(
-        MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
-      );
-      await _loadStats();
-      setState(() => _activeMenuTitle = 'Beranda');
-      return;
-    }
+
+    await _loadStats();
+    if (mounted) setState(() => _activeMenuTitle = 'Beranda');
   }
+
+  // ─── BUILD ───────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     if (_currentUser == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
     final isMobile = MediaQuery.of(context).size.width < 820;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       drawer: isMobile ? Drawer(child: _buildSidebar(forDrawer: true)) : null,
@@ -500,12 +369,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
 
   Widget _buildDashboardContent({required bool isMobile}) {
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 16,
-        isMobile ? 6 : 0,
-        isMobile ? 16 : 18,
-        20,
-      ),
+      padding: EdgeInsets.fromLTRB(isMobile ? 16 : 16, isMobile ? 6 : 0, isMobile ? 16 : 18, 20),
       child: Align(
         alignment: Alignment.topLeft,
         child: SizedBox(
@@ -528,299 +392,220 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildDashboardHeader(bool isMobile) {
-  final displayName = _currentUser?.nama ?? 'Mentor BMC';
-  final roleName = _currentUser?.roleName ?? 'Mentor';
-  final dateLabel = _buildFormattedDate();
-  final initial = displayName.isNotEmpty
-      ? displayName.substring(0, 2).toUpperCase()
-      : 'MT';
+    final displayName = _currentUser?.nama ?? 'Mentor BMC';
+    final roleName = _currentUser?.roleName ?? 'Mentor';
+    final dateLabel = _buildFormattedDate();
+    final initial = displayName.isNotEmpty ? displayName.substring(0, 2).toUpperCase() : 'MT';
 
-  return Container(
-    height: 80,
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: const Color(0xFFE6EDF7)),
-      boxShadow: const [
-        BoxShadow(
-          color: Color.fromRGBO(15, 23, 42, 0.04),
-          blurRadius: 16,
-          offset: Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-        if (isMobile) ...[
-          Builder(
-            builder: (ctx) => IconButton(
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-              icon: const Icon(Icons.menu, color: Color(0xFF1F2937)),
-            ),
-          ),
-          const SizedBox(width: 4),
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE6EDF7)),
+        boxShadow: const [
+          BoxShadow(color: Color.fromRGBO(15, 23, 42, 0.04), blurRadius: 16, offset: Offset(0, 4)),
         ],
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Selamat Datang, Mentor!',   // ← sesuai Admin
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Berikut adalah ringkasan aktivitas mengajar Anda dari sistem BMC - $dateLabel.',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        // Profil dengan hover effect seperti Admin
-        MouseRegion(
-          cursor: SystemMouseCursors.click,
-          onEnter: (_) => setState(() => _isProfileHovered = true),
-          onExit: (_) => setState(() => _isProfileHovered = false),
-          child: InkWell(
-            onTap: _openProfilePage,
-            borderRadius: BorderRadius.circular(12),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: _isProfileHovered
-                    ? const Color(0xFFF1F5FF)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: _isProfileHovered ? 38 : 32,
-                    height: _isProfileHovered ? 38 : 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2A58F2),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2A58F2).withOpacity(0.25),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      initial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 200),
-                        style: TextStyle(
-                          color: _isProfileHovered
-                              ? const Color(0xFF2A58F2)
-                              : const Color(0xFF27344B),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        child: Text(displayName),
-                      ),
-                      Text(
-                        roleName,
-                        style: const TextStyle(
-                          color: Color(0xFF99A4B5),
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+      ),
+      child: Row(
+        children: [
+          if (isMobile) ...[
+            Builder(
+              builder: (ctx) => IconButton(
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+                icon: const Icon(Icons.menu, color: Color(0xFF1F2937)),
               ),
             ),
+            const SizedBox(width: 4),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Selamat Datang, Mentor!',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A), letterSpacing: -0.5),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Berikut adalah ringkasan aktivitas mengajar Anda dari sistem BMC - $dateLabel.',
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-  Widget _buildSidebar({required bool forDrawer}) {
-  return Container(
-    width: forDrawer ? double.infinity : 214,
-    decoration: BoxDecoration(
-      color: _sidebarBg,
-      border: const Border(
-        right: BorderSide(color: _sidebarBorder),
-        top: BorderSide(color: _sidebarBorder),
-        bottom: BorderSide(color: _sidebarBorder),
-        left: BorderSide(color: Color(0xFF2A8CF4), width: 2), // ← border biru kiri
-      ),
-    ),
-    child: Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 16, 12, 10),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 36,
-                height: 36,
-                child: Image.asset('assets/images/BMC .png'),
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: 16),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _isProfileHovered = true),
+            onExit: (_) => setState(() => _isProfileHovered = false),
+            child: InkWell(
+              onTap: _openProfilePage,
+              borderRadius: BorderRadius.circular(12),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _isProfileHovered ? const Color(0xFFF1F5FF) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      'BMC GrowUp',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                        color: Color(0xFF1E2A3E),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: _isProfileHovered ? 38 : 32,
+                      height: _isProfileHovered ? 38 : 32,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A58F2),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2A58F2).withOpacity(0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
+                      alignment: Alignment.center,
+                      child: Text(initial,
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
                     ),
-                    Text(
-                      'Bintang Muda Center',   // ← subtitle
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF6D7B93),
-                      ),
+                    const SizedBox(width: 8),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            color: _isProfileHovered ? const Color(0xFF2A58F2) : const Color(0xFF27344B),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          child: Text(displayName),
+                        ),
+                        Text(roleName,
+                            style: const TextStyle(color: Color(0xFF99A4B5), fontSize: 10)),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'MENU UTAMA',
-              style: TextStyle(
-                color: Color(0xFF9AA4B8),
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                height: 1.1,
-              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebar({required bool forDrawer}) {
+    return Container(
+      width: forDrawer ? double.infinity : 214,
+      decoration: const BoxDecoration(
+        color: _sidebarBg,
+        border: Border(
+          right: BorderSide(color: _sidebarBorder),
+          top: BorderSide(color: _sidebarBorder),
+          bottom: BorderSide(color: _sidebarBorder),
+          left: BorderSide(color: Color(0xFF2A8CF4), width: 2),
         ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            itemCount: _menuItems.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 2),
-            itemBuilder: (context, index) {
-              final item = _menuItems[index];
-              final active = item.title == _activeMenuTitle;
-              return InkWell(
-                onTap: () {
-                  if (forDrawer) Navigator.of(context).pop();
-                  _onMenuTap(item.title);
-                },
-                borderRadius: BorderRadius.circular(9),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: active
-                        ? const Color(0xFF2A58F2)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Row(
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 10),
+            child: Row(
+              children: [
+                SizedBox(width: 36, height: 36, child: Image.asset('assets/images/BMC .png')),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        item.icon,
-                        size: 15,
-                        color: active
-                            ? Colors.white
-                            : const Color(0xFF8290A6),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: TextStyle(
-                            color: active
-                                ? Colors.white
-                                : const Color(0xFF4B5972),
-                            fontSize: 12.5,
-                            fontWeight: active
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                          ),
-                        ),
-                      ),
+                      Text('BMC GrowUp',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF1E2A3E))),
+                      Text('Bintang Muda Center',
+                          style: TextStyle(fontSize: 11, color: Color(0xFF6D7B93))),
                     ],
                   ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        ),
-        // Tombol Keluar style Admin
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 6, 12, 16),
-          child: InkWell(
-            onTap: _confirmAndLogout,
-            borderRadius: BorderRadius.circular(8),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.logout_rounded,
-                    size: 15,
-                    color: Color(0xFF9CA5B5),
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Keluar',
-                    style: TextStyle(
-                      color: Color(0xFF8E96A8),
-                      fontSize: 12,
+          const SizedBox(height: 8),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('MENU UTAMA',
+                  style: TextStyle(color: Color(0xFF9AA4B8), fontSize: 11, fontWeight: FontWeight.w700, height: 1.1)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              itemCount: _menuItems.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 2),
+              itemBuilder: (context, index) {
+                final item = _menuItems[index];
+                final active = item.title == _activeMenuTitle;
+                return InkWell(
+                  onTap: () {
+                    if (forDrawer) Navigator.of(context).pop();
+                    _onMenuTap(item.title);
+                  },
+                  borderRadius: BorderRadius.circular(9),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: active ? const Color(0xFF2A58F2) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(item.icon, size: 15,
+                            color: active ? Colors.white : const Color(0xFF8290A6)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(item.title,
+                              style: TextStyle(
+                                color: active ? Colors.white : const Color(0xFF4B5972),
+                                fontSize: 12.5,
+                                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                              )),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 16),
+            child: InkWell(
+              onTap: _confirmAndLogout,
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_rounded, size: 15, color: Color(0xFF9CA5B5)),
+                    SizedBox(width: 8),
+                    Text('Keluar', style: TextStyle(color: Color(0xFF8E96A8), fontSize: 12)),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   Widget _buildHeroCard() {
     return Container(
@@ -829,11 +614,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
         gradient: AppColors.primaryGradient,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x332557E4),
-            blurRadius: 14,
-            offset: Offset(0, 6),
-          ),
+          BoxShadow(color: Color(0x332557E4), blurRadius: 14, offset: Offset(0, 6)),
         ],
       ),
       child: Row(
@@ -846,32 +627,19 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               color: Colors.white.withAlpha((0.08 * 255).round()),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
-              Icons.space_dashboard_outlined,
-              color: Colors.white,
-            ),
+            child: const Icon(Icons.space_dashboard_outlined, color: Colors.white),
           ),
           const SizedBox(width: 14),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Ringkasan Aktivitas Mengajar Hari Ini',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
+                Text('Ringkasan Aktivitas Mengajar Hari Ini',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
+                SizedBox(height: 6),
+                Text(
                   'Pantau jadwal mengajar, kelola latihan siswa, serta akses informasi try out dan olimpiade akademik.',
-                  style: TextStyle(
-                    color: Color(0xFFD9E4FF),
-                    fontWeight: FontWeight.w500,
-                    height: 1.35,
-                  ),
+                  style: TextStyle(color: Color(0xFFD9E4FF), fontWeight: FontWeight.w500, height: 1.35),
                 ),
               ],
             ),
@@ -887,13 +655,9 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
         final stacked = constraints.maxWidth < 960;
         final scheduleCard = _buildScheduleCard();
         final tryoutCard = _buildTryoutCard();
-
         if (stacked) {
-          return Column(
-            children: [scheduleCard, const SizedBox(height: 16), tryoutCard],
-          );
+          return Column(children: [scheduleCard, const SizedBox(height: 16), tryoutCard]);
         }
-
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -909,10 +673,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   Widget _buildScheduleCard() {
     final filtered = _selectedClass == 'Semua Kelas'
         ? _recentSchedules
-        : _recentSchedules.where((item) {
-            final kelas = _resolveKelasFromJadwal(item);
-            return kelas == _selectedClass;
-          }).toList();
+        : _recentSchedules.where((item) => _resolveKelasFromJadwal(item) == _selectedClass).toList();
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
@@ -921,11 +682,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.softBorder),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
+          BoxShadow(color: Color(0x0A0F172A), blurRadius: 18, offset: Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -947,42 +704,22 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Jadwal Mengajar',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
+                      Text('Jadwal Mengajar',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
                       SizedBox(height: 2),
-                      Text(
-                        'Jadwal kelas yang aktif hari ini',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFFD9E4FF),
-                        ),
-                      ),
+                      Text('Jadwal kelas yang aktif hari ini',
+                          style: TextStyle(fontSize: 11, color: Color(0xFFD9E4FF))),
                     ],
                   ),
                 ),
                 TextButton(
                   onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            const JadwalPembelajaranScreen(mentorView: true),
-                      ),
-                    );
+                    await Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const JadwalPembelajaranScreen(mentorView: true)));
                     await _loadDashboardCards();
                   },
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                   child: const Text('Lihat semua'),
                 ),
               ],
@@ -994,42 +731,27 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
               padding: EdgeInsets.symmetric(vertical: 28),
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (_recentSchedules.isEmpty)
-            _buildEmptyScheduleState()
           else if (filtered.isEmpty)
             _buildEmptyScheduleState()
           else
-            Column(
-              children: filtered
-                  .map((item) => _buildScheduleRow(item))
-                  .toList(),
-            ),
+            Column(children: filtered.map(_buildScheduleRow).toList()),
         ],
       ),
     );
   }
 
   Widget _buildEmptyScheduleState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 22),
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 22),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(
-              Icons.event_busy_outlined,
-              size: 46,
-              color: Color(0xFFD1D5DB),
-            ),
+          children: [
+            Icon(Icons.event_busy_outlined, size: 46, color: Color(0xFFD1D5DB)),
             SizedBox(height: 10),
-            Text(
-              'Belum ada jadwal mengajar.',
-              style: TextStyle(
-                color: Color(0xFF8B909A),
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Text('Belum ada jadwal mengajar.',
+                style: TextStyle(color: Color(0xFF8B909A), fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -1039,9 +761,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   Widget _buildTryoutCard() {
     final filtered = _selectedClass == 'Semua Kelas'
         ? _recentTryouts
-        : _recentTryouts
-              .where((item) => item.classLevel == _selectedClass)
-              .toList();
+        : _recentTryouts.where((item) => item.classLevel == _selectedClass).toList();
 
     return _buildCompetitionCard(
       title: 'Try Out Terbaru',
@@ -1062,17 +782,14 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   Widget _buildOlimpiadeCard() {
     final filtered = _selectedClass == 'Semua Kelas'
         ? _recentOlimpiades
-        : _recentOlimpiades
-              .where((item) => item.classLevel == _selectedClass)
-              .toList();
+        : _recentOlimpiades.where((item) => item.classLevel == _selectedClass).toList();
 
     return _buildCompetitionCard(
       title: 'Olimpiade Akademik',
       actionLabel: 'Lihat semua',
       onActionTap: () async {
         await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()),
-        );
+            MaterialPageRoute(builder: (_) => const MentorOlimpiadeScreen()));
         await _loadDashboardCards();
       },
       items: filtered,
@@ -1085,13 +802,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildScheduleRow(Map<String, dynamic> item) {
-    final title = _pickValue(item, [
-      'mata_pelajaran',
-      'mapel',
-      'subject',
-      'judul',
-      'nama',
-    ], fallback: 'Jadwal');
+    final title = _pickValue(item, ['mata_pelajaran', 'mapel', 'subject', 'judul', 'nama'], fallback: 'Jadwal');
     final kelas = _resolveKelasFromJadwal(item);
     final ruang = _pickValue(item, ['ruang', 'room'], fallback: 'Ruang');
     final time = _formatScheduleTime(item);
@@ -1119,40 +830,20 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '$title — $kelas',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14.5,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
+                Text('$title — $kelas',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: AppColors.textPrimary)),
                 const SizedBox(height: 4),
-                Text(
-                  '$time · $ruang',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF4B5563),
-                  ),
-                ),
+                Text('$time · $ruang',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563))),
               ],
             ),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.blueLightBg,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: const Text(
-              'Jadwal',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
+            decoration: BoxDecoration(color: AppColors.blueLightBg, borderRadius: BorderRadius.circular(999)),
+            child: const Text('Jadwal',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
           ),
         ],
       ),
@@ -1177,11 +868,7 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.softBorder),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 14,
-            offset: Offset(0, 6),
-          ),
+          BoxShadow(color: Color(0x0A0F172A), blurRadius: 14, offset: Offset(0, 6)),
         ],
       ),
       child: Column(
@@ -1203,34 +890,18 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
+                      Text(title,
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
                       const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFFD9E4FF),
-                        ),
-                      ),
+                      Text(subtitle,
+                          style: const TextStyle(fontSize: 11, color: Color(0xFFD9E4FF))),
                     ],
                   ),
                 ),
                 TextButton(
                   onPressed: onActionTap,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                   child: Text(actionLabel),
                 ),
               ],
@@ -1249,20 +920,11 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.inbox_outlined,
-                      size: 46,
-                      color: Color(0xFFD1D5DB),
-                    ),
+                    const Icon(Icons.inbox_outlined, size: 46, color: Color(0xFFD1D5DB)),
                     const SizedBox(height: 10),
-                    Text(
-                      emptyLabel,
-                      style: const TextStyle(
-                        color: Color(0xFF8B909A),
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                    Text(emptyLabel,
+                        style: const TextStyle(color: Color(0xFF8B909A), fontWeight: FontWeight.w600),
+                        textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -1276,12 +938,8 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
 
   Widget _buildCompetitionRow(MentorCompetitionItem item) {
     final statusLabel = item.isPublished ? 'Publik' : 'Draft';
-    final badgeColor = item.isPublished
-        ? const Color(0xFFE3F5D9)
-        : const Color(0xFFF3F0E7);
-    final badgeTextColor = item.isPublished
-        ? const Color(0xFF2E7D32)
-        : const Color(0xFF7C6A2A);
+    final badgeColor = item.isPublished ? const Color(0xFFE3F5D9) : const Color(0xFFF3F0E7);
+    final badgeTextColor = item.isPublished ? const Color(0xFF2E7D32) : const Color(0xFF7C6A2A);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -1310,50 +968,23 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.title.isNotEmpty ? item.title : 'Try out',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14.5,
-                    color: Color(0xFF111827),
-                  ),
-                ),
+                Text(item.title.isNotEmpty ? item.title : 'Try out',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Color(0xFF111827))),
                 const SizedBox(height: 4),
-                Text(
-                  '${item.subject} · ${item.classLevel} · ${item.totalQuestions} soal',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF4B5563),
-                  ),
-                ),
+                Text('${item.subject} · ${item.classLevel} · ${item.totalQuestions} soal',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563))),
                 const SizedBox(height: 3),
-                Text(
-                  item.scheduleLabel.isNotEmpty
-                      ? item.scheduleLabel
-                      : item.durationLabel,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
+                Text(item.scheduleLabel.isNotEmpty ? item.scheduleLabel : item.durationLabel,
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
               ],
             ),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: badgeColor,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              statusLabel,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: badgeTextColor,
-              ),
-            ),
+            decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(999)),
+            child: Text(statusLabel,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: badgeTextColor)),
           ),
         ],
       ),
@@ -1361,145 +992,63 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildOlimpiadeRow(MentorCompetitionItem item) {
-  final statusLabel = item.isPublished ? 'Aktif' : 'Draft';
-  final badgeColor = item.isPublished
-      ? const Color(0xFFE6F6EF)
-      : const Color(0xFFF3F0E7);
-  final badgeTextColor = item.isPublished
-      ? const Color(0xFF047857)
-      : const Color(0xFF7C6A2A);
-  final accentColor = item.subject.toLowerCase().contains('matematika')
-      ? const Color(0xFF0F766E)
-      : const Color(0xFFD97706);
-  final icon = item.subject.toLowerCase().contains('matematika')
-      ? Icons.calculate_outlined
-      : Icons.science_outlined;
+    final statusLabel = item.isPublished ? 'Aktif' : 'Draft';
+    final badgeColor = item.isPublished ? const Color(0xFFE6F6EF) : const Color(0xFFF3F0E7);
+    final badgeTextColor = item.isPublished ? const Color(0xFF047857) : const Color(0xFF7C6A2A);
+    final accentColor = item.subject.toLowerCase().contains('matematika')
+        ? const Color(0xFF0F766E)
+        : const Color(0xFFD97706);
+    final icon = item.subject.toLowerCase().contains('matematika')
+        ? Icons.calculate_outlined
+        : Icons.science_outlined;
 
-  return Container(
-    margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: const Color(0xFFE5E7EB)),
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: accentColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: accentColor, size: 22),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.title.isNotEmpty ? item.title : 'Olimpiade Akademik',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14.5,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${item.classLevel} · ${item.subject}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF4B5563),
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                item.scheduleLabel.isNotEmpty
-                    ? item.scheduleLabel
-                    : item.durationLabel,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF6B7280),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: badgeColor,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                statusLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: badgeTextColor,
-                ),
-              ),
-            ),
-            // const SizedBox(height: 8), // Baris ini juga bisa dihapus jika tidak diperlukan
-            // HAPUS atau KOMENTARI bagian LinearProgressIndicator di bawah ini:
-            // SizedBox(
-            //   width: 84,
-            //   child: ClipRRect(
-            //     borderRadius: BorderRadius.circular(999),
-            //     child: LinearProgressIndicator(
-            //       value: item.isPublished ? 0.62 : 0.26,
-            //       minHeight: 4,
-            //       backgroundColor: const Color(0xFFE5E7EB),
-            //       valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-            //     ),
-            //   ),
-            // ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-  Widget _buildHeaderChip({
-    required IconData icon,
-    required String label,
-    required Color backgroundColor,
-    required Color foregroundColor,
-  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: foregroundColor),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: foregroundColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(icon, color: accentColor, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.title.isNotEmpty ? item.title : 'Olimpiade Akademik',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Color(0xFF111827))),
+                const SizedBox(height: 4),
+                Text('${item.classLevel} · ${item.subject}',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563))),
+                const SizedBox(height: 3),
+                Text(item.scheduleLabel.isNotEmpty ? item.scheduleLabel : item.durationLabel,
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(999)),
+            child: Text(statusLabel,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: badgeTextColor)),
           ),
         ],
       ),
     );
   }
-}
+} // ← penutup _MentorDashboardState
 
 class _SidebarMenuItem {
   final String title;

@@ -49,16 +49,18 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final rawList = data['data'];
         final list = (rawList as List<dynamic>? ?? [])
-            .whereType<Map<String, dynamic>>()
+            .map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
         setState(() {
           _list = list;
           _isLoading = false;
         });
       } else {
+        debugPrint("Failed to fetch pengumuman: ${response.statusCode} - ${response.body}");
         setState(() => _isLoading = false);
       }
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint("Error fetching pengumuman: $e\n$stack");
       setState(() => _isLoading = false);
     }
   }

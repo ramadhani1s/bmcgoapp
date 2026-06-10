@@ -89,7 +89,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   }
 
   void _onSidebarMenuTap(String title) {
-    if (title == 'Dashboard') {
+    if (title == 'Dashboard' || title == 'Beranda') {
       Navigator.pushReplacementNamed(context, AppRoutes.mentorDashboard);
       return;
     }
@@ -785,7 +785,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -1329,7 +1329,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
             border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: Colors.black.withOpacity(0.03),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               ),

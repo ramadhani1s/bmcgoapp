@@ -1,10 +1,7 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:frontend_mobile_bmc/models/payment_model.dart';
 import 'package:frontend_mobile_bmc/models/alumni_model.dart';
 import 'package:frontend_mobile_bmc/services/alumni_service.dart';
-import 'package:frontend_mobile_bmc/screens/home/latihan_siswa_screen.dart';
 import 'package:frontend_mobile_bmc/screens/siswa/materi_screen.dart';
 import 'package:frontend_mobile_bmc/services/payment_service.dart';
 import 'package:frontend_mobile_bmc/services/jadwal_service.dart';
@@ -14,6 +11,8 @@ import 'package:frontend_mobile_bmc/config/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
+import 'package:frontend_mobile_bmc/core/session/app_session.dart';
+import 'package:frontend_mobile_bmc/screens/siswa/pengumuman_detail_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -44,6 +43,16 @@ class _DashboardScreenState extends State<DashboardScreen>
   int _realOverallProgressPercent = 0;
   Timer? _verificationRefreshTimer;
 
+  // Dynamic user data variables
+  String _displayName = 'Yohana Nababan';
+  String _displayClass = 'Kelas 12';
+  String _displayEmail = '-';
+  bool _didLoadUserData = false;
+
+  // Dynamic announcement banner variables
+  Map<String, dynamic>? _latestAnnouncement;
+  bool _isLoadingAnnouncement = true;
+
   // Jadwal variables
   List<Map<String, dynamic>> _jadwalList = [];
 
@@ -73,10 +82,124 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didLoadUserData) {
+      _loadUserData();
+      _loadLatestAnnouncement();
+      _didLoadUserData = true;
+    }
+  }
+
+  @override
   void dispose() {
     _verificationRefreshTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final user = args?['user'] as Map<String, dynamic>?;
+    
+    String? name = user?['nama'] as String?;
+    String? kelas = user?['kelas'] as String?;
+    String? email = user?['email'] as String?;
+    
+    // Fallback to AppSession
+    name ??= await AppSession.getUserName();
+    email ??= await AppSession.getUserEmail();
+    final sessionKelas = await AppSession.getUserKelas();
+    if (sessionKelas != 'Kelas 12') {
+      kelas ??= sessionKelas;
+    }
+    
+    // Fallback to SharedPreferences student_profile_detail
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final profileRaw = prefs.getString('student_profile_detail');
+      if (profileRaw != null && profileRaw.isNotEmpty) {
+        final profile = jsonDecode(profileRaw) as Map<String, dynamic>;
+        if (profile['nama']?.toString().trim().isNotEmpty == true) {
+          name = profile['nama'].toString();
+        }
+        if (profile['kelas']?.toString().trim().isNotEmpty == true) {
+          kelas = profile['kelas'].toString();
+        }
+        if (profile['email']?.toString().trim().isNotEmpty == true) {
+          email = profile['email'].toString();
+        }
+      }
+    } catch (_) {}
+    
+    if (mounted) {
+      setState(() {
+        if (name != null && name.trim().isNotEmpty) {
+          _displayName = name;
+        }
+        if (kelas != null && kelas.trim().isNotEmpty) {
+          _displayClass = kelas;
+        }
+        if (email != null && email.trim().isNotEmpty) {
+          _displayEmail = email;
+        }
+      });
+    }
+  }
+
+  String _formatAnnouncementDate(String rawDate) {
+    try {
+      final dt = DateTime.parse(rawDate).toLocal();
+      const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+      const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+      final dayName = days[dt.weekday % 7];
+      return '$dayName, ${dt.day} ${months[dt.month - 1]} ${dt.year}';
+    } catch (_) {
+      return rawDate;
+    }
+  }
+
+  Future<void> _loadLatestAnnouncement() async {
+    try {
+      final token = await AppSession.getAuthToken();
+      if (token == null) return;
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/siswa/pengumuman');
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final rawList = data['data'] as List<dynamic>? ?? [];
+        if (mounted) {
+          setState(() {
+            if (rawList.isNotEmpty) {
+              _latestAnnouncement = Map<String, dynamic>.from(rawList.first as Map);
+            } else {
+              _latestAnnouncement = null;
+            }
+            _isLoadingAnnouncement = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoadingAnnouncement = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading latest announcement: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingAnnouncement = false;
+        });
+      }
+    }
   }
 
   @override
@@ -98,7 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         });
       }
     } catch (e) {
-      print('❌ Error loading dynamic alumni: $e');
+      debugPrint('❌ Error loading dynamic alumni: $e');
     }
   }
 
@@ -164,7 +287,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
 
     setState(() {
-      if (verificationStatus.isUserActive && !_hasAutoNavigatedToProfile) {
+      if (!verificationStatus.isUserActive && !_hasAutoNavigatedToProfile) {
         _previousIndex = _selectedIndex;
         _selectedIndex = 3;
         _hasAutoNavigatedToProfile = true;
@@ -220,26 +343,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  String get _studentName {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final user = args?['user'] as Map<String, dynamic>?;
-    return (user?['nama'] as String?) ?? 'Yohana Nababan';
-  }
+  String get _studentName => _displayName;
 
-  String get _classLabel {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final user = args?['user'] as Map<String, dynamic>?;
-    return (user?['kelas'] as String?) ?? 'Kelas 12';
-  }
+  String get _classLabel => _displayClass;
 
-  String get _studentEmail {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final user = args?['user'] as Map<String, dynamic>?;
-    return (user?['email'] as String?) ?? '-';
-  }
+  String get _studentEmail => _displayEmail;
 
   Future<void> _loadJadwalHariIni() async {
     try {
@@ -264,7 +372,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         _jadwalList = jadwalData;
       });
     } catch (e) {
-      print("❌ Error loading jadwal: $e");
+      debugPrint("❌ Error loading jadwal: $e");
       if (!mounted) return;
       setState(() {});
     }
@@ -839,56 +947,69 @@ class _DashboardScreenState extends State<DashboardScreen>
                   },
                 ),
                 const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                  decoration: BoxDecoration(
-                    color: _accent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Color(0xFFFF856E),
-                        child: Icon(
-                          Icons.campaign_outlined,
-                          color: Color(0xFFFFD35E),
+                if (_latestAnnouncement != null) ...[
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => PengumumanDetailScreen(item: _latestAnnouncement!),
                         ),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      decoration: BoxDecoration(
+                        color: _accent,
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Pengumuman Baru!',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                              ),
+                      child: Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Color(0xFFFF856E),
+                            child: Icon(
+                              Icons.campaign_outlined,
+                              color: Color(0xFFFFD35E),
                             ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Try Out SNBT: Sabtu, 15 Maret 2025',
-                              style: TextStyle(
-                                color: Color(0xFFFFE5E5),
-                                fontSize: 12,
-                              ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Pengumuman Baru!',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${_latestAnnouncement!['judul']}: ${_formatAnnouncementDate(_latestAnnouncement!['created_at'])}',
+                                  style: const TextStyle(
+                                    color: Color(0xFFFFE5E5),
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ],
                       ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 22),
+                  const SizedBox(height: 22),
+                ],
                 _SectionTitleRow(
                   title: 'Profil Alumni',
                   actionText: 'Lihat Semua',
@@ -939,7 +1060,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   },
                                 ),
                         ),
-                        
+
                 const SizedBox(height: 22),
                 _SectionTitleRow(
                   title: 'Jadwal Hari Ini',
@@ -1221,16 +1342,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                           fontSize: 12.5,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          _buildStat('0', 'Materi'),
-                          _buildDivider(),
-                          _buildStat('0', 'Try Out'),
-                          _buildDivider(),
-                          _buildStat('0', 'Absensi'),
-                        ],
-                      ),
                       const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
@@ -1330,38 +1441,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                       onTap: () {
                         Navigator.of(context).pushNamed('/package');
                       },
-                    ),
-                    _ProfileTile(
-                      icon: Icons.shield_outlined,
-                      title: isActive
-                          ? 'Status Akun: Aktif'
-                          : 'Status Akun: Non-Aktif',
-                      color: const Color(0xFFFFF1E7),
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _buildSectionTitle('AKADEMIK'),
-                _buildTileCard(
-                  children: [
-                    _ProfileTile(
-                      icon: Icons.military_tech_outlined,
-                      title: 'Prestasi & Sertifikat',
-                      color: const Color(0xFFFFF7DD),
-                      onTap: _showDynamicInfo,
-                    ),
-                    _ProfileTile(
-                      icon: Icons.fact_check_outlined,
-                      title: 'Riwayat Kehadiran',
-                      color: const Color(0xFFEAF8ED),
-                      onTap: _showDynamicInfo,
-                    ),
-                    _ProfileTile(
-                      icon: Icons.menu_book_outlined,
-                      title: 'Transkrip Nilai',
-                      color: const Color(0xFFE7F8FD),
-                      onTap: _showDynamicInfo,
                     ),
                   ],
                 ),

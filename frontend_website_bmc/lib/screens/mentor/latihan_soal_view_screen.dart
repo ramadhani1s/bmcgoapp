@@ -285,9 +285,7 @@ class _LatihanSoalViewScreenState extends State<LatihanSoalViewScreen> {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.18,
-                                          ),
+                                          color: Colors.white.withOpacity(0.18),
                                           borderRadius: BorderRadius.circular(
                                             999,
                                           ),

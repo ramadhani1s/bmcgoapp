@@ -6,6 +6,7 @@ class AppSession {
   static const String _userEmailKey = 'user_email';
   static const String _userPhoneKey = 'user_phone';
   static const String _userStatusKey = 'user_status';
+  static const String _userKelasKey = 'user_kelas';
 
   static Future<SharedPreferences> _prefs() async {
     return SharedPreferences.getInstance();
@@ -47,6 +48,12 @@ class AppSession {
           ? user['status'].toString()
           : 'inactive',
     );
+    await prefs.setString(
+      _userKelasKey,
+      user['kelas']?.toString().trim().isNotEmpty == true
+          ? user['kelas'].toString()
+          : 'Kelas 12',
+    );
   }
 
   static Future<void> saveUserStatus(String status) async {
@@ -84,6 +91,11 @@ class AppSession {
     return prefs.getString(_userStatusKey) ?? 'inactive';
   }
 
+  static Future<String> getUserKelas() async {
+    final prefs = await _prefs();
+    return prefs.getString(_userKelasKey) ?? 'Kelas 12';
+  }
+
   static Future<void> clear() async {
     final prefs = await _prefs();
     await prefs.remove(_authTokenKey);
@@ -91,5 +103,6 @@ class AppSession {
     await prefs.remove(_userEmailKey);
     await prefs.remove(_userPhoneKey);
     await prefs.remove(_userStatusKey);
+    await prefs.remove(_userKelasKey);
   }
 }
