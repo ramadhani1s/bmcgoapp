@@ -24,6 +24,7 @@ class MentorDashboard extends StatefulWidget {
 class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   User? _currentUser;
   String _activeMenuTitle = 'Beranda';
+  bool _isProfileHovered = false;  // ← letakkan di sini
   bool _loadingDashboardCards = true;
   List<Map<String, dynamic>> _recentSchedules = [];
   List<Map<String, dynamic>> _paketList = [];
@@ -498,35 +499,28 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildDashboardContent({required bool isMobile}) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        await _loadStats();
-        await _loadDashboardCards();
-      },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          isMobile ? 16 : 16,
-          isMobile ? 6 : 0,
-          isMobile ? 16 : 18,
-          20,
-        ),
-        child: Align(
-          alignment: Alignment.topLeft,
-          child: SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildDashboardHeader(isMobile),
-                const SizedBox(height: 12),
-                _buildHeroCard(),
-                const SizedBox(height: 12),
-                _buildTopPanels(),
-                const SizedBox(height: 14),
-                _buildOlimpiadeCard(),
-              ],
-            ),
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        isMobile ? 16 : 16,
+        isMobile ? 6 : 0,
+        isMobile ? 16 : 18,
+        20,
+      ),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDashboardHeader(isMobile),
+              const SizedBox(height: 12),
+              _buildHeroCard(),
+              const SizedBox(height: 12),
+              _buildTopPanels(),
+              const SizedBox(height: 14),
+              _buildOlimpiadeCard(),
+            ],
           ),
         ),
       ),
@@ -534,237 +528,299 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildDashboardHeader(bool isMobile) {
-    final displayName = _currentUser?.nama ?? 'Mentor';
-    final dateLabel = _buildFormattedDate();
+  final displayName = _currentUser?.nama ?? 'Mentor BMC';
+  final roleName = _currentUser?.roleName ?? 'Mentor';
+  final dateLabel = _buildFormattedDate();
+  final initial = displayName.isNotEmpty
+      ? displayName.substring(0, 2).toUpperCase()
+      : 'MT';
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  return Container(
+    height: 80,
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: const Color(0xFFE6EDF7)),
+      boxShadow: const [
+        BoxShadow(
+          color: Color.fromRGBO(15, 23, 42, 0.04),
+          blurRadius: 16,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
       children: [
         if (isMobile) ...[
           Builder(
-            builder: (buttonContext) => IconButton(
-              onPressed: () => Scaffold.of(buttonContext).openDrawer(),
+            builder: (ctx) => IconButton(
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
               icon: const Icon(Icons.menu, color: Color(0xFF1F2937)),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 4),
         ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                'Beranda Mentor',
+                'Selamat Datang, Mentor!',   // ← sesuai Admin
                 style: TextStyle(
-                  color: Color(0xFF1F3C88),
-                  fontWeight: FontWeight.w900,
-                  fontSize: 26,
-                  height: 1.0,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildHeaderChip(
-                    icon: Icons.calendar_today_outlined,
-                    label: dateLabel,
-                    backgroundColor: const Color(0xFFDBEAFE),
-                    foregroundColor: const Color(0xFF1D4ED8),
-                  ),
-                ],
+              const SizedBox(height: 4),
+              Text(
+                'Berikut adalah ringkasan aktivitas mengajar Anda dari sistem BMC - $dateLabel.',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: _openProfilePage,
-          child: _buildProfileButton(displayName),
+        const SizedBox(width: 16),
+        // Profil dengan hover effect seperti Admin
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _isProfileHovered = true),
+          onExit: (_) => setState(() => _isProfileHovered = false),
+          child: InkWell(
+            onTap: _openProfilePage,
+            borderRadius: BorderRadius.circular(12),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _isProfileHovered
+                    ? const Color(0xFFF1F5FF)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: _isProfileHovered ? 38 : 32,
+                    height: _isProfileHovered ? 38 : 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A58F2),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF2A58F2).withOpacity(0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      initial,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        style: TextStyle(
+                          color: _isProfileHovered
+                              ? const Color(0xFF2A58F2)
+                              : const Color(0xFF27344B),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        child: Text(displayName),
+                      ),
+                      Text(
+                        roleName,
+                        style: const TextStyle(
+                          color: Color(0xFF99A4B5),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
-    );
-  }
-
-  Widget _buildProfileButton(String displayName) {
-    final displayNameSafe = displayName.isNotEmpty ? displayName : 'Mentor';
-    final roleName = _currentUser?.roleName ?? 'Mentor';
-    final initial = displayNameSafe[0].toUpperCase();
-
-    return InkWell(
-      onTap: _openProfilePage,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 38,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                color: Color(0xFFDBEAFE),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  initial,
-                  style: const TextStyle(
-                    color: Color(0xFF2563EB),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayNameSafe,
-                  style: const TextStyle(
-                    color: Color(0xFF334155),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  roleName,
-                  style: const TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSidebar({required bool forDrawer}) {
-    return Container(
-      width: forDrawer ? double.infinity : 232,
-      decoration: const BoxDecoration(
-        color: _sidebarBg,
-        border: Border(right: BorderSide(color: _sidebarBorder)),
+  return Container(
+    width: forDrawer ? double.infinity : 214,
+    decoration: BoxDecoration(
+      color: _sidebarBg,
+      border: const Border(
+        right: BorderSide(color: _sidebarBorder),
+        top: BorderSide(color: _sidebarBorder),
+        bottom: BorderSide(color: _sidebarBorder),
+        left: BorderSide(color: Color(0xFF2A8CF4), width: 2), // ← border biru kiri
       ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 34,
-                  height: 34,
-                  child: Image.asset('assets/images/BMC .png'),
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'BMC GrowUp',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                      height: 1.0,
+    ),
+    child: Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 16, 12, 10),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 36,
+                height: 36,
+                child: Image.asset('assets/images/BMC .png'),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'BMC GrowUp',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                        color: Color(0xFF1E2A3E),
+                      ),
                     ),
-                  ),
+                    Text(
+                      'Bintang Muda Center',   // ← subtitle
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF6D7B93),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'MENU UTAMA',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF6B7280),
-                ),
+        ),
+        const SizedBox(height: 8),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'MENU UTAMA',
+              style: TextStyle(
+                color: Color(0xFF9AA4B8),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: ListView(
-              children: _menuItems.map((item) {
-                final active = item.title == _activeMenuTitle;
-                return Padding(
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            itemCount: _menuItems.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 2),
+            itemBuilder: (context, index) {
+              final item = _menuItems[index];
+              final active = item.title == _activeMenuTitle;
+              return InkWell(
+                onTap: () {
+                  if (forDrawer) Navigator.of(context).pop();
+                  _onMenuTap(item.title);
+                },
+                borderRadius: BorderRadius.circular(9),
+                child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
+                    horizontal: 12,
+                    vertical: 10,
                   ),
-                  child: InkWell(
-                    onTap: () {
-                      if (forDrawer) Navigator.of(context).pop();
-                      _onMenuTap(item.title);
-                    },
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 11,
+                  decoration: BoxDecoration(
+                    color: active
+                        ? const Color(0xFF2A58F2)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        item.icon,
+                        size: 15,
+                        color: active
+                            ? Colors.white
+                            : const Color(0xFF8290A6),
                       ),
-                      decoration: BoxDecoration(
-                        color: active ? _sidebarActive : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            item.icon,
-                            size: 15,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: TextStyle(
                             color: active
                                 ? Colors.white
-                                : const Color(0xFF8290A6),
+                                : const Color(0xFF4B5972),
+                            fontSize: 12.5,
+                            fontWeight: active
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              item.title,
-                              style: TextStyle(
-                                color: active
-                                    ? Colors.white
-                                    : const Color(0xFF4B5972),
-                                fontSize: 12.3,
-                                fontWeight: active
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        // Tombol Keluar style Admin
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 6, 12, 16),
+          child: InkWell(
+            onTap: _confirmAndLogout,
+            borderRadius: BorderRadius.circular(8),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.logout_rounded,
+                    size: 15,
+                    color: Color(0xFF9CA5B5),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Keluar',
+                    style: TextStyle(
+                      color: Color(0xFF8E96A8),
+                      fontSize: 12,
                     ),
                   ),
-                );
-              }).toList(),
+                ],
+              ),
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.logout_rounded, size: 16),
-            title: const Text('Keluar', style: TextStyle(fontSize: 12.5)),
-            onTap: _confirmAndLogout,
-          ),
-          const SizedBox(height: 10),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildHeroCard() {
     return Container(
