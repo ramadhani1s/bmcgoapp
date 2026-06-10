@@ -1102,15 +1102,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ],
                       ),
                     ),
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: e.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(e.icon, color: e.color, size: 28),
-                    ),
+
                   ],
                 ),
               ),
