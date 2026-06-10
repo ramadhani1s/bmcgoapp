@@ -199,12 +199,14 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
 
   String _formatScheduleTime(Map<String, dynamic> item) {
     final rawStart = _pickValue(item, [
+      'waktu_mulai',
       'jam_mulai',
       'start_time',
       'jamAwal',
       'time_start',
     ]);
     final rawEnd = _pickValue(item, [
+      'waktu_selesai',
       'jam_selesai',
       'end_time',
       'jamAkhir',
@@ -496,28 +498,35 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildDashboardContent({required bool isMobile}) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 16,
-        isMobile ? 6 : 0,
-        isMobile ? 16 : 18,
-        20,
-      ),
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: SizedBox(
-          width: double.infinity,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDashboardHeader(isMobile),
-              const SizedBox(height: 12),
-              _buildHeroCard(),
-              const SizedBox(height: 12),
-              _buildTopPanels(),
-              const SizedBox(height: 14),
-              _buildOlimpiadeCard(),
-            ],
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _loadStats();
+        await _loadDashboardCards();
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          isMobile ? 16 : 16,
+          isMobile ? 6 : 0,
+          isMobile ? 16 : 18,
+          20,
+        ),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDashboardHeader(isMobile),
+                const SizedBox(height: 12),
+                _buildHeroCard(),
+                const SizedBox(height: 12),
+                _buildTopPanels(),
+                const SizedBox(height: 14),
+                _buildOlimpiadeCard(),
+              ],
+            ),
           ),
         ),
       ),
@@ -1296,115 +1305,115 @@ class _MentorDashboardState extends State<MentorDashboard> with RouteAware {
   }
 
   Widget _buildOlimpiadeRow(MentorCompetitionItem item) {
-    final statusLabel = item.isPublished ? 'Aktif' : 'Draft';
-    final badgeColor = item.isPublished
-        ? const Color(0xFFE6F6EF)
-        : const Color(0xFFF3F0E7);
-    final badgeTextColor = item.isPublished
-        ? const Color(0xFF047857)
-        : const Color(0xFF7C6A2A);
-    final accentColor = item.subject.toLowerCase().contains('matematika')
-        ? const Color(0xFF0F766E)
-        : const Color(0xFFD97706);
-    final icon = item.subject.toLowerCase().contains('matematika')
-        ? Icons.calculate_outlined
-        : Icons.science_outlined;
+  final statusLabel = item.isPublished ? 'Aktif' : 'Draft';
+  final badgeColor = item.isPublished
+      ? const Color(0xFFE6F6EF)
+      : const Color(0xFFF3F0E7);
+  final badgeTextColor = item.isPublished
+      ? const Color(0xFF047857)
+      : const Color(0xFF7C6A2A);
+  final accentColor = item.subject.toLowerCase().contains('matematika')
+      ? const Color(0xFF0F766E)
+      : const Color(0xFFD97706);
+  final icon = item.subject.toLowerCase().contains('matematika')
+      ? Icons.calculate_outlined
+      : Icons.science_outlined;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: accentColor, size: 22),
+  return Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: const Color(0xFFE5E7EB)),
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: accentColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title.isNotEmpty ? item.title : 'Olimpiade Akademik',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14.5,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${item.classLevel} · ${item.subject}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF4B5563),
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  item.scheduleLabel.isNotEmpty
-                      ? item.scheduleLabel
-                      : item.durationLabel,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Icon(icon, color: accentColor, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: badgeColor,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  statusLabel,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: badgeTextColor,
-                  ),
+              Text(
+                item.title.isNotEmpty ? item.title : 'Olimpiade Akademik',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14.5,
+                  color: Color(0xFF111827),
                 ),
               ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: 84,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: item.isPublished ? 0.62 : 0.26,
-                    minHeight: 4,
-                    backgroundColor: const Color(0xFFE5E7EB),
-                    valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                  ),
+              const SizedBox(height: 4),
+              Text(
+                '${item.classLevel} · ${item.subject}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF4B5563),
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                item.scheduleLabel.isNotEmpty
+                    ? item.scheduleLabel
+                    : item.durationLabel,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF6B7280),
                 ),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
+        ),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: badgeColor,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                statusLabel,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: badgeTextColor,
+                ),
+              ),
+            ),
+            // const SizedBox(height: 8), // Baris ini juga bisa dihapus jika tidak diperlukan
+            // HAPUS atau KOMENTARI bagian LinearProgressIndicator di bawah ini:
+            // SizedBox(
+            //   width: 84,
+            //   child: ClipRRect(
+            //     borderRadius: BorderRadius.circular(999),
+            //     child: LinearProgressIndicator(
+            //       value: item.isPublished ? 0.62 : 0.26,
+            //       minHeight: 4,
+            //       backgroundColor: const Color(0xFFE5E7EB),
+            //       valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+            //     ),
+            //   ),
+            // ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildHeaderChip({
     required IconData icon,
     required String label,

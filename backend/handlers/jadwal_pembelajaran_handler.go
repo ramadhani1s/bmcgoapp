@@ -77,32 +77,33 @@ func GetJadwalList(c *gin.Context) {
 	hari := c.Query("hari")
 
 	query := `
-		SELECT id, paket_id, mentor_id, class_level, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
-		FROM jadwal
+		SELECT j.id, j.paket_id, j.mentor_id, j.class_level, j.mata_pelajaran, j.hari, to_char(j.jam_mulai, 'HH24:MI') AS waktu_mulai, to_char(j.jam_selesai, 'HH24:MI') AS waktu_selesai, j.ruang, COALESCE(m.nama_mentor, '') AS mentor
+		FROM jadwal j
+		LEFT JOIN mentor m ON m.id = j.mentor_id
 		WHERE 1=1
 	`
 	var args []interface{}
 	argCount := 1
 
 	if paketID != "" {
-		query += ` AND paket_id = $` + strconv.Itoa(argCount)
+		query += ` AND j.paket_id = $` + strconv.Itoa(argCount)
 		args = append(args, paketID)
 		argCount++
 	}
 
 	if mentorID != "" {
-		query += ` AND mentor_id = $` + strconv.Itoa(argCount)
+		query += ` AND j.mentor_id = $` + strconv.Itoa(argCount)
 		args = append(args, mentorID)
 		argCount++
 	}
 
 	if hari != "" {
-		query += ` AND hari = $` + strconv.Itoa(argCount)
+		query += ` AND j.hari = $` + strconv.Itoa(argCount)
 		args = append(args, hari)
 		argCount++
 	}
 
-	query += ` ORDER BY hari, jam_mulai`
+	query += ` ORDER BY j.hari, j.jam_mulai`
 
 	rows, err := config.DB.Query(context.Background(), query, args...)
 	if err != nil {
@@ -118,10 +119,23 @@ func GetJadwalList(c *gin.Context) {
 	var jadwals []models.Jadwal
 	for rows.Next() {
 		var j models.Jadwal
-		if err := rows.Scan(&j.ID, &j.PaketID, &j.MentorID, &j.ClassLevel, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang); err != nil {
+		if err := rows.Scan(
+			&j.ID,
+			&j.PaketID,
+			&j.MentorID,
+			&j.ClassLevel,
+			&j.MataPelajaran,
+			&j.Hari,
+			&j.WaktuMulai,
+			&j.WaktuSelesai,
+			&j.Ruang,
+			&j.Mentor,
+		); err != nil {
 			fmt.Println("Scan error:", err)
 			continue
 		}
+		j.JamMulai = j.WaktuMulai
+		j.JamSelesai = j.WaktuSelesai
 		jadwals = append(jadwals, j)
 	}
 
@@ -161,18 +175,20 @@ func GetMentorJadwalList(c *gin.Context) {
 
 	rows, err := config.DB.Query(context.Background(), `
 		SELECT
-			id,
-			paket_id,
-			mentor_id,
-			class_level,
-			mata_pelajaran,
-			hari,
-			jam_mulai,
-			jam_selesai,
-			ruang
-		FROM jadwal
-		WHERE mentor_id = $1
-		ORDER BY hari, jam_mulai
+			j.id,
+			j.paket_id,
+			j.mentor_id,
+			j.class_level,
+			j.mata_pelajaran,
+			j.hari,
+			to_char(j.jam_mulai, 'HH24:MI') as waktu_mulai,
+			to_char(j.jam_selesai, 'HH24:MI') as waktu_selesai,
+			j.ruang,
+			COALESCE(m.nama_mentor, '') as mentor
+		FROM jadwal j
+		LEFT JOIN mentor m ON m.id = j.mentor_id
+		WHERE j.mentor_id = $1
+		ORDER BY j.hari, j.jam_mulai
 	`, mentorID)
 
 	if err != nil {
@@ -197,13 +213,16 @@ func GetMentorJadwalList(c *gin.Context) {
 			&j.ClassLevel,
 			&j.MataPelajaran,
 			&j.Hari,
-			&j.JamMulai,
-			&j.JamSelesai,
+			&j.WaktuMulai,
+			&j.WaktuSelesai,
 			&j.Ruang,
+			&j.Mentor,
 		); err != nil {
 			continue
 		}
 
+		j.JamMulai = j.WaktuMulai
+		j.JamSelesai = j.WaktuSelesai
 		jadwals = append(jadwals, j)
 	}
 
@@ -225,10 +244,11 @@ func GetJadwalDetail(c *gin.Context) {
 
 	var j models.Jadwal
 	err := config.DB.QueryRow(context.Background(), `
-		SELECT id, paket_id, mentor_id, class_level, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
-		FROM jadwal
-		WHERE id = $1
-	`, id).Scan(&j.ID, &j.PaketID, &j.MentorID, &j.ClassLevel, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang)
+		SELECT j.id, j.paket_id, j.mentor_id, j.class_level, j.mata_pelajaran, j.hari, to_char(j.jam_mulai, 'HH24:MI') as waktu_mulai, to_char(j.jam_selesai, 'HH24:MI') as waktu_selesai, j.ruang, COALESCE(m.nama_mentor, '') as mentor
+		FROM jadwal j
+		LEFT JOIN mentor m ON m.id = j.mentor_id
+		WHERE j.id = $1
+	`, id).Scan(&j.ID, &j.PaketID, &j.MentorID, &j.ClassLevel, &j.MataPelajaran, &j.Hari, &j.WaktuMulai, &j.WaktuSelesai, &j.Ruang, &j.Mentor)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -237,6 +257,9 @@ func GetJadwalDetail(c *gin.Context) {
 		})
 		return
 	}
+
+	j.JamMulai = j.WaktuMulai
+	j.JamSelesai = j.WaktuSelesai
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
@@ -408,10 +431,11 @@ func GetJadwalByHari(c *gin.Context) {
 	}
 
 	rows, err := config.DB.Query(context.Background(), `
-		SELECT id, paket_id, mentor_id, class_level, mata_pelajaran, hari, jam_mulai, jam_selesai, ruang
-		FROM jadwal
-		WHERE hari = $1
-		ORDER BY jam_mulai
+		SELECT j.id, j.paket_id, j.mentor_id, j.class_level, j.mata_pelajaran, j.hari, to_char(j.jam_mulai, 'HH24:MI') as waktu_mulai, to_char(j.jam_selesai, 'HH24:MI') as waktu_selesai, j.ruang, COALESCE(m.nama_mentor, '') as mentor
+		FROM jadwal j
+		LEFT JOIN mentor m ON m.id = j.mentor_id
+		WHERE j.hari = $1
+		ORDER BY j.jam_mulai
 	`, hari)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -426,9 +450,22 @@ func GetJadwalByHari(c *gin.Context) {
 	var jadwals []models.Jadwal
 	for rows.Next() {
 		var j models.Jadwal
-		if err := rows.Scan(&j.ID, &j.PaketID, &j.MentorID, &j.ClassLevel, &j.MataPelajaran, &j.Hari, &j.JamMulai, &j.JamSelesai, &j.Ruang); err != nil {
+		if err := rows.Scan(
+			&j.ID,
+			&j.PaketID,
+			&j.MentorID,
+			&j.ClassLevel,
+			&j.MataPelajaran,
+			&j.Hari,
+			&j.WaktuMulai,
+			&j.WaktuSelesai,
+			&j.Ruang,
+			&j.Mentor,
+		); err != nil {
 			continue
 		}
+		j.JamMulai = j.WaktuMulai
+		j.JamSelesai = j.WaktuSelesai
 		jadwals = append(jadwals, j)
 	}
 

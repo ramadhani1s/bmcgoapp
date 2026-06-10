@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/user.dart';
 import '../../services/auth_service.dart';
 import '../../routes/app_routes.dart';
@@ -10,6 +10,7 @@ import '../mentor/materi_pembelajaran_screen.dart';
 
 const Color _dialogHeaderBlue = Color(0xFF2563EB);
 const List<String> _dialogHariList = [
+  'Semua Hari',
   'Senin',
   'Selasa',
   'Rabu',
@@ -74,6 +75,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   User? _currentUser;
 
   static const List<String> hariList = [
+    'Semua Hari',
     'Senin',
     'Selasa',
     'Rabu',
@@ -584,7 +586,7 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
 
   String _dayName(DateTime date) {
     const days = [
-      'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'
+      'Semua Hari', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'
     ];
     return days[date.weekday - 1];
   }

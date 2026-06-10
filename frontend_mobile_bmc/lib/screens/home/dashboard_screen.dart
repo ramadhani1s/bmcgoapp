@@ -66,6 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       (_) {
         if (mounted) {
           _loadDashboardStatus(silent: true);
+          _loadJadwalHariIni();
         }
       },
     );
@@ -84,6 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       _loadDashboardStatus();
       _loadRealProgress();
       _loadDynamicAlumni();
+      _loadJadwalHariIni();
     }
   }
 
@@ -268,6 +270,15 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
+  String get _formattedTodayShort {
+    final now = DateTime.now();
+    const hariShort = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const bulanShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    final hari = hariShort[now.weekday % 7];
+    final bulan = bulanShort[now.month - 1];
+    return '$hari, ${now.day} $bulan';
+  }
+
   String get _firstName {
     final parts = _studentName.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty || parts.first.isEmpty) {
@@ -326,11 +337,17 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
 
     return _jadwalList.map((jadwal) {
-      final waktuMulai = jadwal['waktu_mulai'] as String? ?? '00:00';
+      final waktuMulai = (jadwal['waktu_mulai'] ?? jadwal['jam_mulai'] ?? '00:00').toString();
+      final waktuSelesai = (jadwal['waktu_selesai'] ?? jadwal['jam_selesai'] ?? '').toString();
       final mataPelajaran =
-          jadwal['mata_pelajaran'] as String? ?? 'Pembelajaran';
-      final mentor = jadwal['mentor'] as String? ?? 'Mentor';
-      final ruang = jadwal['ruang'] as String? ?? 'Ruang';
+          (jadwal['mata_pelajaran'] ?? 'Pembelajaran').toString();
+      final mentor = (jadwal['mentor'] ?? 'Mentor').toString();
+      final ruang = (jadwal['ruang'] ?? 'Ruang').toString();
+
+      // Display time - show range if end time available
+      final displayTime = waktuSelesai.isNotEmpty
+          ? '$waktuMulai - $waktuSelesai'
+          : waktuMulai;
 
       // Determine status based on current time
       String status = 'Akan Datang';
@@ -339,24 +356,26 @@ class _DashboardScreenState extends State<DashboardScreen>
 
       final now = DateTime.now();
       final scheduledTime = _parseTime(waktuMulai);
-      final timeDiff = scheduledTime.difference(now).inMinutes;
+      final endTime = waktuSelesai.isNotEmpty ? _parseTime(waktuSelesai) : scheduledTime.add(const Duration(minutes: 60));
+      final timeDiffStart = scheduledTime.difference(now).inMinutes;
+      final timeDiffEnd = endTime.difference(now).inMinutes;
 
-      if (timeDiff < -30) {
+      if (timeDiffEnd < 0) {
         status = 'Selesai';
         statusColor = const Color(0xFF8D90A3);
         statusBackground = const Color(0xFFF0F2F7);
-      } else if (timeDiff <= 0) {
+      } else if (timeDiffStart <= 0 && timeDiffEnd >= 0) {
         status = 'Sekarang';
         statusColor = const Color(0xFF1CC08A);
         statusBackground = const Color(0xFFDEF8EF);
-      } else if (timeDiff <= 30) {
+      } else if (timeDiffStart <= 30) {
         status = 'Segera';
         statusColor = const Color(0xFFF39A44);
         statusBackground = const Color(0xFFFFF0E0);
       }
 
       return _SchedulePreviewItem(
-        time: waktuMulai,
+        time: displayTime,
         subject: mataPelajaran,
         mentorRoom: '$mentor · $ruang',
         status: status,
@@ -465,10 +484,20 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildDashboardTab() {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return RefreshIndicator(
+      onRefresh: () async {
+        await Future.wait([
+          _loadDashboardStatus(silent: true),
+          _loadRealProgress(),
+          _loadDynamicAlumni(),
+          _loadJadwalHariIni(),
+        ]);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           Stack(
             children: [
               Container(
@@ -985,15 +1014,34 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ),
                 ),
                 const SizedBox(height: 22),
-                const _SectionTitleRow(
+                _SectionTitleRow(
                   title: 'Jadwal Hari Ini',
-                  trailingText: 'Sen, 10 Feb',
+                  trailingText: _formattedTodayShort,
                   trailingIcon: Icons.calendar_today_outlined,
                 ),
                 const SizedBox(height: 12),
-                for (final item in _schedulePreview) ...[
-                  _SchedulePreviewTile(item: item),
+                if (_schedulePreview.isEmpty) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Tidak ada jadwal kelas hari ini.',
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 10),
+                ] else ...[
+                  for (final item in _schedulePreview) ...[
+                    _SchedulePreviewTile(item: item),
+                    const SizedBox(height: 10),
+                  ],
                 ],
                 if (!_isActive) ...[
                   const SizedBox(height: 8),
@@ -1079,8 +1127,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildPlaceholderTab({required String title, required IconData icon}) {
     return Center(
