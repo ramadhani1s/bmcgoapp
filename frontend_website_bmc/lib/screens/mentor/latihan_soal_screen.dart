@@ -42,17 +42,14 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
   String? _selectedMapel;
   String _selectedClass = 'Semua Kelas';
   final List<String> _classOptions = const [
-    'Semua Kelas',
-    '10 IPA IPS',
-    '11 IPA IPS',
-    '12 IPA IPS',
-    'Kelas 10 IPA',
-    'Kelas 10 IPS',
-    'Kelas 11 IPA',
-    'Kelas 11 IPS',
-    'Kelas 12 IPA',
-    'Kelas 12 IPS',
-  ];
+  'Semua Kelas',
+  'Kelas 10 IPA',
+  'Kelas 10 IPS',
+  'Kelas 11 IPA',
+  'Kelas 11 IPS',
+  'Kelas 12 IPA',
+  'Kelas 12 IPS',
+];
 
   static const Color _primaryBlue = Color(0xFF2563EB);
 
@@ -785,7 +782,7 @@ class _LatihanSoalScreenState extends State<LatihanSoalScreen> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -1405,4 +1402,3 @@ class _ParsedQuestion {
 
   const _ParsedQuestion({required this.mapel, required this.questionText});
 }
-

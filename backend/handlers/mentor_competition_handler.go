@@ -35,6 +35,7 @@ type olimpiadePayload struct {
 	Nama              string         `json:"nama"`
 	Tanggal           string         `json:"tanggal"`
 	Lokasi            string         `json:"lokasi"`
+	Durasi            int            `json:"durasi"`
 	TotalQuestions    int            `json:"total_questions"`
 	CategoryQuestions map[string]int `json:"category_questions"`
 }
@@ -551,13 +552,17 @@ func CreateOlimpiadeHandler(c *gin.Context) {
 		return
 	}
 
-	// 🔥 PERBAIKAN: INSERT dengan total_questions dan category_questions
+	// INSERT dengan durasi, total_questions dan category_questions
 	var id int
+	durasiFinal := payload.Durasi
+	if durasiFinal <= 0 {
+		durasiFinal = 120 // default 120 menit
+	}
 	err = config.DB.QueryRow(context.Background(), `
-		INSERT INTO olimpiade (mentor_id, class_level, nama, tanggal, lokasi, total_questions, category_questions)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO olimpiade (mentor_id, class_level, nama, tanggal, lokasi, durasi, total_questions, category_questions)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
-	`, mentorID, payload.ClassLevel, payload.Nama, tanggal, payload.Lokasi, payload.TotalQuestions, categoryQuestionsJSON).Scan(&id)
+	`, mentorID, payload.ClassLevel, payload.Nama, tanggal, payload.Lokasi, durasiFinal, payload.TotalQuestions, categoryQuestionsJSON).Scan(&id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -573,10 +578,25 @@ func CreateOlimpiadeHandler(c *gin.Context) {
 			"nama":               payload.Nama,
 			"tanggal":            formatDate(tanggal),
 			"lokasi":             payload.Lokasi,
+			"durasi":             durasiFinal,
 			"total_questions":    payload.TotalQuestions,
 			"category_questions": payload.CategoryQuestions,
 		},
 	})
+
+	// Kirim Notifikasi FCM ke semua siswa secara asinkron
+	go func(nama string) {
+		rows, err := config.DB.Query(context.Background(), `SELECT fcm_token FROM users WHERE role_id = 3 AND fcm_token IS NOT NULL AND fcm_token != ''`)
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var token string
+				if err := rows.Scan(&token); err == nil && token != "" {
+					_ = services.SendFCMNotification(token, "Olimpiade Baru! 🏆", fmt.Sprintf("Olimpiade '%s' telah ditambahkan. Cek sekarang!", nama))
+				}
+			}
+		}
+	}(payload.Nama)
 }
 
 func UpdateOlimpiadeHandler(c *gin.Context) {
@@ -617,17 +637,22 @@ func UpdateOlimpiadeHandler(c *gin.Context) {
 		return
 	}
 
-	// 🔥 PERBAIKAN: UPDATE dengan total_questions dan category_questions
+	// UPDATE dengan durasi, total_questions dan category_questions
+	durasiFinalUpd := payload.Durasi
+	if durasiFinalUpd <= 0 {
+		durasiFinalUpd = 120
+	}
 	cmd, err := config.DB.Exec(context.Background(), `
 		UPDATE olimpiade
 		SET class_level = $1,
 		    nama = $2,
 		    tanggal = $3,
 		    lokasi = $4,
-		    total_questions = $5,
-		    category_questions = $6
-		WHERE id = $7 AND mentor_id = $8
-	`, payload.ClassLevel, payload.Nama, tanggal, payload.Lokasi, payload.TotalQuestions, categoryQuestionsJSON, olimpiadeID, mentorID)
+		    durasi = $5,
+		    total_questions = $6,
+		    category_questions = $7
+		WHERE id = $8 AND mentor_id = $9
+	`, payload.ClassLevel, payload.Nama, tanggal, payload.Lokasi, durasiFinalUpd, payload.TotalQuestions, categoryQuestionsJSON, olimpiadeID, mentorID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

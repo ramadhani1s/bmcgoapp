@@ -113,6 +113,10 @@ class MentorCompetitionService {
               'class_level': classLevel,
               'nama': title,
               'tanggal': scheduleLabel,
+              'durasi': _extractDurationMinutes(
+                durationLabel,
+                fallback: 120,
+              ),
               'total_questions': totalQuestions,
               'category_questions': categoryQuestions,
             }

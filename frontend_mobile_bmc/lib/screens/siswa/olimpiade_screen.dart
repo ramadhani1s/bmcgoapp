@@ -113,12 +113,19 @@ class _OlimpiadeScreenState extends State<OlimpiadeScreen> {
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: _accent))
-                  : currentList.isEmpty
-                      ? const OlimpiadeEmpty(accentColor: _accent)
-                      : RefreshIndicator(
-                          color: _accent,
-                          onRefresh: () => _fetchOlimpiade(),
-                          child: ListView.separated(
+                  : RefreshIndicator(
+                      color: _accent,
+                      onRefresh: () => _fetchOlimpiade(),
+                      child: currentList.isEmpty
+                          ? SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: Container(
+                                height: MediaQuery.of(context).size.height * 0.6,
+                                alignment: Alignment.center,
+                                child: const OlimpiadeEmpty(accentColor: _accent),
+                              ),
+                            )
+                          : ListView.separated(
                             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                             itemCount: currentList.length,
                             separatorBuilder: (_, __) => const SizedBox(height: 12),
