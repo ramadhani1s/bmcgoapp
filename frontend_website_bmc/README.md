@@ -1,4 +1,4 @@
-# BMC Admin Portal
+# BMC Admin 
 
 Aplikasi web admin untuk sistem BMC (Bimbingan Belajar) yang memungkinkan login sebagai Admin atau Mentor dengan role-based authentication.
 
@@ -37,8 +37,8 @@ Aplikasi web admin untuk sistem BMC (Bimbingan Belajar) yang memungkinkan login 
 ## Akun Test
 
 ### Admin Account
-- Email: admin@bmc.com
-- Password: admin123
+- Email: bimbelbmc@gmail.com
+- Password: BMC123
 
 ### Mentor Account
 - Email: mentor@bmc.com

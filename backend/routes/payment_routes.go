@@ -37,4 +37,27 @@ func PaymentRoutes(r *gin.Engine) {
 		admin.POST("/:transactionId/approve", handlers.ApprovePaymentVerification)
 		admin.POST("/:transactionId/reject", handlers.RejectPaymentVerification)
 	}
+
+	// API prefixes for Flutter Web/App compatibility
+	apiPayment := r.Group("/api/payment")
+	{
+		apiPayment.POST("/notification", handlers.PaymentNotification)
+		apiPayment.GET("/success", handlers.PaymentSuccessPage)
+		apiPayment.Use(middleware.AuthMiddleware())
+		{
+			apiPayment.POST("/create-transaction", handlers.CreateTransaction)
+			apiPayment.GET("/history", handlers.GetPaymentHistory)
+			apiPayment.GET("/status/:transactionId", handlers.CheckPaymentStatus)
+			apiPayment.POST("/finish-transaction", handlers.FinishTransaction)
+			apiPayment.GET("/verification-status", handlers.GetVerificationStatus)
+		}
+	}
+
+	apiAdmin := r.Group("/api/admin/payment")
+	apiAdmin.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware(1))
+	{
+		apiAdmin.GET("/pending-verifications", handlers.GetPendingPaymentVerifications)
+		apiAdmin.POST("/:transactionId/approve", handlers.ApprovePaymentVerification)
+		apiAdmin.POST("/:transactionId/reject", handlers.RejectPaymentVerification)
+	}
 }

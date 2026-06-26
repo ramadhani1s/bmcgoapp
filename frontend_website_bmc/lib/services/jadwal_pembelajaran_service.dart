@@ -6,8 +6,8 @@ import 'package:frontend_website_bmc/core/session/app_session.dart';
 import 'package:http/http.dart' as http;
 
 class JadwalService {
-  static const String _defaultAdminBaseUrl = "http://localhost:8080/api/admin";
-  static const String _defaultPublicBaseUrl = "http://localhost:8080/api";
+  static const String _defaultAdminBaseUrl = "https://bmcgoapp-production.up.railway.app/api/admin";
+  static const String _defaultPublicBaseUrl = "https://bmcgoapp-production.up.railway.app/api";
   static String? _activeAdminBaseUrl;
   static String? _activePublicBaseUrl;
 
@@ -33,27 +33,24 @@ class JadwalService {
 
   static List<String> _candidateAdminBaseUrls() {
     final urls = <String>[
-      'http://127.0.0.1:8080/api/admin',
-      'http://localhost:8080/api/admin',
-      'http://10.0.2.2:8080/api/admin',
-      'http://172.27.66.99:8080/api/admin',
+      _defaultAdminBaseUrl,
     ];
 
     if (kIsWeb) {
       final host = Uri.base.host;
+      // If hosted in production, use the same host
       if (host.isNotEmpty && host != 'localhost' && host != '127.0.0.1') {
-        final scheme = Uri.base.scheme.isEmpty ? 'http' : Uri.base.scheme;
-        urls.insert(0, '$scheme://$host:8080/api/admin');
+        final scheme = Uri.base.scheme.isEmpty ? 'https' : Uri.base.scheme;
+        final port = Uri.base.hasPort ? ':${Uri.base.port}' : '';
+        urls.insert(0, '$scheme://$host$port/api/admin');
       }
+      // If local dev, check local backend on 8080
       if (host == 'localhost' || host == '127.0.0.1') {
-        final scheme = Uri.base.scheme.isEmpty ? 'http' : Uri.base.scheme;
-        urls.insert(0, '$scheme://$host:8080/api/admin');
+        urls.insert(0, 'http://$host:8080/api/admin');
       }
     }
 
-    urls.insert(0, _defaultAdminBaseUrl);
-
-    if (_activeAdminBaseUrl != null && _activeAdminBaseUrl!.isNotEmpty) {
+    if (_activeAdminBaseUrl?.isNotEmpty ?? false) {
       urls.insert(0, _activeAdminBaseUrl!);
     }
 
@@ -62,25 +59,20 @@ class JadwalService {
 
   static List<String> _candidatePublicBaseUrls() {
     final urls = <String>[
-      'http://127.0.0.1:8080/api',
-      'http://localhost:8080/api',
-      'http://10.0.2.2:8080/api',
-      'http://172.27.66.99:8080/api',
+      'https://bmcgoapp-production.up.railway.app/api',
     ];
 
     if (kIsWeb) {
       final host = Uri.base.host;
       if (host.isNotEmpty && host != 'localhost' && host != '127.0.0.1') {
-        final scheme = Uri.base.scheme.isEmpty ? 'http' : Uri.base.scheme;
-        urls.insert(0, '$scheme://$host:8080/api');
+        final scheme = Uri.base.scheme.isEmpty ? 'https' : Uri.base.scheme;
+        final port = Uri.base.hasPort ? ':${Uri.base.port}' : '';
+        urls.insert(0, '$scheme://$host$port/api');
       }
       if (host == 'localhost' || host == '127.0.0.1') {
-        final scheme = Uri.base.scheme.isEmpty ? 'http' : Uri.base.scheme;
-        urls.insert(0, '$scheme://$host:8080/api');
+        urls.insert(0, 'http://$host:8080/api');
       }
     }
-
-    urls.insert(0, _defaultPublicBaseUrl);
 
     if (_activePublicBaseUrl != null && _activePublicBaseUrl!.isNotEmpty) {
       urls.insert(0, _activePublicBaseUrl!);
@@ -99,6 +91,9 @@ class JadwalService {
     for (final baseUrl in _candidateAdminBaseUrls()) {
       try {
         final response = await request(baseUrl).timeout(const Duration(seconds: 15));
+        if (response.statusCode == 200 && response.body.trim().startsWith('<!DOCTYPE')) {
+          throw Exception("Received HTML instead of JSON. Incorrect API url: $baseUrl");
+        }
         _activeAdminBaseUrl = baseUrl;
         return response;
       } catch (e) {
@@ -118,6 +113,9 @@ class JadwalService {
     for (final baseUrl in _candidatePublicBaseUrls()) {
       try {
         final response = await request(baseUrl).timeout(const Duration(seconds: 15));
+        if (response.statusCode == 200 && response.body.trim().startsWith('<!DOCTYPE')) {
+          throw Exception("Received HTML instead of JSON. Incorrect API url: $baseUrl");
+        }
         _activePublicBaseUrl = baseUrl;
         return response;
       } catch (e) {
@@ -180,10 +178,18 @@ class JadwalService {
           "data": result['data'],
         };
       } else {
+        String detailMessage = response.body;
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded['detail'] != null) {
+            detailMessage = decoded['detail'].toString();
+          }
+        } catch (_) {}
+        
         return {
           "success": false,
           "status": "error",
-          "message": "Failed to create jadwal: ${response.statusCode}",
+          "message": "Gagal: $detailMessage (Error ${response.statusCode})",
           "detail": response.body,
         };
       }
@@ -274,10 +280,18 @@ class JadwalService {
           "data": result['data'],
         };
       } else {
+        String detailMessage = response.body;
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded['detail'] != null) {
+            detailMessage = decoded['detail'].toString();
+          }
+        } catch (_) {}
+        
         return {
           "success": false,
           "status": "error",
-          "message": "Failed to update jadwal: ${response.statusCode}",
+          "message": "Gagal: $detailMessage (Error ${response.statusCode})",
           "detail": response.body,
         };
       }

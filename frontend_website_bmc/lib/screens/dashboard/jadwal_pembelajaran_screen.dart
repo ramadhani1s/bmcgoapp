@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../models/user.dart';
 import '../../services/auth_service.dart';
 import '../../routes/app_routes.dart';
@@ -487,8 +487,11 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
   }
 
   DataRow _buildRow(Map<String, dynamic> jadwal, int index) {
-    final paketId = jadwal['paket_id'] as int?;
-    final mentorId = jadwal['mentor_id'] as int?;
+    final paketIdRaw = jadwal['paket_id'];
+    final paketId = paketIdRaw is int ? paketIdRaw : int.tryParse(paketIdRaw?.toString() ?? '');
+    
+    final mentorIdRaw = jadwal['mentor_id'];
+    final mentorId = mentorIdRaw is int ? mentorIdRaw : int.tryParse(mentorIdRaw?.toString() ?? '');
     final jamMulai = _timeToString(jadwal['jam_mulai']);
     final jamSelesai = _timeToString(jadwal['jam_selesai']);
 
@@ -557,7 +560,11 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-              onPressed: () => _showDeleteDialog(jadwal['id'] as int),
+              onPressed: () {
+                final idRaw = jadwal['id'];
+                final id = idRaw is int ? idRaw : int.tryParse(idRaw?.toString() ?? '') ?? 0;
+                _showDeleteDialog(id);
+              },
             ),
           ],
         ),
@@ -720,7 +727,10 @@ class _JadwalPembelajaranScreenState extends State<JadwalPembelajaranScreen> {
                         value: selectedMentorFilterId,
                         hint: 'Semua Mentor',
                         items: mentorList.map((m) => _mentorLabel(m)).toList(),
-                        values: mentorList.map((m) => m['id'] as int).toList(),
+                        values: mentorList.map((m) {
+                          final id = m['id'];
+                          return id is int ? id : int.tryParse(id?.toString() ?? '') ?? 0;
+                        }).toList(),
                         onChanged: (value) {
                           setState(() => selectedMentorFilterId = value as int?);
                         },
@@ -1440,7 +1450,10 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                       _buildSafeFormDropdown<int>(
                         value: _selectedPaketId,
                         hint: 'Pilih Paket Les',
-                        items: widget.paketList.map((p) => p['id'] as int).toList(),
+                        items: widget.paketList.map((p) {
+                          final id = p['id'];
+                          return id is int ? id : int.tryParse(id?.toString() ?? '') ?? 0;
+                        }).toList(),
                         labels: widget.paketList.map((p) => (p['nama_paket'] ?? p['nama'] ?? 'Paket').toString()).toList(),
                         onChanged: (v) => setState(() => _selectedPaketId = v),
                       ),
@@ -1448,7 +1461,10 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                       _buildSafeFormDropdown<int>(
                         value: _selectedMentorId,
                         hint: 'Pilih Mentor',
-                        items: widget.mentorList.map((m) => m['id'] as int).toList(),
+                        items: widget.mentorList.map((m) {
+                          final id = m['id'];
+                          return id is int ? id : int.tryParse(id?.toString() ?? '') ?? 0;
+                        }).toList(),
                         labels: widget.mentorList.map((m) => (m['nama_mentor'] ?? m['nama'] ?? 'Mentor').toString()).toList(),
                         onChanged: (v) => setState(() => _selectedMentorId = v),
                       ),

@@ -6,9 +6,7 @@ import 'auth_service.dart';
 class AdminMappingService {
   static List<String> get _baseCandidates => [
     AuthService.baseUrl,
-    'http://127.0.0.1:8080',
-    'http://localhost:8080',
-    'http://172.27.66.99:8080',
+    'https://bmcgoapp-production.up.railway.app/',
   ];
 
   static Future<String> _getToken() async {

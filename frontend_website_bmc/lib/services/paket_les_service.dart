@@ -6,25 +6,23 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class PaketLesService {
-  static const String _defaultBaseUrl = "http://localhost:8080/api/admin";
+  static const String _defaultBaseUrl = "https://bmcgoapp-production.up.railway.app/api/admin";
   static String? _activeBaseUrl;
 
   static List<String> _candidateBaseUrls() {
     final urls = <String>[
-      "http://localhost:8080/api/admin",
-      "http://127.0.0.1:8080/api/admin",
-      "http://172.27.66.99:8080/api/admin",
+      "https://bmcgoapp-production.up.railway.app/api/admin",
     ];
 
     if (kIsWeb) {
       final host = Uri.base.host;
       if (host.isNotEmpty && host != "localhost" && host != "127.0.0.1") {
-        final scheme = Uri.base.scheme.isEmpty ? "http" : Uri.base.scheme;
-        urls.insert(0, "$scheme://$host:8080/api/admin");
+        final scheme = Uri.base.scheme.isEmpty ? "https" : Uri.base.scheme;
+        final port = Uri.base.hasPort ? ':${Uri.base.port}' : '';
+        urls.insert(0, "$scheme://$host$port/api/admin");
       }
       if (host == "localhost" || host == "127.0.0.1") {
-        final scheme = Uri.base.scheme.isEmpty ? "http" : Uri.base.scheme;
-        urls.insert(0, "$scheme://$host:8080/api/admin");
+        urls.insert(0, "http://$host:8080/api/admin");
       }
     }
 
@@ -48,6 +46,9 @@ class PaketLesService {
         final response = await request(
           baseUrl,
         ).timeout(const Duration(seconds: 15));
+        if (response.statusCode == 200 && response.body.trim().startsWith('<!DOCTYPE')) {
+          throw Exception("Received HTML instead of JSON. Incorrect API url: $baseUrl");
+        }
         _activeBaseUrl = baseUrl;
         return response;
       } catch (e) {

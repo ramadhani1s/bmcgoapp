@@ -5,7 +5,7 @@ import '../../models/admin_laporan_absensi.dart';
 
 class AbsensiService {
   static final ApiClient _client = ApiClient(
-    baseUrl: 'http://localhost:8080/api',
+    baseUrl: 'https://bmcgoapp-production.up.railway.app/api',
   );
 
   // ignore: unused_element

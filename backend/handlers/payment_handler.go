@@ -85,7 +85,7 @@ func resolveMidtransNotificationURL() string {
 		return strings.TrimRight(baseURL, "/") + "/payment/notification"
 	}
 
-	return "http://localhost:8080/payment/notification"
+	return "https://bmcgoapp-production.up.railway.app/payment/notification"
 }
 
 func getCurrentPhone(ctx *gin.Context, userID int) string {

@@ -6,7 +6,7 @@ import '../models/admin_dashboard_data.dart';
 
 class AdminDashboardService {
   // Backend server
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'https://bmcgoapp-production.up.railway.app/';
   static final ApiClient _client = ApiClient(baseUrl: baseUrl);
 
   static Future<AdminDashboardData> getSummary() async {

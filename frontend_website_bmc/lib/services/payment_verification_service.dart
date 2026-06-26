@@ -40,7 +40,7 @@ class PaymentVerificationOverview {
 }
 
 class PaymentVerificationService {
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'https://bmcgoapp-production.up.railway.app/api';
   static final ApiClient _client = ApiClient(baseUrl: baseUrl);
 
   static Map<String, dynamic> _decodeObject(String body) {

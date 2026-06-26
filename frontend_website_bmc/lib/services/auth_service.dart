@@ -12,22 +12,9 @@ class AuthService {
   // =====================================================
   // BASE URL
   // =====================================================
-  static const String _defaultBaseUrl = 'http://127.0.0.1:8080';
+  static const String _defaultBaseUrl = 'https://bmcgoapp-production.up.railway.app';
 
   static String get baseUrl {
-    final fromEnv = const String.fromEnvironment('API_BASE_URL').trim();
-    if (fromEnv.isNotEmpty) {
-      return _sanitizeBaseUrl(fromEnv);
-    }
-
-    if (kIsWeb) {
-      final host = Uri.base.host.trim();
-      if (host.isNotEmpty) {
-        final scheme = Uri.base.scheme == 'https' ? 'https' : 'http';
-        return '$scheme://$host:8080';
-      }
-    }
-
     return _defaultBaseUrl;
   }
 
